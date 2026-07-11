@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>คลังแนะแนว | แนะให้แนว</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Mitr:wght@400;500;600&family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{
+  --ink:#22313A;
+  --ink-soft:#5B6B72;
+  --board:#EFF3F1;
+  --card:#FFFFFF;
+  --pine:#0F6B5C;
+  --pine-deep:#0A4F44;
+  --pine-tint:#E2F0EC;
+  --note:#FFD34D;
+  --note-deep:#8A6D00;
+  --line:#DCE4E1;
+  --danger:#C0392B;
+  --g1:#F28C6B; --g2:#F2B84B; --g3:#7FB069; --g4:#4E9BB9; --g5:#8E7CC3; --g6:#D96A9C; --gall:#0F6B5C;
+  --radius:14px;
+  --shadow:0 2px 10px rgba(34,49,58,.08);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{font-family:'Sarabun',sans-serif;background:var(--board);color:var(--ink);font-size:16px;line-height:1.55;min-height:100vh}
+h1,h2,h3,.brand{font-family:'Mitr',sans-serif;font-weight:600}
+button{font-family:inherit;cursor:pointer}
+input,select,textarea{font-family:inherit;font-size:16px}
+a{color:var(--pine)}
+:focus-visible{outline:3px solid var(--note);outline-offset:2px;border-radius:6px}
+@media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
+
+/* ---------- โครงหลัก ---------- */
+.wrap{max-width:1080px;margin:0 auto;padding:0 16px 64px}
+header.app{background:var(--pine);color:#fff;padding:14px 0}
+header.app .wrap{display:flex;align-items:center;gap:12px;padding-bottom:0;flex-wrap:wrap}
+.brand{font-size:1.25rem;letter-spacing:.2px;display:flex;align-items:center;gap:10px}
+.brand .logo{width:34px;height:34px;border-radius:9px;background:var(--note);color:var(--pine-deep);display:grid;place-items:center;font-size:1.05rem;font-family:'Mitr';flex:none}
+.brand small{display:block;font-family:'Sarabun';font-weight:400;font-size:.72rem;opacity:.85;letter-spacing:.4px}
+.spacer{flex:1}
+.userchip{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.14);padding:6px 12px;border-radius:999px;font-size:.85rem}
+.userchip .role{background:var(--note);color:var(--pine-deep);border-radius:999px;padding:1px 9px;font-weight:700;font-size:.72rem}
+.iconbtn{background:rgba(255,255,255,.14);border:none;color:#fff;border-radius:999px;padding:7px 14px;font-size:.85rem}
+.iconbtn:hover{background:rgba(255,255,255,.26)}
+
+/* ---------- แท็บแฟ้ม (signature) ---------- */
+.folder-tabs{display:flex;gap:4px;overflow-x:auto;padding:22px 2px 0;scrollbar-width:none}
+.folder-tabs::-webkit-scrollbar{display:none}
+.ftab{flex:none;border:none;background:#fff;color:var(--ink-soft);font-family:'Mitr';font-size:.92rem;font-weight:500;
+  padding:9px 18px 12px;border-radius:12px 12px 0 0;border:1px solid var(--line);border-bottom:none;
+  position:relative;top:4px;opacity:.82;transition:top .15s}
+.ftab .dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--tabc,var(--pine));margin-right:7px}
+.ftab.active{top:0;opacity:1;color:var(--ink);border-top:4px solid var(--tabc,var(--pine));box-shadow:0 -3px 8px rgba(34,49,58,.06);z-index:2}
+.folder-body{background:#fff;border:1px solid var(--line);border-radius:0 var(--radius) var(--radius) var(--radius);padding:16px;box-shadow:var(--shadow);position:relative;z-index:1}
+
+/* ---------- ตัวกรอง ---------- */
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+.search{flex:1;min-width:200px;position:relative}
+.search input{width:100%;padding:10px 14px 10px 38px;border:1.5px solid var(--line);border-radius:999px;background:var(--board)}
+.search::before{content:"🔍";position:absolute;left:13px;top:50%;transform:translateY(-50%);font-size:.85rem;opacity:.6}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{border:1.5px solid var(--line);background:#fff;border-radius:999px;padding:6px 13px;font-size:.82rem;color:var(--ink-soft)}
+.chip.active{background:var(--pine);border-color:var(--pine);color:#fff;font-weight:600}
+
+/* ---------- การ์ดสื่อ ---------- */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(255px,1fr));gap:14px}
+.rescard{background:var(--card);border:1px solid var(--line);border-left:5px solid var(--gc,var(--pine));border-radius:12px;padding:14px 14px 12px;display:flex;flex-direction:column;gap:8px;box-shadow:var(--shadow)}
+.rescard .top{display:flex;gap:6px;flex-wrap:wrap}
+.badge{font-size:.7rem;font-weight:700;border-radius:6px;padding:2px 8px;letter-spacing:.2px}
+.badge.grade{background:color-mix(in srgb,var(--gc) 16%,#fff);color:var(--gc)}
+.badge.type{background:var(--pine-tint);color:var(--pine-deep)}
+.badge.link{background:#FFF3CE;color:var(--note-deep)}
+.rescard h3{font-size:1.02rem;line-height:1.35;font-weight:500}
+.rescard .desc{font-size:.83rem;color:var(--ink-soft);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.rescard .meta{font-size:.75rem;color:var(--ink-soft);display:flex;justify-content:space-between;gap:8px;border-top:1px dashed var(--line);padding-top:8px;margin-top:auto}
+.rescard .actions{display:flex;gap:8px;flex-wrap:wrap}
+.btn{border:none;border-radius:9px;padding:9px 16px;font-size:.88rem;font-weight:600;display:inline-flex;align-items:center;gap:6px;justify-content:center}
+.btn.primary{background:var(--pine);color:#fff}
+.btn.primary:hover{background:var(--pine-deep)}
+.btn.ghost{background:#fff;border:1.5px solid var(--line);color:var(--ink-soft)}
+.btn.ghost:hover{border-color:var(--pine);color:var(--pine)}
+.btn.danger{background:#fff;border:1.5px solid #EAC7C2;color:var(--danger)}
+.btn.note{background:var(--note);color:var(--pine-deep)}
+.btn.sm{padding:6px 11px;font-size:.78rem}
+.btn:disabled{opacity:.55;cursor:wait}
+.empty{padding:44px 16px;text-align:center;color:var(--ink-soft)}
+.empty .big{font-size:2rem;margin-bottom:6px}
+
+/* ---------- ฟอร์ม/โมดัล ---------- */
+.modal-back{position:fixed;inset:0;background:rgba(20,32,30,.45);display:none;align-items:flex-start;justify-content:center;padding:24px 14px;overflow-y:auto;z-index:50}
+.modal-back.show{display:flex}
+.modal{background:#fff;border-radius:16px;max-width:560px;width:100%;padding:22px;box-shadow:0 12px 40px rgba(0,0,0,.2)}
+.modal h2{font-size:1.15rem;margin-bottom:14px;color:var(--pine-deep)}
+.field{margin-bottom:13px}
+.field label{display:block;font-size:.83rem;font-weight:700;margin-bottom:5px;color:var(--ink)}
+.field input,.field select,.field textarea{width:100%;padding:10px 12px;border:1.5px solid var(--line);border-radius:10px;background:#fff}
+.field textarea{min-height:74px;resize:vertical}
+.field .hint{font-size:.74rem;color:var(--ink-soft);margin-top:4px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:520px){.row2{grid-template-columns:1fr}}
+.seg{display:flex;border:1.5px solid var(--line);border-radius:10px;overflow:hidden}
+.seg button{flex:1;border:none;background:#fff;padding:9px;font-size:.86rem;color:var(--ink-soft)}
+.seg button.active{background:var(--pine);color:#fff;font-weight:600}
+.modal .foot{display:flex;gap:10px;justify-content:flex-end;margin-top:16px}
+.msg{border-radius:10px;padding:10px 13px;font-size:.85rem;margin-bottom:12px;display:none}
+.msg.err{display:block;background:#FBEAE7;color:var(--danger)}
+.msg.ok{display:block;background:var(--pine-tint);color:var(--pine-deep)}
+
+/* ---------- หน้า login ---------- */
+.login-stage{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;
+  background:linear-gradient(160deg,var(--pine) 0%,var(--pine-deep) 60%),var(--pine)}
+.login-card{background:#fff;border-radius:20px;padding:30px 26px;max-width:400px;width:100%;box-shadow:0 18px 50px rgba(0,0,0,.28)}
+.login-card .logo-big{width:58px;height:58px;border-radius:16px;background:var(--note);color:var(--pine-deep);display:grid;place-items:center;font-family:'Mitr';font-size:1.5rem;font-weight:600;margin:0 auto 12px}
+.login-card h1{text-align:center;font-size:1.35rem;color:var(--pine-deep)}
+.login-card .sub{text-align:center;font-size:.83rem;color:var(--ink-soft);margin-bottom:20px}
+.login-card .btn{width:100%;padding:12px;font-size:1rem}
+
+/* ---------- จัดการผู้ใช้ ---------- */
+.panel{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:18px;margin-bottom:16px;box-shadow:var(--shadow)}
+.panel h2{font-size:1.05rem;color:var(--pine-deep);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:.85rem}
+th{text-align:left;padding:8px 10px;background:var(--board);color:var(--ink-soft);font-size:.76rem;white-space:nowrap}
+td{padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+.pill{border-radius:999px;padding:2px 10px;font-size:.72rem;font-weight:700}
+.pill.admin{background:#FFE9C7;color:#8A5A00}
+.pill.teacher{background:var(--pine-tint);color:var(--pine-deep)}
+.pill.student{background:#E8EEF7;color:#3D5A80}
+.viewtabs{display:flex;gap:8px;margin:20px 0 14px}
+.viewtabs .btn{border-radius:999px}
+textarea.csvbox{font-family:monospace;font-size:.82rem;min-height:120px}
+.csv-result{max-height:200px;overflow-y:auto;font-size:.8rem;margin-top:10px}
+.csv-result .bad{color:var(--danger)}
+.csv-result .good{color:var(--pine-deep)}
+
+/* ---------- toast ---------- */
+#toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;
+  padding:11px 20px;border-radius:999px;font-size:.88rem;box-shadow:0 6px 20px rgba(0,0,0,.3);opacity:0;pointer-events:none;transition:opacity .25s;z-index:99;max-width:92vw;text-align:center}
+#toast.show{opacity:1}
+.loading{text-align:center;padding:40px;color:var(--ink-soft)}
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+
+<!-- ═══════════ หน้าเข้าสู่ระบบ / ตั้งค่าครั้งแรก ═══════════ -->
+<div id="loginStage" class="login-stage hidden">
+  <div class="login-card">
+    <div class="logo-big">แนว</div>
+    <h1 id="loginTitle">คลังแนะแนว</h1>
+    <p class="sub" id="loginSub">แนะให้แนว · โรงเรียนพูลเจริญวิทยาคม</p>
+    <div id="loginMsg" class="msg"></div>
+
+    <div id="loginForm">
+      <div class="field"><label for="liUser">ชื่อผู้ใช้</label>
+        <input id="liUser" autocomplete="username" placeholder="เช่น รหัสนักเรียน">
+      </div>
+      <div class="field"><label for="liPass">รหัสผ่าน</label>
+        <input id="liPass" type="password" autocomplete="current-password">
+      </div>
+      <button class="btn primary" id="btnLogin">เข้าสู่ระบบ</button>
+    </div>
+
+    <div id="bootstrapForm" class="hidden">
+      <div class="msg ok" style="display:block">ยังไม่มีผู้ดูแลระบบ — สร้างบัญชีผู้ดูแลคนแรกก่อนนะคะ (ทำได้ครั้งเดียว)</div>
+      <div class="field"><label for="bsUser">ชื่อผู้ใช้ผู้ดูแล</label>
+        <input id="bsUser" placeholder="a-z, 0-9, . _ - (3-40 ตัว)">
+      </div>
+      <div class="field"><label for="bsName">ชื่อ-นามสกุล</label>
+        <input id="bsName" placeholder="เช่น ครูสมศรี ใจดี">
+      </div>
+      <div class="field"><label for="bsPass">รหัสผ่าน (อย่างน้อย 6 ตัว)</label>
+        <input id="bsPass" type="password">
+      </div>
+      <button class="btn note" id="btnBootstrap">สร้างบัญชีผู้ดูแล</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ แอปหลัก ═══════════ -->
+<div id="appStage" class="hidden">
+  <header class="app">
+    <div class="wrap">
+      <div class="brand"><span class="logo">แนว</span>
+        <span>คลังแนะแนว<small>แนะให้แนว · พูลเจริญวิทยาคม</small></span>
+      </div>
+      <div class="spacer"></div>
+      <div class="userchip"><span id="uName"></span><span class="role" id="uRole"></span></div>
+      <button class="iconbtn" id="btnPw" title="เปลี่ยนรหัสผ่าน">🔑</button>
+      <button class="iconbtn" id="btnLogout">ออกจากระบบ</button>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <div class="viewtabs">
+      <button class="btn note" id="tabLibrary">📚 คลังสื่อ</button>
+      <button class="btn ghost hidden" id="tabManage">👥 จัดการบัญชี</button>
+      <div class="spacer"></div>
+      <button class="btn primary hidden" id="btnAdd">➕ เพิ่มสื่อ/แผน</button>
+    </div>
+
+    <!-- ── มุมมองคลังสื่อ ── -->
+    <div id="viewLibrary">
+      <nav class="folder-tabs" id="gradeTabs" aria-label="เลือกระดับชั้น"></nav>
+      <div class="folder-body">
+        <div class="toolbar">
+          <div class="search"><input id="q" placeholder="ค้นหาชื่อ/คำอธิบาย…" aria-label="ค้นหา"></div>
+          <div class="chips" id="typeChips"></div>
+        </div>
+        <div id="resGrid" class="grid"></div>
+        <div id="resEmpty" class="empty hidden"><div class="big">🗂️</div>ยังไม่มีรายการในหมวดนี้</div>
+        <div id="resLoading" class="loading">กำลังโหลด…</div>
+      </div>
+    </div>
+
+    <!-- ── มุมมองจัดการบัญชี ── -->
+    <div id="viewManage" class="hidden">
+
+      <div class="panel">
+        <h2>➕ เพิ่มบัญชีทีละคน</h2>
+        <div class="row2">
+          <div class="field"><label for="nuUser">ชื่อผู้ใช้</label><input id="nuUser" placeholder="a-z, 0-9, . _ -"></div>
+          <div class="field"><label for="nuPass">รหัสผ่าน</label><input id="nuPass" placeholder="อย่างน้อย 6 ตัว"></div>
+        </div>
+        <div class="row2">
+          <div class="field"><label for="nuName">ชื่อ-นามสกุล</label><input id="nuName"></div>
+          <div class="field"><label for="nuRole">ประเภท</label>
+            <select id="nuRole">
+              <option value="student">นักเรียน</option>
+              <option value="teacher" class="adminOnly">ครู</option>
+              <option value="admin" class="adminOnly">ผู้ดูแลระบบ</option>
+            </select>
+          </div>
+        </div>
+        <div class="field" id="nuRoomWrap"><label for="nuRoom">ห้อง (สำหรับนักเรียน)</label><input id="nuRoom" placeholder="เช่น ม.6/1"></div>
+        <div id="nuMsg" class="msg"></div>
+        <button class="btn primary" id="btnCreateUser">สร้างบัญชี</button>
+      </div>
+
+      <div class="panel">
+        <h2>📄 นำเข้านักเรียนทั้งห้อง (CSV)</h2>
+        <p class="field hint" style="margin-bottom:10px">รูปแบบบรรทัดละคน: <b>ชื่อผู้ใช้,รหัสผ่าน,ชื่อ-นามสกุล,ห้อง</b> เช่น <code>12345,pcw12345,เด็กหญิงใจดี มีสุข,ม.6/1</code></p>
+        <div class="field">
+          <input type="file" id="csvFile" accept=".csv,.txt">
+          <div class="hint">เลือกไฟล์ CSV หรือวางข้อความด้านล่างก็ได้ · <a href="#" id="csvTemplate">ดาวน์โหลดไฟล์ตัวอย่าง</a></div>
+        </div>
+        <div class="field"><textarea id="csvBox" class="csvbox" placeholder="12345,pcw12345,เด็กหญิงใจดี มีสุข,ม.6/1&#10;12346,pcw12346,เด็กชายตั้งใจ เรียนเก่ง,ม.6/1"></textarea></div>
+        <div id="csvMsg" class="msg"></div>
+        <button class="btn primary" id="btnImport">นำเข้ารายชื่อ</button>
+        <div id="csvResult" class="csv-result"></div>
+      </div>
+
+      <div class="panel">
+        <h2>👥 รายชื่อผู้ใช้ทั้งหมด</h2>
+        <div class="toolbar">
+          <div class="search"><input id="userQ" placeholder="ค้นหาชื่อ/ชื่อผู้ใช้/ห้อง…"></div>
+          <div class="chips" id="roleChips"></div>
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>ชื่อผู้ใช้</th><th>ชื่อ-นามสกุล</th><th>ประเภท</th><th>ห้อง</th><th></th></tr></thead>
+            <tbody id="userRows"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ โมดัล: เพิ่ม/แก้ไขสื่อ ═══════════ -->
+<div class="modal-back" id="resModal">
+  <div class="modal">
+    <h2 id="resModalTitle">เพิ่มสื่อ/แผนการสอน</h2>
+    <div id="resMsg" class="msg"></div>
+    <div class="field"><label for="rTitle">ชื่อรายการ *</label><input id="rTitle" placeholder="เช่น แผนหน่วยที่ 1 รู้จักตนเอง"></div>
+    <div class="field"><label for="rDesc">คำอธิบาย</label><textarea id="rDesc" placeholder="รายละเอียดสั้นๆ ให้เพื่อนครู/นักเรียนเข้าใจ"></textarea></div>
+    <div class="row2">
+      <div class="field"><label for="rGrade">ระดับชั้น *</label>
+        <select id="rGrade">
+          <option>ม.1</option><option>ม.2</option><option>ม.3</option>
+          <option>ม.4</option><option>ม.5</option><option>ม.6</option>
+          <option>ทุกระดับ</option>
+        </select>
+      </div>
+      <div class="field"><label for="rType">ประเภท *</label>
+        <select id="rType">
+          <option value="full_plan">แผนการสอนฉบับเต็ม</option>
+          <option value="one_page">แผนการสอนหน้าเดียว</option>
+          <option value="media">สื่อการสอน</option>
+          <option value="worksheet">ใบงาน</option>
+          <option value="webapp">เว็บแอป/อื่นๆ</option>
+        </select>
+      </div>
+    </div>
+    <div class="field" id="srcSegWrap"><label>รูปแบบ *</label>
+      <div class="seg">
+        <button type="button" id="segFile" class="active">📎 แนบไฟล์</button>
+        <button type="button" id="segLink">🔗 วางลิงก์</button>
+      </div>
+    </div>
+    <div class="field" id="fileWrap">
+      <label for="rFile">ไฟล์ (PDF, docx, pptx ฯลฯ ไม่เกิน 50MB)</label>
+      <input type="file" id="rFile">
+    </div>
+    <div class="field hidden" id="linkWrap">
+      <label for="rUrl">ลิงก์ (ขึ้นต้น https://)</label>
+      <input id="rUrl" placeholder="https://…">
+    </div>
+    <div class="foot">
+      <button class="btn ghost" id="btnResCancel">ยกเลิก</button>
+      <button class="btn primary" id="btnResSave">บันทึก</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ โมดัล: เปลี่ยนรหัสผ่านตัวเอง ═══════════ -->
+<div class="modal-back" id="pwModal">
+  <div class="modal" style="max-width:400px">
+    <h2>🔑 เปลี่ยนรหัสผ่านของฉัน</h2>
+    <div id="pwMsg" class="msg"></div>
+    <div class="field"><label for="pwNew">รหัสผ่านใหม่ (อย่างน้อย 6 ตัว)</label><input type="password" id="pwNew"></div>
+    <div class="field"><label for="pwNew2">พิมพ์อีกครั้ง</label><input type="password" id="pwNew2"></div>
+    <div class="foot">
+      <button class="btn ghost" id="btnPwCancel">ยกเลิก</button>
+      <button class="btn primary" id="btnPwSave">บันทึก</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" role="status"></div>
+
+<script>
+/* ═══════════ ตั้งค่า Supabase ═══════════ */
+const SUPABASE_URL = "https://ikkhjslmtjwrxzxvtokb.supabase.co";
+const ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlra2hqc2xtdGp3cnh6eHZ0b2tiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM3NDMzNjksImV4cCI6MjA5OTMxOTM2OX0.3OR_9mEv82Ns1LLjx5nnRwJYzrtKFtWCWd1bPuQfNKU";
+const EMAIL_DOMAIN = "guidance-pcw.local";
+const FN_URL = SUPABASE_URL + "/functions/v1/manage-users";
+const sb = supabase.createClient(SUPABASE_URL, ANON_KEY);
+
+/* ═══════════ ค่าคงที่ ═══════════ */
+const GRADES = [
+  {key:"all", label:"ทั้งหมด", color:"var(--gall)"},
+  {key:"ม.1", label:"ม.1", color:"var(--g1)"},
+  {key:"ม.2", label:"ม.2", color:"var(--g2)"},
+  {key:"ม.3", label:"ม.3", color:"var(--g3)"},
+  {key:"ม.4", label:"ม.4", color:"var(--g4)"},
+  {key:"ม.5", label:"ม.5", color:"var(--g5)"},
+  {key:"ม.6", label:"ม.6", color:"var(--g6)"},
+];
+const GRADE_COLOR = {"ม.1":"var(--g1)","ม.2":"var(--g2)","ม.3":"var(--g3)","ม.4":"var(--g4)","ม.5":"var(--g5)","ม.6":"var(--g6)","ทุกระดับ":"var(--gall)"};
+const TYPES = [
+  {key:"all", label:"ทุกประเภท"},
+  {key:"full_plan", label:"แผนฉบับเต็ม"},
+  {key:"one_page", label:"แผนหน้าเดียว"},
+  {key:"media", label:"สื่อการสอน"},
+  {key:"worksheet", label:"ใบงาน"},
+  {key:"webapp", label:"เว็บแอป/อื่นๆ"},
+];
+const TYPE_LABEL = Object.fromEntries(TYPES.map(t=>[t.key,t.label]));
+const ROLE_LABEL = {admin:"ผู้ดูแล", teacher:"ครู", student:"นักเรียน"};
+
+/* ═══════════ สถานะ ═══════════ */
+let session=null, profile=null, resources=[], users=[];
+let f = {grade:"all", type:"all", q:""};
+let uf = {role:"all", q:""};
+let editingId = null, srcMode = "file";
+
+/* ═══════════ ตัวช่วย ═══════════ */
+const $ = id => document.getElementById(id);
+const esc = s => String(s??"").replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+function toast(m){ const t=$("toast"); t.textContent=m; t.classList.add("show"); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove("show"),2800); }
+function msg(id, text, kind){ const el=$(id); el.className="msg"+(text?(" "+kind):""); el.textContent=text||""; }
+function thDate(s){ try{ return new Date(s).toLocaleDateString("th-TH",{day:"numeric",month:"short",year:"2-digit"}); }catch{ return ""; } }
+async function callFn(action, payload={}){
+  const token = session?.access_token || ANON_KEY;
+  const res = await fetch(FN_URL, {
+    method:"POST",
+    headers:{ "Content-Type":"application/json", "apikey":ANON_KEY, "Authorization":"Bearer "+token },
+    body: JSON.stringify({action, ...payload})
+  });
+  const data = await res.json().catch(()=>({error:"ตอบกลับผิดรูปแบบ"}));
+  if(!res.ok) throw new Error(data.error || ("HTTP "+res.status));
+  return data;
+}
+
+/* ═══════════ เริ่มต้น ═══════════ */
+init();
+async function init(){
+  const {data:{session:s}} = await sb.auth.getSession();
+  session = s;
+  if(session) await enterApp(); else await showLogin();
+  sb.auth.onAuthStateChange((_e, s2)=>{ session = s2; });
+}
+
+async function showLogin(){
+  $("appStage").classList.add("hidden");
+  $("loginStage").classList.remove("hidden");
+  try{
+    const r = await callFn("check_bootstrap");
+    if(r.needs_bootstrap){
+      $("loginForm").classList.add("hidden");
+      $("bootstrapForm").classList.remove("hidden");
+      $("loginTitle").textContent = "ตั้งค่าครั้งแรก";
+    }
+  }catch(e){ /* แสดง login ตามปกติ */ }
+}
+
+async function enterApp(){
+  const {data:p, error} = await sb.from("profiles").select("*").eq("id", session.user.id).maybeSingle();
+  if(error || !p){ msg("loginMsg","ไม่พบข้อมูลผู้ใช้ กรุณาติดต่อผู้ดูแล","err"); await sb.auth.signOut(); session=null; return showLogin(); }
+  profile = p;
+  $("loginStage").classList.add("hidden");
+  $("appStage").classList.remove("hidden");
+  $("uName").textContent = profile.display_name;
+  $("uRole").textContent = ROLE_LABEL[profile.role] + (profile.class_room? " · "+profile.class_room : "");
+  const staff = ["teacher","admin"].includes(profile.role);
+  $("btnAdd").classList.toggle("hidden", !staff);
+  $("tabManage").classList.toggle("hidden", !staff);
+  document.querySelectorAll("#nuRole .adminOnly").forEach(o=>o.classList.toggle("hidden", profile.role!=="admin"));
+  renderGradeTabs(); renderTypeChips(); renderRoleChips();
+  await loadResources();
+}
+
+/* ═══════════ เข้าสู่ระบบ ═══════════ */
+$("btnLogin").onclick = async ()=>{
+  const u = $("liUser").value.trim().toLowerCase(), p = $("liPass").value;
+  if(!u || !p) return msg("loginMsg","กรอกชื่อผู้ใช้และรหัสผ่านก่อนนะคะ","err");
+  $("btnLogin").disabled = true; msg("loginMsg","");
+  const {data, error} = await sb.auth.signInWithPassword({email:u+"@"+EMAIL_DOMAIN, password:p});
+  $("btnLogin").disabled = false;
+  if(error) return msg("loginMsg","ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง","err");
+  session = data.session; await enterApp();
+};
+$("liPass").addEventListener("keydown", e=>{ if(e.key==="Enter") $("btnLogin").click(); });
+
+$("btnBootstrap").onclick = async ()=>{
+  const u=$("bsUser").value.trim(), n=$("bsName").value.trim(), p=$("bsPass").value;
+  if(!u||!n||!p) return msg("loginMsg","กรอกให้ครบทุกช่องนะคะ","err");
+  $("btnBootstrap").disabled = true;
+  try{
+    await callFn("bootstrap_admin",{username:u,password:p,display_name:n});
+    msg("loginMsg","สร้างผู้ดูแลเรียบร้อย! เข้าสู่ระบบได้เลยค่ะ","ok");
+    $("bootstrapForm").classList.add("hidden");
+    $("loginForm").classList.remove("hidden");
+    $("loginTitle").textContent = "คลังแนะแนว";
+    $("liUser").value = u.toLowerCase();
+  }catch(e){ msg("loginMsg", e.message, "err"); }
+  $("btnBootstrap").disabled = false;
+};
+
+$("btnLogout").onclick = async ()=>{ await sb.auth.signOut(); location.reload(); };
+
+/* ═══════════ สลับมุมมอง ═══════════ */
+$("tabLibrary").onclick = ()=> switchView("library");
+$("tabManage").onclick = ()=> switchView("manage");
+function switchView(v){
+  $("viewLibrary").classList.toggle("hidden", v!=="library");
+  $("viewManage").classList.toggle("hidden", v!=="manage");
+  $("tabLibrary").className = "btn " + (v==="library"?"note":"ghost");
+  $("tabManage").className = "btn " + (v==="manage"?"note":"ghost");
+  if(v==="manage") loadUsers();
+}
+
+/* ═══════════ คลังสื่อ ═══════════ */
+function renderGradeTabs(){
+  $("gradeTabs").innerHTML = GRADES.map(g=>
+    `<button class="ftab ${f.grade===g.key?"active":""}" style="--tabc:${g.color}" data-g="${g.key}"><span class="dot"></span>${g.label}</button>`
+  ).join("");
+  $("gradeTabs").querySelectorAll(".ftab").forEach(b=> b.onclick = ()=>{ f.grade=b.dataset.g; renderGradeTabs(); renderResources(); });
+}
+function renderTypeChips(){
+  $("typeChips").innerHTML = TYPES.map(t=>
+    `<button class="chip ${f.type===t.key?"active":""}" data-t="${t.key}">${t.label}</button>`
+  ).join("");
+  $("typeChips").querySelectorAll(".chip").forEach(b=> b.onclick = ()=>{ f.type=b.dataset.t; renderTypeChips(); renderResources(); });
+}
+$("q").addEventListener("input", ()=>{ f.q=$("q").value.trim().toLowerCase(); renderResources(); });
+
+async function loadResources(){
+  $("resLoading").classList.remove("hidden");
+  const {data, error} = await sb.from("resources").select("*").order("created_at",{ascending:false});
+  $("resLoading").classList.add("hidden");
+  if(error){ toast("โหลดข้อมูลไม่สำเร็จ: "+error.message); return; }
+  resources = data||[]; renderResources();
+}
+
+function renderResources(){
+  const list = resources.filter(r=>{
+    if(f.grade!=="all" && r.grade_level!==f.grade && r.grade_level!=="ทุกระดับ") return false;
+    if(f.type!=="all" && r.resource_type!==f.type) return false;
+    if(f.q && !((r.title||"")+" "+(r.description||"")+" "+(r.uploader_name||"")).toLowerCase().includes(f.q)) return false;
+    return true;
+  });
+  $("resEmpty").classList.toggle("hidden", list.length>0);
+  const staff = profile && ["teacher","admin"].includes(profile.role);
+  $("resGrid").innerHTML = list.map(r=>{
+    const gc = GRADE_COLOR[r.grade_level] || "var(--pine)";
+    const mine = profile && (r.uploaded_by===profile.id || profile.role==="admin");
+    const isLink = !!r.external_url;
+    return `<article class="rescard" style="--gc:${gc}">
+      <div class="top">
+        <span class="badge grade">${esc(r.grade_level)}</span>
+        <span class="badge type">${esc(TYPE_LABEL[r.resource_type]||r.resource_type)}</span>
+        ${isLink?'<span class="badge link">🔗 ลิงก์</span>':""}
+      </div>
+      <h3>${esc(r.title)}</h3>
+      ${r.description?`<p class="desc">${esc(r.description)}</p>`:""}
+      <div class="actions">
+        ${isLink
+          ? `<button class="btn primary sm" data-open="${r.id}">🔗 เปิดลิงก์</button>`
+          : `<button class="btn primary sm" data-dl="${r.id}">⬇ ดาวน์โหลด</button>`}
+        ${staff && mine ? `<button class="btn ghost sm" data-edit="${r.id}">แก้ไข</button>
+        <button class="btn danger sm" data-del="${r.id}">ลบ</button>`:""}
+      </div>
+      <div class="meta"><span>👩‍🏫 ${esc(r.uploader_name||"-")}</span><span>${thDate(r.created_at)} · ⬇ ${r.download_count}</span></div>
+    </article>`;
+  }).join("");
+  $("resGrid").querySelectorAll("[data-dl]").forEach(b=> b.onclick=()=>downloadRes(b.dataset.dl, b));
+  $("resGrid").querySelectorAll("[data-open]").forEach(b=> b.onclick=()=>openLink(b.dataset.open));
+  $("resGrid").querySelectorAll("[data-edit]").forEach(b=> b.onclick=()=>openResModal(b.dataset.edit));
+  $("resGrid").querySelectorAll("[data-del]").forEach(b=> b.onclick=()=>delRes(b.dataset.del));
+}
+
+async function downloadRes(id, btn){
+  const r = resources.find(x=>x.id===id); if(!r||!r.file_path) return;
+  btn.disabled = true;
+  const {data, error} = await sb.storage.from("resources").createSignedUrl(r.file_path, 3600, {download: r.file_name||true});
+  btn.disabled = false;
+  if(error) return toast("เปิดไฟล์ไม่สำเร็จ: "+error.message);
+  window.open(data.signedUrl, "_blank");
+  sb.rpc("increment_download",{rid:id}).then(()=>{ r.download_count++; renderResources(); });
+}
+function openLink(id){
+  const r = resources.find(x=>x.id===id); if(!r||!r.external_url) return;
+  window.open(r.external_url, "_blank", "noopener");
+  sb.rpc("increment_download",{rid:id}).then(()=>{ r.download_count++; renderResources(); });
+}
+
+/* ── เพิ่ม/แก้ไขสื่อ ── */
+$("btnAdd").onclick = ()=> openResModal(null);
+$("btnResCancel").onclick = ()=> $("resModal").classList.remove("show");
+$("segFile").onclick = ()=> setSrc("file");
+$("segLink").onclick = ()=> setSrc("link");
+function setSrc(m){
+  srcMode = m;
+  $("segFile").classList.toggle("active", m==="file");
+  $("segLink").classList.toggle("active", m==="link");
+  $("fileWrap").classList.toggle("hidden", m!=="file");
+  $("linkWrap").classList.toggle("hidden", m!=="link");
+}
+function openResModal(id){
+  editingId = id; msg("resMsg","");
+  const r = id ? resources.find(x=>x.id===id) : null;
+  $("resModalTitle").textContent = r? "แก้ไขรายการ" : "เพิ่มสื่อ/แผนการสอน";
+  $("rTitle").value = r?.title||""; $("rDesc").value = r?.description||"";
+  $("rGrade").value = r?.grade_level||"ม.1"; $("rType").value = r?.resource_type||"full_plan";
+  $("rFile").value = ""; $("rUrl").value = r?.external_url||"";
+  setSrc(r ? (r.external_url? "link":"file") : "file");
+  // แก้ไข: เปลี่ยนไฟล์ไม่ได้ (ลบแล้วลงใหม่) แต่แก้ลิงก์/ข้อมูลได้
+  $("srcSegWrap").classList.toggle("hidden", !!r);
+  $("fileWrap").classList.toggle("hidden", !!r || srcMode!=="file");
+  if(r && r.external_url) $("linkWrap").classList.remove("hidden");
+  $("resModal").classList.add("show");
+}
+$("btnResSave").onclick = async ()=>{
+  const title=$("rTitle").value.trim();
+  if(!title) return msg("resMsg","ใส่ชื่อรายการก่อนนะคะ","err");
+  const base = { title, description:$("rDesc").value.trim()||null, grade_level:$("rGrade").value, resource_type:$("rType").value };
+  $("btnResSave").disabled = true;
+  try{
+    if(editingId){
+      const r = resources.find(x=>x.id===editingId);
+      const upd = {...base};
+      if(r.external_url){
+        const u = $("rUrl").value.trim();
+        if(!/^https?:\/\//.test(u)) throw new Error("ลิงก์ต้องขึ้นต้นด้วย http:// หรือ https://");
+        upd.external_url = u;
+      }
+      const {error} = await sb.from("resources").update(upd).eq("id", editingId);
+      if(error) throw error;
+      toast("แก้ไขเรียบร้อย ✅");
+    }else if(srcMode==="link"){
+      const u = $("rUrl").value.trim();
+      if(!/^https?:\/\//.test(u)) throw new Error("ลิงก์ต้องขึ้นต้นด้วย http:// หรือ https://");
+      const {error} = await sb.from("resources").insert({...base, external_url:u, uploaded_by:profile.id, uploader_name:profile.display_name});
+      if(error) throw error;
+      toast("เพิ่มลิงก์เรียบร้อย ✅");
+    }else{
+      const file = $("rFile").files[0];
+      if(!file) throw new Error("เลือกไฟล์ก่อนนะคะ");
+      if(file.size > 50*1024*1024) throw new Error("ไฟล์ใหญ่เกิน 50MB ค่ะ");
+      const ext = file.name.includes(".") ? file.name.split(".").pop() : "bin";
+      const path = profile.id + "/" + crypto.randomUUID() + "." + ext;
+      msg("resMsg","กำลังอัพโหลดไฟล์…","ok");
+      const {error:upErr} = await sb.storage.from("resources").upload(path, file);
+      if(upErr) throw upErr;
+      const {error} = await sb.from("resources").insert({...base, file_path:path, file_name:file.name, uploaded_by:profile.id, uploader_name:profile.display_name});
+      if(error){ await sb.storage.from("resources").remove([path]); throw error; }
+      toast("อัพโหลดเรียบร้อย ✅");
+    }
+    $("resModal").classList.remove("show");
+    await loadResources();
+  }catch(e){ msg("resMsg", e.message, "err"); }
+  $("btnResSave").disabled = false;
+};
+
+async function delRes(id){
+  const r = resources.find(x=>x.id===id); if(!r) return;
+  if(!confirm(`ลบ "${r.title}" ใช่ไหมคะ?`)) return;
+  if(r.file_path) await sb.storage.from("resources").remove([r.file_path]);
+  const {error} = await sb.from("resources").delete().eq("id", id);
+  if(error) return toast("ลบไม่สำเร็จ: "+error.message);
+  toast("ลบเรียบร้อย"); await loadResources();
+}
+
+/* ═══════════ จัดการบัญชี ═══════════ */
+$("nuRole").onchange = ()=> $("nuRoomWrap").classList.toggle("hidden", $("nuRole").value!=="student");
+$("btnCreateUser").onclick = async ()=>{
+  const u=$("nuUser").value.trim(), p=$("nuPass").value, n=$("nuName").value.trim(), role=$("nuRole").value, room=$("nuRoom").value.trim();
+  if(!u||!p||!n) return msg("nuMsg","กรอกชื่อผู้ใช้ รหัสผ่าน และชื่อ-นามสกุลให้ครบนะคะ","err");
+  $("btnCreateUser").disabled = true; msg("nuMsg","");
+  try{
+    await callFn("create_user",{username:u,password:p,display_name:n,role,class_room:room||null});
+    msg("nuMsg",`สร้างบัญชี ${u} (${ROLE_LABEL[role]}) เรียบร้อยค่ะ ✅`,"ok");
+    $("nuUser").value=$("nuPass").value=$("nuName").value=$("nuRoom").value="";
+    loadUsers();
+  }catch(e){ msg("nuMsg", e.message, "err"); }
+  $("btnCreateUser").disabled = false;
+};
+
+/* ── CSV ── */
+$("csvTemplate").onclick = (e)=>{
+  e.preventDefault();
+  const csv = "\uFEFFชื่อผู้ใช้,รหัสผ่าน,ชื่อ-นามสกุล,ห้อง\n12345,pcw12345,เด็กหญิงใจดี มีสุข,ม.6/1\n12346,pcw12346,เด็กชายตั้งใจ เรียนเก่ง,ม.6/1\n";
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));
+  a.download = "ตัวอย่างรายชื่อนักเรียน.csv"; a.click();
+};
+$("csvFile").onchange = async ()=>{
+  const fFile = $("csvFile").files[0]; if(!fFile) return;
+  $("csvBox").value = (await fFile.text()).replace(/^\uFEFF/,"");
+};
+function parseCSV(text){
+  const rows = [];
+  for(const raw of text.replace(/^\uFEFF/,"").split(/\r?\n/)){
+    const line = raw.trim(); if(!line) continue;
+    const c = line.split(",").map(x=>x.trim());
+    if(c[0] && (c[0].includes("ชื่อผู้ใช้")||c[0].toLowerCase()==="username")) continue; // ข้ามหัวตาราง
+    rows.push({username:c[0]||"", password:c[1]||"", display_name:c[2]||"", class_room:c[3]||""});
+  }
+  return rows;
+}
+$("btnImport").onclick = async ()=>{
+  const rows = parseCSV($("csvBox").value);
+  if(rows.length===0) return msg("csvMsg","ยังไม่มีรายชื่อเลยค่ะ วางข้อความหรือเลือกไฟล์ก่อนนะคะ","err");
+  if(rows.length>200) return msg("csvMsg","ครั้งละไม่เกิน 200 คนนะคะ (แบ่งเป็นหลายรอบได้ค่ะ)","err");
+  if(!confirm(`นำเข้านักเรียน ${rows.length} คน ใช่ไหมคะ?`)) return;
+  $("btnImport").disabled = true; msg("csvMsg","กำลังสร้างบัญชี… (ห้องละหลายวินาที รอสักครู่นะคะ)","ok");
+  $("csvResult").innerHTML = "";
+  try{
+    const r = await callFn("bulk_create_students",{students:rows});
+    msg("csvMsg",`สำเร็จ ${r.created} คน · ไม่สำเร็จ ${r.failed} คน`, r.failed? "err":"ok");
+    $("csvResult").innerHTML = (r.results||[]).map(x=>
+      x.ok ? `<div class="good">✅ ${esc(x.username)}</div>` : `<div class="bad">❌ ${esc(x.username)} — ${esc(x.error||"")}</div>`
+    ).join("");
+    loadUsers();
+  }catch(e){ msg("csvMsg", e.message, "err"); }
+  $("btnImport").disabled = false;
+};
+
+/* ── รายชื่อผู้ใช้ ── */
+function renderRoleChips(){
+  const roles = [{key:"all",label:"ทั้งหมด"},{key:"admin",label:"ผู้ดูแล"},{key:"teacher",label:"ครู"},{key:"student",label:"นักเรียน"}];
+  $("roleChips").innerHTML = roles.map(r=>`<button class="chip ${uf.role===r.key?"active":""}" data-r="${r.key}">${r.label}</button>`).join("");
+  $("roleChips").querySelectorAll(".chip").forEach(b=> b.onclick=()=>{ uf.role=b.dataset.r; renderRoleChips(); renderUsers(); });
+}
+$("userQ").addEventListener("input", ()=>{ uf.q=$("userQ").value.trim().toLowerCase(); renderUsers(); });
+
+async function loadUsers(){
+  const {data, error} = await sb.from("profiles").select("*").order("role").order("class_room").order("username");
+  if(error) return toast("โหลดรายชื่อไม่สำเร็จ");
+  users = data||[]; renderUsers();
+}
+function renderUsers(){
+  const list = users.filter(u=>{
+    if(uf.role!=="all" && u.role!==uf.role) return false;
+    if(uf.q && !((u.username||"")+" "+(u.display_name||"")+" "+(u.class_room||"")).toLowerCase().includes(uf.q)) return false;
+    return true;
+  });
+  const canManage = t => profile.role==="admin" ? t.id!==profile.id : (profile.role==="teacher" && t.role==="student");
+  $("userRows").innerHTML = list.map(u=>`<tr>
+    <td><b>${esc(u.username)}</b></td>
+    <td>${esc(u.display_name)}</td>
+    <td><span class="pill ${u.role}">${ROLE_LABEL[u.role]}</span></td>
+    <td>${esc(u.class_room||"-")}</td>
+    <td>${canManage(u)?`
+      <button class="btn ghost sm" data-rp="${esc(u.username)}">รีเซ็ตรหัส</button>
+      <button class="btn danger sm" data-du="${esc(u.username)}">ลบ</button>`:""}</td>
+  </tr>`).join("") || `<tr><td colspan="5" style="text-align:center;color:var(--ink-soft)">ไม่พบผู้ใช้</td></tr>`;
+  $("userRows").querySelectorAll("[data-rp]").forEach(b=> b.onclick=()=>resetPw(b.dataset.rp));
+  $("userRows").querySelectorAll("[data-du]").forEach(b=> b.onclick=()=>delUser(b.dataset.du));
+}
+async function resetPw(username){
+  const np = prompt(`ตั้งรหัสผ่านใหม่ให้ ${username} (อย่างน้อย 6 ตัว):`);
+  if(np===null) return;
+  try{ await callFn("reset_password",{username, new_password:np}); toast(`รีเซ็ตรหัสของ ${username} เรียบร้อย ✅`); }
+  catch(e){ toast(e.message); }
+}
+async function delUser(username){
+  if(!confirm(`ลบบัญชี ${username} ใช่ไหมคะ? (สื่อที่เคยอัพโหลดจะยังอยู่)`)) return;
+  try{ await callFn("delete_user",{username}); toast("ลบบัญชีเรียบร้อย"); loadUsers(); }
+  catch(e){ toast(e.message); }
+}
+
+/* ═══════════ เปลี่ยนรหัสผ่านตัวเอง ═══════════ */
+$("btnPw").onclick = ()=>{ msg("pwMsg",""); $("pwNew").value=$("pwNew2").value=""; $("pwModal").classList.add("show"); };
+$("btnPwCancel").onclick = ()=> $("pwModal").classList.remove("show");
+$("btnPwSave").onclick = async ()=>{
+  const a=$("pwNew").value, b=$("pwNew2").value;
+  if(a.length<6) return msg("pwMsg","รหัสผ่านต้องยาวอย่างน้อย 6 ตัวนะคะ","err");
+  if(a!==b) return msg("pwMsg","รหัสผ่านสองช่องไม่ตรงกันค่ะ","err");
+  $("btnPwSave").disabled = true;
+  const {error} = await sb.auth.updateUser({password:a});
+  $("btnPwSave").disabled = false;
+  if(error) return msg("pwMsg", error.message, "err");
+  $("pwModal").classList.remove("show"); toast("เปลี่ยนรหัสผ่านเรียบร้อย ✅");
+};
+
+/* ปิดโมดัลเมื่อคลิกพื้นหลัง */
+document.querySelectorAll(".modal-back").forEach(m=> m.addEventListener("click", e=>{ if(e.target===m) m.classList.remove("show"); }));
+</script>
+</body>
+</html>
