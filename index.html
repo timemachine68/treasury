@@ -158,6 +158,28 @@ textarea.csvbox{font-family:monospace;font-size:.82rem;min-height:120px}
 .duechip{font-size:.76rem;color:var(--ink-soft)}
 .progressbar{height:7px;border-radius:99px;background:var(--board);overflow:hidden}
 .progressbar > div{height:100%;background:var(--pine);border-radius:99px}
+
+/* ---------- เฟส 4: จุดแข็ง ---------- */
+.quiz-item{border-bottom:1px dashed var(--line);padding:12px 0}
+.quiz-item p{font-size:.92rem;font-weight:500;margin-bottom:8px}
+.quiz-opts{display:flex;gap:6px}
+.quiz-opts button{flex:1;border:1.5px solid var(--line);background:#fff;border-radius:999px;padding:7px 6px;font-size:.8rem;color:var(--ink-soft)}
+.quiz-opts button.active{background:var(--pine);border-color:var(--pine);color:#fff;font-weight:600}
+.stbar{display:grid;grid-template-columns:130px 1fr 42px;gap:8px;align-items:center;margin-bottom:7px;font-size:.85rem}
+.stbar .track{height:14px;background:var(--board);border-radius:99px;overflow:hidden}
+.stbar .fill{height:100%;border-radius:99px}
+.sttop{border:2px solid var(--pine-tint);border-radius:12px;padding:14px;margin-bottom:12px;background:#fff}
+.sttop h3{color:var(--pine-deep);font-size:1.05rem;margin-bottom:6px}
+.sttop .sec{font-size:.85rem;margin-top:6px}
+.sttop .sec b{color:var(--pine-deep)}
+.tagchip{display:inline-flex;align-items:center;gap:6px;background:var(--pine-tint);color:var(--pine-deep);border-radius:999px;padding:4px 11px;font-size:.78rem;font-weight:600;margin:0 6px 6px 0}
+.tagchip button{border:none;background:none;color:var(--danger);font-weight:700;padding:0 2px}
+#printArea{display:none}
+@media print{
+  body > *:not(#printArea){display:none!important}
+  #printArea{display:block!important;padding:10mm;font-family:'Sarabun',sans-serif}
+  #printArea .noprint{display:none!important}
+}
 </style>
 </head>
 <body>
@@ -214,6 +236,9 @@ textarea.csvbox{font-family:monospace;font-size:.82rem;min-height:120px}
     <div class="viewtabs">
       <button class="btn note" id="tabLibrary">📚 คลังสื่อ</button>
       <button class="btn ghost" id="tabWork">📝 งานมอบหมาย</button>
+      <button class="btn ghost" id="tabSurvey">🎓 สำรวจเรียนต่อ</button>
+      <button class="btn ghost" id="tabStrength">🌟 จุดแข็ง</button>
+      <button class="btn ghost" id="tabApps">🧭 ระบบของเรา</button>
       <button class="btn ghost hidden" id="tabManage">👥 จัดการบัญชี</button>
       <div class="spacer"></div>
       <button class="btn primary hidden" id="btnAdd">➕ เพิ่มสื่อ/แผน</button>
@@ -294,6 +319,65 @@ textarea.csvbox{font-family:monospace;font-size:.82rem;min-height:120px}
       <div id="workGrid" class="grid"></div>
       <div id="workEmpty" class="empty hidden"><div class="big">📭</div><span id="workEmptyText">ยังไม่มีงานมอบหมาย</span></div>
       <div id="workLoading" class="loading hidden">กำลังโหลด…</div>
+    </div>
+
+    <!-- ── มุมมองสำรวจเรียนต่อ ── -->
+    <div id="viewSurvey" class="hidden">
+      <div class="toolbar">
+        <div class="spacer"></div>
+        <button class="btn primary hidden" id="btnAddRound">➕ สร้างรอบสำรวจ</button>
+      </div>
+      <div id="svGrid" class="grid"></div>
+      <div id="svEmpty" class="empty hidden"><div class="big">🎓</div><span id="svEmptyText">ยังไม่มีรอบสำรวจ</span></div>
+      <div id="svLoading" class="loading hidden">กำลังโหลด…</div>
+    </div>
+
+    <!-- ── มุมมองระบบของเรา ── -->
+    <div id="viewApps" class="hidden">
+      <div class="toolbar">
+        <div class="spacer"></div>
+        <button class="btn primary hidden" id="btnAddApp">➕ เพิ่มลิงก์ระบบ</button>
+      </div>
+      <div id="appGrid" class="grid"></div>
+      <div id="appEmpty" class="empty hidden"><div class="big">🧭</div>ยังไม่มีลิงก์ระบบ</div>
+    </div>
+
+    <!-- ── มุมมองจุดแข็ง ── -->
+    <div id="viewStrength" class="hidden">
+      <!-- นักเรียน -->
+      <div id="stStudent" class="hidden">
+        <div id="stIntro" class="panel hidden" style="text-align:center">
+          <h2 style="justify-content:center">🌟 ค้นหาจุดแข็งของฉัน</h2>
+          <p style="font-size:.9rem;color:var(--ink-soft);margin-bottom:14px">ตอบคำถามสั้นๆ 24 ข้อ ตามความรู้สึกจริง ไม่มีถูกหรือผิด<br>ระบบจะสรุปจุดแข็ง 3 อันดับ พร้อมไกด์แผนการเรียนและอาชีพที่เข้าทางเรา</p>
+          <button class="btn primary" id="btnStartQuiz">เริ่มทำแบบประเมิน</button>
+        </div>
+        <div id="stQuiz" class="panel hidden">
+          <h2>📝 แบบประเมินจุดแข็ง (24 ข้อ)</h2>
+          <p class="field hint" style="margin-bottom:12px">เลือกคำตอบที่ตรงกับตัวเราที่สุดนะคะ</p>
+          <div id="quizItems"></div>
+          <div id="quizMsg" class="msg"></div>
+          <button class="btn primary" id="btnQuizSave" style="width:100%">ดูผลจุดแข็งของฉัน 🌟</button>
+        </div>
+        <div id="stProfile"></div>
+      </div>
+      <!-- ครู -->
+      <div id="stTeacher" class="hidden">
+        <div class="panel">
+          <h2>🌟 จุดแข็งนักเรียน</h2>
+          <p class="field hint" style="margin-bottom:10px">ตรวจใบงานเจอจุดแข็งของใคร กด "ติดแท็ก" สะสมให้เขาได้เลยค่ะ แท็กจะรวมเข้ากราฟจุดแข็งของนักเรียนอัตโนมัติ</p>
+          <div class="toolbar">
+            <div class="search"><input id="stQ" placeholder="ค้นหาชื่อ/ห้อง…"></div>
+            <div class="chips" id="stRooms"></div>
+          </div>
+          <div class="tbl-wrap">
+            <table>
+              <thead><tr><th>ชื่อผู้ใช้</th><th>ชื่อ-นามสกุล</th><th>ห้อง</th><th>แบบประเมิน</th><th>แท็ก</th><th></th></tr></thead>
+              <tbody id="stRows"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div id="stLoading" class="loading hidden">กำลังโหลด…</div>
     </div>
   </div>
 </div>
@@ -412,6 +496,133 @@ textarea.csvbox{font-family:monospace;font-size:.82rem;min-height:120px}
   </div>
 </div>
 
+<!-- ═══════════ โมดัล: สร้างรอบสำรวจ ═══════════ -->
+<div class="modal-back" id="roundModal">
+  <div class="modal" style="max-width:440px">
+    <h2>➕ สร้างรอบสำรวจ</h2>
+    <div id="roundMsg" class="msg"></div>
+    <div class="field"><label for="rdGrade">ระดับชั้น *</label>
+      <select id="rdGrade"><option>ม.3</option><option>ม.6</option></select>
+    </div>
+    <div class="field"><label for="rdTitle">ชื่อรอบ *</label><input id="rdTitle" placeholder="เช่น รอบที่ 1 (มี.ค. 69)"></div>
+    <div class="field"><label for="rdYear">ปีการศึกษา</label><input id="rdYear" placeholder="เช่น 2569"></div>
+    <p class="field hint">สร้างแล้วรอบจะ "ปิด" อยู่ก่อน กดเปิดรับคำตอบเมื่อพร้อมนะคะ</p>
+    <div class="foot">
+      <button class="btn ghost" id="btnRoundCancel">ยกเลิก</button>
+      <button class="btn primary" id="btnRoundSave">สร้างรอบ</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ โมดัล: นักเรียนตอบสำรวจ ═══════════ -->
+<div class="modal-back" id="svFormModal">
+  <div class="modal" style="max-width:470px">
+    <h2 id="svFormTitle">ตอบแบบสำรวจ</h2>
+    <div id="svFormMsg" class="msg"></div>
+    <div class="field"><label for="svStatus">หลังจบการศึกษา ฉันจะ… *</label>
+      <select id="svStatus"></select>
+    </div>
+    <div class="field hidden" id="svInstWrap"><label for="svInst" id="svInstLabel">ชื่อสถานศึกษา</label><input id="svInst"></div>
+    <div class="field hidden" id="svProgWrap"><label for="svProg" id="svProgLabel">แผนการเรียน/สาขา</label><input id="svProg"></div>
+    <div class="field hidden" id="svTcasWrap"><label for="svTcas">ติดรอบ TCAS</label>
+      <select id="svTcas">
+        <option>รอบ 1 Portfolio</option><option>รอบ 2 Quota</option>
+        <option>รอบ 3 Admission</option><option>รอบ 4 Direct Admission</option>
+        <option>ยังไม่ทราบ/รอประกาศ</option>
+      </select>
+    </div>
+    <div class="field hidden" id="svOtherWrap"><label for="svOther" id="svOtherLabel">ระบุรายละเอียด</label><input id="svOther"></div>
+    <div class="foot">
+      <button class="btn ghost" id="btnSvFormCancel">ยกเลิก</button>
+      <button class="btn primary" id="btnSvFormSave">บันทึกคำตอบ</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ โมดัล: ครูดูผลสำรวจ ═══════════ -->
+<div class="modal-back" id="svRosterModal">
+  <div class="modal" style="max-width:760px">
+    <h2 id="svRosterTitle">ผลสำรวจ</h2>
+    <div id="svStats" class="chips" style="margin-bottom:10px"></div>
+    <div class="toolbar">
+      <div class="chips" id="svRooms"></div>
+      <div class="spacer"></div>
+      <button class="btn note sm" id="btnSvCsv">⬇ ดาวน์โหลด CSV</button>
+    </div>
+    <div class="tbl-wrap" style="max-height:52vh;overflow-y:auto">
+      <table>
+        <thead><tr><th>ชื่อผู้ใช้</th><th>ชื่อ-นามสกุล</th><th>ห้อง</th><th>สถานะ</th><th>สถานศึกษา/รายละเอียด</th><th>เวลา</th></tr></thead>
+        <tbody id="svRows"></tbody>
+      </table>
+    </div>
+    <div class="foot"><button class="btn ghost" id="btnSvRosterClose">ปิด</button></div>
+  </div>
+</div>
+
+<!-- ═══════════ โมดัล: เพิ่ม/แก้ลิงก์ระบบ ═══════════ -->
+<div class="modal-back" id="appModal">
+  <div class="modal" style="max-width:470px">
+    <h2 id="appModalTitle">เพิ่มลิงก์ระบบ</h2>
+    <div id="appMsg" class="msg"></div>
+    <div class="row2">
+      <div class="field"><label for="apIcon">ไอคอน (อีโมจิ)</label><input id="apIcon" placeholder="เช่น 💚" maxlength="4"></div>
+      <div class="field"><label for="apTitle">ชื่อระบบ *</label><input id="apTitle" placeholder="เช่น ระบบดูแลช่วยเหลือนักเรียน"></div>
+    </div>
+    <div class="field"><label for="apDesc">คำอธิบาย</label><input id="apDesc" placeholder="เช่น SDQ, EQ, เยี่ยมบ้าน"></div>
+    <div class="field"><label for="apUrl">ลิงก์ *</label><input id="apUrl" placeholder="https://…"></div>
+    <div class="field"><label>ใครมองเห็น *</label>
+      <div class="roomchecks" id="apVis">
+        <label><input type="checkbox" value="teacher" checked>ครู</label>
+        <label><input type="checkbox" value="student">นักเรียน</label>
+      </div>
+    </div>
+    <div class="foot">
+      <button class="btn ghost" id="btnAppCancel">ยกเลิก</button>
+      <button class="btn primary" id="btnAppSave">บันทึก</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ โมดัล: โปรไฟล์จุดแข็ง (ครูเปิดดู) ═══════════ -->
+<div class="modal-back" id="stModal">
+  <div class="modal" style="max-width:720px">
+    <div id="stModalBody"></div>
+    <div class="panel" style="margin-top:14px;margin-bottom:0">
+      <h2>🏷️ ติดแท็กจุดแข็งจากใบงาน</h2>
+      <div class="roomchecks" id="tagPick"></div>
+      <div class="field" style="margin-top:10px"><input id="tagNote" placeholder="ที่มา เช่น ใบงานอาชีพในฝัน (ไม่บังคับ)"></div>
+      <div id="tagMsg" class="msg"></div>
+      <button class="btn primary sm" id="btnTagSave">➕ เพิ่มแท็ก</button>
+    </div>
+    <div class="foot">
+      <button class="btn note" id="btnStPrint">🖨️ พิมพ์/บันทึก PDF</button>
+      <button class="btn ghost" id="btnStClose">ปิด</button>
+    </div>
+  </div>
+</div>
+
+<div id="printArea"></div>
+
+<!-- ═══════════ โมดัล: สิทธิ์เมนูของครู ═══════════ -->
+<div class="modal-back" id="permModal">
+  <div class="modal" style="max-width:420px">
+    <h2 id="permTitle">🔐 สิทธิ์เมนู</h2>
+    <p class="field hint" style="margin-bottom:12px">เลือกเมนูที่ครูคนนี้จะมองเห็นและใช้งานได้ (ไม่ติ๊ก = ซ่อนเมนูนั้นให้ครูคนนี้)</p>
+    <div id="permMsg" class="msg"></div>
+    <div class="roomchecks" id="permChecks" style="flex-direction:column;align-items:stretch">
+      <label><input type="checkbox" value="library" checked>📚 คลังสื่อ</label>
+      <label><input type="checkbox" value="work" checked>📝 งานมอบหมาย</label>
+      <label><input type="checkbox" value="survey" checked>🎓 สำรวจเรียนต่อ</label>
+      <label><input type="checkbox" value="strength" checked>🌟 จุดแข็ง</label>
+    </div>
+    <p class="field hint" style="margin-top:10px">หมายเหตุ: "จัดการบัญชี" กำหนดให้แอดมินเท่านั้นเสมอ ไม่มีในรายการนี้ค่ะ</p>
+    <div class="foot">
+      <button class="btn ghost" id="btnPermCancel">ยกเลิก</button>
+      <button class="btn primary" id="btnPermSave">บันทึกสิทธิ์</button>
+    </div>
+  </div>
+</div>
+
 <!-- ═══════════ โมดัล: เปลี่ยนรหัสผ่านตัวเอง ═══════════ -->
 <div class="modal-back" id="pwModal">
   <div class="modal" style="max-width:400px">
@@ -513,11 +724,26 @@ async function enterApp(){
   $("uName").textContent = profile.display_name;
   $("uRole").textContent = ROLE_LABEL[profile.role] + (profile.class_room? " · "+profile.class_room : "");
   const staff = ["teacher","admin"].includes(profile.role);
-  $("btnAdd").classList.toggle("hidden", !staff);
   $("tabManage").classList.toggle("hidden", !staff);
   document.querySelectorAll("#nuRole .adminOnly").forEach(o=>o.classList.toggle("hidden", profile.role!=="admin"));
   renderGradeTabs(); renderTypeChips(); renderRoleChips();
-  await loadResources();
+  const perms = computeMyPerms();
+  $("tabLibrary").classList.toggle("hidden", !perms.library);
+  $("tabWork").classList.toggle("hidden", !perms.work);
+  $("tabSurvey").classList.toggle("hidden", !perms.survey);
+  $("tabStrength").classList.toggle("hidden", !perms.strength);
+  const initial = perms.library? "library" : perms.work? "work" : perms.survey? "survey" : perms.strength? "strength" : "apps";
+  switchView(initial);
+}
+function computeMyPerms(){
+  if(!profile || profile.role !== "teacher") return {library:true, work:true, survey:true, strength:true};
+  const mp = profile.menu_permissions;
+  return {
+    library: !mp || mp.library !== false,
+    work: !mp || mp.work !== false,
+    survey: !mp || mp.survey !== false,
+    strength: !mp || mp.strength !== false
+  };
 }
 
 /* ═══════════ เข้าสู่ระบบ ═══════════ */
@@ -552,17 +778,23 @@ $("btnLogout").onclick = async ()=>{ await sb.auth.signOut(); location.reload();
 /* ═══════════ สลับมุมมอง ═══════════ */
 $("tabLibrary").onclick = ()=> switchView("library");
 $("tabWork").onclick = ()=> switchView("work");
+$("tabSurvey").onclick = ()=> switchView("survey");
+$("tabStrength").onclick = ()=> switchView("strength");
+$("tabApps").onclick = ()=> switchView("apps");
 $("tabManage").onclick = ()=> switchView("manage");
 function switchView(v){
-  $("viewLibrary").classList.toggle("hidden", v!=="library");
-  $("viewWork").classList.toggle("hidden", v!=="work");
-  $("viewManage").classList.toggle("hidden", v!=="manage");
-  $("tabLibrary").className = "btn " + (v==="library"?"note":"ghost");
-  $("tabWork").className = "btn " + (v==="work"?"note":"ghost");
-  $("tabManage").className = "btn " + (v==="manage"?"note":"ghost") + ($("tabManage").classList.contains("hidden")?" hidden":"");
+  ["Library","Work","Survey","Strength","Apps","Manage"].forEach(n=> $("view"+n).classList.toggle("hidden", v!==n.toLowerCase()));
+  [["tabLibrary","library"],["tabWork","work"],["tabSurvey","survey"],["tabStrength","strength"],["tabApps","apps"],["tabManage","manage"]].forEach(([id,key])=>{
+    const hid = $(id).classList.contains("hidden");
+    $(id).className = "btn " + (v===key?"note":"ghost") + (hid?" hidden":"");
+  });
   $("btnAdd").classList.toggle("hidden", v!=="library" || !(profile && ["teacher","admin"].includes(profile.role)));
+  if(v==="library") loadResources();
   if(v==="manage") loadUsers();
   if(v==="work") loadWork();
+  if(v==="survey") loadSurvey();
+  if(v==="strength") loadStrength();
+  if(v==="apps") loadApps();
 }
 
 /* ═══════════ คลังสื่อ ═══════════ */
@@ -799,10 +1031,12 @@ function renderUsers(){
     <td>${esc(u.class_room||"-")}</td>
     <td>${canManage(u)?`
       <button class="btn ghost sm" data-rp="${esc(u.username)}">รีเซ็ตรหัส</button>
+      ${(profile.role==="admin" && u.role==="teacher")?`<button class="btn note sm" data-perm="${esc(u.id)}">🔐 สิทธิ์เมนู</button>`:""}
       <button class="btn danger sm" data-du="${esc(u.username)}">ลบ</button>`:""}</td>
   </tr>`).join("") || `<tr><td colspan="5" style="text-align:center;color:var(--ink-soft)">ไม่พบผู้ใช้</td></tr>`;
   $("userRows").querySelectorAll("[data-rp]").forEach(b=> b.onclick=()=>resetPw(b.dataset.rp));
   $("userRows").querySelectorAll("[data-du]").forEach(b=> b.onclick=()=>delUser(b.dataset.du));
+  $("userRows").querySelectorAll("[data-perm]").forEach(b=> b.onclick=()=>openPermModal(b.dataset.perm));
 }
 async function resetPw(username){
   const np = prompt(`ตั้งรหัสผ่านใหม่ให้ ${username} (อย่างน้อย 6 ตัว):`);
@@ -1136,6 +1370,549 @@ $("btnSubSave").onclick = async ()=>{
     await loadWork();
   }catch(e){ msg("subMsg", e.message, "err"); }
   $("btnSubSave").disabled = false;
+};
+
+/* ═══════════ เฟส 3: สำรวจเรียนต่อ ═══════════ */
+const SV_STATUS = {
+  "ม.3": ["ต่อ ม.4 โรงเรียนเดิม","ต่อ ม.4 โรงเรียนอื่น","ปวช.","กศน.","ทำงาน","ยังไม่แน่ใจ","อื่นๆ"],
+  "ม.6": ["มหาวิทยาลัย","ปวส./ปวช.ต่อเนื่อง","ทำงาน","เตรียมสอบใหม่ (เด็กซิ่ว)","เกณฑ์ทหาร","ยังไม่แน่ใจ","อื่นๆ"]
+};
+const NEED_INST = ["ต่อ ม.4 โรงเรียนเดิม","ต่อ ม.4 โรงเรียนอื่น","ปวช.","กศน.","มหาวิทยาลัย","ปวส./ปวช.ต่อเนื่อง"];
+const NEED_DETAIL = ["ทำงาน","อื่นๆ"];
+const gradeOf = room => (room||"").split("/")[0];
+let svRounds=[], svMine={}, svAllResp=[], svStudents=[], svRid=null, svRoom="all", svFormRid=null;
+
+async function loadSurvey(){
+  const staff = ["teacher","admin"].includes(profile.role);
+  $("btnAddRound").classList.toggle("hidden", !staff);
+  $("svLoading").classList.remove("hidden");
+  const {data:rounds, error} = await sb.from("survey_rounds").select("*").order("created_at",{ascending:false});
+  if(error){ $("svLoading").classList.add("hidden"); return toast("โหลดรอบสำรวจไม่สำเร็จ: "+error.message); }
+  svRounds = rounds||[];
+  if(staff){
+    const [{data:resp},{data:stu}] = await Promise.all([
+      sb.from("survey_responses").select("*"),
+      sb.from("profiles").select("id,username,display_name,class_room").eq("role","student")
+    ]);
+    svAllResp = resp||[]; svStudents = stu||[];
+  }else{
+    const {data:resp} = await sb.from("survey_responses").select("*").eq("student_id", profile.id);
+    svMine = {}; (resp||[]).forEach(r=> svMine[r.round_id]=r);
+  }
+  $("svLoading").classList.add("hidden");
+  renderSurvey();
+}
+
+function renderSurvey(){
+  const staff = ["teacher","admin"].includes(profile.role);
+  $("svEmpty").classList.toggle("hidden", svRounds.length>0);
+  $("svEmptyText").textContent = staff? "ยังไม่มีรอบสำรวจ กดสร้างรอบแรกได้เลยค่ะ" : "ยังไม่มีแบบสำรวจที่เปิดอยู่ตอนนี้ค่ะ";
+  $("svGrid").innerHTML = svRounds.map(r=> staff? svTeacherCard(r) : svStudentCard(r)).join("");
+  if(staff){
+    $("svGrid").querySelectorAll("[data-svt]").forEach(b=> b.onclick=()=>toggleRound(b.dataset.svt));
+    $("svGrid").querySelectorAll("[data-svr]").forEach(b=> b.onclick=()=>openSvRoster(b.dataset.svr));
+    $("svGrid").querySelectorAll("[data-svd]").forEach(b=> b.onclick=()=>delRound(b.dataset.svd));
+  }else{
+    $("svGrid").querySelectorAll("[data-svf]").forEach(b=> b.onclick=()=>openSvForm(b.dataset.svf));
+  }
+}
+
+function svTeacherCard(r){
+  const targets = svStudents.filter(s=> gradeOf(s.class_room)===r.grade);
+  const resp = svAllResp.filter(x=> x.round_id===r.id);
+  const pct = targets.length? Math.round(resp.length/targets.length*100) : 0;
+  const gc = r.grade==="ม.3"? "var(--g3)":"var(--g6)";
+  const mine = r.created_by===profile.id || profile.role==="admin";
+  return `<article class="rescard" style="--gc:${gc}">
+    <div class="top"><span class="badge grade" style="--gc:${gc}">${esc(r.grade)}</span>
+      ${r.is_open? '<span class="status sent">🟢 เปิดรับคำตอบ</span>':'<span class="status missing">ปิดอยู่</span>'}</div>
+    <h3>${esc(r.title)}</h3>
+    ${r.academic_year?`<span class="duechip">ปีการศึกษา ${esc(r.academic_year)}</span>`:""}
+    <div class="progressbar"><div style="width:${pct}%"></div></div>
+    <div class="duechip">ตอบแล้ว <b>${resp.length}/${targets.length}</b> คน (${pct}%)</div>
+    <div class="actions">
+      <button class="btn ${r.is_open?"ghost":"note"} sm" data-svt="${r.id}">${r.is_open?"⏸ ปิดรอบ":"▶ เปิดรอบ"}</button>
+      <button class="btn primary sm" data-svr="${r.id}">📊 ผลสำรวจ</button>
+      ${mine?`<button class="btn danger sm" data-svd="${r.id}">ลบ</button>`:""}
+    </div>
+    <div class="meta"><span>👩‍🏫 ${esc(r.creator_name||"-")}</span><span>${thDate(r.created_at)}</span></div>
+  </article>`;
+}
+
+function svStudentCard(r){
+  const ans = svMine[r.id];
+  return `<article class="rescard" style="--gc:${r.grade==="ม.3"?"var(--g3)":"var(--g6)"}">
+    <div class="top">${ans? '<span class="status sent">✅ ตอบแล้ว</span>':'<span class="status missing">ยังไม่ตอบ</span>'}</div>
+    <h3>${esc(r.title)}</h3>
+    ${r.academic_year?`<span class="duechip">ปีการศึกษา ${esc(r.academic_year)}</span>`:""}
+    ${ans?`<p class="desc">คำตอบ: ${esc(ans.status)}${ans.institution? " · "+esc(ans.institution):""}</p>`:""}
+    <div class="actions"><button class="btn primary sm" data-svf="${r.id}">${ans?"✏️ แก้ไขคำตอบ":"📝 ตอบแบบสำรวจ"}</button></div>
+  </article>`;
+}
+
+/* ── ครู: สร้าง/เปิดปิด/ลบรอบ ── */
+$("btnAddRound").onclick = ()=>{ msg("roundMsg",""); $("rdTitle").value=""; $("rdYear").value=""; $("roundModal").classList.add("show"); };
+$("btnRoundCancel").onclick = ()=> $("roundModal").classList.remove("show");
+$("btnRoundSave").onclick = async ()=>{
+  const title = $("rdTitle").value.trim();
+  if(!title) return msg("roundMsg","ใส่ชื่อรอบก่อนนะคะ","err");
+  $("btnRoundSave").disabled = true;
+  const {error} = await sb.from("survey_rounds").insert({
+    grade:$("rdGrade").value, title, academic_year:$("rdYear").value.trim()||null,
+    created_by:profile.id, creator_name:profile.display_name
+  });
+  $("btnRoundSave").disabled = false;
+  if(error) return msg("roundMsg", error.message, "err");
+  $("roundModal").classList.remove("show"); toast("สร้างรอบเรียบร้อย (อย่าลืมกดเปิดรอบนะคะ)"); loadSurvey();
+};
+async function toggleRound(id){
+  const r = svRounds.find(x=>x.id===id); if(!r) return;
+  const {error} = await sb.from("survey_rounds").update({is_open:!r.is_open}).eq("id", id);
+  if(error) return toast("สลับสถานะไม่สำเร็จ: "+error.message);
+  toast(r.is_open? "ปิดรอบแล้ว":"เปิดรอบแล้ว นักเรียนเห็นและตอบได้เลยค่ะ"); loadSurvey();
+}
+async function delRound(id){
+  const r = svRounds.find(x=>x.id===id); if(!r) return;
+  if(!confirm(`ลบรอบ "${r.title}" ใช่ไหมคะ? คำตอบของนักเรียนในรอบนี้จะถูกลบทั้งหมด!`)) return;
+  const {error} = await sb.from("survey_rounds").delete().eq("id", id);
+  if(error) return toast("ลบไม่สำเร็จ: "+error.message);
+  toast("ลบรอบเรียบร้อย"); loadSurvey();
+}
+
+/* ── นักเรียน: ตอบแบบสำรวจ ── */
+$("btnSvFormCancel").onclick = ()=> $("svFormModal").classList.remove("show");
+$("svStatus").addEventListener("change", updateSvFields);
+function openSvForm(rid){
+  svFormRid = rid; msg("svFormMsg","");
+  const r = svRounds.find(x=>x.id===rid); const ans = svMine[rid];
+  $("svFormTitle").textContent = "📝 " + r.title;
+  const opts = SV_STATUS[r.grade]||[];
+  $("svStatus").innerHTML = opts.map(o=>`<option>${esc(o)}</option>`).join("");
+  $("svStatus").value = ans?.status || opts[0];
+  $("svInst").value = ans?.institution||""; $("svProg").value = ans?.program||"";
+  $("svTcas").value = ans?.tcas_round||"รอบ 1 Portfolio"; $("svOther").value = ans?.other_detail||"";
+  updateSvFields();
+  $("svFormModal").classList.add("show");
+}
+function updateSvFields(){
+  const r = svRounds.find(x=>x.id===svFormRid); if(!r) return;
+  const st = $("svStatus").value, m6 = r.grade==="ม.6";
+  const inst = NEED_INST.includes(st), det = NEED_DETAIL.includes(st);
+  $("svInstWrap").classList.toggle("hidden", !inst);
+  $("svProgWrap").classList.toggle("hidden", !inst);
+  $("svTcasWrap").classList.toggle("hidden", !(m6 && st==="มหาวิทยาลัย"));
+  $("svOtherWrap").classList.toggle("hidden", !det);
+  $("svInstLabel").textContent = m6? "ชื่อมหาวิทยาลัย/สถาบัน":"ชื่อสถานศึกษา";
+  $("svProgLabel").textContent = m6? "คณะ/สาขา":"แผนการเรียน/สาขา";
+  $("svOtherLabel").textContent = st==="ทำงาน"? "สถานที่ทำงาน/อาชีพ":"ระบุรายละเอียด";
+  if(st==="ต่อ ม.4 โรงเรียนเดิม" && !$("svInst").value) $("svInst").value = "โรงเรียนพูลเจริญวิทยาคม";
+}
+$("btnSvFormSave").onclick = async ()=>{
+  const st = $("svStatus").value;
+  const row = {
+    round_id:svFormRid, student_id:profile.id, status:st,
+    institution: NEED_INST.includes(st)? ($("svInst").value.trim()||null) : null,
+    program: NEED_INST.includes(st)? ($("svProg").value.trim()||null) : null,
+    tcas_round: (st==="มหาวิทยาลัย")? $("svTcas").value : null,
+    other_detail: NEED_DETAIL.includes(st)? ($("svOther").value.trim()||null) : null,
+    submitted_at: new Date().toISOString()
+  };
+  $("btnSvFormSave").disabled = true;
+  const old = svMine[svFormRid];
+  const {error} = old
+    ? await sb.from("survey_responses").update(row).eq("id", old.id)
+    : await sb.from("survey_responses").insert(row);
+  $("btnSvFormSave").disabled = false;
+  if(error) return msg("svFormMsg", error.message.includes("row-level")? "รอบนี้ปิดรับคำตอบแล้วค่ะ" : error.message, "err");
+  $("svFormModal").classList.remove("show"); toast("บันทึกคำตอบเรียบร้อย ✅"); loadSurvey();
+};
+
+/* ── ครู: ผลสำรวจ + CSV ── */
+$("btnSvRosterClose").onclick = ()=> $("svRosterModal").classList.remove("show");
+function openSvRoster(rid){
+  svRid = rid; svRoom = "all";
+  $("svRosterTitle").textContent = "📊 " + (svRounds.find(x=>x.id===rid)?.title||"");
+  renderSvRoster();
+  $("svRosterModal").classList.add("show");
+}
+function svTargets(r){ return svStudents.filter(s=> gradeOf(s.class_room)===r.grade); }
+function renderSvRoster(){
+  const r = svRounds.find(x=>x.id===svRid); if(!r) return;
+  const respMap = {}; svAllResp.filter(x=>x.round_id===svRid).forEach(x=> respMap[x.student_id]=x);
+  let list = svTargets(r);
+  const rooms = ["all", ...[...new Set(list.map(s=>s.class_room).filter(Boolean))].sort()];
+  $("svRooms").innerHTML = rooms.map(x=>`<button class="chip ${svRoom===x?"active":""}" data-svrm="${esc(x)}">${x==="all"?"ทุกห้อง":esc(x)}</button>`).join("");
+  $("svRooms").querySelectorAll(".chip").forEach(b=> b.onclick=()=>{ svRoom=b.dataset.svrm; renderSvRoster(); });
+  if(svRoom!=="all") list = list.filter(s=> s.class_room===svRoom);
+  list.sort((a,b)=> (a.class_room||"").localeCompare(b.class_room||"","th") || (a.username||"").localeCompare(b.username||""));
+
+  const counts = {};
+  list.forEach(s=>{ const k = respMap[s.id]? respMap[s.id].status : "ยังไม่ตอบ"; counts[k]=(counts[k]||0)+1; });
+  $("svStats").innerHTML = Object.entries(counts).map(([k,v])=>
+    `<span class="chip" style="cursor:default">${esc(k)} <b>${v}</b></span>`).join("");
+
+  $("svRows").innerHTML = list.map(s=>{
+    const a = respMap[s.id];
+    const detail = a? [a.institution, a.program, a.tcas_round, a.other_detail].filter(Boolean).join(" · ") : "";
+    return `<tr><td><b>${esc(s.username)}</b></td><td>${esc(s.display_name)}</td><td>${esc(s.class_room||"-")}</td>
+      <td>${a? `<span class="status sent">${esc(a.status)}</span>`:'<span class="status missing">ยังไม่ตอบ</span>'}</td>
+      <td>${esc(detail)||"-"}</td><td>${a? thDateTime(a.submitted_at):"-"}</td></tr>`;
+  }).join("") || `<tr><td colspan="6" style="text-align:center;color:var(--ink-soft)">ไม่มีนักเรียน${r.grade}ในระบบ</td></tr>`;
+}
+$("btnSvCsv").onclick = ()=>{
+  const r = svRounds.find(x=>x.id===svRid); if(!r) return;
+  const respMap = {}; svAllResp.filter(x=>x.round_id===svRid).forEach(x=> respMap[x.student_id]=x);
+  const q = v => `"${String(v??"").replace(/"/g,'""')}"`;
+  let list = svTargets(r);
+  if(svRoom!=="all") list = list.filter(s=> s.class_room===svRoom);
+  list.sort((a,b)=> (a.class_room||"").localeCompare(b.class_room||"","th") || (a.username||"").localeCompare(b.username||""));
+  const rows = [["ชื่อผู้ใช้","ชื่อ-นามสกุล","ห้อง","สถานะ","สถานศึกษา","สาขา/แผนการเรียน","รอบ TCAS","รายละเอียดอื่น","เวลาตอบ"].map(q).join(",")];
+  list.forEach(s=>{
+    const a = respMap[s.id]||{};
+    rows.push([s.username, s.display_name, s.class_room||"", a.status||"ยังไม่ตอบ", a.institution||"", a.program||"", a.tcas_round||"", a.other_detail||"", a.submitted_at? thDateTime(a.submitted_at):""].map(q).join(","));
+  });
+  const el = document.createElement("a");
+  el.href = URL.createObjectURL(new Blob(["\uFEFF"+rows.join("\n")],{type:"text/csv;charset=utf-8"}));
+  el.download = `ผลสำรวจ_${r.grade}_${r.title}.csv`; el.click();
+};
+
+/* ═══════════ เฟส 3: ระบบของเรา ═══════════ */
+let extApps=[], editingAppId=null;
+async function loadApps(){
+  $("btnAddApp").classList.toggle("hidden", profile.role!=="admin");
+  const {data, error} = await sb.from("external_systems").select("*").order("sort_order").order("created_at");
+  if(error) return toast("โหลดลิงก์ระบบไม่สำเร็จ: "+error.message);
+  extApps = data||[];
+  $("appEmpty").classList.toggle("hidden", extApps.length>0);
+  $("appGrid").innerHTML = extApps.map(a=>`<article class="rescard" style="--gc:var(--g5)">
+    <div class="top">${(a.visible_to||[]).map(v=>`<span class="badge type">${v==="teacher"?"ครู":"นักเรียน"}</span>`).join("")}</div>
+    <h3>${esc(a.icon||"🔗")} ${esc(a.title)}</h3>
+    ${a.description?`<p class="desc">${esc(a.description)}</p>`:""}
+    <div class="actions">
+      <a class="btn primary sm" href="${esc(a.url)}" target="_blank" rel="noopener">🚀 เปิดระบบ</a>
+      ${profile.role==="admin"?`<button class="btn ghost sm" data-ape="${a.id}">แก้ไข</button>
+      <button class="btn danger sm" data-apd="${a.id}">ลบ</button>`:""}
+    </div>
+  </article>`).join("");
+  $("appGrid").querySelectorAll("[data-ape]").forEach(b=> b.onclick=()=>openAppModal(b.dataset.ape));
+  $("appGrid").querySelectorAll("[data-apd]").forEach(b=> b.onclick=()=>delApp(b.dataset.apd));
+}
+$("btnAddApp").onclick = ()=> openAppModal(null);
+$("btnAppCancel").onclick = ()=> $("appModal").classList.remove("show");
+function openAppModal(id){
+  editingAppId = id; msg("appMsg","");
+  const a = id? extApps.find(x=>x.id===id) : null;
+  $("appModalTitle").textContent = a? "แก้ไขลิงก์ระบบ":"เพิ่มลิงก์ระบบ";
+  $("apIcon").value = a?.icon||""; $("apTitle").value = a?.title||"";
+  $("apDesc").value = a?.description||""; $("apUrl").value = a?.url||"";
+  $("apVis").querySelectorAll("input").forEach(i=> i.checked = a? (a.visible_to||[]).includes(i.value) : i.value==="teacher");
+  $("appModal").classList.add("show");
+}
+$("btnAppSave").onclick = async ()=>{
+  const title = $("apTitle").value.trim(), url = $("apUrl").value.trim();
+  const vis = [...$("apVis").querySelectorAll("input:checked")].map(i=>i.value);
+  if(!title) return msg("appMsg","ใส่ชื่อระบบก่อนนะคะ","err");
+  if(!/^https?:\/\//.test(url)) return msg("appMsg","ลิงก์ต้องขึ้นต้นด้วย http:// หรือ https://","err");
+  if(vis.length===0) return msg("appMsg","เลือกอย่างน้อย 1 กลุ่มที่มองเห็นนะคะ","err");
+  const row = { title, url, description:$("apDesc").value.trim()||null, icon:$("apIcon").value.trim()||"🔗", visible_to:vis };
+  $("btnAppSave").disabled = true;
+  const {error} = editingAppId
+    ? await sb.from("external_systems").update(row).eq("id", editingAppId)
+    : await sb.from("external_systems").insert(row);
+  $("btnAppSave").disabled = false;
+  if(error) return msg("appMsg", error.message, "err");
+  $("appModal").classList.remove("show"); toast("บันทึกเรียบร้อย ✅"); loadApps();
+};
+async function delApp(id){
+  const a = extApps.find(x=>x.id===id); if(!a) return;
+  if(!confirm(`ลบลิงก์ "${a.title}" ใช่ไหมคะ?`)) return;
+  const {error} = await sb.from("external_systems").delete().eq("id", id);
+  if(error) return toast("ลบไม่สำเร็จ: "+error.message);
+  toast("ลบเรียบร้อย"); loadApps();
+}
+
+/* ═══════════ เฟส 4: จุดแข็ง (RIASEC) ═══════════ */
+const RIASEC = {
+  R:{name:"นักปฏิบัติ", emoji:"🔧", color:"#F28C6B",
+     desc:"ถนัดลงมือทำจริง ชอบใช้มือ เครื่องมือ ร่างกาย และแก้ปัญหาที่จับต้องได้",
+     plans:"วิทย์-คณิต · ศิลป์คำนวณ · สายอาชีพ (ช่าง/เกษตร)",
+     fac:"วิศวกรรมศาสตร์ · เกษตรศาสตร์ · วิทยาศาสตร์การกีฬา · เทคโนโลยีอุตสาหกรรม",
+     careers:"วิศวกร · ช่างเทคนิค · นักกีฬา/โค้ช · เกษตรกรรุ่นใหม่ · นักบิน",
+     act:"ชมรมหุ่นยนต์/ช่าง · โครงงานสิ่งประดิษฐ์ · กีฬาและกิจกรรมกลางแจ้ง"},
+  I:{name:"นักคิดวิเคราะห์", emoji:"🔬", color:"#4E9BB9",
+     desc:"ชอบตั้งคำถาม สืบค้น ทดลอง และใช้เหตุผลไขปัญหาที่ซับซ้อน",
+     plans:"วิทย์-คณิต",
+     fac:"แพทยศาสตร์ · เภสัชศาสตร์ · วิทยาศาสตร์ · วิศวกรรมคอมพิวเตอร์",
+     careers:"แพทย์ · นักวิจัย · นักวิทยาศาสตร์ข้อมูล · โปรแกรมเมอร์",
+     act:"โครงงานวิทยาศาสตร์ · ค่ายวิชาการ/โอลิมปิก · ชมรมคอมพิวเตอร์"},
+  A:{name:"นักสร้างสรรค์", emoji:"🎨", color:"#D96A9C",
+     desc:"เต็มไปด้วยจินตนาการ ชอบแสดงออกผ่านศิลปะ ดนตรี ภาษา และการออกแบบ",
+     plans:"ศิลป์ภาษา · ศิลป์ทั่วไป",
+     fac:"สถาปัตยกรรมศาสตร์ · นิเทศศาสตร์ · ศิลปกรรมศาสตร์ · อักษรศาสตร์/มนุษยศาสตร์",
+     careers:"นักออกแบบ · สถาปนิก · ครีเอทีฟ · นักเขียน · คอนเทนต์ครีเอเตอร์",
+     act:"ชมรมศิลปะ/ดนตรี/การแสดง · ประกวดออกแบบ · ทำคอนเทนต์ของตัวเอง"},
+  S:{name:"นักช่วยเหลือสังคม", emoji:"🤝", color:"#7FB069",
+     desc:"ใส่ใจผู้คน รับฟังเก่ง ชอบสอน ช่วยเหลือ และทำให้คนรอบข้างดีขึ้น",
+     plans:"ศิลป์ภาษา · วิทย์-คณิต (สายสุขภาพ)",
+     fac:"ครุศาสตร์/ศึกษาศาสตร์ · พยาบาลศาสตร์ · จิตวิทยา · สังคมสงเคราะห์",
+     careers:"ครู · พยาบาล · นักจิตวิทยา · นักสังคมสงเคราะห์ · นักโภชนาการ",
+     act:"งานอาสา · สภานักเรียน · กิจกรรมพี่สอนน้อง · ค่ายบำเพ็ญประโยชน์"},
+  E:{name:"นักบริหารจัดการ", emoji:"🚀", color:"#F2B84B",
+     desc:"กล้าคิดกล้านำ ชอบโน้มน้าว เจรจา และผลักดันทีมให้ถึงเป้าหมาย",
+     plans:"ศิลป์คำนวณ · ศิลป์ภาษา",
+     fac:"บริหารธุรกิจ · เศรษฐศาสตร์ · นิติศาสตร์ · รัฐศาสตร์ · การตลาด",
+     careers:"ผู้ประกอบการ · นักการตลาด · ทนายความ · นักการทูต/นักปกครอง",
+     act:"สภานักเรียน · ขายของ/ธุรกิจเล็กๆ ของตัวเอง · แข่งขันแผนธุรกิจ · โต้วาที"},
+  C:{name:"นักจัดระเบียบ", emoji:"📋", color:"#8E7CC3",
+     desc:"ละเอียดรอบคอบ ทำงานเป็นระบบ วางแผนเก่ง และไว้ใจได้เรื่องความถูกต้อง",
+     plans:"ศิลป์คำนวณ",
+     fac:"บัญชี · การเงิน · สถิติ · การจัดการ",
+     careers:"นักบัญชี · นักการเงิน/นักวิเคราะห์ · ข้าราชการ · นักวิเคราะห์ข้อมูล",
+     act:"เหรัญญิก/เลขาชมรม · จัดระบบเอกสารกิจกรรม · แข่งทักษะบัญชี/Excel"}
+};
+const QUIZ = [
+  {t:"R", q:"ฉันชอบประดิษฐ์ ซ่อม หรือประกอบสิ่งของด้วยมือตัวเอง"},
+  {t:"I", q:"ฉันชอบตั้งคำถามว่า “ทำไม” และหาคำตอบด้วยตัวเอง"},
+  {t:"A", q:"ฉันชอบวาดรูป ออกแบบ หรือตกแต่งสิ่งต่างๆ ให้สวยงาม"},
+  {t:"S", q:"เพื่อนมักมาปรึกษาฉันเวลามีปัญหา และฉันชอบรับฟัง"},
+  {t:"E", q:"ฉันชอบเป็นผู้นำกลุ่มหรือหัวหน้าทีม"},
+  {t:"C", q:"ฉันชอบจัดโต๊ะ จัดแฟ้ม หรือจัดหมวดหมู่สิ่งของให้เป็นระเบียบ"},
+  {t:"R", q:"ฉันชอบกิจกรรมกลางแจ้ง กีฬา หรืองานที่ได้เคลื่อนไหวร่างกาย"},
+  {t:"I", q:"ฉันสนุกกับการแก้โจทย์ยากๆ หรือปริศนาที่ต้องใช้ความคิด"},
+  {t:"A", q:"ฉันชอบร้องเพลง เล่นดนตรี เต้น หรือการแสดง"},
+  {t:"S", q:"ฉันชอบช่วยสอนหรืออธิบายให้เพื่อนที่ยังไม่เข้าใจ"},
+  {t:"E", q:"ฉันกล้าพูดหน้าชั้น นำเสนองาน หรือพูดในที่สาธารณะ"},
+  {t:"C", q:"ฉันทำงานตามขั้นตอนได้ครบถ้วน ละเอียด ไม่ตกหล่น"},
+  {t:"R", q:"ฉันใช้เครื่องมือหรืออุปกรณ์ต่างๆ ได้คล่อง เรียนรู้วิธีใช้ได้เร็ว"},
+  {t:"I", q:"ฉันชอบทดลอง สังเกต และจดบันทึกผล"},
+  {t:"A", q:"ฉันชอบเขียนเรื่องราว แต่งกลอน หรือทำคอนเทนต์"},
+  {t:"S", q:"ฉันสนุกกับกิจกรรมอาสาหรืองานที่ได้ช่วยเหลือคนอื่น"},
+  {t:"E", q:"ฉันชักชวนหรือโน้มน้าวให้คนอื่นเห็นด้วยกับฉันได้"},
+  {t:"C", q:"ฉันชอบวางแผนตารางเวลาและทำตามแผนที่วางไว้"},
+  {t:"R", q:"ฉันชอบปลูกต้นไม้ เลี้ยงสัตว์ หรือทำงานที่ได้สัมผัสธรรมชาติ"},
+  {t:"I", q:"ฉันชอบอ่านหรือดูสารคดีวิทยาศาสตร์ เทคโนโลยี หรือสิ่งรอบตัว"},
+  {t:"A", q:"ฉันมักมีไอเดียแปลกใหม่ที่ต่างจากคนอื่น"},
+  {t:"S", q:"ฉันทำงานกลุ่มได้ดี ชอบทำให้ทุกคนรู้สึกสบายใจ"},
+  {t:"E", q:"ฉันชอบขายของ ต่อรอง หรือคิดหาวิธีหารายได้"},
+  {t:"C", q:"ฉันถนัดงานตัวเลข บัญชี หรือการบันทึกข้อมูลให้ถูกต้อง"}
+];
+const TYPE_KEYS = ["R","I","A","S","E","C"];
+let stAssess=null, stTags=[], stAllAssess=[], stAllTags=[], stStudentsList=[], quizAnswers=[], stF={room:"all",q:""}, stSid=null, stTagType=null;
+
+function combineScores(assess, tags){
+  const c = {}; TYPE_KEYS.forEach(k=> c[k] = (assess?.scores?.[k]||0) + tags.filter(t=>t.type===k).length*2);
+  return c;
+}
+
+async function loadStrength(){
+  const staff = ["teacher","admin"].includes(profile.role);
+  $("stStudent").classList.toggle("hidden", staff);
+  $("stTeacher").classList.toggle("hidden", !staff);
+  $("stLoading").classList.remove("hidden");
+  if(staff){
+    const [{data:stu},{data:asm},{data:tg}] = await Promise.all([
+      sb.from("profiles").select("id,username,display_name,class_room").eq("role","student"),
+      sb.from("strength_assessments").select("*"),
+      sb.from("strength_tags").select("*")
+    ]);
+    stStudentsList = stu||[]; stAllAssess = asm||[]; stAllTags = tg||[];
+    renderStTeacher();
+  }else{
+    const [{data:asm},{data:tg}] = await Promise.all([
+      sb.from("strength_assessments").select("*").eq("student_id", profile.id).maybeSingle(),
+      sb.from("strength_tags").select("*").eq("student_id", profile.id).order("created_at",{ascending:false})
+    ]);
+    stAssess = asm||null; stTags = tg||[];
+    renderStStudent();
+  }
+  $("stLoading").classList.add("hidden");
+}
+
+/* ── ฝั่งนักเรียน ── */
+function renderStStudent(){
+  const has = !!stAssess || stTags.length>0;
+  $("stIntro").classList.toggle("hidden", has);
+  $("stQuiz").classList.add("hidden");
+  $("stProfile").innerHTML = has? profileHTML(profile, stAssess, stTags, {student:true}) : "";
+  if(has){
+    const pr = $("stProfile").querySelector("[data-print]");
+    if(pr) pr.onclick = ()=> printProfile(profile, stAssess, stTags);
+    const redo = $("stProfile").querySelector("[data-redo]");
+    if(redo) redo.onclick = startQuiz;
+  }
+}
+$("btnStartQuiz").onclick = startQuiz;
+function startQuiz(){
+  quizAnswers = Array(QUIZ.length).fill(null);
+  if(stAssess){ // เติมคำตอบเดิมไม่ได้ (เก็บเฉพาะคะแนน) เริ่มใหม่สดๆ
+  }
+  $("stIntro").classList.add("hidden");
+  $("stProfile").innerHTML = "";
+  $("stQuiz").classList.remove("hidden");
+  msg("quizMsg","");
+  $("quizItems").innerHTML = QUIZ.map((it,i)=>`<div class="quiz-item">
+    <p>${i+1}. ${esc(it.q)}</p>
+    <div class="quiz-opts" data-i="${i}">
+      <button data-v="0">ไม่ใช่ฉันเลย</button>
+      <button data-v="1">ก็มีบ้าง</button>
+      <button data-v="2">ใช่เลย!</button>
+    </div>
+  </div>`).join("");
+  $("quizItems").querySelectorAll(".quiz-opts").forEach(g=>{
+    g.querySelectorAll("button").forEach(b=> b.onclick = ()=>{
+      quizAnswers[+g.dataset.i] = +b.dataset.v;
+      g.querySelectorAll("button").forEach(x=>x.classList.remove("active"));
+      b.classList.add("active");
+    });
+  });
+  window.scrollTo({top:0});
+}
+$("btnQuizSave").onclick = async ()=>{
+  const miss = quizAnswers.findIndex(a=>a===null);
+  if(miss>=0) return msg("quizMsg",`ยังตอบไม่ครบค่ะ (เหลือข้อ ${miss+1})`,"err");
+  const scores = {}; TYPE_KEYS.forEach(k=>scores[k]=0);
+  QUIZ.forEach((it,i)=> scores[it.t] += quizAnswers[i]);
+  $("btnQuizSave").disabled = true;
+  const {error} = await sb.from("strength_assessments")
+    .upsert({student_id:profile.id, scores, done_at:new Date().toISOString()}, {onConflict:"student_id"});
+  $("btnQuizSave").disabled = false;
+  if(error) return msg("quizMsg", error.message, "err");
+  toast("บันทึกผลเรียบร้อย 🌟");
+  await loadStrength();
+}
+
+/* ── สร้าง HTML โปรไฟล์ (ใช้ร่วมกันทุกที่) ── */
+function profileHTML(stu, assess, tags, opt={}){
+  const c = combineScores(assess, tags);
+  const max = Math.max(8, ...Object.values(c));
+  const top3 = [...TYPE_KEYS].sort((a,b)=> c[b]-c[a]).slice(0,3).filter(k=>c[k]>0);
+  const bars = TYPE_KEYS.map(k=>{
+    const r = RIASEC[k];
+    return `<div class="stbar"><span>${r.emoji} ${r.name}</span>
+      <div class="track"><div class="fill" style="width:${max? Math.round(c[k]/max*100):0}%;background:${r.color}"></div></div>
+      <b style="text-align:right">${c[k]}</b></div>`;
+  }).join("");
+  const guide = top3.length? top3.map((k,i)=>{
+    const r = RIASEC[k];
+    return `<div class="sttop" style="border-color:${r.color}">
+      <h3>อันดับ ${i+1}: ${r.emoji} ${r.name}</h3>
+      <p style="font-size:.87rem">${r.desc}</p>
+      <p class="sec"><b>แผนการเรียนที่เข้าทาง:</b> ${r.plans}</p>
+      <p class="sec"><b>คณะ/สาขาที่น่ามอง:</b> ${r.fac}</p>
+      <p class="sec"><b>อาชีพตัวอย่าง:</b> ${r.careers}</p>
+      <p class="sec"><b>กิจกรรมพัฒนาจุดแข็งนี้:</b> ${r.act}</p>
+    </div>`;
+  }).join("") : `<p class="empty">ยังไม่มีข้อมูลพอสรุปผลค่ะ</p>`;
+  const tagList = tags.length? tags.map(t=>{
+    const r = RIASEC[t.type];
+    const del = opt.canDelTag && (t.tagged_by===profile.id || profile.role==="admin")
+      ? `<button data-deltag="${t.id}" title="ลบแท็ก">×</button>` : "";
+    return `<span class="tagchip" style="background:${r.color}22;color:${r.color}">${r.emoji} ${r.name}${t.note? " · "+esc(t.note):""} <small>(${esc(t.tagger_name||"ครู")})</small>${del}</span>`;
+  }).join("") : `<span class="duechip">ยังไม่มีแท็กจากครู</span>`;
+  return `<div class="panel">
+    <h2>🌟 โปรไฟล์จุดแข็ง: ${esc(stu.display_name)} ${stu.class_room? "("+esc(stu.class_room)+")":""}</h2>
+    ${assess? `<p class="duechip" style="margin-bottom:10px">ทำแบบประเมินล่าสุด ${thDate(assess.done_at)} · คะแนน = แบบประเมิน + แท็กจากครู (แท็กละ 2 คะแนน)</p>`
+      : `<p class="duechip" style="margin-bottom:10px">⚠ ยังไม่ได้ทำแบบประเมิน — ผลนี้มาจากแท็กของครูเท่านั้น</p>`}
+    ${bars}
+    <div style="margin-top:14px">${guide}</div>
+    <h2 style="margin-top:14px">🏷️ จุดแข็งที่ครูมองเห็น</h2>
+    <div>${tagList}</div>
+    ${opt.student? `<div class="actions noprint" style="margin-top:14px">
+      <button class="btn note" data-print>🖨️ พิมพ์/บันทึก PDF</button>
+      <button class="btn ghost" data-redo>ทำแบบประเมินใหม่</button>
+    </div>`:""}
+  </div>`;
+}
+
+function printProfile(stu, assess, tags){
+  $("printArea").innerHTML = `
+    <div style="text-align:center;margin-bottom:12px">
+      <h2 style="font-family:'Mitr'">ไกด์จุดแข็งของฉัน 🌟</h2>
+      <p style="font-size:.85rem">งานแนะแนว "แนะให้แนว" โรงเรียนพูลเจริญวิทยาคม · พิมพ์เมื่อ ${new Date().toLocaleDateString("th-TH")}</p>
+    </div>` + profileHTML(stu, assess, tags, {});
+  window.print();
+}
+
+/* ── ฝั่งครู ── */
+$("stQ").addEventListener("input", ()=>{ stF.q=$("stQ").value.trim().toLowerCase(); renderStTeacher(); });
+function renderStTeacher(){
+  const rooms = ["all", ...[...new Set(stStudentsList.map(s=>s.class_room).filter(Boolean))].sort()];
+  $("stRooms").innerHTML = rooms.map(r=>`<button class="chip ${stF.room===r?"active":""}" data-str="${esc(r)}">${r==="all"?"ทุกห้อง":esc(r)}</button>`).join("");
+  $("stRooms").querySelectorAll(".chip").forEach(b=> b.onclick=()=>{ stF.room=b.dataset.str; renderStTeacher(); });
+  let list = stStudentsList;
+  if(stF.room!=="all") list = list.filter(s=>s.class_room===stF.room);
+  if(stF.q) list = list.filter(s=> ((s.username||"")+" "+(s.display_name||"")+" "+(s.class_room||"")).toLowerCase().includes(stF.q));
+  list = [...list].sort((a,b)=> (a.class_room||"").localeCompare(b.class_room||"","th") || (a.username||"").localeCompare(b.username||""));
+  const asmSet = new Set(stAllAssess.map(a=>a.student_id));
+  $("stRows").innerHTML = list.map(s=>{
+    const n = stAllTags.filter(t=>t.student_id===s.id).length;
+    return `<tr><td><b>${esc(s.username)}</b></td><td>${esc(s.display_name)}</td><td>${esc(s.class_room||"-")}</td>
+      <td>${asmSet.has(s.id)? '<span class="status sent">✅ ทำแล้ว</span>':'<span class="status missing">ยังไม่ทำ</span>'}</td>
+      <td>${n? `🏷️ ${n}`:"-"}</td>
+      <td><button class="btn primary sm" data-stp="${s.id}">ดู/ติดแท็ก</button></td></tr>`;
+  }).join("") || `<tr><td colspan="6" style="text-align:center;color:var(--ink-soft)">ไม่พบนักเรียน</td></tr>`;
+  $("stRows").querySelectorAll("[data-stp]").forEach(b=> b.onclick=()=>openStModal(b.dataset.stp));
+}
+
+$("btnStClose").onclick = ()=> $("stModal").classList.remove("show");
+function openStModal(sid){
+  stSid = sid; stTagType = null; msg("tagMsg",""); $("tagNote").value="";
+  renderStModal();
+  $("stModal").classList.add("show");
+}
+function renderStModal(){
+  const stu = stStudentsList.find(s=>s.id===stSid); if(!stu) return;
+  const assess = stAllAssess.find(a=>a.student_id===stSid)||null;
+  const tags = stAllTags.filter(t=>t.student_id===stSid).sort((a,b)=> b.created_at.localeCompare(a.created_at));
+  $("stModalBody").innerHTML = profileHTML(stu, assess, tags, {canDelTag:true});
+  $("stModalBody").querySelectorAll("[data-deltag]").forEach(b=> b.onclick=()=>delTag(b.dataset.deltag));
+  $("tagPick").innerHTML = TYPE_KEYS.map(k=>{
+    const r = RIASEC[k];
+    return `<label style="${stTagType===k?`background:${r.color};border-color:${r.color};color:#fff`:""}"><input type="radio" name="tagT" value="${k}" ${stTagType===k?"checked":""} style="display:none">${r.emoji} ${r.name}</label>`;
+  }).join("");
+  $("tagPick").querySelectorAll("input").forEach(i=> i.onchange=()=>{ stTagType=i.value; renderStModal(); });
+  $("btnStPrint").onclick = ()=> printProfile(stu, assess, tags);
+}
+$("btnTagSave").onclick = async ()=>{
+  if(!stTagType) return msg("tagMsg","เลือกจุดแข็งที่จะแท็กก่อนนะคะ","err");
+  $("btnTagSave").disabled = true;
+  const {data, error} = await sb.from("strength_tags").insert({
+    student_id:stSid, type:stTagType, note:$("tagNote").value.trim()||null,
+    tagged_by:profile.id, tagger_name:profile.display_name
+  }).select().single();
+  $("btnTagSave").disabled = false;
+  if(error) return msg("tagMsg", error.message, "err");
+  stAllTags.push(data); $("tagNote").value=""; stTagType=null;
+  toast("ติดแท็กเรียบร้อย 🏷️"); renderStModal(); renderStTeacher();
+};
+async function delTag(id){
+  const {error} = await sb.from("strength_tags").delete().eq("id", id);
+  if(error) return toast("ลบแท็กไม่สำเร็จ: "+error.message);
+  stAllTags = stAllTags.filter(t=>t.id!==id);
+  renderStModal(); renderStTeacher();
+}
+
+/* ═══════════ เฟส 5: สิทธิ์เมนูของครู ═══════════ */
+let permUid = null;
+function openPermModal(uid){
+  permUid = uid; msg("permMsg","");
+  const u = users.find(x=>x.id===uid); if(!u) return;
+  $("permTitle").textContent = "🔐 สิทธิ์เมนู: " + u.display_name;
+  const mp = u.menu_permissions;
+  $("permChecks").querySelectorAll("input").forEach(i=>{ i.checked = !mp || mp[i.value] !== false; });
+  $("permModal").classList.add("show");
+}
+$("btnPermCancel").onclick = ()=> $("permModal").classList.remove("show");
+$("btnPermSave").onclick = async ()=>{
+  const obj = {};
+  $("permChecks").querySelectorAll("input").forEach(i=> obj[i.value] = i.checked);
+  $("btnPermSave").disabled = true;
+  const {error} = await sb.from("profiles").update({menu_permissions:obj}).eq("id", permUid);
+  $("btnPermSave").disabled = false;
+  if(error) return msg("permMsg", error.message, "err");
+  const u = users.find(x=>x.id===permUid); if(u) u.menu_permissions = obj;
+  $("permModal").classList.remove("show");
+  toast("บันทึกสิทธิ์เมนูเรียบร้อย ✅ (มีผลตอนครูล็อกอินครั้งถัดไป)");
 };
 </script>
 </body>
