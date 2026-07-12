@@ -736,7 +736,9 @@ async function enterApp(){
   switchView(initial);
 }
 function computeMyPerms(){
-  if(!profile || profile.role !== "teacher") return {library:true, work:true, survey:true, strength:true};
+  if(!profile) return {library:true, work:true, survey:true, strength:true};
+  if(profile.role === "student") return {library:false, work:true, survey:true, strength:true};
+  if(profile.role !== "teacher") return {library:true, work:true, survey:true, strength:true}; // admin
   const mp = profile.menu_permissions;
   return {
     library: !mp || mp.library !== false,
