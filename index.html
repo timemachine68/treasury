@@ -440,6 +440,14 @@ textarea.csvbox{font-family:monospace;font-size:.82rem;min-height:120px}
       <div class="roomchecks" id="wRooms"></div>
       <input id="wRoomExtra" placeholder="เพิ่มห้องเอง เช่น ม.6/7, ม.6/8 (คั่นด้วย ,)" style="margin-top:8px">
     </div>
+    <div class="field"><label>รูปแบบการส่งงานของนักเรียน *</label>
+      <div class="seg">
+        <button type="button" id="wReqText">📝 พิมพ์ข้อความ</button>
+        <button type="button" id="wReqFile" class="active">📎 ไฟล์</button>
+        <button type="button" id="wReqLink">🔗 ลิงก์</button>
+      </div>
+      <div class="hint">เลือกรูปแบบเดียวที่ให้นักเรียนส่งได้สำหรับงานนี้</div>
+    </div>
     <div class="field"><label>ใบงานแนบ (ไม่บังคับ)</label>
       <div class="seg">
         <button type="button" id="wSegNone" class="active">ไม่แนบ</button>
@@ -461,12 +469,13 @@ textarea.csvbox{font-family:monospace;font-size:.82rem;min-height:120px}
   <div class="modal" style="max-width:460px">
     <h2 id="subModalTitle">ส่งงาน</h2>
     <div id="subMsg" class="msg"></div>
-    <div class="field"><label>ส่งเป็น *</label>
+    <div class="field" id="sModeSeg"><label>ส่งเป็น *</label>
       <div class="seg">
         <button type="button" id="sSegFile" class="active">📎 แนบไฟล์</button>
         <button type="button" id="sSegLink">🔗 วางลิงก์</button>
       </div>
     </div>
+    <div class="field hidden" id="sTextWrap"><label for="sText">คำตอบของฉัน *</label><textarea id="sText" placeholder="พิมพ์คำตอบที่นี่…" style="min-height:130px"></textarea></div>
     <div class="field" id="sFileWrap"><input type="file" id="sFile"></div>
     <div class="field hidden" id="sLinkWrap"><input id="sUrl" placeholder="https://… เช่นลิงก์ Canva"></div>
     <div class="field"><label for="sNote">ข้อความถึงครู (ไม่บังคับ)</label><input id="sNote"></div>
@@ -474,6 +483,15 @@ textarea.csvbox{font-family:monospace;font-size:.82rem;min-height:120px}
       <button class="btn ghost" id="btnSubCancel">ยกเลิก</button>
       <button class="btn primary" id="btnSubSave">ส่งงาน</button>
     </div>
+  </div>
+</div>
+
+<!-- ═══════════ โมดัล: ดูคำตอบข้อความ ═══════════ -->
+<div class="modal-back" id="textViewModal">
+  <div class="modal" style="max-width:560px">
+    <h2 id="textViewTitle">คำตอบของนักเรียน</h2>
+    <div id="textViewBody" style="white-space:pre-wrap;font-size:.92rem;line-height:1.65;max-height:55vh;overflow-y:auto;border:1px solid var(--line);border-radius:10px;padding:14px;background:var(--board)"></div>
+    <div class="foot"><button class="btn ghost" id="btnTextViewClose">ปิด</button></div>
   </div>
 </div>
 
@@ -1073,7 +1091,8 @@ document.querySelectorAll(".modal-back").forEach(m=> m.addEventListener("click",
 
 /* ═══════════ เฟส 2: งานมอบหมาย ═══════════ */
 let assignments=[], mySubs={}, allSubs=[], allStudents=[], rosterAid=null, rosterRoom="all";
-let editingWorkId=null, wAttach="none", sMode="file";
+let editingWorkId=null, wAttach="none", wSubmitType="file", sMode="file";
+const SUBMIT_TYPE_LABEL = {text:"📝 พิมพ์ข้อความ", file:"📎 ส่งเป็นไฟล์", link:"🔗 ส่งเป็นลิงก์", any:"📎🔗 ไฟล์หรือลิงก์"};
 
 function thDateTime(s){ try{ return new Date(s).toLocaleString("th-TH",{day:"numeric",month:"short",year:"2-digit",hour:"2-digit",minute:"2-digit"}); }catch{ return ""; } }
 function isLate(sub, a){ return !!(sub && a.due_at && new Date(sub.submitted_at) > new Date(a.due_at)); }
@@ -1087,7 +1106,7 @@ async function loadWork(){
   assignments = aData||[];
   if(staff){
     const [{data:sData},{data:stu}] = await Promise.all([
-      sb.from("submissions").select("id,assignment_id,student_id,submitted_at,file_path,file_name,external_url,note"),
+      sb.from("submissions").select("id,assignment_id,student_id,submitted_at,file_path,file_name,external_url,text_answer,note"),
       sb.from("profiles").select("id,username,display_name,class_room").eq("role","student")
     ]);
     allSubs = sData||[]; allStudents = stu||[];
@@ -1123,9 +1142,10 @@ function studentCard(a){
   let st = `<span class="status missing">ยังไม่ส่ง</span>`;
   if(sub) st = isLate(sub,a)? `<span class="status late">✅ ส่งแล้ว · ส่งช้า</span>` : `<span class="status sent">✅ ส่งแล้ว</span>`;
   else if(a.due_at && new Date() > new Date(a.due_at)) st = `<span class="status overdue">⚠ เลยกำหนด ยังไม่ส่ง</span>`;
-  const sent = sub ? `<div class="meta"><span>ส่งเมื่อ ${thDateTime(sub.submitted_at)}</span><span>${sub.file_name? "📎 "+esc(sub.file_name) : (sub.external_url? "🔗 ลิงก์":"")}</span></div>` : "";
+  const submark = sub? (sub.file_name? "📎 "+esc(sub.file_name) : (sub.external_url? "🔗 ลิงก์" : (sub.text_answer? "📝 ข้อความ":""))) : "";
+  const sent = sub ? `<div class="meta"><span>ส่งเมื่อ ${thDateTime(sub.submitted_at)}</span><span>${submark}</span></div>` : "";
   return `<article class="rescard" style="--gc:var(--note)">
-    <div class="top">${st}</div>
+    <div class="top">${st}<span class="badge type">${SUBMIT_TYPE_LABEL[a.submission_type||"any"]}</span></div>
     <h3>${esc(a.title)}</h3>
     ${a.description?`<p class="desc">${esc(a.description)}</p>`:""}
     ${dueLabel(a)}
@@ -1145,7 +1165,7 @@ function teacherCard(a){
   const pct = targets.length? Math.round(subs.length/targets.length*100) : 0;
   const mine = a.created_by===profile.id || profile.role==="admin";
   return `<article class="rescard" style="--gc:var(--g4)">
-    <div class="top">${(a.class_rooms||[]).map(r=>`<span class="badge grade" style="--gc:var(--g4)">${esc(r)}</span>`).join("")}</div>
+    <div class="top">${(a.class_rooms||[]).map(r=>`<span class="badge grade" style="--gc:var(--g4)">${esc(r)}</span>`).join("")}<span class="badge type">${SUBMIT_TYPE_LABEL[a.submission_type||"any"]}</span></div>
     <h3>${esc(a.title)}</h3>
     ${a.description?`<p class="desc">${esc(a.description)}</p>`:""}
     ${dueLabel(a)}
@@ -1187,6 +1207,15 @@ $("btnWorkCancel").onclick = ()=> $("workModal").classList.remove("show");
 $("wSegNone").onclick = ()=> setWAttach("none");
 $("wSegFile").onclick = ()=> setWAttach("file");
 $("wSegLink").onclick = ()=> setWAttach("link");
+$("wReqText").onclick = ()=> setWSubmit("text");
+$("wReqFile").onclick = ()=> setWSubmit("file");
+$("wReqLink").onclick = ()=> setWSubmit("link");
+function setWSubmit(m){
+  wSubmitType = m;
+  $("wReqText").classList.toggle("active", m==="text");
+  $("wReqFile").classList.toggle("active", m==="file");
+  $("wReqLink").classList.toggle("active", m==="link");
+}
 function setWAttach(m){
   wAttach = m;
   $("wSegNone").classList.toggle("active", m==="none");
@@ -1209,6 +1238,7 @@ function openWorkModal(id){
   $("wDue").value = a?.due_at? new Date(new Date(a.due_at).getTime()-new Date().getTimezoneOffset()*60000).toISOString().slice(0,16) : "";
   $("wRoomExtra").value = ""; $("wFile").value = ""; $("wUrl").value = a?.external_url||"";
   roomOptions(a?.class_rooms||[]);
+  setWSubmit((a && ["text","file","link"].includes(a.submission_type))? a.submission_type : "file");
   setWAttach(a? (a.file_path? "file" : (a.external_url? "link":"none")) : "none");
   // แก้ไข: เปลี่ยนไฟล์แนบเดิมไม่ได้ (ลบแล้วสร้างใหม่ถ้าจำเป็น)
   if(a && a.file_path){ $("wFileWrap").classList.add("hidden"); }
@@ -1221,7 +1251,8 @@ $("btnWorkSave").onclick = async ()=>{
   $("wRoomExtra").value.split(",").map(x=>x.trim()).filter(Boolean).forEach(r=>{ if(!rooms.includes(r)) rooms.push(r); });
   if(rooms.length===0) return msg("workMsg","เลือกอย่างน้อย 1 ห้องนะคะ","err");
   const base = { title, description:$("wDesc").value.trim()||null, class_rooms:rooms,
-    due_at: $("wDue").value? new Date($("wDue").value).toISOString() : null };
+    due_at: $("wDue").value? new Date($("wDue").value).toISOString() : null,
+    submission_type: wSubmitType };
   $("btnWorkSave").disabled = true;
   try{
     if(editingWorkId){
@@ -1272,6 +1303,13 @@ async function delWork(id){
   toast("ลบงานเรียบร้อย"); await loadWork();
 }
 
+function openTextView(title, text){
+  $("textViewTitle").textContent = title;
+  $("textViewBody").textContent = text || "(ไม่มีข้อความ)";
+  $("textViewModal").classList.add("show");
+}
+$("btnTextViewClose").onclick = ()=> $("textViewModal").classList.remove("show");
+
 /* ── ครู: ตารางรายชื่อผู้ส่ง ── */
 $("btnRosterClose").onclick = ()=> $("rosterModal").classList.remove("show");
 function openRoster(aid){
@@ -1302,14 +1340,20 @@ function renderRoster(){
     let st = `<span class="status missing">ยังไม่ส่ง</span>`;
     if(sub) st = isLate(sub,a)? `<span class="status late">✅ ส่งช้า</span>` : `<span class="status sent">✅ ส่งแล้ว</span>`;
     else if(a.due_at && new Date() > new Date(a.due_at)) st = `<span class="status overdue">⚠ ค้างส่ง</span>`;
-    const open = sub? (sub.file_path
-      ? `<button class="btn ghost sm" data-sd="${sub.id}">📎 เปิดงาน</button>`
-      : `<a class="btn ghost sm" href="${esc(sub.external_url)}" target="_blank" rel="noopener">🔗 เปิดงาน</a>`) : "";
+    const open = sub? (sub.text_answer
+      ? `<button class="btn ghost sm" data-viewtext="${sub.id}">📝 ดูคำตอบ</button>`
+      : sub.file_path
+        ? `<button class="btn ghost sm" data-sd="${sub.id}">📎 เปิดงาน</button>`
+        : (sub.external_url? `<a class="btn ghost sm" href="${esc(sub.external_url)}" target="_blank" rel="noopener">🔗 เปิดงาน</a>` : "")) : "";
     const note = sub?.note? ` <span class="duechip" title="${esc(sub.note)}">💬</span>` : "";
     return `<tr><td><b>${esc(s.username)}</b></td><td>${esc(s.display_name)}${note}</td><td>${esc(s.class_room||"-")}</td>
       <td>${st}</td><td>${sub? thDateTime(sub.submitted_at):"-"}</td><td>${open}</td></tr>`;
   }).join("") || `<tr><td colspan="6" style="text-align:center;color:var(--ink-soft)">ไม่มีนักเรียนในห้องนี้</td></tr>`;
 
+  $("rosterRows").querySelectorAll("[data-viewtext]").forEach(b=> b.onclick=()=>{
+    const sub = allSubs.find(x=>x.id===b.dataset.viewtext); if(!sub) return;
+    openTextView("📝 คำตอบของนักเรียน", sub.text_answer);
+  });
   $("rosterRows").querySelectorAll("[data-sd]").forEach(b=> b.onclick=async ()=>{
     const sub = allSubs.find(x=>x.id===b.dataset.sd); if(!sub||!sub.file_path) return;
     b.disabled = true;
@@ -1328,6 +1372,7 @@ function setSMode(m){
   sMode = m;
   $("sSegFile").classList.toggle("active", m==="file");
   $("sSegLink").classList.toggle("active", m==="link");
+  $("sTextWrap").classList.toggle("hidden", m!=="text");
   $("sFileWrap").classList.toggle("hidden", m!=="file");
   $("sLinkWrap").classList.toggle("hidden", m!=="link");
 }
@@ -1337,8 +1382,15 @@ function openSubModal(aid){
   const a = assignments.find(x=>x.id===aid);
   const sub = mySubs[aid];
   $("subModalTitle").textContent = (sub? "ส่งใหม่: ":"ส่งงาน: ") + a.title;
-  $("sFile").value = ""; $("sUrl").value = sub?.external_url||""; $("sNote").value = sub?.note||"";
-  setSMode(sub?.external_url? "link":"file");
+  $("sFile").value = ""; $("sUrl").value = sub?.external_url||""; $("sNote").value = sub?.note||""; $("sText").value = sub?.text_answer||"";
+  const type = a.submission_type || "any";
+  if(type==="any"){
+    $("sModeSeg").classList.remove("hidden");
+    setSMode(sub?.external_url? "link":"file");
+  }else{
+    $("sModeSeg").classList.add("hidden");
+    setSMode(type);
+  }
   if(a.due_at && new Date() > new Date(a.due_at)) msg("subMsg","เลยกำหนดส่งแล้ว แต่ยังส่งได้นะคะ (จะขึ้นป้ายส่งช้า)","err");
   $("subModal").classList.add("show");
 }
@@ -1348,8 +1400,12 @@ $("btnSubSave").onclick = async ()=>{
   $("btnSubSave").disabled = true;
   try{
     const row = { assignment_id:subAid, student_id:profile.id, note:$("sNote").value.trim()||null,
-      submitted_at:new Date().toISOString(), file_path:null, file_name:null, external_url:null };
-    if(sMode==="link"){
+      submitted_at:new Date().toISOString(), file_path:null, file_name:null, external_url:null, text_answer:null };
+    if(sMode==="text"){
+      const t = $("sText").value.trim();
+      if(!t) throw new Error("พิมพ์คำตอบก่อนนะคะ");
+      row.text_answer = t;
+    }else if(sMode==="link"){
       const u = $("sUrl").value.trim();
       if(!/^https?:\/\//.test(u)) throw new Error("ลิงก์ต้องขึ้นต้นด้วย http:// หรือ https://");
       row.external_url = u;
