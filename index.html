@@ -68,7 +68,7 @@ header.app .wrap{display:flex;align-items:center;gap:12px;padding-bottom:0;flex-
 .chip.active{background:var(--pine);border-color:var(--pine);color:#fff;font-weight:600}
 
 /* ---------- การ์ดสื่อ ---------- */
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(255px,100%),1fr));gap:14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(255px,1fr));gap:14px}
 .rescard{background:var(--card);border:1px solid var(--line);border-left:5px solid var(--gc,var(--pine));border-radius:12px;padding:14px 14px 12px;display:flex;flex-direction:column;gap:8px;box-shadow:var(--shadow)}
 .rescard .top{display:flex;gap:6px;flex-wrap:wrap}
 .badge{font-size:.7rem;font-weight:700;border-radius:6px;padding:2px 8px;letter-spacing:.2px}
@@ -131,7 +131,7 @@ td{padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
 .pill.admin{background:#FFE9C7;color:#8A5A00}
 .pill.teacher{background:var(--pine-tint);color:var(--pine-deep)}
 .pill.student{background:#E8EEF7;color:#3D5A80}
-.viewtabs{display:flex;gap:8px;margin:20px 0 14px;flex-wrap:wrap;overflow-x:auto}
+.viewtabs{display:flex;gap:8px;margin:20px 0 14px}
 .viewtabs .btn{border-radius:999px}
 textarea.csvbox{font-family:monospace;font-size:.82rem;min-height:120px}
 .csv-result{max-height:200px;overflow-y:auto;font-size:.8rem;margin-top:10px}
@@ -179,16 +179,6 @@ textarea.csvbox{font-family:monospace;font-size:.82rem;min-height:120px}
   body > *:not(#printArea){display:none!important}
   #printArea{display:block!important;padding:10mm;font-family:'Sarabun',sans-serif}
   #printArea .noprint{display:none!important}
-}
-@media (max-width:420px){
-  .folder-tabs{padding-top:14px}
-  .ftab{padding:7px 12px 10px;font-size:.82rem}
-  .rescard h3{font-size:.95rem}
-  .btn{padding:8px 13px;font-size:.84rem}
-  .btn.sm{padding:5px 9px;font-size:.76rem}
-  .userchip{display:none}
-  header.app .wrap{gap:8px}
-  .stbar{grid-template-columns:110px 1fr 38px;font-size:.8rem}
 }
 </style>
 </head>
@@ -248,6 +238,7 @@ textarea.csvbox{font-family:monospace;font-size:.82rem;min-height:120px}
       <button class="btn ghost" id="tabWork">📝 งานมอบหมาย</button>
       <button class="btn ghost" id="tabSurvey">🎓 สำรวจเรียนต่อ</button>
       <button class="btn ghost" id="tabStrength">🌟 จุดแข็ง</button>
+      <button class="btn ghost hidden" id="tabOverview">🧑‍🎓 ภาพรวมนักเรียน</button>
       <button class="btn ghost" id="tabApps">🧭 ระบบของเรา</button>
       <button class="btn ghost hidden" id="tabManage">👥 จัดการบัญชี</button>
       <div class="spacer"></div>
@@ -287,19 +278,22 @@ textarea.csvbox{font-family:monospace;font-size:.82rem;min-height:120px}
             </select>
           </div>
         </div>
-        <div class="field" id="nuRoomWrap"><label for="nuRoom">ห้อง (สำหรับนักเรียน)</label><input id="nuRoom" placeholder="เช่น ม.6/1"></div>
+        <div class="row2">
+          <div class="field" id="nuRoomWrap"><label for="nuRoom">ห้อง (สำหรับนักเรียน)</label><input id="nuRoom" placeholder="เช่น ม.6/1"></div>
+          <div class="field" id="nuSidWrap"><label for="nuSid">เลขประจำตัวนักเรียน</label><input id="nuSid" placeholder="ไม่กรอก = ใช้ชื่อผู้ใช้แทน"></div>
+        </div>
         <div id="nuMsg" class="msg"></div>
         <button class="btn primary" id="btnCreateUser">สร้างบัญชี</button>
       </div>
 
       <div class="panel">
         <h2>📄 นำเข้านักเรียนทั้งห้อง (CSV)</h2>
-        <p class="field hint" style="margin-bottom:10px">รูปแบบบรรทัดละคน: <b>ชื่อผู้ใช้,รหัสผ่าน,ชื่อ-นามสกุล,ห้อง</b> เช่น <code>12345,pcw12345,เด็กหญิงใจดี มีสุข,ม.6/1</code></p>
+        <p class="field hint" style="margin-bottom:10px">รูปแบบบรรทัดละคน: <b>ชื่อผู้ใช้,รหัสผ่าน,ชื่อ-นามสกุล,ห้อง,เลขประจำตัว(ไม่บังคับ)</b> เช่น <code>12345,pcw12345,เด็กหญิงใจดี มีสุข,ม.6/1,12345</code> · ถ้าไม่มีคอลัมน์ที่ 5 ระบบจะใช้ชื่อผู้ใช้แทนให้อัตโนมัติค่ะ</p>
         <div class="field">
           <input type="file" id="csvFile" accept=".csv,.txt">
           <div class="hint">เลือกไฟล์ CSV หรือวางข้อความด้านล่างก็ได้ (คัดลอกจาก Excel/Google ชีตมาวางตรงๆ ได้เลย ไม่ต้องใส่จุลภาคเอง) · <a href="#" id="csvTemplate">ดาวน์โหลดไฟล์ตัวอย่าง</a></div>
         </div>
-        <div class="field"><textarea id="csvBox" class="csvbox" placeholder="12345,pcw12345,เด็กหญิงใจดี มีสุข,ม.6/1&#10;12346,pcw12346,เด็กชายตั้งใจ เรียนเก่ง,ม.6/1"></textarea></div>
+        <div class="field"><textarea id="csvBox" class="csvbox" placeholder="12345,pcw12345,เด็กหญิงใจดี มีสุข,ม.6/1,12345&#10;12346,pcw12346,เด็กชายตั้งใจ เรียนเก่ง,ม.6/1,12346"></textarea></div>
         <div id="csvMsg" class="msg"></div>
         <button class="btn primary" id="btnImport">นำเข้ารายชื่อ</button>
         <div id="csvResult" class="csv-result"></div>
@@ -313,34 +307,9 @@ textarea.csvbox{font-family:monospace;font-size:.82rem;min-height:120px}
         </div>
         <div class="tbl-wrap">
           <table>
-            <thead><tr><th>ชื่อผู้ใช้</th><th>ชื่อ-นามสกุล</th><th>ประเภท</th><th>ห้อง</th><th></th></tr></thead>
+            <thead><tr><th>ชื่อผู้ใช้</th><th>ชื่อ-นามสกุล</th><th>เลขประจำตัว</th><th>ประเภท</th><th>ห้อง</th><th></th></tr></thead>
             <tbody id="userRows"></tbody>
           </table>
-        </div>
-      </div>
-
-      <!-- ล้างข้อมูลจบเทอม (แอดมินเท่านั้น) -->
-      <div class="panel hidden" id="cleanupPanel" style="border:2px solid #EAC7C2">
-        <h2 style="color:var(--danger)">🗑️ ล้างข้อมูลจบเทอม</h2>
-        <p style="font-size:.88rem;color:var(--ink-soft);margin-bottom:12px">ลบงานมอบหมาย + ชิ้นงานของนักเรียก + ไฟล์รูปทั้งหมดใน Storage ในคลิกเดียว เลือกได้ว่าจะลบทั้งหมดหรือเฉพาะงานเก่า</p>
-        <div class="row2">
-          <div class="field">
-            <label for="cleanupMode">เลือกขอบเขต</label>
-            <select id="cleanupMode">
-              <option value="old">งานที่สร้างมานานกว่า X วัน</option>
-              <option value="all">ทั้งหมด (เริ่มต้นเทอมใหม่)</option>
-            </select>
-          </div>
-          <div class="field" id="cleanupDaysWrap">
-            <label for="cleanupDays">นานกว่ากี่วัน</label>
-            <input type="number" id="cleanupDays" value="120" min="1" max="999">
-          </div>
-        </div>
-        <div id="cleanupPreview" style="font-size:.85rem;color:var(--ink-soft);margin-bottom:10px"></div>
-        <div id="cleanupMsg" class="msg"></div>
-        <div style="display:flex;gap:10px;flex-wrap:wrap">
-          <button class="btn ghost" id="btnCleanupPreview">🔍 ตรวจสอบก่อนลบ</button>
-          <button class="btn danger hidden" id="btnCleanupRun">🗑️ ยืนยันลบเลย</button>
         </div>
       </div>
     </div>
@@ -413,6 +382,25 @@ textarea.csvbox{font-family:monospace;font-size:.82rem;min-height:120px}
         </div>
       </div>
       <div id="stLoading" class="loading hidden">กำลังโหลด…</div>
+    </div>
+
+    <!-- ── มุมมองภาพรวมนักเรียน 360° ── -->
+    <div id="viewOverview" class="hidden">
+      <div class="panel">
+        <h2>🧑‍🎓 ภาพรวมนักเรียน 360°</h2>
+        <p class="field hint" style="margin-bottom:10px">รวมข้อมูลจากทุกระบบในคลังแนะแนวไว้ในหน้าเดียวต่อคน: งานที่ส่ง · ผลสำรวจเรียนต่อ · จุดแข็ง RIASEC</p>
+        <div class="toolbar">
+          <div class="search"><input id="ovQ" placeholder="ค้นหาชื่อ/ห้อง…"></div>
+          <div class="chips" id="ovRooms"></div>
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>ชื่อผู้ใช้</th><th>ชื่อ-นามสกุล</th><th>ห้อง</th><th>งานที่ส่ง</th><th>สำรวจเรียนต่อ</th><th>จุดแข็ง</th><th></th></tr></thead>
+            <tbody id="ovRows"></tbody>
+          </table>
+        </div>
+      </div>
+      <div id="ovLoading" class="loading hidden">กำลังโหลด…</div>
     </div>
   </div>
 </div>
@@ -511,7 +499,7 @@ textarea.csvbox{font-family:monospace;font-size:.82rem;min-height:120px}
       </div>
     </div>
     <div class="field hidden" id="sTextWrap"><label for="sText">คำตอบของฉัน *</label><textarea id="sText" placeholder="พิมพ์คำตอบที่นี่…" style="min-height:130px"></textarea></div>
-    <div class="field" id="sFileWrap"><input type="file" id="sFile" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.jpg,.jpeg,.png,.webp,.heic,.heif"></div>
+    <div class="field" id="sFileWrap"><input type="file" id="sFile"></div>
     <div class="field hidden" id="sLinkWrap"><input id="sUrl" placeholder="https://… เช่นลิงก์ Canva"></div>
     <div class="field"><label for="sNote">ข้อความถึงครู (ไม่บังคับ)</label><input id="sNote"></div>
     <div class="foot">
@@ -656,6 +644,16 @@ textarea.csvbox{font-family:monospace;font-size:.82rem;min-height:120px}
 
 <div id="printArea"></div>
 
+<!-- ═══════════ โมดัล: ภาพรวมนักเรียน 360° ═══════════ -->
+<div class="modal-back" id="ovModal">
+  <div class="modal" style="max-width:760px">
+    <div id="ovModalBody"></div>
+    <div class="foot">
+      <button class="btn ghost" id="btnOvClose">ปิด</button>
+    </div>
+  </div>
+</div>
+
 <!-- ═══════════ โมดัล: สิทธิ์เมนูของครู ═══════════ -->
 <div class="modal-back" id="permModal">
   <div class="modal" style="max-width:420px">
@@ -778,6 +776,7 @@ async function enterApp(){
   $("uRole").textContent = ROLE_LABEL[profile.role] + (profile.class_room? " · "+profile.class_room : "");
   const staff = ["teacher","admin"].includes(profile.role);
   $("tabManage").classList.toggle("hidden", !staff);
+  $("tabOverview").classList.toggle("hidden", !staff);
   document.querySelectorAll("#nuRole .adminOnly").forEach(o=>o.classList.toggle("hidden", profile.role!=="admin"));
   renderGradeTabs(); renderTypeChips(); renderRoleChips();
   const perms = computeMyPerms();
@@ -835,20 +834,22 @@ $("tabLibrary").onclick = ()=> switchView("library");
 $("tabWork").onclick = ()=> switchView("work");
 $("tabSurvey").onclick = ()=> switchView("survey");
 $("tabStrength").onclick = ()=> switchView("strength");
+$("tabOverview").onclick = ()=> switchView("overview");
 $("tabApps").onclick = ()=> switchView("apps");
 $("tabManage").onclick = ()=> switchView("manage");
 function switchView(v){
-  ["Library","Work","Survey","Strength","Apps","Manage"].forEach(n=> $("view"+n).classList.toggle("hidden", v!==n.toLowerCase()));
-  [["tabLibrary","library"],["tabWork","work"],["tabSurvey","survey"],["tabStrength","strength"],["tabApps","apps"],["tabManage","manage"]].forEach(([id,key])=>{
+  ["Library","Work","Survey","Strength","Overview","Apps","Manage"].forEach(n=> $("view"+n).classList.toggle("hidden", v!==n.toLowerCase()));
+  [["tabLibrary","library"],["tabWork","work"],["tabSurvey","survey"],["tabStrength","strength"],["tabOverview","overview"],["tabApps","apps"],["tabManage","manage"]].forEach(([id,key])=>{
     const hid = $(id).classList.contains("hidden");
     $(id).className = "btn " + (v===key?"note":"ghost") + (hid?" hidden":"");
   });
   $("btnAdd").classList.toggle("hidden", v!=="library" || !(profile && ["teacher","admin"].includes(profile.role)));
   if(v==="library") loadResources();
-  if(v==="manage"){ loadUsers(); initCleanupPanel(); }
+  if(v==="manage") loadUsers();
   if(v==="work") loadWork();
   if(v==="survey") loadSurvey();
   if(v==="strength") loadStrength();
+  if(v==="overview") loadOverview();
   if(v==="apps") loadApps();
 }
 
@@ -1007,13 +1008,13 @@ async function delRes(id){
 /* ═══════════ จัดการบัญชี ═══════════ */
 $("nuRole").onchange = ()=> $("nuRoomWrap").classList.toggle("hidden", $("nuRole").value!=="student");
 $("btnCreateUser").onclick = async ()=>{
-  const u=$("nuUser").value.trim(), p=$("nuPass").value, n=$("nuName").value.trim(), role=$("nuRole").value, room=$("nuRoom").value.trim();
+  const u=$("nuUser").value.trim(), p=$("nuPass").value, n=$("nuName").value.trim(), role=$("nuRole").value, room=$("nuRoom").value.trim(), sid=$("nuSid").value.trim();
   if(!u||!p||!n) return msg("nuMsg","กรอกชื่อผู้ใช้ รหัสผ่าน และชื่อ-นามสกุลให้ครบนะคะ","err");
   $("btnCreateUser").disabled = true; msg("nuMsg","");
   try{
-    await callFn("create_user",{username:u,password:p,display_name:n,role,class_room:room||null});
+    await callFn("create_user",{username:u,password:p,display_name:n,role,class_room:room||null,student_id:sid||u});
     msg("nuMsg",`สร้างบัญชี ${u} (${ROLE_LABEL[role]}) เรียบร้อยค่ะ ✅`,"ok");
-    $("nuUser").value=$("nuPass").value=$("nuName").value=$("nuRoom").value="";
+    $("nuUser").value=$("nuPass").value=$("nuName").value=$("nuRoom").value=$("nuSid").value="";
     loadUsers();
   }catch(e){ msg("nuMsg", e.message, "err"); }
   $("btnCreateUser").disabled = false;
@@ -1022,7 +1023,7 @@ $("btnCreateUser").onclick = async ()=>{
 /* ── CSV ── */
 $("csvTemplate").onclick = (e)=>{
   e.preventDefault();
-  const csv = "\uFEFFชื่อผู้ใช้,รหัสผ่าน,ชื่อ-นามสกุล,ห้อง\n12345,pcw12345,เด็กหญิงใจดี มีสุข,ม.6/1\n12346,pcw12346,เด็กชายตั้งใจ เรียนเก่ง,ม.6/1\n";
+  const csv = "\uFEFFชื่อผู้ใช้,รหัสผ่าน,ชื่อ-นามสกุล,ห้อง,เลขประจำตัว\n12345,pcw12345,เด็กหญิงใจดี มีสุข,ม.6/1,12345\n12346,pcw12346,เด็กชายตั้งใจ เรียนเก่ง,ม.6/1,12346\n";
   const a = document.createElement("a");
   a.href = URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));
   a.download = "ตัวอย่างรายชื่อนักเรียน.csv"; a.click();
@@ -1039,7 +1040,7 @@ function parseCSV(text){
     const delim = line.includes("\t") ? "\t" : ",";
     const c = line.split(delim).map(x=>x.trim());
     if(c[0] && (c[0].includes("ชื่อผู้ใช้")||c[0].toLowerCase()==="username")) continue; // ข้ามหัวตาราง
-    rows.push({username:c[0]||"", password:c[1]||"", display_name:c[2]||"", class_room:c[3]||""});
+    rows.push({username:c[0]||"", password:c[1]||"", display_name:c[2]||"", class_room:c[3]||"", student_id:c[4]||c[0]||""});
   }
   return rows;
 }
@@ -1084,13 +1085,14 @@ function renderUsers(){
   $("userRows").innerHTML = list.map(u=>`<tr>
     <td><b>${esc(u.username)}</b></td>
     <td>${esc(u.display_name)}</td>
+    <td>${esc(u.student_id||"-")}</td>
     <td><span class="pill ${u.role}">${ROLE_LABEL[u.role]}</span></td>
     <td>${esc(u.class_room||"-")}</td>
     <td>${canManage(u)?`
       <button class="btn ghost sm" data-rp="${esc(u.username)}">รีเซ็ตรหัส</button>
       ${(profile.role==="admin" && u.role==="teacher")?`<button class="btn note sm" data-perm="${esc(u.id)}">🔐 สิทธิ์เมนู</button>`:""}
       <button class="btn danger sm" data-du="${esc(u.username)}">ลบ</button>`:""}</td>
-  </tr>`).join("") || `<tr><td colspan="5" style="text-align:center;color:var(--ink-soft)">ไม่พบผู้ใช้</td></tr>`;
+  </tr>`).join("") || `<tr><td colspan="6" style="text-align:center;color:var(--ink-soft)">ไม่พบผู้ใช้</td></tr>`;
   $("userRows").querySelectorAll("[data-rp]").forEach(b=> b.onclick=()=>resetPw(b.dataset.rp));
   $("userRows").querySelectorAll("[data-du]").forEach(b=> b.onclick=()=>delUser(b.dataset.du));
   $("userRows").querySelectorAll("[data-perm]").forEach(b=> b.onclick=()=>openPermModal(b.dataset.perm));
@@ -1399,33 +1401,6 @@ function renderRoster(){
   });
 }
 
-/* ── compress รูปด้วย Canvas ก่อนอัพ ── */
-function compressImage(file, maxPx=1280, quality=0.82){
-  return new Promise((resolve, reject)=>{
-    const url = URL.createObjectURL(file);
-    const img = new Image();
-    img.onload = ()=>{
-      URL.revokeObjectURL(url);
-      let {width:w, height:h} = img;
-      // scale down ถ้าเกิน maxPx
-      if(w > maxPx || h > maxPx){
-        if(w >= h){ h = Math.round(h * maxPx / w); w = maxPx; }
-        else { w = Math.round(w * maxPx / h); h = maxPx; }
-      }
-      const canvas = document.createElement("canvas");
-      canvas.width = w; canvas.height = h;
-      const ctx = canvas.getContext("2d");
-      ctx.drawImage(img, 0, 0, w, h);
-      canvas.toBlob(blob=>{
-        if(!blob) return reject(new Error("บีบอัดรูปไม่สำเร็จ"));
-        resolve(blob);
-      }, "image/jpeg", quality);
-    };
-    img.onerror = ()=>{ URL.revokeObjectURL(url); reject(new Error("อ่านไฟล์รูปไม่สำเร็จ")); };
-    img.src = url;
-  });
-}
-
 /* ── นักเรียน: ส่งงาน ── */
 $("btnSubCancel").onclick = ()=> $("subModal").classList.remove("show");
 $("sSegFile").onclick = ()=> setSMode("file");
@@ -1473,22 +1448,14 @@ $("btnSubSave").onclick = async ()=>{
       row.external_url = u;
     }else{
       const file = $("sFile").files[0];
-      if(!file) throw new Error("เลือกไฟล์รูปภาพก่อนนะคะ");
-      // ตรวจนามสกุล: รับเฉพาะรูปภาพ
-      const ALLOWED_IMG = ["jpg","jpeg","png","webp","heic","heif"];
-      const rawExt = (file.name.includes(".")? file.name.split(".").pop() : "").toLowerCase();
-      if(!ALLOWED_IMG.includes(rawExt))
-        throw new Error(`ส่งได้เฉพาะไฟล์รูปภาพ (.jpg .png .webp) นะคะ — ไฟล์ที่เลือก: .${rawExt||"ไม่ทราบนามสกุล"}`);
-      // บีบอัดรูปด้วย Canvas (วิธีที่ 1) ก่อนอัพ
-      msg("subMsg","กำลังบีบอัดรูป…","ok");
-      const compressed = await compressImage(file, 1280, 0.82);
-      const finalExt = "jpg";
-      const finalName = file.name.replace(/\.[^.]+$/, "") + "_compressed.jpg";
-      const path = profile.id + "/" + subAid + "_" + crypto.randomUUID() + "." + finalExt;
+      if(!file) throw new Error("เลือกไฟล์ก่อนนะคะ");
+      if(file.size > 50*1024*1024) throw new Error("ไฟล์ใหญ่เกิน 50MB ค่ะ");
+      const ext = file.name.includes(".")? file.name.split(".").pop() : "bin";
+      const path = profile.id + "/" + subAid + "_" + crypto.randomUUID() + "." + ext;
       msg("subMsg","กำลังอัพโหลด…","ok");
-      const {error:upErr} = await sb.storage.from("submissions").upload(path, compressed, {contentType:"image/jpeg"});
+      const {error:upErr} = await sb.storage.from("submissions").upload(path, file);
       if(upErr) throw upErr;
-      row.file_path = path; row.file_name = finalName;
+      row.file_path = path; row.file_name = file.name;
     }
     const {error} = old
       ? await sb.from("submissions").update(row).eq("id", old.id)
@@ -1761,100 +1728,7 @@ async function delApp(id){
   toast("ลบเรียบร้อย"); loadApps();
 }
 
-/* ═══════════ ล้างข้อมูลจบเทอม (แอดมินเท่านั้น) ═══════════ */
-let cleanupTargets = [];   // assignment ids ที่จะลบ
-
-function initCleanupPanel(){
-  if(profile.role !== "admin"){ $("cleanupPanel").classList.add("hidden"); return; }
-  $("cleanupPanel").classList.remove("hidden");
-  $("cleanupMode").onchange = ()=>{
-    $("cleanupDaysWrap").classList.toggle("hidden", $("cleanupMode").value === "all");
-    $("cleanupPreview").textContent = "";
-    $("btnCleanupRun").classList.add("hidden");
-    cleanupTargets = [];
-  };
-}
-
-$("btnCleanupPreview").onclick = async ()=>{
-  msg("cleanupMsg",""); $("btnCleanupRun").classList.add("hidden"); cleanupTargets = [];
-  $("btnCleanupPreview").disabled = true;
-  $("cleanupPreview").textContent = "กำลังตรวจสอบ…";
-  try{
-    let q = sb.from("assignments").select("id,title,created_at");
-    if($("cleanupMode").value === "old"){
-      const days = parseInt($("cleanupDays").value)||120;
-      const cutoff = new Date(Date.now() - days*86400000).toISOString();
-      q = q.lte("created_at", cutoff);
-    }
-    const {data:aList, error} = await q.order("created_at");
-    if(error) throw error;
-    cleanupTargets = (aList||[]).map(a=>a.id);
-    if(cleanupTargets.length === 0){
-      $("cleanupPreview").textContent = "✅ ไม่มีงานที่เข้าเงื่อนไข ไม่ต้องลบอะไรค่ะ";
-      $("btnCleanupPreview").disabled = false; return;
-    }
-    // นับจำนวน submissions และประมาณไฟล์
-    const {count:subCount} = await sb.from("submissions")
-      .select("id",{count:"exact",head:true})
-      .in("assignment_id", cleanupTargets);
-    const {count:fileCount} = await sb.from("submissions")
-      .select("id",{count:"exact",head:true})
-      .in("assignment_id", cleanupTargets)
-      .not("file_path","is",null);
-    $("cleanupPreview").innerHTML =
-      `<b>พบ ${cleanupTargets.length} งาน</b> · ชิ้นงานนักเรียน ${subCount||0} รายการ · มีไฟล์รูป ${fileCount||0} ไฟล์ที่จะถูกลบออกจาก Storage<br>`+
-      `<span style="color:var(--danger);font-weight:600">⚠ การลบไม่สามารถกู้คืนได้ กรุณาตรวจสอบให้แน่ใจก่อนกดยืนยัน</span>`;
-    $("btnCleanupRun").classList.remove("hidden");
-  }catch(e){ msg("cleanupMsg", e.message, "err"); }
-  $("btnCleanupPreview").disabled = false;
-};
-
-$("btnCleanupRun").onclick = async ()=>{
-  if(cleanupTargets.length === 0) return;
-  if(!confirm(`ยืนยันลบ ${cleanupTargets.length} งาน พร้อมไฟล์ทั้งหมด?\n\n❗ ไม่สามารถกู้คืนได้`)) return;
-  $("btnCleanupRun").disabled = true; $("btnCleanupPreview").disabled = true;
-  msg("cleanupMsg","กำลังลบไฟล์ใน Storage…","ok");
-  try{
-    // 1. ดึง file_path ทั้งหมดของ submissions ที่มีไฟล์
-    const {data:subs} = await sb.from("submissions")
-      .select("file_path").in("assignment_id", cleanupTargets).not("file_path","is",null);
-    const paths = (subs||[]).map(s=>s.file_path).filter(Boolean);
-    // ลบไฟล์ทีละ 100 (Supabase limit per call)
-    let deletedFiles = 0;
-    for(let i=0; i<paths.length; i+=100){
-      const batch = paths.slice(i, i+100);
-      const {error:stErr} = await sb.storage.from("submissions").remove(batch);
-      if(stErr) console.warn("storage remove partial error:", stErr.message);
-      else deletedFiles += batch.length;
-      msg("cleanupMsg", `กำลังลบไฟล์… ${Math.min(i+100,paths.length)}/${paths.length}`, "ok");
-    }
-    // 2. ลบ assignments (cascade ลบ submissions ตาม)
-    msg("cleanupMsg","กำลังลบข้อมูลใน Database…","ok");
-    const CHUNK = 50;
-    let deletedWork = 0;
-    for(let i=0; i<cleanupTargets.length; i+=CHUNK){
-      const batch = cleanupTargets.slice(i, i+CHUNK);
-      const {error:dbErr} = await sb.from("assignments").delete().in("id", batch);
-      if(dbErr) throw dbErr;
-      deletedWork += batch.length;
-    }
-    msg("cleanupMsg",
-      `✅ ล้างข้อมูลเรียบร้อย! ลบงาน ${deletedWork} ชิ้น · ไฟล์ ${deletedFiles} ไฟล์ออกจาก Storage แล้วค่ะ`,
-      "ok");
-    $("cleanupPreview").textContent = "";
-    $("btnCleanupRun").classList.add("hidden");
-    cleanupTargets = [];
-    // รีโหลดข้อมูลงาน
-    if(!$("viewWork").classList.contains("hidden")) loadWork();
-  }catch(e){ msg("cleanupMsg","เกิดข้อผิดพลาด: "+e.message,"err"); }
-  $("btnCleanupRun").disabled = false; $("btnCleanupPreview").disabled = false;
-};
-
-$("cleanupDays").onchange = ()=>{
-  $("cleanupPreview").textContent = "";
-  $("btnCleanupRun").classList.add("hidden");
-  cleanupTargets = [];
-};
+/* ═══════════ เฟส 4: จุดแข็ง (RIASEC) ═══════════ */
 const RIASEC = {
   R:{name:"นักปฏิบัติ", emoji:"🔧", color:"#F28C6B",
      desc:"ถนัดลงมือทำจริง ชอบใช้มือ เครื่องมือ ร่างกาย และแก้ปัญหาที่จับต้องได้",
@@ -2113,6 +1987,114 @@ async function delTag(id){
   if(error) return toast("ลบแท็กไม่สำเร็จ: "+error.message);
   stAllTags = stAllTags.filter(t=>t.id!==id);
   renderStModal(); renderStTeacher();
+}
+
+/* ═══════════ ภาพรวมนักเรียน 360° ═══════════ */
+let ovStudents=[], ovAssignments=[], ovSubmissions=[], ovRounds=[], ovResponses=[], ovAssess=[], ovTags=[], ovF={room:"all",q:""}, ovSid=null;
+
+async function loadOverview(){
+  $("ovLoading").classList.remove("hidden");
+  const [{data:stu},{data:asg},{data:sub},{data:rnd},{data:resp},{data:asm},{data:tg}] = await Promise.all([
+    sb.from("profiles").select("id,username,student_id,display_name,class_room").eq("role","student"),
+    sb.from("assignments").select("id,title,class_rooms,due_at"),
+    sb.from("submissions").select("assignment_id,student_id,submitted_at"),
+    sb.from("survey_rounds").select("id,grade,title,is_open,created_at"),
+    sb.from("survey_responses").select("*"),
+    sb.from("strength_assessments").select("*"),
+    sb.from("strength_tags").select("*"),
+  ]);
+  ovStudents=stu||[]; ovAssignments=asg||[]; ovSubmissions=sub||[]; ovRounds=rnd||[]; ovResponses=resp||[]; ovAssess=asm||[]; ovTags=tg||[];
+  renderOverview();
+  $("ovLoading").classList.add("hidden");
+}
+
+function studentGrade_(classRoom){
+  if(!classRoom) return null;
+  return classRoom.split("/")[0].trim(); // "ม.6/8" -> "ม.6"
+}
+
+function ovAssignmentsFor_(classRoom){
+  return ovAssignments.filter(a => !a.class_rooms || a.class_rooms.length===0 || a.class_rooms.includes(classRoom));
+}
+
+function ovLatestRoundFor_(grade){
+  const rounds = ovRounds.filter(r=>r.grade===grade).sort((a,b)=> b.created_at.localeCompare(a.created_at));
+  return rounds[0] || null;
+}
+
+$("ovQ").addEventListener("input", ()=>{ ovF.q=$("ovQ").value.trim().toLowerCase(); renderOverview(); });
+
+function renderOverview(){
+  const rooms = ["all", ...[...new Set(ovStudents.map(s=>s.class_room).filter(Boolean))].sort()];
+  $("ovRooms").innerHTML = rooms.map(r=>`<button class="chip ${ovF.room===r?"active":""}" data-ovr="${esc(r)}">${r==="all"?"ทุกห้อง":esc(r)}</button>`).join("");
+  $("ovRooms").querySelectorAll(".chip").forEach(b=> b.onclick=()=>{ ovF.room=b.dataset.ovr; renderOverview(); });
+
+  let list = ovStudents;
+  if(ovF.room!=="all") list = list.filter(s=>s.class_room===ovF.room);
+  if(ovF.q) list = list.filter(s=> ((s.username||"")+" "+(s.display_name||"")+" "+(s.class_room||"")).toLowerCase().includes(ovF.q));
+  list = [...list].sort((a,b)=> (a.class_room||"").localeCompare(b.class_room||"","th") || (a.username||"").localeCompare(b.username||""));
+
+  $("ovRows").innerHTML = list.map(s=>{
+    const asgs = ovAssignmentsFor_(s.class_room);
+    const done = asgs.filter(a=> ovSubmissions.some(sub=>sub.assignment_id===a.id && sub.student_id===s.id)).length;
+    const grade = studentGrade_(s.class_room);
+    const round = grade? ovLatestRoundFor_(grade) : null;
+    const myResp = round? ovResponses.find(r=>r.round_id===round.id && r.student_id===s.id) : null;
+    const surveyLabel = !round ? "-" : myResp ? `✅ ${esc(myResp.status||"ตอบแล้ว")}` : "⏳ ยังไม่ตอบ";
+    const assess = ovAssess.find(a=>a.student_id===s.id)||null;
+    const tags = ovTags.filter(t=>t.student_id===s.id);
+    const c = combineScores(assess, tags);
+    const top = [...TYPE_KEYS].sort((a,b)=>c[b]-c[a])[0];
+    const strengthLabel = c[top]>0 ? `${RIASEC[top].emoji} ${RIASEC[top].name}` : "-";
+    return `<tr>
+      <td><b>${esc(s.username)}</b></td>
+      <td>${esc(s.display_name)}</td>
+      <td>${esc(s.class_room||"-")}</td>
+      <td>${asgs.length? `${done}/${asgs.length}` : "-"}</td>
+      <td>${surveyLabel}</td>
+      <td>${strengthLabel}</td>
+      <td><button class="btn primary sm" data-ovp="${s.id}">ดูรายละเอียด</button></td>
+    </tr>`;
+  }).join("") || `<tr><td colspan="7" style="text-align:center;color:var(--ink-soft)">ไม่พบนักเรียน</td></tr>`;
+  $("ovRows").querySelectorAll("[data-ovp]").forEach(b=> b.onclick=()=>openOvModal(b.dataset.ovp));
+}
+
+$("btnOvClose").onclick = ()=> $("ovModal").classList.remove("show");
+function openOvModal(sid){
+  ovSid = sid;
+  const s = ovStudents.find(x=>x.id===sid); if(!s) return;
+  const asgs = ovAssignmentsFor_(s.class_room);
+  const grade = studentGrade_(s.class_room);
+  const rounds = grade? ovRounds.filter(r=>r.grade===grade).sort((a,b)=> b.created_at.localeCompare(a.created_at)) : [];
+  const assess = ovAssess.find(a=>a.student_id===sid)||null;
+  const tags = ovTags.filter(t=>t.student_id===sid).sort((a,b)=> b.created_at.localeCompare(a.created_at));
+
+  const asgRows = asgs.length? asgs.map(a=>{
+    const sub = ovSubmissions.find(x=>x.assignment_id===a.id && x.student_id===sid);
+    return `<tr><td>${esc(a.title)}</td><td>${sub? '<span class="status sent">✅ ส่งแล้ว</span>' : '<span class="status missing">ยังไม่ส่ง</span>'}</td></tr>`;
+  }).join("") : `<tr><td colspan="2" style="text-align:center;color:var(--ink-soft)">ไม่มีงานมอบหมาย</td></tr>`;
+
+  const svRows = rounds.length? rounds.map(r=>{
+    const resp = ovResponses.find(x=>x.round_id===r.id && x.student_id===sid);
+    if(!resp) return `<tr><td>${esc(r.title)}</td><td colspan="2" style="color:var(--ink-soft)">⏳ ยังไม่ตอบ</td></tr>`;
+    return `<tr><td>${esc(r.title)}</td><td>${esc(resp.status||"-")}</td><td>${esc(resp.institution||"-")} ${resp.program? "· "+esc(resp.program):""}</td></tr>`;
+  }).join("") : `<tr><td colspan="3" style="text-align:center;color:var(--ink-soft)">ยังไม่มีรอบสำรวจสำหรับชั้นนี้</td></tr>`;
+
+  $("ovModalBody").innerHTML = `
+    <h2>🧑‍🎓 ${esc(s.display_name)} <small style="font-weight:400;color:var(--ink-soft)">${esc(s.username)} · ${esc(s.class_room||"-")}</small></h2>
+
+    <div class="panel" style="margin-top:12px">
+      <h2 style="font-size:1rem">📝 งานมอบหมาย</h2>
+      <div class="tbl-wrap"><table><thead><tr><th>งาน</th><th>สถานะ</th></tr></thead><tbody>${asgRows}</tbody></table></div>
+    </div>
+
+    <div class="panel" style="margin-top:12px">
+      <h2 style="font-size:1rem">🎓 สำรวจเรียนต่อ</h2>
+      <div class="tbl-wrap"><table><thead><tr><th>รอบ</th><th>สถานะ</th><th>รายละเอียด</th></tr></thead><tbody>${svRows}</tbody></table></div>
+    </div>
+
+    ${profileHTML(s, assess, tags, {})}
+  `;
 }
 
 /* ═══════════ เฟส 5: สิทธิ์เมนูของครู ═══════════ */
