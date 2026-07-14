@@ -29,9 +29,27 @@
   .status.err { color:#e0403f; }
   .thumb { width:44px; height:44px; object-fit:cover; border-radius:6px; }
   a.link { color:#6c5ce7; text-decoration:none; }
+  .login-stage { min-height:100vh; display:flex; align-items:center; justify-content:center; }
+  .login-card { background:#fff; border-radius:16px; padding:28px; max-width:360px; width:100%; box-shadow:0 8px 30px rgba(0,0,0,.12); }
+  .login-card h2 { margin-bottom:14px; color:#4b3f72; }
+  .hidden { display:none !important; }
 </style>
 </head>
 <body>
+
+<div id="loginStage" class="login-stage">
+  <div class="login-card">
+    <h2>🔐 เข้าสู่ระบบ</h2>
+    <label>ชื่อผู้ใช้</label>
+    <input id="li-user" placeholder="ชื่อผู้ใช้เดิมของระบบหลัก">
+    <label>รหัสผ่าน</label>
+    <input id="li-pass" type="password">
+    <button id="btn-login" style="width:100%">เข้าสู่ระบบ</button>
+    <div id="login-status" class="status"></div>
+  </div>
+</div>
+
+<div id="appStage" class="hidden">
 <div class="container">
   <h1>📁 คลังโครงการ/กิจกรรม</h1>
 
@@ -117,15 +135,59 @@
     </table>
   </div>
 </div>
+</div>
 
 <script>
 // ⚠️ ใส่ค่าจริงจาก Supabase project ของคุณ (เหมือนหน้าอื่นในระบบ)
 const SUPABASE_URL = 'https://ikkhjslmtjwrxzxvtokb.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlra2hqc2xtdGp3cnh6eHZ0b2tiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM3NDMzNjksImV4cCI6MjA5OTMxOTM2OX0.3OR_9mEv82Ns1LLjx5nnRwJYzrtKFtWCWd1bPuQfNKU';
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const EMAIL_DOMAIN = 'guidance-pcw.local'; // ต้องตรงกับที่ระบบหลักใช้
 
 const BUCKET = 'project-media';
 let selectedFiles = [];
+
+// ── ล็อกอิน ──
+async function checkSession() {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (session) {
+    document.getElementById('loginStage').classList.add('hidden');
+    document.getElementById('appStage').classList.remove('hidden');
+    loadProjects();
+  }
+}
+
+document.getElementById('btn-login').addEventListener('click', async () => {
+  const btn = document.getElementById('btn-login');
+  const user = document.getElementById('li-user').value.trim().toLowerCase();
+  const pass = document.getElementById('li-pass').value;
+  const statusEl = document.getElementById('login-status');
+  if (!user || !pass) {
+    statusEl.textContent = 'กรอกชื่อผู้ใช้และรหัสผ่านก่อนนะคะ';
+    statusEl.className = 'status err';
+    return;
+  }
+  btn.disabled = true;
+  statusEl.textContent = '';
+  const { error } = await supabase.auth.signInWithPassword({
+    email: user + '@' + EMAIL_DOMAIN,
+    password: pass
+  });
+  btn.disabled = false;
+  if (error) {
+    statusEl.textContent = 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง';
+    statusEl.className = 'status err';
+    return;
+  }
+  document.getElementById('loginStage').classList.add('hidden');
+  document.getElementById('appStage').classList.remove('hidden');
+  loadProjects();
+});
+document.getElementById('li-pass').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') document.getElementById('btn-login').click();
+});
+
+checkSession();
 
 // ตั้งค่าการบีบอัดรูป
 const IMG_MAX_DIMENSION = 1600;   // ด้านยาวสุดของรูปหลังบีบอัด (px)
@@ -301,7 +363,6 @@ async function loadProjects() {
   `).join('');
 }
 
-loadProjects();
 </script>
 </body>
 </html>
