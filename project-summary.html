@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>สรุปโครงการประจำปีการศึกษา - แนะให้แนว</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: 'Sarabun', 'TH SarabunPSK', sans-serif; background:#f7f7fb; margin:0; padding:24px; color:#222; }
+  .container { max-width: 1040px; margin: 0 auto; }
+  h1 { font-size: 1.5rem; color:#4b3f72; }
+  .toolbar { display:flex; gap:12px; align-items:end; margin-bottom:16px; flex-wrap:wrap; }
+  .toolbar label { font-size:.85rem; font-weight:600; display:block; margin-bottom:4px; }
+  .toolbar select { padding:8px 12px; border-radius:8px; border:1px solid #ddd; }
+  button { background:#6c5ce7; color:#fff; border:none; padding:10px 20px; border-radius:9px; font-size:.95rem; cursor:pointer; }
+  button:hover { background:#5a4bd6; }
+  button.secondary { background:#fff; color:#6c5ce7; border:1px solid #6c5ce7; }
+  .stat-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:20px; }
+  .stat-card { background:#fff; border-radius:14px; padding:18px; text-align:center; box-shadow:0 2px 10px rgba(0,0,0,.06); }
+  .stat-card .num { font-size:2rem; font-weight:700; color:#6c5ce7; }
+  .stat-card .label { font-size:.82rem; color:#888; margin-top:4px; }
+  .card { background:#fff; border-radius:14px; padding:20px; box-shadow:0 2px 10px rgba(0,0,0,.06); margin-bottom:20px; }
+  table { width:100%; border-collapse:collapse; }
+  th, td { text-align:left; padding:9px 12px; border-bottom:1px solid #eee; font-size:.9rem; }
+  th { color:#888; font-weight:600; }
+  .bar-wrap { display:flex; align-items:center; gap:10px; margin:8px 0; }
+  .bar-label { width:170px; font-size:.85rem; flex-shrink:0; }
+  .bar-bg { flex:1; background:#f0eefc; border-radius:6px; height:20px; overflow:hidden; }
+  .bar-fill { background:#6c5ce7; height:100%; border-radius:6px; }
+  .bar-count { width:36px; text-align:right; font-size:.85rem; color:#666; }
+  @media print {
+    .toolbar, .no-print { display:none !important; }
+    body { background:#fff; padding:0; }
+    .card, .stat-card { box-shadow:none; border:1px solid #ddd; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>📊 สรุปโครงการ/กิจกรรมประจำปีการศึกษา</h1>
+
+  <div class="toolbar no-print">
+    <div>
+      <label>ปีการศึกษา</label>
+      <select id="filter-year"><option value="">ทุกปี</option></select>
+    </div>
+    <div>
+      <label>ภาคเรียน</label>
+      <select id="filter-semester">
+        <option value="">ทั้งปี</option>
+        <option value="1">ภาคเรียนที่ 1</option>
+        <option value="2">ภาคเรียนที่ 2</option>
+      </select>
+    </div>
+    <div>
+      <label>ประเภทกิจกรรม</label>
+      <select id="filter-activity-type">
+        <option value="">ทุกประเภท</option>
+        <option value="open_house">Open House</option>
+        <option value="training">ประชุม/อบรม</option>
+        <option value="school_project">โครงการโรงเรียน</option>
+        <option value="mou">MOU</option>
+        <option value="exam_prep">เตรียมสอบ</option>
+        <option value="competition">แข่งขันวิชาการ</option>
+        <option value="other">อื่นๆ</option>
+      </select>
+    </div>
+    <button id="btn-refresh">🔄 อัปเดตข้อมูล</button>
+    <button class="secondary" id="btn-print">🖨️ พิมพ์ / บันทึกเป็น PDF</button>
+  </div>
+
+  <div class="stat-grid">
+    <div class="stat-card"><div class="num" id="stat-total">-</div><div class="label">โครงการ/กิจกรรมทั้งหมด</div></div>
+    <div class="stat-card"><div class="num" id="stat-participants">-</div><div class="label">ผู้เข้าร่วมสะสม (คน)</div></div>
+    <div class="stat-card"><div class="num" id="stat-categories">-</div><div class="label">กลุ่มสาระ/หมวดหมู่ที่ร่วม</div></div>
+    <div class="stat-card"><div class="num" id="stat-files">-</div><div class="label">ไฟล์/รูปภาพหลักฐาน</div></div>
+  </div>
+
+  <div class="card">
+    <h3>จำนวนกิจกรรมแยกตามกลุ่มสาระ/หมวดหมู่</h3>
+    <div id="category-bars"></div>
+  </div>
+
+  <div class="card">
+    <h3>จำนวนกิจกรรมแยกตามประเภทกิจกรรม</h3>
+    <div id="type-bars"></div>
+  </div>
+
+  <div class="card">
+    <h3>รายละเอียดโครงการทั้งหมด (สำหรับเสนอผู้บริหาร)</h3>
+    <table>
+      <thead>
+        <tr><th>#</th><th>ชื่อโครงการ</th><th>หมวดหมู่</th><th>ประเภทกิจกรรม</th><th>วันที่</th><th>ผู้เข้าร่วม</th><th>สถานที่</th></tr>
+      </thead>
+      <tbody id="detail-table"><tr><td colspan="7">กำลังโหลด...</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://ikkhjslmtjwrxzxvtokb.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlra2hqc2xtdGp3cnh6eHZ0b2tiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM3NDMzNjksImV4cCI6MjA5OTMxOTM2OX0.3OR_9mEv82Ns1LLjx5nnRwJYzrtKFtWCWd1bPuQfNKU';
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+const ACTIVITY_TYPE_LABELS = {
+  open_house: 'Open House',
+  training: 'ประชุม/อบรม',
+  school_project: 'โครงการโรงเรียน',
+  mou: 'MOU',
+  exam_prep: 'เตรียมสอบ',
+  competition: 'แข่งขันวิชาการ',
+  other: 'อื่นๆ'
+};
+
+async function loadYearOptions() {
+  const { data } = await supabase.from('gs_projects').select('academic_year').order('academic_year', { ascending: false });
+  const years = [...new Set((data || []).map(d => d.academic_year))];
+  const sel = document.getElementById('filter-year');
+  years.forEach(y => {
+    const opt = document.createElement('option');
+    opt.value = y; opt.textContent = `ปีการศึกษา ${y}`;
+    sel.appendChild(opt);
+  });
+}
+
+async function loadSummary() {
+  const year = document.getElementById('filter-year').value;
+  const semester = document.getElementById('filter-semester').value;
+  const activityType = document.getElementById('filter-activity-type').value;
+
+  let query = supabase.from('gs_projects')
+    .select('id, title, category, activity_type, activity_date, participant_count, location, gs_project_files(count)')
+    .order('activity_date', { ascending: false });
+
+  if (year) query = query.eq('academic_year', parseInt(year));
+  if (semester) query = query.eq('semester', parseInt(semester));
+  if (activityType) query = query.eq('activity_type', activityType);
+
+  const { data, error } = await query;
+  if (error) {
+    document.getElementById('detail-table').innerHTML = `<tr><td colspan="7">โหลดข้อมูลไม่สำเร็จ: ${error.message}</td></tr>`;
+    return;
+  }
+
+  const total = data.length;
+  const participants = data.reduce((s, p) => s + (p.participant_count || 0), 0);
+  const fileCount = data.reduce((s, p) => s + (p.gs_project_files?.[0]?.count || 0), 0);
+  const catCounts = {};
+  const typeCounts = {};
+  data.forEach(p => {
+    catCounts[p.category] = (catCounts[p.category] || 0) + 1;
+    typeCounts[p.activity_type] = (typeCounts[p.activity_type] || 0) + 1;
+  });
+
+  document.getElementById('stat-total').textContent = total;
+  document.getElementById('stat-participants').textContent = participants.toLocaleString('th-TH');
+  document.getElementById('stat-categories').textContent = Object.keys(catCounts).length;
+  document.getElementById('stat-files').textContent = fileCount;
+
+  const renderBars = (counts, labelFn) => {
+    const max = Math.max(1, ...Object.values(counts));
+    return Object.entries(counts)
+      .sort((a, b) => b[1] - a[1])
+      .map(([key, count]) => `
+        <div class="bar-wrap">
+          <div class="bar-label">${labelFn(key)}</div>
+          <div class="bar-bg"><div class="bar-fill" style="width:${(count / max) * 100}%"></div></div>
+          <div class="bar-count">${count}</div>
+        </div>
+      `).join('');
+  };
+
+  document.getElementById('category-bars').innerHTML = renderBars(catCounts, k => k) || '<p>ไม่มีข้อมูล</p>';
+  document.getElementById('type-bars').innerHTML = renderBars(typeCounts, k => ACTIVITY_TYPE_LABELS[k] ?? k) || '<p>ไม่มีข้อมูล</p>';
+
+  document.getElementById('detail-table').innerHTML = data.length
+    ? data.map((p, i) => `
+        <tr>
+          <td>${i + 1}</td>
+          <td>${p.title}</td>
+          <td>${p.category}</td>
+          <td>${ACTIVITY_TYPE_LABELS[p.activity_type] ?? p.activity_type}</td>
+          <td>${new Date(p.activity_date).toLocaleDateString('th-TH')}</td>
+          <td>${p.participant_count ?? 0}</td>
+          <td>${p.location ?? '-'}</td>
+        </tr>
+      `).join('')
+    : '<tr><td colspan="7">ไม่มีข้อมูลในช่วงที่เลือก</td></tr>';
+}
+
+document.getElementById('btn-refresh').addEventListener('click', loadSummary);
+document.getElementById('btn-print').addEventListener('click', () => window.print());
+document.getElementById('filter-year').addEventListener('change', loadSummary);
+document.getElementById('filter-semester').addEventListener('change', loadSummary);
+document.getElementById('filter-activity-type').addEventListener('change', loadSummary);
+
+loadYearOptions().then(loadSummary);
+</script>
+</body>
+</html>

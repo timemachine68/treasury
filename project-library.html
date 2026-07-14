@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>คลังโครงการ/กิจกรรม - แนะให้แนว</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: 'Sarabun', 'TH SarabunPSK', sans-serif; background:#f7f7fb; margin:0; padding:24px; color:#222; }
+  .container { max-width: 960px; margin: 0 auto; }
+  h1 { font-size: 1.5rem; color:#4b3f72; }
+  .card { background:#fff; border-radius:14px; padding:20px; box-shadow:0 2px 10px rgba(0,0,0,.06); margin-bottom:20px; }
+  label { display:block; margin:10px 0 4px; font-weight:600; font-size:.92rem; }
+  input, select, textarea { width:100%; padding:9px 12px; border:1px solid #ddd; border-radius:8px; font-family:inherit; font-size:.95rem; }
+  textarea { resize:vertical; min-height:70px; }
+  .row { display:flex; gap:12px; }
+  .row > div { flex:1; }
+  button { margin-top:16px; background:#6c5ce7; color:#fff; border:none; padding:11px 22px; border-radius:9px; font-size:1rem; cursor:pointer; }
+  button:hover { background:#5a4bd6; }
+  button:disabled { background:#bbb; cursor:not-allowed; }
+  .file-list { margin-top:10px; font-size:.85rem; color:#666; }
+  table { width:100%; border-collapse:collapse; margin-top:10px; }
+  th, td { text-align:left; padding:8px 10px; border-bottom:1px solid #eee; font-size:.9rem; }
+  th { color:#888; font-weight:600; }
+  .badge { display:inline-block; padding:2px 10px; border-radius:20px; background:#eee6ff; color:#6c5ce7; font-size:.78rem; }
+  .status { font-size:.88rem; margin-top:8px; }
+  .status.ok { color:#1ba55c; }
+  .status.err { color:#e0403f; }
+  .thumb { width:44px; height:44px; object-fit:cover; border-radius:6px; }
+  a.link { color:#6c5ce7; text-decoration:none; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>📁 คลังโครงการ/กิจกรรม</h1>
+
+  <div class="card">
+    <h3>บันทึกโครงการ/กิจกรรมใหม่</h3>
+    <label>ชื่อโครงการ/กิจกรรม *</label>
+    <input id="f-title" placeholder="เช่น กิจกรรมค่ายแนะแนวเส้นทางสู่มหาวิทยาลัย">
+
+    <div class="row">
+      <div>
+        <label>กลุ่มสาระ/หมวดหมู่ *</label>
+        <select id="f-category">
+          <option value="งานแนะแนว">งานแนะแนว</option>
+          <option value="ภาษาไทย">กลุ่มสาระภาษาไทย</option>
+          <option value="คณิตศาสตร์">กลุ่มสาระคณิตศาสตร์</option>
+          <option value="วิทยาศาสตร์">กลุ่มสาระวิทยาศาสตร์</option>
+          <option value="สังคมศึกษา">กลุ่มสาระสังคมศึกษา</option>
+          <option value="ภาษาต่างประเทศ">กลุ่มสาระภาษาต่างประเทศ</option>
+          <option value="กิจกรรมพัฒนาผู้เรียน">กิจกรรมพัฒนาผู้เรียน</option>
+          <option value="อื่นๆ">อื่นๆ</option>
+        </select>
+      </div>
+      <div>
+        <label>ประเภทกิจกรรม *</label>
+        <select id="f-activity-type">
+          <option value="open_house">Open House</option>
+          <option value="training">ประชุม/อบรม</option>
+          <option value="school_project">โครงการโรงเรียน</option>
+          <option value="mou">MOU</option>
+          <option value="exam_prep">เตรียมสอบ</option>
+          <option value="competition">เข้าร่วมแข่งขันวิชาการ</option>
+          <option value="other">อื่นๆ</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="row">
+      <div>
+        <label>วันที่จัดกิจกรรม *</label>
+        <input id="f-date" type="date">
+      </div>
+    </div>
+
+    <div class="row">
+      <div>
+        <label>ปีการศึกษา (พ.ศ.) *</label>
+        <input id="f-year" type="number" placeholder="2568">
+      </div>
+      <div>
+        <label>ภาคเรียน *</label>
+        <select id="f-semester">
+          <option value="1">ภาคเรียนที่ 1</option>
+          <option value="2">ภาคเรียนที่ 2</option>
+        </select>
+      </div>
+      <div>
+        <label>จำนวนผู้เข้าร่วม (คน)</label>
+        <input id="f-participants" type="number" min="0" placeholder="0">
+      </div>
+    </div>
+
+    <label>สถานที่</label>
+    <input id="f-location" placeholder="เช่น หอประชุมโรงเรียน">
+
+    <label>รายละเอียด/สรุปกิจกรรม</label>
+    <textarea id="f-desc" placeholder="อธิบายวัตถุประสงค์ ผลที่ได้ ฯลฯ"></textarea>
+
+    <label>แนบไฟล์/รูปภาพ (เลือกได้หลายไฟล์)</label>
+    <input id="f-files" type="file" multiple accept="image/*,.pdf,.doc,.docx">
+    <div id="file-list" class="file-list"></div>
+
+    <button id="btn-save">💾 บันทึกโครงการ</button>
+    <div id="status" class="status"></div>
+  </div>
+
+  <div class="card">
+    <h3>รายการโครงการล่าสุด</h3>
+    <table>
+      <thead>
+        <tr><th>ชื่อโครงการ</th><th>หมวดหมู่</th><th>ประเภทกิจกรรม</th><th>วันที่</th><th>ผู้เข้าร่วม</th><th>ไฟล์แนบ</th></tr>
+      </thead>
+      <tbody id="project-list"><tr><td colspan="6">กำลังโหลด...</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+// ⚠️ ใส่ค่าจริงจาก Supabase project ของคุณ (เหมือนหน้าอื่นในระบบ)
+const SUPABASE_URL = 'https://ikkhjslmtjwrxzxvtokb.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlra2hqc2xtdGp3cnh6eHZ0b2tiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM3NDMzNjksImV4cCI6MjA5OTMxOTM2OX0.3OR_9mEv82Ns1LLjx5nnRwJYzrtKFtWCWd1bPuQfNKU';
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+const BUCKET = 'project-media';
+let selectedFiles = [];
+
+// ตั้งค่าการบีบอัดรูป
+const IMG_MAX_DIMENSION = 1600;   // ด้านยาวสุดของรูปหลังบีบอัด (px)
+const IMG_QUALITY = 0.72;         // คุณภาพ JPEG (0-1)
+const IMG_COMPRESS_THRESHOLD = 300 * 1024; // ถ้าไฟล์เล็กกว่านี้อยู่แล้ว ไม่ต้องบีบซ้ำ (300KB)
+
+// บีบอัดรูปภาพด้วย canvas ก่อนอัปโหลด (ไฟล์ที่ไม่ใช่รูป เช่น PDF/Word จะข้ามขั้นตอนนี้)
+function compressImage(file) {
+  return new Promise((resolve) => {
+    if (!file.type.startsWith('image/') || file.size <= IMG_COMPRESS_THRESHOLD) {
+      resolve(file); // ไม่ใช่รูป หรือเล็กอยู่แล้ว ไม่ต้องบีบ
+      return;
+    }
+
+    const img = new Image();
+    const reader = new FileReader();
+
+    reader.onload = (e) => {
+      img.onload = () => {
+        let { width, height } = img;
+        if (width > height && width > IMG_MAX_DIMENSION) {
+          height = Math.round((height * IMG_MAX_DIMENSION) / width);
+          width = IMG_MAX_DIMENSION;
+        } else if (height > IMG_MAX_DIMENSION) {
+          width = Math.round((width * IMG_MAX_DIMENSION) / height);
+          height = IMG_MAX_DIMENSION;
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+
+        canvas.toBlob((blob) => {
+          if (!blob || blob.size >= file.size) {
+            // ถ้าบีบแล้วไม่เล็กลง ให้ใช้ไฟล์เดิม
+            resolve(file);
+            return;
+          }
+          const compressedFile = new File(
+            [blob],
+            file.name.replace(/\.\w+$/, '.jpg'),
+            { type: 'image/jpeg' }
+          );
+          resolve(compressedFile);
+        }, 'image/jpeg', IMG_QUALITY);
+      };
+      img.onerror = () => resolve(file); // เปิดรูปไม่ได้ ใช้ไฟล์เดิม
+      img.src = e.target.result;
+    };
+    reader.onerror = () => resolve(file);
+    reader.readAsDataURL(file);
+  });
+}
+
+document.getElementById('f-files').addEventListener('change', (e) => {
+  selectedFiles = Array.from(e.target.files);
+  document.getElementById('file-list').textContent =
+    selectedFiles.length ? `เลือกไว้ ${selectedFiles.length} ไฟล์: ${selectedFiles.map(f => f.name).join(', ')}` : '';
+});
+
+function setStatus(msg, ok) {
+  const el = document.getElementById('status');
+  el.textContent = msg;
+  el.className = 'status ' + (ok ? 'ok' : 'err');
+}
+
+document.getElementById('btn-save').addEventListener('click', async () => {
+  const btn = document.getElementById('btn-save');
+  const title = document.getElementById('f-title').value.trim();
+  const category = document.getElementById('f-category').value;
+  const activity_type = document.getElementById('f-activity-type').value;
+  const activity_date = document.getElementById('f-date').value;
+  const academic_year = parseInt(document.getElementById('f-year').value);
+  const semester = parseInt(document.getElementById('f-semester').value);
+  const participant_count = parseInt(document.getElementById('f-participants').value) || 0;
+  const location = document.getElementById('f-location').value.trim();
+  const description = document.getElementById('f-desc').value.trim();
+
+  if (!title || !activity_date || !academic_year) {
+    setStatus('กรุณากรอก ชื่อโครงการ / วันที่ / ปีการศึกษา ให้ครบค่ะ', false);
+    return;
+  }
+
+  btn.disabled = true;
+  setStatus('กำลังบันทึก...', true);
+
+  try {
+    const { data: project, error } = await supabase
+      .from('gs_projects')
+      .insert({ title, category, activity_type, activity_date, academic_year, semester, participant_count, location, description })
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    // บีบอัด + อัปโหลดไฟล์แนบ (ถ้ามี)
+    for (let i = 0; i < selectedFiles.length; i++) {
+      const original = selectedFiles[i];
+      setStatus(`กำลังบีบอัดรูป ${i + 1}/${selectedFiles.length}...`, true);
+
+      const uploadFile = await compressImage(original);
+      const savedKB = Math.max(0, Math.round((original.size - uploadFile.size) / 1024));
+      if (savedKB > 0) {
+        console.log(`${original.name}: ${(original.size / 1024).toFixed(0)}KB → ${(uploadFile.size / 1024).toFixed(0)}KB (ประหยัด ${savedKB}KB)`);
+      }
+
+      setStatus(`กำลังอัปโหลด ${i + 1}/${selectedFiles.length}...`, true);
+      const path = `${project.id}/${Date.now()}_${uploadFile.name}`;
+      const { error: upErr } = await supabase.storage.from(BUCKET).upload(path, uploadFile);
+      if (upErr) throw upErr;
+
+      await supabase.from('gs_project_files').insert({
+        project_id: project.id,
+        file_path: path,
+        file_name: uploadFile.name,
+        file_type: uploadFile.type.startsWith('image/') ? 'image' : 'document'
+      });
+    }
+
+    setStatus('✅ บันทึกเรียบร้อยค่ะ', true);
+    document.getElementById('f-title').value = '';
+    document.getElementById('f-desc').value = '';
+    document.getElementById('f-files').value = '';
+    selectedFiles = [];
+    document.getElementById('file-list').textContent = '';
+    loadProjects();
+  } catch (err) {
+    console.error(err);
+    setStatus('❌ เกิดข้อผิดพลาด: ' + err.message, false);
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+const ACTIVITY_TYPE_LABELS = {
+  open_house: 'Open House',
+  training: 'ประชุม/อบรม',
+  school_project: 'โครงการโรงเรียน',
+  mou: 'MOU',
+  exam_prep: 'เตรียมสอบ',
+  competition: 'แข่งขันวิชาการ',
+  other: 'อื่นๆ'
+};
+
+async function loadProjects() {
+  const tbody = document.getElementById('project-list');
+  const { data, error } = await supabase
+    .from('gs_projects')
+    .select('id, title, category, activity_type, activity_date, participant_count, gs_project_files(count)')
+    .order('activity_date', { ascending: false })
+    .limit(20);
+
+  if (error) {
+    tbody.innerHTML = `<tr><td colspan="6">โหลดข้อมูลไม่สำเร็จ: ${error.message}</td></tr>`;
+    return;
+  }
+
+  if (!data.length) {
+    tbody.innerHTML = `<tr><td colspan="6">ยังไม่มีข้อมูลโครงการ</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = data.map(p => `
+    <tr>
+      <td>${p.title}</td>
+      <td><span class="badge">${p.category}</span></td>
+      <td>${ACTIVITY_TYPE_LABELS[p.activity_type] ?? p.activity_type}</td>
+      <td>${new Date(p.activity_date).toLocaleDateString('th-TH')}</td>
+      <td>${p.participant_count ?? 0}</td>
+      <td>${p.gs_project_files?.[0]?.count ?? 0} ไฟล์</td>
+    </tr>
+  `).join('');
+}
+
+loadProjects();
+</script>
+</body>
+</html>
