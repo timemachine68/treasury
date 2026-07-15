@@ -174,6 +174,12 @@ textarea.csvbox{font-family:monospace;font-size:.82rem;min-height:120px}
 .sttop .sec b{color:var(--pine-deep)}
 .tagchip{display:inline-flex;align-items:center;gap:6px;background:var(--pine-tint);color:var(--pine-deep);border-radius:999px;padding:4px 11px;font-size:.78rem;font-weight:600;margin:0 6px 6px 0}
 .tagchip button{border:none;background:none;color:var(--danger);font-weight:700;padding:0 2px}
+.awardchip{display:inline-flex;align-items:center;gap:6px;background:#FFF8E1;color:#7A5800;border:1.5px solid #FFD34D;border-radius:999px;padding:4px 11px;font-size:.78rem;font-weight:600;margin:0 6px 6px 0}
+.awardchip button{border:none;background:none;color:var(--danger);font-weight:700;padding:0 2px}
+.sub-check-row{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px dashed var(--line)}
+.sub-check-row:last-child{border-bottom:none}
+.sub-check-row input[type=checkbox]{width:16px;height:16px;accent-color:var(--pine);flex:none}
+.ai-result{background:var(--pine-tint);border-radius:10px;padding:12px 14px;font-size:.87rem;line-height:1.7;margin-top:10px;white-space:pre-wrap}
 #printArea{display:none}
 @media print{
   body > *:not(#printArea){display:none!important}
@@ -375,7 +381,7 @@ textarea.csvbox{font-family:monospace;font-size:.82rem;min-height:120px}
           </div>
           <div class="tbl-wrap">
             <table>
-              <thead><tr><th>ชื่อผู้ใช้</th><th>ชื่อ-นามสกุล</th><th>ห้อง</th><th>แบบประเมิน</th><th>แท็ก</th><th></th></tr></thead>
+              <thead><tr><th>ชื่อผู้ใช้</th><th>ชื่อ-นามสกุล</th><th>ห้อง</th><th>แบบประเมิน</th><th>แท็ก</th><th>รางวัล</th><th></th></tr></thead>
               <tbody id="stRows"></tbody>
             </table>
           </div>
@@ -635,6 +641,30 @@ textarea.csvbox{font-family:monospace;font-size:.82rem;min-height:120px}
       <div id="tagMsg" class="msg"></div>
       <button class="btn primary sm" id="btnTagSave">➕ เพิ่มแท็ก</button>
     </div>
+    <div class="panel" style="margin-top:10px;margin-bottom:0">
+      <h2>🏆 บันทึกเกียรติบัตร / รางวัล / การแข่งขัน</h2>
+      <p class="field hint" style="margin-bottom:10px">บันทึกรางวัลที่นักเรียนได้รับเพื่อใช้ประกอบการแนะแนวและ Portfolio ค่ะ</p>
+      <div class="row2">
+        <div class="field"><label for="awTitle">ชื่อรางวัล/กิจกรรม *</label><input id="awTitle" placeholder="เช่น รางวัลชนะเลิศการแข่งขันหุ่นยนต์"></div>
+        <div class="field"><label for="awLevel">ระดับ</label>
+          <select id="awLevel">
+            <option value="school">ระดับโรงเรียน</option>
+            <option value="district">ระดับเขต/อำเภอ</option>
+            <option value="province">ระดับจังหวัด</option>
+            <option value="region">ระดับภาค</option>
+            <option value="national">ระดับประเทศ</option>
+            <option value="international">ระดับนานาชาติ</option>
+            <option value="other">อื่นๆ</option>
+          </select>
+        </div>
+      </div>
+      <div class="row2">
+        <div class="field"><label for="awYear">ปีที่ได้รับ</label><input id="awYear" placeholder="เช่น 2567"></div>
+        <div class="field"><label for="awNote">หมายเหตุเพิ่มเติม</label><input id="awNote" placeholder="เช่น ได้รับทุนการศึกษา 5,000 บาท"></div>
+      </div>
+      <div id="awMsg" class="msg"></div>
+      <button class="btn note sm" id="btnAwSave">🏆 บันทึกรางวัล</button>
+    </div>
     <div class="foot">
       <button class="btn note" id="btnStPrint">🖨️ พิมพ์/บันทึก PDF</button>
       <button class="btn ghost" id="btnStClose">ปิด</button>
@@ -837,6 +867,7 @@ $("tabStrength").onclick = ()=> switchView("strength");
 $("tabOverview").onclick = ()=> switchView("overview");
 $("tabApps").onclick = ()=> switchView("apps");
 $("tabManage").onclick = ()=> switchView("manage");
+let _currentView = null;
 function switchView(v){
   ["Library","Work","Survey","Strength","Overview","Apps","Manage"].forEach(n=> $("view"+n).classList.toggle("hidden", v!==n.toLowerCase()));
   [["tabLibrary","library"],["tabWork","work"],["tabSurvey","survey"],["tabStrength","strength"],["tabOverview","overview"],["tabApps","apps"],["tabManage","manage"]].forEach(([id,key])=>{
@@ -844,6 +875,9 @@ function switchView(v){
     $(id).className = "btn " + (v===key?"note":"ghost") + (hid?" hidden":"");
   });
   $("btnAdd").classList.toggle("hidden", v!=="library" || !(profile && ["teacher","admin"].includes(profile.role)));
+  // #6 fix: โหลดซ้ำก็ต่อเมื่อเปลี่ยน view จริงๆ (กด tab เดิมซ้ำ = ไม่ยิง network อีกรอบ)
+  if(v === _currentView) return;
+  _currentView = v;
   if(v==="library") loadResources();
   if(v==="manage") loadUsers();
   if(v==="work") loadWork();
@@ -1262,9 +1296,12 @@ function setWAttach(m){
   $("wLinkWrap").classList.toggle("hidden", m!=="link");
 }
 function roomOptions(selected){
-  const rooms = [...new Set(allStudents.map(s=>s.class_room).filter(Boolean))].sort();
+  // รวมห้องจากนักเรียนในระบบ + ห้องที่งานนี้เคยมอบหมายไว้แล้ว (เช่น ห้องที่พิมพ์เพิ่มเองใน wRoomExtra)
+  const fromStudents = [...new Set(allStudents.map(s=>s.class_room).filter(Boolean))];
+  const extra = (selected||[]).filter(r=> !fromStudents.includes(r));
+  const rooms = [...new Set([...fromStudents, ...extra])].sort();
   $("wRooms").innerHTML = rooms.map(r=>
-    `<label><input type="checkbox" value="${esc(r)}" ${selected?.includes(r)?"checked":""}>${esc(r)}</label>`
+    `<label><input type="checkbox" value="${esc(r)}" ${(selected||[]).includes(r)?"checked":""}>${esc(r)}</label>`
   ).join("") || `<span class="duechip">ยังไม่มีห้องในระบบ — พิมพ์เพิ่มด้านล่างได้เลยค่ะ</span>`;
 }
 function openWorkModal(id){
@@ -1272,7 +1309,12 @@ function openWorkModal(id){
   const a = id? assignments.find(x=>x.id===id) : null;
   $("workModalTitle").textContent = a? "แก้ไขงาน" : "มอบหมายงานใหม่";
   $("wTitle").value = a?.title||""; $("wDesc").value = a?.description||"";
-  $("wDue").value = a?.due_at? new Date(new Date(a.due_at).getTime()-new Date().getTimezoneOffset()*60000).toISOString().slice(0,16) : "";
+  // #4 fix: แปลง due_at เป็น local time อย่างถูกต้องโดยไม่พึ่ง getTimezoneOffset (ใช้ slice บน local string แทน)
+  if(a?.due_at){
+    const d = new Date(a.due_at);
+    const pad = n => String(n).padStart(2,"0");
+    $("wDue").value = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  } else { $("wDue").value = ""; }
   $("wRoomExtra").value = ""; $("wFile").value = ""; $("wUrl").value = a?.external_url||"";
   roomOptions(a?.class_rooms||[]);
   setWSubmit((a && ["text","file","link"].includes(a.submission_type))? a.submission_type : "file");
@@ -1288,7 +1330,17 @@ $("btnWorkSave").onclick = async ()=>{
   $("wRoomExtra").value.split(",").map(x=>x.trim()).filter(Boolean).forEach(r=>{ if(!rooms.includes(r)) rooms.push(r); });
   if(rooms.length===0) return msg("workMsg","เลือกอย่างน้อย 1 ห้องนะคะ","err");
   const base = { title, description:$("wDesc").value.trim()||null, class_rooms:rooms,
-    due_at: $("wDue").value? new Date($("wDue").value).toISOString() : null,
+    due_at: (()=>{
+      const v = $("wDue").value;
+      if(!v) return null;
+      // แปลง local datetime string เป็น ISO โดยรักษา timezone ของ browser
+      const d = new Date(v);
+      const off = d.getTimezoneOffset(); // นาที (negative = ahead of UTC)
+      return new Date(d.getTime() - off * 60000).toISOString().replace("Z", "") +
+        (off <= 0 ? "+" : "-") +
+        String(Math.floor(Math.abs(off)/60)).padStart(2,"0") + ":" +
+        String(Math.abs(off)%60).padStart(2,"0");
+    })(),
     submission_type: wSubmitType };
   $("btnWorkSave").disabled = true;
   try{
@@ -1348,11 +1400,11 @@ function openTextView(title, text){
 $("btnTextViewClose").onclick = ()=> $("textViewModal").classList.remove("show");
 
 /* ── ครู: ตารางรายชื่อผู้ส่ง ── */
-$("btnRosterClose").onclick = ()=> $("rosterModal").classList.remove("show");
+$("btnRosterClose").onclick = ()=>{ $("rosterModal").classList.remove("show"); rosterAid=null; rosterRoom="all"; };
 function openRoster(aid){
   rosterAid = aid; rosterRoom = "all";
   const a = assignments.find(x=>x.id===aid);
-  $("rosterTitle").textContent = "📋 " + a.title;
+  $("rosterTitle").textContent = "📋 " + (a.title||"");
   renderRoster();
   $("rosterModal").classList.add("show");
 }
@@ -1797,6 +1849,7 @@ const TYPE_KEYS = ["R","I","A","S","E","C"];
 let stAssess=null, stTags=[], stAllAssess=[], stAllTags=[], stStudentsList=[], quizAnswers=[], stF={room:"all",q:""}, stSid=null, stTagType=null;
 
 function combineScores(assess, tags){
+  // กรองเฉพาะ tag ที่เป็น RIASEC จริงๆ (ไม่รวม type="award")
   const c = {}; TYPE_KEYS.forEach(k=> c[k] = (assess?.scores?.[k]||0) + tags.filter(t=>t.type===k).length*2);
   return c;
 }
@@ -1879,8 +1932,19 @@ $("btnQuizSave").onclick = async ()=>{
 }
 
 /* ── สร้าง HTML โปรไฟล์ (ใช้ร่วมกันทุกที่) ── */
+const AW_LEVEL_LABEL_MAP = {school:"ระดับโรงเรียน",district:"ระดับเขต",province:"ระดับจังหวัด",region:"ระดับภาค",national:"ระดับประเทศ",international:"ระดับนานาชาติ",other:"อื่นๆ"};
+// awards บันทึกใน strength_tags โดย type="award", note="ชื่อรางวัล|ระดับ|ปี|หมายเหตุ"
+function parseAwardNote(note){
+  const p = (note||"").split("|");
+  return {title:p[0]||"", level:p[1]||"", year:p[2]||"", extra:p[3]||""};
+}
+function formatAwardNote(title,level,year,extra){ return [title,level,year,extra].join("|"); }
+
 function profileHTML(stu, assess, tags, opt={}){
-  const c = combineScores(assess, tags);
+  // แยก RIASEC tags กับ awards ออกจากกัน
+  const riasecTags = tags.filter(t=>TYPE_KEYS.includes(t.type));
+  const awardTags  = tags.filter(t=>t.type==="award");
+  const c = combineScores(assess, riasecTags);
   const max = Math.max(8, ...Object.values(c));
   const top3 = [...TYPE_KEYS].sort((a,b)=> c[b]-c[a]).slice(0,3).filter(k=>c[k]>0);
   const bars = TYPE_KEYS.map(k=>{
@@ -1900,12 +1964,20 @@ function profileHTML(stu, assess, tags, opt={}){
       <p class="sec"><b>กิจกรรมพัฒนาจุดแข็งนี้:</b> ${r.act}</p>
     </div>`;
   }).join("") : `<p class="empty">ยังไม่มีข้อมูลพอสรุปผลค่ะ</p>`;
-  const tagList = tags.length? tags.map(t=>{
+  const tagList = riasecTags.length? riasecTags.map(t=>{
     const r = RIASEC[t.type];
     const del = opt.canDelTag && (t.tagged_by===profile.id || profile.role==="admin")
       ? `<button data-deltag="${t.id}" title="ลบแท็ก">×</button>` : "";
     return `<span class="tagchip" style="background:${r.color}22;color:${r.color}">${r.emoji} ${r.name}${t.note? " · "+esc(t.note):""} <small>(${esc(t.tagger_name||"ครู")})</small>${del}</span>`;
   }).join("") : `<span class="duechip">ยังไม่มีแท็กจากครู</span>`;
+  // เกียรติบัตร/รางวัล
+  const awardList = awardTags.length? awardTags.map(aw=>{
+    const p = parseAwardNote(aw.note);
+    const lvLabel = AW_LEVEL_LABEL_MAP[p.level] || p.level;
+    const del = opt.canDelTag && (aw.tagged_by===profile.id || profile.role==="admin")
+      ? `<button data-delaward="${aw.id}" title="ลบรางวัล">×</button>` : "";
+    return `<span class="awardchip">🏆 ${esc(p.title)}${lvLabel?" · "+esc(lvLabel):""}${p.year?" ("+esc(p.year)+")":""}${p.extra?" · "+esc(p.extra):""}${del}</span>`;
+  }).join("") : `<span class="duechip">ยังไม่มีรางวัล</span>`;
   return `<div class="panel">
     <h2>🌟 โปรไฟล์จุดแข็ง: ${esc(stu.display_name)} ${stu.class_room? "("+esc(stu.class_room)+")":""}</h2>
     ${assess? `<p class="duechip" style="margin-bottom:10px">ทำแบบประเมินล่าสุด ${thDate(assess.done_at)} · คะแนน = แบบประเมิน + แท็กจากครู (แท็กละ 2 คะแนน)</p>`
@@ -1914,6 +1986,8 @@ function profileHTML(stu, assess, tags, opt={}){
     <div style="margin-top:14px">${guide}</div>
     <h2 style="margin-top:14px">🏷️ จุดแข็งที่ครูมองเห็น</h2>
     <div>${tagList}</div>
+    <h2 style="margin-top:14px">🏆 เกียรติบัตร / รางวัล</h2>
+    <div>${awardList}</div>
     ${opt.student? `<div class="actions noprint" style="margin-top:14px">
       <button class="btn note" data-print>🖨️ พิมพ์/บันทึก PDF</button>
       <button class="btn ghost" data-redo>ทำแบบประเมินใหม่</button>
@@ -1921,12 +1995,13 @@ function profileHTML(stu, assess, tags, opt={}){
   </div>`;
 }
 
-function printProfile(stu, assess, tags){
+function printProfile(stu, assess, allTags){
+  // ส่ง allTags ทั้งหมด (RIASEC + award) profileHTML แยกเอง
   $("printArea").innerHTML = `
     <div style="text-align:center;margin-bottom:12px">
       <h2 style="font-family:'Mitr'">ไกด์จุดแข็งของฉัน 🌟</h2>
       <p style="font-size:.85rem">งานแนะแนว "แนะให้แนว" โรงเรียนพูลเจริญวิทยาคม · พิมพ์เมื่อ ${new Date().toLocaleDateString("th-TH")}</p>
-    </div>` + profileHTML(stu, assess, tags, {});
+    </div>` + profileHTML(stu, assess, allTags, {});
   window.print();
 }
 
@@ -1942,12 +2017,14 @@ function renderStTeacher(){
   list = [...list].sort((a,b)=> (a.class_room||"").localeCompare(b.class_room||"","th") || (a.username||"").localeCompare(b.username||""));
   const asmSet = new Set(stAllAssess.map(a=>a.student_id));
   $("stRows").innerHTML = list.map(s=>{
-    const n = stAllTags.filter(t=>t.student_id===s.id).length;
+    const nTag   = stAllTags.filter(t=>t.student_id===s.id && TYPE_KEYS.includes(t.type)).length;
+    const nAward = stAllTags.filter(t=>t.student_id===s.id && t.type==="award").length;
     return `<tr><td><b>${esc(s.username)}</b></td><td>${esc(s.display_name)}</td><td>${esc(s.class_room||"-")}</td>
       <td>${asmSet.has(s.id)? '<span class="status sent">✅ ทำแล้ว</span>':'<span class="status missing">ยังไม่ทำ</span>'}</td>
-      <td>${n? `🏷️ ${n}`:"-"}</td>
-      <td><button class="btn primary sm" data-stp="${s.id}">ดู/ติดแท็ก</button></td></tr>`;
-  }).join("") || `<tr><td colspan="6" style="text-align:center;color:var(--ink-soft)">ไม่พบนักเรียน</td></tr>`;
+      <td>${nTag? `🏷️ ${nTag}`:"-"}</td>
+      <td>${nAward? `🏆 ${nAward}`:"-"}</td>
+      <td><button class="btn primary sm" data-stp="${s.id}">ดู/บันทึก</button></td></tr>`;
+  }).join("") || `<tr><td colspan="7" style="text-align:center;color:var(--ink-soft)">ไม่พบนักเรียน</td></tr>`;
   $("stRows").querySelectorAll("[data-stp]").forEach(b=> b.onclick=()=>openStModal(b.dataset.stp));
 }
 
@@ -1960,15 +2037,17 @@ function openStModal(sid){
 function renderStModal(){
   const stu = stStudentsList.find(s=>s.id===stSid); if(!stu) return;
   const assess = stAllAssess.find(a=>a.student_id===stSid)||null;
+  // ส่ง tags ทั้งหมด (RIASEC + award) ให้ profileHTML แยกเอง
   const tags = stAllTags.filter(t=>t.student_id===stSid).sort((a,b)=> b.created_at.localeCompare(a.created_at));
   $("stModalBody").innerHTML = profileHTML(stu, assess, tags, {canDelTag:true});
   $("stModalBody").querySelectorAll("[data-deltag]").forEach(b=> b.onclick=()=>delTag(b.dataset.deltag));
+  $("stModalBody").querySelectorAll("[data-delaward]").forEach(b=> b.onclick=()=>delTag(b.dataset.delaward));
   $("tagPick").innerHTML = TYPE_KEYS.map(k=>{
     const r = RIASEC[k];
     return `<label style="${stTagType===k?`background:${r.color};border-color:${r.color};color:#fff`:""}"><input type="radio" name="tagT" value="${k}" ${stTagType===k?"checked":""} style="display:none">${r.emoji} ${r.name}</label>`;
   }).join("");
   $("tagPick").querySelectorAll("input").forEach(i=> i.onchange=()=>{ stTagType=i.value; renderStModal(); });
-  $("btnStPrint").onclick = ()=> printProfile(stu, assess, tags);
+  $("btnStPrint").onclick = ()=> printProfile(stu, assess, tags.filter(t=>TYPE_KEYS.includes(t.type)));
 }
 $("btnTagSave").onclick = async ()=>{
   if(!stTagType) return msg("tagMsg","เลือกจุดแข็งที่จะแท็กก่อนนะคะ","err");
@@ -1982,22 +2061,43 @@ $("btnTagSave").onclick = async ()=>{
   stAllTags.push(data); $("tagNote").value=""; stTagType=null;
   toast("ติดแท็กเรียบร้อย 🏷️"); renderStModal(); renderStTeacher();
 };
+$("btnAwSave").onclick = async ()=>{
+  const title = $("awTitle").value.trim();
+  if(!title) return msg("awMsg","ใส่ชื่อรางวัลก่อนนะคะ","err");
+  const level = $("awLevel").value;
+  const year  = $("awYear").value.trim();
+  const extra = $("awNote").value.trim();
+  const noteStr = formatAwardNote(title, level, year, extra);
+  $("btnAwSave").disabled = true;
+  const {data, error} = await sb.from("strength_tags").insert({
+    student_id:stSid, type:"award", note:noteStr,
+    tagged_by:profile.id, tagger_name:profile.display_name
+  }).select().single();
+  $("btnAwSave").disabled = false;
+  if(error) return msg("awMsg", error.message, "err");
+  stAllTags.push(data);
+  $("awTitle").value=""; $("awYear").value=""; $("awNote").value="";
+  msg("awMsg","");
+  toast("บันทึกรางวัลเรียบร้อย 🏆"); renderStModal(); renderStTeacher();
+};
 async function delTag(id){
   const {error} = await sb.from("strength_tags").delete().eq("id", id);
-  if(error) return toast("ลบแท็กไม่สำเร็จ: "+error.message);
+  if(error) return toast("ลบไม่สำเร็จ: "+error.message);
   stAllTags = stAllTags.filter(t=>t.id!==id);
   renderStModal(); renderStTeacher();
 }
 
 /* ═══════════ ภาพรวมนักเรียน 360° ═══════════ */
 let ovStudents=[], ovAssignments=[], ovSubmissions=[], ovRounds=[], ovResponses=[], ovAssess=[], ovTags=[], ovF={room:"all",q:""}, ovSid=null;
+// ovTags รวมทั้ง RIASEC tags และ award records (type="award")
 
 async function loadOverview(){
   $("ovLoading").classList.remove("hidden");
   const [{data:stu},{data:asg},{data:sub},{data:rnd},{data:resp},{data:asm},{data:tg}] = await Promise.all([
     sb.from("profiles").select("id,username,student_id,display_name,class_room").eq("role","student"),
     sb.from("assignments").select("id,title,class_rooms,due_at"),
-    sb.from("submissions").select("assignment_id,student_id,submitted_at"),
+    // ดึง content ด้วยเพื่อให้ AI วิเคราะห์ได้ (text_answer, file_name, external_url)
+    sb.from("submissions").select("id,assignment_id,student_id,submitted_at,text_answer,file_name,external_url,note"),
     sb.from("survey_rounds").select("id,grade,title,is_open,created_at"),
     sb.from("survey_responses").select("*"),
     sb.from("strength_assessments").select("*"),
@@ -2067,12 +2167,23 @@ function openOvModal(sid){
   const grade = studentGrade_(s.class_room);
   const rounds = grade? ovRounds.filter(r=>r.grade===grade).sort((a,b)=> b.created_at.localeCompare(a.created_at)) : [];
   const assess = ovAssess.find(a=>a.student_id===sid)||null;
-  const tags = ovTags.filter(t=>t.student_id===sid).sort((a,b)=> b.created_at.localeCompare(a.created_at));
+  const tags = ovTags.filter(t=>t.student_id===sid && t.type!=="award").sort((a,b)=> b.created_at.localeCompare(a.created_at));
+  const awards = ovTags.filter(t=>t.student_id===sid && t.type==="award").sort((a,b)=> b.created_at.localeCompare(a.created_at));
 
+  // ─── งานมอบหมาย: checkbox สำหรับติ๊กเลือกงานที่ต้องการรวมในภาพรวม/ส่งไปวิเคราะห์ต่อ ───
+  const AW_LEVEL_LABEL = {school:"ระดับโรงเรียน",district:"ระดับเขต",province:"ระดับจังหวัด",region:"ระดับภาค",national:"ระดับประเทศ",international:"ระดับนานาชาติ",other:"อื่นๆ"};
   const asgRows = asgs.length? asgs.map(a=>{
     const sub = ovSubmissions.find(x=>x.assignment_id===a.id && x.student_id===sid);
-    return `<tr><td>${esc(a.title)}</td><td>${sub? '<span class="status sent">✅ ส่งแล้ว</span>' : '<span class="status missing">ยังไม่ส่ง</span>'}</td></tr>`;
-  }).join("") : `<tr><td colspan="2" style="text-align:center;color:var(--ink-soft)">ไม่มีงานมอบหมาย</td></tr>`;
+    const hasContent = sub && (sub.text_answer || sub.file_name || sub.external_url);
+    const checkBox = sub ? `<input type="checkbox" class="ov-sub-check" checked data-subid="${sub.id}" data-asgname="${esc(a.title)}" data-text="${esc(sub.text_answer||"")}" data-file="${esc(sub.file_name||"")}" data-url="${esc(sub.external_url||"")}" data-submitted="${esc(thDateTime(sub.submitted_at))}" ${hasContent?"":"disabled"} title="${hasContent?"ติ๊กเพื่อรวมในสรุปภาพรวม":"ไม่มีเนื้อหาที่สรุปได้"}">` : `<input type="checkbox" disabled title="ยังไม่ส่งงาน">`;
+    const subLabel = sub
+      ? (sub.text_answer ? `<span class="status sent">✅ ส่งข้อความ</span>`
+        : sub.file_name  ? `<span class="status sent">✅ ${esc(sub.file_name)}</span>`
+        : sub.external_url ? `<span class="status sent">✅ ลิงก์</span>`
+        : `<span class="status sent">✅ ส่งแล้ว</span>`)
+      : `<span class="status missing">ยังไม่ส่ง</span>`;
+    return `<div class="sub-check-row">${checkBox}<span style="flex:1">${esc(a.title)}</span>${subLabel}</div>`;
+  }).join("") : `<p style="color:var(--ink-soft);font-size:.85rem;padding:8px 0">ไม่มีงานมอบหมาย</p>`;
 
   const svRows = rounds.length? rounds.map(r=>{
     const resp = ovResponses.find(x=>x.round_id===r.id && x.student_id===sid);
@@ -2080,12 +2191,29 @@ function openOvModal(sid){
     return `<tr><td>${esc(r.title)}</td><td>${esc(resp.status||"-")}</td><td>${esc(resp.institution||"-")} ${resp.program? "· "+esc(resp.program):""}</td></tr>`;
   }).join("") : `<tr><td colspan="3" style="text-align:center;color:var(--ink-soft)">ยังไม่มีรอบสำรวจสำหรับชั้นนี้</td></tr>`;
 
+  const awardList = awards.length ? awards.map(aw=>{
+    const lvLabel = AW_LEVEL_LABEL[aw.note?.split("|")[1]] || "";
+    const yr = aw.note?.split("|")[2] || "";
+    const extra = aw.note?.split("|")[3] || "";
+    return `<span class="awardchip">🏆 ${esc(aw.note?.split("|")[0]||"")}${lvLabel? " · "+lvLabel:""}${yr? " ("+yr+")":""}${extra? " · "+esc(extra):""}</span>`;
+  }).join("") : `<span class="duechip" style="font-size:.8rem">ยังไม่มีรางวัล</span>`;
+
   $("ovModalBody").innerHTML = `
     <h2>🧑‍🎓 ${esc(s.display_name)} <small style="font-weight:400;color:var(--ink-soft)">${esc(s.username)} · ${esc(s.class_room||"-")}</small></h2>
 
     <div class="panel" style="margin-top:12px">
-      <h2 style="font-size:1rem">📝 งานมอบหมาย</h2>
-      <div class="tbl-wrap"><table><thead><tr><th>งาน</th><th>สถานะ</th></tr></thead><tbody>${asgRows}</tbody></table></div>
+      <h2 style="font-size:1rem">📝 งานมอบหมาย <span style="font-weight:400;font-size:.8rem;color:var(--ink-soft)">(ติ๊กงานที่ต้องการรวมในสรุปภาพรวมด้านล่าง)</span></h2>
+      <div id="ovAsgList">${asgRows}</div>
+    </div>
+
+    <div class="panel" style="margin-top:12px">
+      <h2 style="font-size:1rem">📋 สรุปภาพรวม (จากงานที่ติ๊กเลือก)</h2>
+      <div id="ovSummaryBox" class="ai-result"></div>
+      <div style="margin-top:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <button class="btn note sm" id="btnOvCopy">📋 คัดลอกสรุปนี้</button>
+        <button class="btn ghost sm" id="btnOvOpenClaude">🔗 เปิด Claude.ai เพื่อวิเคราะห์ต่อ (ฟรี)</button>
+        <span style="font-size:.76rem;color:var(--ink-soft)">คัดลอกแล้วนำไปวางในแชทฟรีได้เลยค่ะ ไม่มีค่าใช้จ่ายเพิ่ม</span>
+      </div>
     </div>
 
     <div class="panel" style="margin-top:12px">
@@ -2093,8 +2221,62 @@ function openOvModal(sid){
       <div class="tbl-wrap"><table><thead><tr><th>รอบ</th><th>สถานะ</th><th>รายละเอียด</th></tr></thead><tbody>${svRows}</tbody></table></div>
     </div>
 
+    <div class="panel" style="margin-top:12px">
+      <h2 style="font-size:1rem">🏆 เกียรติบัตร / รางวัล</h2>
+      <div>${awardList}</div>
+    </div>
+
     ${profileHTML(s, assess, tags, {})}
   `;
+
+  // อัปเดตสรุปภาพรวมทันทีตอนเปิด + ทุกครั้งที่ติ๊ก/ยกเลิกติ๊ก
+  updateOvSummary(s);
+  $("ovModalBody").querySelectorAll(".ov-sub-check").forEach(cb=>{
+    cb.onchange = ()=> updateOvSummary(s);
+  });
+  $("btnOvCopy").onclick = ()=> copyOvSummary();
+  $("btnOvOpenClaude").onclick = ()=>{
+    copyOvSummary(true);
+    window.open("https://claude.ai/new", "_blank", "noopener");
+  };
+}
+
+/* ── สร้างข้อความสรุปภาพรวม (ไม่เรียก API ใดๆ ทั้งสิ้น — ไม่มีค่าใช้จ่าย) ── */
+function buildOvSummaryText(s){
+  const checked = [...$("ovModalBody").querySelectorAll(".ov-sub-check:checked")];
+  const lines = [];
+  lines.push(`ข้อมูลนักเรียน: ${s.display_name} (${s.username}) ห้อง ${s.class_room||"-"}`);
+  lines.push("");
+  if(checked.length){
+    lines.push(`ชิ้นงานที่เลือก (${checked.length} รายการ):`);
+    checked.forEach(cb=>{
+      const parts = [];
+      if(cb.dataset.text)  parts.push(`คำตอบ: "${cb.dataset.text}"`);
+      if(cb.dataset.file)  parts.push(`ไฟล์ที่ส่ง: ${cb.dataset.file}`);
+      if(cb.dataset.url)   parts.push(`ลิงก์: ${cb.dataset.url}`);
+      lines.push(`• ${cb.dataset.asgname} (ส่งเมื่อ ${cb.dataset.submitted}) — ${parts.join(" / ")||"(ส่งแล้วแต่ไม่มีเนื้อหา)"}`);
+    });
+  } else {
+    lines.push("ยังไม่ได้ติ๊กเลือกชิ้นงานใดค่ะ");
+  }
+  lines.push("");
+  lines.push("โปรดช่วยวิเคราะห์จุดแข็ง ความสนใจ และให้คำแนะนำเชิงแนะแนวสำหรับนักเรียนคนนี้ โดยอ้างอิงจากชิ้นงานข้างต้น (ตอบเป็นภาษาไทย ไม่เกิน 200 คำ)");
+  return lines.join("\\n");
+}
+function updateOvSummary(s){
+  const box = $("ovSummaryBox");
+  if(!box) return;
+  box.textContent = buildOvSummaryText(s);
+}
+function copyOvSummary(silent){
+  const box = $("ovSummaryBox");
+  if(!box) return;
+  const text = box.textContent || "";
+  navigator.clipboard.writeText(text).then(()=>{
+    if(!silent) toast("คัดลอกสรุปแล้วค่ะ นำไปวางในแชท AI ที่ใช้อยู่ได้เลย 📋");
+  }).catch(()=>{
+    if(!silent) toast("คัดลอกไม่สำเร็จ ลองเลือกข้อความแล้วคัดลอกเองนะคะ");
+  });
 }
 
 /* ═══════════ เฟส 5: สิทธิ์เมนูของครู ═══════════ */
