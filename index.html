@@ -2171,11 +2171,10 @@ function openOvModal(sid){
   const awards = ovTags.filter(t=>t.student_id===sid && t.type==="award").sort((a,b)=> b.created_at.localeCompare(a.created_at));
 
   // ─── งานมอบหมาย: checkbox สำหรับติ๊กเลือกงานที่ต้องการรวมในภาพรวม/ส่งไปวิเคราะห์ต่อ ───
-  const AW_LEVEL_LABEL = {school:"ระดับโรงเรียน",district:"ระดับเขต",province:"ระดับจังหวัด",region:"ระดับภาค",national:"ระดับประเทศ",international:"ระดับนานาชาติ",other:"อื่นๆ"};
   const asgRows = asgs.length? asgs.map(a=>{
     const sub = ovSubmissions.find(x=>x.assignment_id===a.id && x.student_id===sid);
     const hasContent = sub && (sub.text_answer || sub.file_name || sub.external_url);
-    const checkBox = sub ? `<input type="checkbox" class="ov-sub-check" checked data-subid="${sub.id}" data-asgname="${esc(a.title)}" data-text="${esc(sub.text_answer||"")}" data-file="${esc(sub.file_name||"")}" data-url="${esc(sub.external_url||"")}" data-submitted="${esc(thDateTime(sub.submitted_at))}" ${hasContent?"":"disabled"} title="${hasContent?"ติ๊กเพื่อรวมในสรุปภาพรวม":"ไม่มีเนื้อหาที่สรุปได้"}">` : `<input type="checkbox" disabled title="ยังไม่ส่งงาน">`;
+    const checkBox = sub ? `<input type="checkbox" class="ov-sub-check" ${hasContent?"checked":""} data-subid="${sub.id}" data-asgname="${esc(a.title)}" data-text="${esc(sub.text_answer||"")}" data-file="${esc(sub.file_name||"")}" data-url="${esc(sub.external_url||"")}" data-submitted="${esc(thDateTime(sub.submitted_at))}" ${hasContent?"":"disabled"} title="${hasContent?"ติ๊กเพื่อรวมในสรุปภาพรวม":"ไม่มีเนื้อหาที่สรุปได้ — ไม่รวมในสรุปอัตโนมัติ"}">` : `<input type="checkbox" disabled title="ยังไม่ส่งงาน">`;
     const subLabel = sub
       ? (sub.text_answer ? `<span class="status sent">✅ ส่งข้อความ</span>`
         : sub.file_name  ? `<span class="status sent">✅ ${esc(sub.file_name)}</span>`
@@ -2192,7 +2191,7 @@ function openOvModal(sid){
   }).join("") : `<tr><td colspan="3" style="text-align:center;color:var(--ink-soft)">ยังไม่มีรอบสำรวจสำหรับชั้นนี้</td></tr>`;
 
   const awardList = awards.length ? awards.map(aw=>{
-    const lvLabel = AW_LEVEL_LABEL[aw.note?.split("|")[1]] || "";
+    const lvLabel = AW_LEVEL_LABEL_MAP[aw.note?.split("|")[1]] || "";
     const yr = aw.note?.split("|")[2] || "";
     const extra = aw.note?.split("|")[3] || "";
     return `<span class="awardchip">🏆 ${esc(aw.note?.split("|")[0]||"")}${lvLabel? " · "+lvLabel:""}${yr? " ("+yr+")":""}${extra? " · "+esc(extra):""}</span>`;
@@ -2261,7 +2260,7 @@ function buildOvSummaryText(s){
   }
   lines.push("");
   lines.push("โปรดช่วยวิเคราะห์จุดแข็ง ความสนใจ และให้คำแนะนำเชิงแนะแนวสำหรับนักเรียนคนนี้ โดยอ้างอิงจากชิ้นงานข้างต้น (ตอบเป็นภาษาไทย ไม่เกิน 200 คำ)");
-  return lines.join("\\n");
+  return lines.join("\n");
 }
 function updateOvSummary(s){
   const box = $("ovSummaryBox");
