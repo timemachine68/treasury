@@ -180,6 +180,16 @@ textarea.csvbox{font-family:monospace;font-size:.82rem;min-height:120px}
 .sub-check-row:last-child{border-bottom:none}
 .sub-check-row input[type=checkbox]{width:16px;height:16px;accent-color:var(--pine);flex:none}
 .ai-result{background:var(--pine-tint);border-radius:10px;padding:12px 14px;font-size:.87rem;line-height:1.7;margin-top:10px;white-space:pre-wrap}
+.health-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:520px){.health-grid{grid-template-columns:1fr}}
+.health-card{background:var(--board);border-radius:12px;padding:14px}
+.health-label{font-size:.82rem;color:var(--ink-soft);font-weight:600;margin-bottom:4px}
+.health-value{font-size:1.3rem;font-weight:700;color:var(--pine-deep);font-family:'Mitr'}
+.health-bar{background:#fff;border:1px solid var(--line);border-radius:999px;height:10px;overflow:hidden;margin:8px 0 6px}
+.health-bar>div{height:100%;background:var(--pine);transition:width .3s}
+.health-bar.warn>div{background:var(--note)}
+.health-bar.danger>div{background:var(--danger)}
+.health-sub{font-size:.76rem;color:var(--ink-soft)}
 #printArea{display:none}
 @media print{
   body > *:not(#printArea){display:none!important}
@@ -267,6 +277,32 @@ textarea.csvbox{font-family:monospace;font-size:.82rem;min-height:120px}
 
     <!-- ── มุมมองจัดการบัญชี ── -->
     <div id="viewManage" class="hidden">
+
+      <div class="panel hidden" id="healthPanel">
+        <h2>💚 สุขภาพระบบ</h2>
+        <p class="field hint" style="margin-bottom:12px">ขนาดฐานข้อมูลและไฟล์ที่ใช้ไปบน Supabase (Free Plan) — กดรีเฟรชเพื่อดูค่าล่าสุดค่ะ</p>
+        <div id="healthLoading" class="hint">กำลังโหลด…</div>
+        <div id="healthBody" class="hidden">
+          <div class="health-grid">
+            <div class="health-card">
+              <div class="health-label">🗄️ Database</div>
+              <div class="health-value" id="healthDbSize">-</div>
+              <div class="health-bar"><div id="healthDbBar" style="width:0%"></div></div>
+              <div class="health-sub" id="healthDbPct">-</div>
+            </div>
+            <div class="health-card">
+              <div class="health-label">📦 Storage (ไฟล์)</div>
+              <div class="health-value" id="healthStSize">-</div>
+              <div class="health-bar"><div id="healthStBar" style="width:0%"></div></div>
+              <div class="health-sub" id="healthStPct">-</div>
+            </div>
+          </div>
+          <h2 style="margin-top:16px;font-size:.95rem">📊 ขนาดแยกตามตาราง</h2>
+          <div class="tbl-wrap"><table><thead><tr><th>ตาราง</th><th>ขนาด</th><th>จำนวนแถว (โดยประมาณ)</th></tr></thead><tbody id="healthTableRows"></tbody></table></div>
+          <p class="field hint" style="margin-top:10px" id="healthCheckedAt"></p>
+        </div>
+        <button class="btn ghost sm" id="btnHealthRefresh" style="margin-top:12px">🔄 รีเฟรชข้อมูล</button>
+      </div>
 
       <div class="panel">
         <h2>➕ เพิ่มบัญชีทีละคน</h2>
@@ -879,7 +915,7 @@ function switchView(v){
   if(v === _currentView) return;
   _currentView = v;
   if(v==="library") loadResources();
-  if(v==="manage") loadUsers();
+  if(v==="manage"){ loadUsers(); loadHealth(); }
   if(v==="work") loadWork();
   if(v==="survey") loadSurvey();
   if(v==="strength") loadStrength();
@@ -1040,7 +1076,11 @@ async function delRes(id){
 }
 
 /* ═══════════ จัดการบัญชี ═══════════ */
-$("nuRole").onchange = ()=> $("nuRoomWrap").classList.toggle("hidden", $("nuRole").value!=="student");
+$("nuRole").onchange = ()=>{
+  const isStudent = $("nuRole").value==="student";
+  $("nuRoomWrap").classList.toggle("hidden", !isStudent);
+  $("nuSidWrap").classList.toggle("hidden", !isStudent);
+};
 $("btnCreateUser").onclick = async ()=>{
   const u=$("nuUser").value.trim(), p=$("nuPass").value, n=$("nuName").value.trim(), role=$("nuRole").value, room=$("nuRoom").value.trim(), sid=$("nuSid").value.trim();
   if(!u||!p||!n) return msg("nuMsg","กรอกชื่อผู้ใช้ รหัสผ่าน และชื่อ-นามสกุลให้ครบนะคะ","err");
@@ -1103,6 +1143,54 @@ function renderRoleChips(){
   $("roleChips").querySelectorAll(".chip").forEach(b=> b.onclick=()=>{ uf.role=b.dataset.r; renderRoleChips(); renderUsers(); });
 }
 $("userQ").addEventListener("input", ()=>{ uf.q=$("userQ").value.trim().toLowerCase(); renderUsers(); });
+
+/* ═══════════ สุขภาพระบบ (เฉพาะ admin) — Supabase Free Plan: DB 500MB, Storage 1GB ═══════════ */
+const DB_LIMIT_BYTES = 500 * 1024 * 1024;       // 500 MB
+const STORAGE_LIMIT_BYTES = 1024 * 1024 * 1024; // 1 GB
+function fmtBytes(b){
+  if(b < 1024) return b + " B";
+  if(b < 1024*1024) return (b/1024).toFixed(1) + " KB";
+  if(b < 1024*1024*1024) return (b/1024/1024).toFixed(1) + " MB";
+  return (b/1024/1024/1024).toFixed(2) + " GB";
+}
+function setHealthBar(barId, pctId, usedBytes, limitBytes){
+  const pct = limitBytes>0 ? Math.min(100, (usedBytes/limitBytes)*100) : 0;
+  const bar = $(barId);
+  bar.style.width = pct.toFixed(1) + "%";
+  const wrap = bar.parentElement;
+  wrap.classList.remove("warn","danger");
+  if(pct>=90) wrap.classList.add("danger");
+  else if(pct>=70) wrap.classList.add("warn");
+  $(pctId).textContent = `ใช้ไป ${pct.toFixed(1)}% จาก ${fmtBytes(limitBytes)}`;
+}
+async function loadHealth(){
+  const isAdmin = profile && profile.role==="admin";
+  $("healthPanel").classList.toggle("hidden", !isAdmin);
+  if(!isAdmin) return;
+  $("healthLoading").classList.remove("hidden");
+  $("healthBody").classList.add("hidden");
+  try{
+    const {data, error} = await sb.rpc("get_db_health");
+    if(error) throw error;
+    // ขนาด database
+    $("healthDbSize").textContent = data.db_size_pretty;
+    setHealthBar("healthDbBar","healthDbPct", data.db_size_bytes, DB_LIMIT_BYTES);
+    // ขนาด storage (รวมทุก bucket)
+    const storageTotal = (data.storage||[]).reduce((sum,s)=> sum + Number(s.total_bytes||0), 0);
+    $("healthStSize").textContent = fmtBytes(storageTotal);
+    setHealthBar("healthStBar","healthStPct", storageTotal, STORAGE_LIMIT_BYTES);
+    // ตารางแยกทีละตัว
+    $("healthTableRows").innerHTML = (data.tables||[]).map(t=>
+      `<tr><td>${esc(t.table_name)}</td><td>${esc(t.total_pretty)}</td><td>${Number(t.approx_rows||0).toLocaleString("th-TH")}</td></tr>`
+    ).join("") || `<tr><td colspan="3" style="text-align:center;color:var(--ink-soft)">ไม่มีข้อมูล</td></tr>`;
+    $("healthCheckedAt").textContent = "เช็คล่าสุด: " + thDateTime(data.checked_at);
+    $("healthLoading").classList.add("hidden");
+    $("healthBody").classList.remove("hidden");
+  }catch(e){
+    $("healthLoading").textContent = "โหลดข้อมูลสุขภาพระบบไม่สำเร็จ: " + (e.message||"");
+  }
+}
+$("btnHealthRefresh").onclick = loadHealth;
 
 async function loadUsers(){
   const {data, error} = await sb.from("profiles").select("*").order("role").order("class_room").order("username");
@@ -1732,8 +1820,11 @@ async function loadApps(){
   const {data, error} = await sb.from("external_systems").select("*").order("sort_order").order("created_at");
   if(error) return toast("โหลดลิงก์ระบบไม่สำเร็จ: "+error.message);
   extApps = data||[];
-  $("appEmpty").classList.toggle("hidden", extApps.length>0);
-  $("appGrid").innerHTML = extApps.map(a=>`<article class="rescard" style="--gc:var(--g5)">
+  // กรองตาม visible_to จริง: admin เห็นทุกลิงก์ (เพื่อจัดการ) ส่วนครู/นักเรียนเห็นเฉพาะที่ตั้งค่าให้มองเห็น
+  const myGroup = profile.role==="student" ? "student" : "teacher";
+  const visibleApps = profile.role==="admin" ? extApps : extApps.filter(a=> (a.visible_to||[]).includes(myGroup));
+  $("appEmpty").classList.toggle("hidden", visibleApps.length>0);
+  $("appGrid").innerHTML = visibleApps.map(a=>`<article class="rescard" style="--gc:var(--g5)">
     <div class="top">${(a.visible_to||[]).map(v=>`<span class="badge type">${v==="teacher"?"ครู":"นักเรียน"}</span>`).join("")}</div>
     <h3>${esc(a.icon||"🔗")} ${esc(a.title)}</h3>
     ${a.description?`<p class="desc">${esc(a.description)}</p>`:""}
@@ -1938,7 +2029,11 @@ function parseAwardNote(note){
   const p = (note||"").split("|");
   return {title:p[0]||"", level:p[1]||"", year:p[2]||"", extra:p[3]||""};
 }
-function formatAwardNote(title,level,year,extra){ return [title,level,year,extra].join("|"); }
+function formatAwardNote(title,level,year,extra){
+  // sanitize: แทนที่ "|" ด้วย "／" (full-width) ป้องกันข้อมูลเลื่อนตำแหน่งตอน split
+  const clean = v => String(v||"").replace(/\|/g, "／");
+  return [title,level,year,extra].map(clean).join("|");
+}
 
 function profileHTML(stu, assess, tags, opt={}){
   // แยก RIASEC tags กับ awards ออกจากกัน
@@ -2191,10 +2286,9 @@ function openOvModal(sid){
   }).join("") : `<tr><td colspan="3" style="text-align:center;color:var(--ink-soft)">ยังไม่มีรอบสำรวจสำหรับชั้นนี้</td></tr>`;
 
   const awardList = awards.length ? awards.map(aw=>{
-    const lvLabel = AW_LEVEL_LABEL_MAP[aw.note?.split("|")[1]] || "";
-    const yr = aw.note?.split("|")[2] || "";
-    const extra = aw.note?.split("|")[3] || "";
-    return `<span class="awardchip">🏆 ${esc(aw.note?.split("|")[0]||"")}${lvLabel? " · "+lvLabel:""}${yr? " ("+yr+")":""}${extra? " · "+esc(extra):""}</span>`;
+    const p = parseAwardNote(aw.note);
+    const lvLabel = AW_LEVEL_LABEL_MAP[p.level] || p.level;
+    return `<span class="awardchip">🏆 ${esc(p.title)}${lvLabel? " · "+esc(lvLabel):""}${p.year? " ("+esc(p.year)+")":""}${p.extra? " · "+esc(p.extra):""}</span>`;
   }).join("") : `<span class="duechip" style="font-size:.8rem">ยังไม่มีรางวัล</span>`;
 
   $("ovModalBody").innerHTML = `
