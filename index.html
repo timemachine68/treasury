@@ -805,6 +805,17 @@ let editingId = null, srcMode = "file";
 /* ═══════════ ตัวช่วย ═══════════ */
 const $ = id => document.getElementById(id);
 const esc = s => String(s??"").replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+// เรียงชื่อห้อง (เช่น "ม.3/1", "ม.6/10") แบบธรรมชาติ: เทียบระดับชั้นก่อนด้วย th locale แล้วเทียบเลขห้องเป็นตัวเลขจริง
+// กัน string sort เรียง 1,10,11,...,2,3 ผิดลำดับ
+function roomCompare(a, b){
+  a = a||""; b = b||"";
+  const [ga, na] = a.split("/"); const [gb, nb] = b.split("/");
+  const gc = ga.localeCompare(gb, "th");
+  if(gc !== 0) return gc;
+  const numA = parseInt(na, 10), numB = parseInt(nb, 10);
+  if(!isNaN(numA) && !isNaN(numB)) return numA - numB;
+  return (na||"").localeCompare(nb||"", "th");
+}
 function toast(m){ const t=$("toast"); t.textContent=m; t.classList.add("show"); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove("show"),2800); }
 function msg(id, text, kind){ const el=$(id); el.className="msg"+(text?(" "+kind):""); el.textContent=text||""; }
 function thDate(s){ try{ return new Date(s).toLocaleDateString("th-TH",{day:"numeric",month:"short",year:"2-digit"}); }catch{ return ""; } }
@@ -1397,7 +1408,7 @@ function roomOptions(selected){
   // รวมห้องจากนักเรียนในระบบ + ห้องที่งานนี้เคยมอบหมายไว้แล้ว (เช่น ห้องที่พิมพ์เพิ่มเองใน wRoomExtra)
   const fromStudents = [...new Set(allStudents.map(s=>s.class_room).filter(Boolean))];
   const extra = (selected||[]).filter(r=> !fromStudents.includes(r));
-  const rooms = [...new Set([...fromStudents, ...extra])].sort();
+  const rooms = [...new Set([...fromStudents, ...extra])].sort(roomCompare);
   $("wRooms").innerHTML = rooms.map(r=>
     `<label><input type="checkbox" value="${esc(r)}" ${(selected||[]).includes(r)?"checked":""}>${esc(r)}</label>`
   ).join("") || `<span class="duechip">ยังไม่มีห้องในระบบ — พิมพ์เพิ่มด้านล่างได้เลยค่ะ</span>`;
@@ -1523,7 +1534,7 @@ function renderRoster(){
   const subMap = {}; allSubs.filter(s=>s.assignment_id===rosterAid).forEach(s=> subMap[s.student_id]=s);
   let list = allStudents.filter(s=> (a.class_rooms||[]).includes(s.class_room));
   if(rosterRoom!=="all") list = list.filter(s=> s.class_room===rosterRoom);
-  list.sort((x,y)=> (x.class_room||"").localeCompare(y.class_room||"","th") || (x.username||"").localeCompare(y.username||""));
+  list.sort((x,y)=> roomCompare(x.class_room, y.class_room) || (x.username||"").localeCompare(y.username||""));
   const sent = list.filter(s=>subMap[s.id]).length;
   const late = list.filter(s=> subMap[s.id] && isLate(subMap[s.id],a)).length;
   $("rosterSummary").textContent = `ส่งแล้ว ${sent}/${list.length}${late?` · ส่งช้า ${late}`:""} · ยังไม่ส่ง ${list.length-sent}`;
@@ -1849,11 +1860,11 @@ function renderSvRoster(){
   const r = svRounds.find(x=>x.id===svRid); if(!r) return;
   const respMap = {}; svAllResp.filter(x=>x.round_id===svRid).forEach(x=> respMap[x.student_id]=x);
   let list = svTargets(r);
-  const rooms = ["all", ...[...new Set(list.map(s=>s.class_room).filter(Boolean))].sort()];
+  const rooms = ["all", ...[...new Set(list.map(s=>s.class_room).filter(Boolean))].sort(roomCompare)];
   $("svRooms").innerHTML = rooms.map(x=>`<button class="chip ${svRoom===x?"active":""}" data-svrm="${esc(x)}">${x==="all"?"ทุกห้อง":esc(x)}</button>`).join("");
   $("svRooms").querySelectorAll(".chip").forEach(b=> b.onclick=()=>{ svRoom=b.dataset.svrm; renderSvRoster(); });
   if(svRoom!=="all") list = list.filter(s=> s.class_room===svRoom);
-  list.sort((a,b)=> (a.class_room||"").localeCompare(b.class_room||"","th") || (a.username||"").localeCompare(b.username||""));
+  list.sort((a,b)=> roomCompare(a.class_room, b.class_room) || (a.username||"").localeCompare(b.username||""));
 
   const counts = {};
   list.forEach(s=>{ const k = respMap[s.id]? respMap[s.id].status : "ยังไม่ตอบ"; counts[k]=(counts[k]||0)+1; });
@@ -1883,7 +1894,7 @@ $("btnSvCsv").onclick = ()=>{
   const q = v => `"${String(v??"").replace(/"/g,'""')}"`;
   let list = svTargets(r);
   if(svRoom!=="all") list = list.filter(s=> s.class_room===svRoom);
-  list.sort((a,b)=> (a.class_room||"").localeCompare(b.class_room||"","th") || (a.username||"").localeCompare(b.username||""));
+  list.sort((a,b)=> roomCompare(a.class_room, b.class_room) || (a.username||"").localeCompare(b.username||""));
   const rows = [["ชื่อผู้ใช้","ชื่อ-นามสกุล","ห้อง","สถานะ","สถานศึกษา","สาขา/แผนการเรียน","รอบ TCAS","รายละเอียดอื่น","เวลาตอบ"].map(q).join(",")];
   list.forEach(s=>{
     const a = respMap[s.id]||{};
@@ -2184,13 +2195,13 @@ function printProfile(stu, assess, allTags){
 /* ── ฝั่งครู ── */
 $("stQ").addEventListener("input", ()=>{ stF.q=$("stQ").value.trim().toLowerCase(); renderStTeacher(); });
 function renderStTeacher(){
-  const rooms = ["all", ...[...new Set(stStudentsList.map(s=>s.class_room).filter(Boolean))].sort()];
+  const rooms = ["all", ...[...new Set(stStudentsList.map(s=>s.class_room).filter(Boolean))].sort(roomCompare)];
   $("stRooms").innerHTML = rooms.map(r=>`<button class="chip ${stF.room===r?"active":""}" data-str="${esc(r)}">${r==="all"?"ทุกห้อง":esc(r)}</button>`).join("");
   $("stRooms").querySelectorAll(".chip").forEach(b=> b.onclick=()=>{ stF.room=b.dataset.str; renderStTeacher(); });
   let list = stStudentsList;
   if(stF.room!=="all") list = list.filter(s=>s.class_room===stF.room);
   if(stF.q) list = list.filter(s=> ((s.username||"")+" "+(s.display_name||"")+" "+(s.class_room||"")).toLowerCase().includes(stF.q));
-  list = [...list].sort((a,b)=> (a.class_room||"").localeCompare(b.class_room||"","th") || (a.username||"").localeCompare(b.username||""));
+  list = [...list].sort((a,b)=> roomCompare(a.class_room, b.class_room) || (a.username||"").localeCompare(b.username||""));
   const asmSet = new Set(stAllAssess.map(a=>a.student_id));
   $("stRows").innerHTML = list.map(s=>{
     const nTag   = stAllTags.filter(t=>t.student_id===s.id && TYPE_KEYS.includes(t.type)).length;
@@ -2301,14 +2312,14 @@ function ovLatestRoundFor_(grade){
 $("ovQ").addEventListener("input", ()=>{ ovF.q=$("ovQ").value.trim().toLowerCase(); renderOverview(); });
 
 function renderOverview(){
-  const rooms = ["all", ...[...new Set(ovStudents.map(s=>s.class_room).filter(Boolean))].sort()];
+  const rooms = ["all", ...[...new Set(ovStudents.map(s=>s.class_room).filter(Boolean))].sort(roomCompare)];
   $("ovRooms").innerHTML = rooms.map(r=>`<button class="chip ${ovF.room===r?"active":""}" data-ovr="${esc(r)}">${r==="all"?"ทุกห้อง":esc(r)}</button>`).join("");
   $("ovRooms").querySelectorAll(".chip").forEach(b=> b.onclick=()=>{ ovF.room=b.dataset.ovr; renderOverview(); });
 
   let list = ovStudents;
   if(ovF.room!=="all") list = list.filter(s=>s.class_room===ovF.room);
   if(ovF.q) list = list.filter(s=> ((s.username||"")+" "+(s.display_name||"")+" "+(s.class_room||"")).toLowerCase().includes(ovF.q));
-  list = [...list].sort((a,b)=> (a.class_room||"").localeCompare(b.class_room||"","th") || (a.username||"").localeCompare(b.username||""));
+  list = [...list].sort((a,b)=> roomCompare(a.class_room, b.class_room) || (a.username||"").localeCompare(b.username||""));
 
   $("ovRows").innerHTML = list.map(s=>{
     const asgs = ovAssignmentsFor_(s.class_room);
