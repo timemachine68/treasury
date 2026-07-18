@@ -1412,6 +1412,12 @@ function openWorkModal(id){
   $("workModal").classList.add("show");
 }
 $("btnWorkSave").onclick = async ()=>{
+  // กัน session/token หมดอายุตอนเปิดฟอร์มค้างไว้นาน (ก่อนหน้านี้ทำให้เจอ "row-level security policy" ตอนบันทึก)
+  const {data:{session:freshSession}, error:sessErr} = await sb.auth.refreshSession();
+  if(sessErr || !freshSession){
+    return msg("workMsg","เซสชันหมดอายุแล้วค่ะ กรุณาโหลดหน้านี้ใหม่แล้วลองอีกครั้งนะคะ","err");
+  }
+  session = freshSession;
   const title = $("wTitle").value.trim();
   if(!title) return msg("workMsg","ใส่ชื่องานก่อนนะคะ","err");
   const rooms = [...$("wRooms").querySelectorAll("input:checked")].map(i=>i.value);
