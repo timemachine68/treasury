@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ซ้อมสัมภาษณ์ | แนะให้แนว</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Mitr:wght@400;500;600&family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{
+  --ink:#22313A; --ink-soft:#5B6B72; --board:#EFF3F1; --card:#FFFFFF;
+  --pine:#0F6B5C; --pine-deep:#0A4F44; --pine-tint:#E2F0EC;
+  --note:#FFD34D; --note-deep:#8A6D00; --line:#DCE4E1; --danger:#C0392B;
+  --radius:14px; --shadow:0 2px 10px rgba(34,49,58,.08);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{font-family:'Sarabun',sans-serif;background:var(--board);color:var(--ink);font-size:16px;line-height:1.55;min-height:100vh}
+h1,h2,h3,.brand{font-family:'Mitr',sans-serif;font-weight:600}
+button{font-family:inherit;cursor:pointer}
+input,select,textarea{font-family:inherit;font-size:16px}
+a{color:var(--pine)}
+:focus-visible{outline:3px solid var(--note);outline-offset:2px;border-radius:6px}
+@media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
+
+.wrap{max-width:1080px;margin:0 auto;padding:0 16px 64px}
+header.app{background:var(--pine);color:#fff;padding:14px 0}
+header.app .wrap{display:flex;align-items:center;gap:12px;padding-bottom:0;flex-wrap:wrap}
+.brand{font-size:1.25rem;letter-spacing:.2px;display:flex;align-items:center;gap:10px}
+.brand .logo{width:34px;height:34px;border-radius:9px;background:var(--note);color:var(--pine-deep);display:grid;place-items:center;font-size:1.05rem;font-family:'Mitr';flex:none}
+.brand small{display:block;font-family:'Sarabun';font-weight:400;font-size:.72rem;opacity:.85;letter-spacing:.4px}
+.spacer{flex:1}
+.userchip{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.14);padding:6px 12px;border-radius:999px;font-size:.85rem}
+.userchip .role{background:var(--note);color:var(--pine-deep);border-radius:999px;padding:1px 9px;font-weight:700;font-size:.72rem}
+.iconbtn{background:rgba(255,255,255,.14);border:none;color:#fff;border-radius:999px;padding:7px 14px;font-size:.85rem}
+.iconbtn:hover{background:rgba(255,255,255,.26)}
+
+.folder-tabs{display:flex;gap:4px;overflow-x:auto;padding:22px 2px 0;scrollbar-width:none}
+.folder-tabs::-webkit-scrollbar{display:none}
+.ftab{flex:none;background:#fff;color:var(--ink-soft);font-family:'Mitr';font-size:.92rem;font-weight:500;
+  padding:9px 18px 12px;border-radius:12px 12px 0 0;border:1px solid var(--line);border-bottom:none;
+  position:relative;top:4px;opacity:.82;transition:top .15s}
+.ftab .dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--tabc,var(--pine));margin-right:7px}
+.ftab.active{top:0;opacity:1;color:var(--ink);border-top:4px solid var(--tabc,var(--pine));box-shadow:0 -3px 8px rgba(34,49,58,.06);z-index:2}
+.folder-body{background:#fff;border:1px solid var(--line);border-radius:0 var(--radius) var(--radius) var(--radius);padding:16px;box-shadow:var(--shadow);position:relative;z-index:1}
+
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{border:1.5px solid var(--line);background:#fff;border-radius:999px;padding:6px 13px;font-size:.82rem;color:var(--ink-soft)}
+.chip.active{background:var(--pine);border-color:var(--pine);color:#fff;font-weight:600}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(255px,1fr));gap:14px}
+.rescard{background:var(--card);border:1px solid var(--line);border-left:5px solid var(--gc,var(--pine));border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:8px;box-shadow:var(--shadow)}
+.rescard h3{font-size:1.02rem;line-height:1.35;font-weight:500}
+.rescard .desc{font-size:.83rem;color:var(--ink-soft)}
+.rescard .meta{font-size:.75rem;color:var(--ink-soft);display:flex;justify-content:space-between;gap:8px;border-top:1px dashed var(--line);padding-top:8px;margin-top:auto}
+.rescard .actions{display:flex;gap:8px;flex-wrap:wrap}
+.badge{font-size:.7rem;font-weight:700;border-radius:6px;padding:2px 8px;letter-spacing:.2px}
+.badge.type{background:var(--pine-tint);color:var(--pine-deep)}
+.badge.link{background:#FFF3CE;color:var(--note-deep)}
+.btn{border:none;border-radius:9px;padding:9px 16px;font-size:.88rem;font-weight:600;display:inline-flex;align-items:center;gap:6px;justify-content:center}
+.btn.primary{background:var(--pine);color:#fff}
+.btn.primary:hover{background:var(--pine-deep)}
+.btn.ghost{background:#fff;border:1.5px solid var(--line);color:var(--ink-soft)}
+.btn.ghost:hover{border-color:var(--pine);color:var(--pine)}
+.btn.danger{background:#fff;border:1.5px solid #EAC7C2;color:var(--danger)}
+.btn.note{background:var(--note);color:var(--pine-deep)}
+.btn.sm{padding:6px 11px;font-size:.78rem}
+.btn:disabled{opacity:.55;cursor:wait}
+.empty{padding:44px 16px;text-align:center;color:var(--ink-soft)}
+.empty .big{font-size:2rem;margin-bottom:6px}
+
+.modal-back{position:fixed;inset:0;background:rgba(20,32,30,.45);display:none;align-items:flex-start;justify-content:center;padding:24px 14px;overflow-y:auto;z-index:50}
+.modal-back.show{display:flex}
+.modal{background:#fff;border-radius:16px;max-width:560px;width:100%;padding:22px;box-shadow:0 12px 40px rgba(0,0,0,.2)}
+.modal h2{font-size:1.15rem;margin-bottom:14px;color:var(--pine-deep)}
+.field{margin-bottom:13px}
+.field label{display:block;font-size:.83rem;font-weight:700;margin-bottom:5px;color:var(--ink)}
+.field input,.field select,.field textarea{width:100%;padding:10px 12px;border:1.5px solid var(--line);border-radius:10px;background:#fff}
+.field textarea{min-height:74px;resize:vertical}
+.field .hint{font-size:.74rem;color:var(--ink-soft);margin-top:4px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:520px){.row2{grid-template-columns:1fr}}
+.seg{display:flex;border:1.5px solid var(--line);border-radius:10px;overflow:hidden}
+.seg button{flex:1;border:none;background:#fff;padding:9px;font-size:.86rem;color:var(--ink-soft)}
+.seg button.active{background:var(--pine);color:#fff;font-weight:600}
+.modal .foot{display:flex;gap:10px;justify-content:flex-end;margin-top:16px}
+.msg{border-radius:10px;padding:10px 13px;font-size:.85rem;margin-bottom:12px;display:none}
+.msg.err{display:block;background:#FBEAE7;color:var(--danger)}
+.msg.ok{display:block;background:var(--pine-tint);color:var(--pine-deep)}
+
+.login-stage{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;
+  background:linear-gradient(160deg,var(--pine) 0%,var(--pine-deep) 60%),var(--pine)}
+.login-card{background:#fff;border-radius:20px;padding:30px 26px;max-width:400px;width:100%;box-shadow:0 18px 50px rgba(0,0,0,.28)}
+.login-card .logo-big{width:58px;height:58px;border-radius:16px;background:var(--note);color:var(--pine-deep);display:grid;place-items:center;font-family:'Mitr';font-size:1.5rem;font-weight:600;margin:0 auto 12px}
+.login-card h1{text-align:center;font-size:1.35rem;color:var(--pine-deep)}
+.login-card .sub{text-align:center;font-size:.83rem;color:var(--ink-soft);margin-bottom:20px}
+.login-card .btn{width:100%;padding:12px;font-size:1rem}
+
+.panel{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:18px;margin-bottom:16px;box-shadow:var(--shadow)}
+.panel h2{font-size:1.05rem;color:var(--pine-deep);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:.85rem}
+th{text-align:left;padding:8px 10px;background:var(--board);color:var(--ink-soft);font-size:.76rem;white-space:nowrap}
+td{padding:8px 10px;border-bottom:1px solid var(--line)}
+.pill{border-radius:999px;padding:2px 10px;font-size:.72rem;font-weight:700;white-space:nowrap}
+.pill.draft{background:#E8EEF7;color:#3D5A80}
+.pill.submitted{background:#FFF3CE;color:var(--note-deep)}
+.pill.reviewed{background:var(--pine-tint);color:var(--pine-deep)}
+#toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;
+  padding:11px 20px;border-radius:999px;font-size:.88rem;box-shadow:0 6px 20px rgba(0,0,0,.3);opacity:0;pointer-events:none;transition:opacity .25s;z-index:99;max-width:92vw;text-align:center}
+#toast.show{opacity:1}
+.loading{text-align:center;padding:40px;color:var(--ink-soft)}
+.hidden{display:none!important}
+
+/* ---------- สถิติการ์ด ---------- */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:16px}
+.stat{background:var(--pine-tint);border-radius:12px;padding:14px;text-align:center}
+.stat .num{font-family:'Mitr';font-size:1.7rem;color:var(--pine-deep);line-height:1.1}
+.stat .lab{font-size:.78rem;color:var(--ink-soft)}
+
+/* ---------- ห้องซ้อม ---------- */
+.practice-stage{max-width:680px;margin:0 auto}
+.q-progress{display:flex;gap:5px;margin-bottom:14px}
+.q-progress span{flex:1;height:6px;border-radius:3px;background:var(--line)}
+.q-progress span.done{background:var(--pine)}
+.q-progress span.now{background:var(--note)}
+.q-card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:24px;box-shadow:var(--shadow)}
+.q-card .qno{font-size:.8rem;color:var(--ink-soft);margin-bottom:6px}
+.q-card .qtext{font-family:'Mitr';font-size:1.25rem;line-height:1.5;color:var(--ink);margin-bottom:16px}
+.timer{display:inline-flex;align-items:center;gap:8px;background:var(--board);border-radius:999px;padding:7px 16px;font-family:'Mitr';font-size:1.1rem;margin-bottom:16px}
+.timer.warn{background:#FBEAE7;color:var(--danger)}
+.rec-zone{display:flex;flex-direction:column;gap:12px;align-items:center;padding:14px 0}
+.rec-btn{width:82px;height:82px;border-radius:50%;border:none;background:var(--danger);color:#fff;font-size:1.9rem;box-shadow:0 4px 14px rgba(192,57,43,.35)}
+.rec-btn.recording{animation:pulse 1.2s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(192,57,43,.45)}70%{box-shadow:0 0 0 18px rgba(192,57,43,0)}100%{box-shadow:0 0 0 0 rgba(192,57,43,0)}}
+.rec-hint{font-size:.82rem;color:var(--ink-soft)}
+.answer-review{border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:12px}
+.answer-review .q{font-weight:700;margin-bottom:8px}
+.answer-review .mine{background:var(--board);border-radius:10px;padding:10px 12px;font-size:.9rem;margin-bottom:8px;white-space:pre-wrap}
+.answer-review .guide{background:#FFF9E3;border:1px dashed var(--note);border-radius:10px;padding:10px 12px;font-size:.85rem}
+.answer-review .guide b{color:var(--note-deep)}
+.rubric-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 0;border-bottom:1px dashed var(--line)}
+.rubric-row .info{flex:1;min-width:180px}
+.rubric-row .info b{display:block;font-size:.92rem}
+.rubric-row .info small{color:var(--ink-soft);font-size:.76rem}
+.score-pick{display:flex;gap:6px}
+.score-pick button{width:42px;height:42px;border-radius:10px;border:1.5px solid var(--line);background:#fff;font-family:'Mitr';font-size:1rem;color:var(--ink-soft)}
+.score-pick button.sel{background:var(--pine);border-color:var(--pine);color:#fff}
+.score-legend{font-size:.75rem;color:var(--ink-soft);margin:6px 0 12px}
+audio{width:100%;margin-top:6px}
+</style>
+</head>
+<body>
+
+<!-- ═══════════ เข้าสู่ระบบ ═══════════ -->
+<div id="loginStage" class="login-stage hidden">
+  <div class="login-card">
+    <div class="logo-big">🎤</div>
+    <h1>ซ้อมสัมภาษณ์</h1>
+    <div class="sub">ระบบฝึกซ้อมสอบสัมภาษณ์เข้ามหาวิทยาลัย · ใช้บัญชีเดียวกับคลังแนะแนว</div>
+    <div id="liMsg" class="msg"></div>
+    <div class="field"><label>ชื่อผู้ใช้</label>
+      <input id="liUser" autocomplete="username" placeholder="เช่น รหัสนักเรียน"></div>
+    <div class="field"><label>รหัสผ่าน</label>
+      <input id="liPass" type="password" autocomplete="current-password" placeholder="รหัสผ่าน"></div>
+    <button id="btnLogin" class="btn primary">เข้าสู่ระบบ</button>
+  </div>
+</div>
+
+<!-- ═══════════ แอปหลัก ═══════════ -->
+<div id="appStage" class="hidden">
+  <header class="app"><div class="wrap">
+    <div class="brand"><span class="logo">🎤</span><span>ซ้อมสัมภาษณ์<small>แนะให้แนว · ระบบฝึกซ้อมสอบสัมภาษณ์</small></span></div>
+    <div class="spacer"></div>
+    <div class="userchip"><span id="uName"></span><span class="role" id="uRole"></span></div>
+    <button class="iconbtn" id="btnLogout">ออกจากระบบ</button>
+  </div></header>
+
+  <div class="wrap">
+    <nav class="folder-tabs" id="tabs"></nav>
+    <div class="folder-body" id="body"><div class="loading">กำลังโหลด…</div></div>
+  </div>
+</div>
+
+<!-- โมดัล: ตั้งค่าก่อนเริ่มซ้อม -->
+<div class="modal-back" id="setupModal"><div class="modal">
+  <h2 id="setupTitle">เริ่มฝึกซ้อม</h2>
+  <div class="field"><label>จำนวนคำถามในเซ็ตนี้</label>
+    <div class="seg" id="setupCount">
+      <button data-v="3">3 ข้อ</button><button data-v="5" class="active">5 ข้อ</button><button data-v="7">7 ข้อ</button>
+    </div></div>
+  <div class="field"><label>รูปแบบการตอบ</label>
+    <div class="seg" id="setupMode">
+      <button data-v="text" class="active">✍️ พิมพ์คำตอบ</button><button data-v="audio">🎙️ อัดเสียง</button>
+    </div>
+    <div class="hint" id="setupModeHint">โหมดอัดเสียง: ระบบจะขออนุญาตใช้ไมโครโฟน เหมาะกับการฝึกพูดจริง</div></div>
+  <div class="foot">
+    <button class="btn ghost" onclick="closeModal('setupModal')">ยกเลิก</button>
+    <button class="btn primary" id="btnStartSet">เริ่มเลย 🚀</button>
+  </div>
+</div></div>
+
+<!-- โมดัล: เพิ่ม/แก้ไขคำถาม -->
+<div class="modal-back" id="qModal"><div class="modal">
+  <h2 id="qModalTitle">เพิ่มคำถาม</h2>
+  <div id="qMsg" class="msg"></div>
+  <div class="field"><label>หมวด</label><select id="qCat"></select></div>
+  <div class="field"><label>คำถาม *</label><textarea id="qText"></textarea></div>
+  <div class="field"><label>แนวทางการตอบ (นักเรียนเห็นหลังตอบเสร็จ)</label><textarea id="qGuide"></textarea></div>
+  <div class="row2">
+    <div class="field"><label>ระดับความยาก</label>
+      <select id="qDiff"><option value="easy">ง่าย</option><option value="medium" selected>ปานกลาง</option><option value="hard">ยาก</option></select></div>
+    <div class="field"><label>เวลาแนะนำ (วินาที)</label><input id="qSec" type="number" value="120" min="30" max="600"></div>
+  </div>
+  <div class="row2">
+    <div class="field"><label>ภาษา</label><select id="qLang"><option value="th">ไทย</option><option value="en">อังกฤษ</option></select></div>
+    <div class="field"><label>สถานะ</label><select id="qActive"><option value="true">ใช้งาน</option><option value="false">ปิดไว้</option></select></div>
+  </div>
+  <div class="foot">
+    <button class="btn ghost" onclick="closeModal('qModal')">ยกเลิก</button>
+    <button class="btn primary" id="btnQSave">บันทึก</button>
+  </div>
+</div></div>
+
+<div id="toast"></div>
+
+<script>
+/* ═══════════ ค่าคงที่ ═══════════ */
+const SUPABASE_URL = "https://ikkhjslmtjwrxzxvtokb.supabase.co";
+const ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlra2hqc2xtdGp3cnh6eHZ0b2tiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM3NDMzNjksImV4cCI6MjA5OTMxOTM2OX0.3OR_9mEv82Ns1LLjx5nnRwJYzrtKFtWCWd1bPuQfNKU";
+const EMAIL_DOMAIN = "guidance-pcw.local";
+const sb = supabase.createClient(SUPABASE_URL, ANON_KEY);
+const ROLE_LABEL = {admin:"ผู้ดูแล", teacher:"ครู", student:"นักเรียน"};
+const DIFF_LABEL = {easy:"ง่าย", medium:"ปานกลาง", hard:"ยาก"};
+const STATUS_LABEL = {draft:"ฉบับซ้อม", submitted:"รอครูตรวจ", reviewed:"ตรวจแล้ว"};
+const SCORE_LABEL = {1:"ต้องพัฒนา",2:"พอใช้",3:"ดี",4:"ดีมาก"};
+const BUCKET = "iv-recordings";
+
+/* ═══════════ สถานะ ═══════════ */
+let profile = null, cats = [], rubric = [], questions = [];
+let curTab = "", pr = null; // pr = practice state
+
+const $ = id => document.getElementById(id);
+const esc = s => (s??"").toString().replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+function toast(t){ $("toast").textContent=t; $("toast").classList.add("show"); setTimeout(()=>$("toast").classList.remove("show"),2600); }
+function msg(id,t,cls){ const el=$(id); el.textContent=t; el.className="msg "+cls; }
+function closeModal(id){ $(id).classList.remove("show"); }
+function fmtDate(d){ return new Date(d).toLocaleDateString("th-TH",{day:"numeric",month:"short",year:"2-digit"})+" "+new Date(d).toLocaleTimeString("th-TH",{hour:"2-digit",minute:"2-digit"}); }
+function fmtSec(s){ const m=Math.floor(Math.abs(s)/60), ss=Math.abs(s)%60; return (s<0?"-":"")+m+":"+String(ss).padStart(2,"0"); }
+const isStaff = () => profile && (profile.role==="teacher"||profile.role==="admin");
+
+/* ═══════════ เข้าสู่ระบบ ═══════════ */
+async function boot(){
+  const {data:{session}} = await sb.auth.getSession();
+  if(!session){ $("loginStage").classList.remove("hidden"); return; }
+  const {data:p} = await sb.from("profiles").select("*").eq("id", session.user.id).maybeSingle();
+  if(!p){ await sb.auth.signOut(); $("loginStage").classList.remove("hidden"); return toast("ไม่พบข้อมูลผู้ใช้"); }
+  profile = p;
+  $("loginStage").classList.add("hidden");
+  $("appStage").classList.remove("hidden");
+  $("uName").textContent = p.display_name;
+  $("uRole").textContent = ROLE_LABEL[p.role] + (p.class_room? " · "+p.class_room : "");
+  await loadBase();
+  buildTabs();
+}
+$("btnLogin").onclick = async ()=>{
+  const u=$("liUser").value.trim(), p=$("liPass").value;
+  if(!u||!p) return msg("liMsg","กรอกชื่อผู้ใช้และรหัสผ่านก่อนนะคะ","err");
+  $("btnLogin").disabled = true;
+  const {error} = await sb.auth.signInWithPassword({email:u+"@"+EMAIL_DOMAIN, password:p});
+  $("btnLogin").disabled = false;
+  if(error) return msg("liMsg","เข้าสู่ระบบไม่สำเร็จ: ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง","err");
+  location.reload();
+};
+$("liPass").addEventListener("keydown", e=>{ if(e.key==="Enter") $("btnLogin").click(); });
+$("btnLogout").onclick = async ()=>{ await sb.auth.signOut(); location.reload(); };
+
+async function loadBase(){
+  const [c, r, q] = await Promise.all([
+    sb.from("iv_categories").select("*").order("sort_order"),
+    sb.from("iv_rubric_criteria").select("*").eq("is_active",true).order("sort_order"),
+    sb.from("iv_questions").select("*")
+  ]);
+  cats = c.data||[]; rubric = r.data||[]; questions = q.data||[];
+}
+
+/* ═══════════ แท็บ ═══════════ */
+function buildTabs(){
+  const t = [];
+  t.push({id:"home", label:"🏠 หน้าแรก", c:"#0F6B5C"});
+  if(profile.role==="student"){
+    t.push({id:"practice", label:"🎯 ฝึกซ้อม", c:"#F2B84B"});
+    t.push({id:"myresults", label:"📋 ผลของฉัน", c:"#4E9BB9"});
+  }else{
+    t.push({id:"review", label:"📥 งานตรวจ", c:"#F2B84B"});
+    t.push({id:"bank", label:"🗂 คลังคำถาม", c:"#8E7CC3"});
+  }
+  $("tabs").innerHTML = t.map(x=>`<button class="ftab" data-t="${x.id}" style="--tabc:${x.c}"><span class="dot"></span>${x.label}</button>`).join("");
+  $("tabs").querySelectorAll(".ftab").forEach(b=> b.onclick = ()=> go(b.dataset.t));
+  go("home");
+}
+function go(tab){
+  if(pr && pr.active && tab!=="practice"){ if(!confirm("กำลังซ้อมอยู่ ออกจากห้องซ้อมใช่ไหม? คำตอบที่ตอบแล้วจะถูกเก็บไว้")) return; stopTimer(); stopRecorder(true); pr=null; }
+  curTab = tab;
+  $("tabs").querySelectorAll(".ftab").forEach(b=> b.classList.toggle("active", b.dataset.t===tab));
+  ({home:renderHome, practice:renderPractice, myresults:renderMyResults, review:renderReview, bank:renderBank})[tab]();
+}
+
+/* ═══════════ หน้าแรก ═══════════ */
+async function renderHome(){
+  if(profile.role==="student"){
+    const {data:ss} = await sb.from("iv_sessions").select("id,status,created_at").eq("student_id",profile.id);
+    const all = ss||[];
+    const done = all.filter(s=>s.status==="reviewed").length, wait = all.filter(s=>s.status==="submitted").length;
+    $("body").innerHTML = `
+      <div class="panel" style="background:linear-gradient(120deg,var(--pine-tint),#fff)">
+        <h2>สวัสดี ${esc(profile.display_name)} 👋</h2>
+        <p style="font-size:.92rem;color:var(--ink-soft)">ฝึกตอบคำถามสัมภาษณ์บ่อย ๆ ช่วยให้มั่นใจขึ้นจริงในวันสอบ — เลือกหมวดที่ตรงกับคณะเป้าหมายแล้วเริ่มเลย</p>
+        <div style="margin-top:12px"><button class="btn primary" onclick="go('practice')">🎯 เริ่มฝึกซ้อมวันนี้</button></div>
+      </div>
+      <div class="stats">
+        <div class="stat"><div class="num">${all.length}</div><div class="lab">เซ็ตที่ซ้อมแล้ว</div></div>
+        <div class="stat"><div class="num">${wait}</div><div class="lab">รอครูตรวจ</div></div>
+        <div class="stat"><div class="num">${done}</div><div class="lab">ได้รับ feedback แล้ว</div></div>
+      </div>
+      <div class="panel"><h2>💡 เคล็ดลับก่อนซ้อม</h2>
+        <ul style="font-size:.9rem;color:var(--ink-soft);padding-left:20px;display:grid;gap:6px">
+          <li>ตั้งท่านั่งหลังตรง ยิ้ม แล้วตอบเหมือนอยู่หน้ากรรมการจริง</li>
+          <li>โหมดอัดเสียงช่วยให้ได้ยินน้ำเสียงตัวเอง — ฟังซ้ำแล้วจะรู้จุดที่ต้องปรับ</li>
+          <li>ตอบให้จบใน 1–2 นาทีต่อข้อ กระชับ มีตัวอย่างจริงประกอบ</li>
+          <li>ซ้อมเสร็จอย่าลืมประเมินตนเองตามเกณฑ์ แล้วส่งให้ครูช่วยดู</li>
+        </ul></div>`;
+  }else{
+    const [{data:ss},{data:students}] = await Promise.all([
+      sb.from("iv_sessions").select("id,student_id,status,submitted_at,created_at"),
+      sb.from("profiles").select("id,display_name,class_room").eq("role","student")
+    ]);
+    const all = ss||[], stuMap = Object.fromEntries((students||[]).map(s=>[s.id,s]));
+    const pending = all.filter(s=>s.status==="submitted").length;
+    const practiced = new Set(all.map(s=>s.student_id)).size;
+    const rooms = {};
+    for(const s of all){ const room = stuMap[s.student_id]?.class_room || "ไม่ระบุห้อง";
+      rooms[room] = rooms[room]||{students:new Set(), total:0, pending:0};
+      rooms[room].students.add(s.student_id); rooms[room].total++; if(s.status==="submitted") rooms[room].pending++; }
+    $("body").innerHTML = `
+      <div class="stats">
+        <div class="stat"><div class="num">${pending}</div><div class="lab">เซ็ตรอตรวจ</div></div>
+        <div class="stat"><div class="num">${practiced}</div><div class="lab">นักเรียนที่เริ่มซ้อมแล้ว</div></div>
+        <div class="stat"><div class="num">${all.length}</div><div class="lab">เซ็ตซ้อมทั้งหมด</div></div>
+        <div class="stat"><div class="num">${questions.filter(q=>q.is_active).length}</div><div class="lab">คำถามในคลัง</div></div>
+      </div>
+      ${pending? `<div class="panel" style="background:#FFF9E3"><h2>📥 มีงานรอตรวจ ${pending} เซ็ต</h2><button class="btn primary" onclick="go('review')">ไปตรวจเลย</button></div>`:""}
+      <div class="panel"><h2>ภาพรวมรายห้อง</h2><div class="tbl-wrap"><table>
+        <tr><th>ห้อง</th><th>นักเรียนที่ซ้อมแล้ว</th><th>เซ็ตทั้งหมด</th><th>รอตรวจ</th></tr>
+        ${Object.entries(rooms).sort((a,b)=>a[0].localeCompare(b[0],"th")).map(([room,r])=>
+          `<tr><td><b>${esc(room)}</b></td><td>${r.students.size}</td><td>${r.total}</td><td>${r.pending? `<span class="pill submitted">${r.pending}</span>`:"-"}</td></tr>`).join("") || `<tr><td colspan="4" style="color:var(--ink-soft)">ยังไม่มีนักเรียนเริ่มซ้อม</td></tr>`}
+      </table></div></div>`;
+  }
+}
+
+/* ═══════════ ฝึกซ้อม: เลือกหมวด ═══════════ */
+let setupCat = null;
+function renderPractice(){
+  if(pr && pr.active) return renderPracticeRoom();
+  const activeCats = cats.filter(c=>c.is_active);
+  $("body").innerHTML = `
+    <h2 style="margin-bottom:4px;color:var(--pine-deep)">เลือกหมวดคำถามที่จะฝึกวันนี้</h2>
+    <p style="font-size:.85rem;color:var(--ink-soft);margin-bottom:14px">เลือกหมวดตรงกับคณะเป้าหมาย หรือเริ่มจาก "คำถามทั่วไป" ก่อนก็ได้</p>
+    <div class="grid">${activeCats.map(c=>{
+      const n = questions.filter(q=>q.category_id===c.id && q.is_active).length;
+      return `<article class="rescard" style="--gc:${esc(c.color)}">
+        <h3>${esc(c.emoji)} ${esc(c.name)}</h3>
+        <div class="meta"><span>${n} คำถาม</span></div>
+        <div class="actions"><button class="btn primary sm" onclick="openSetup('${c.id}')" ${n? "":"disabled"}>เริ่มซ้อม</button></div>
+      </article>`;}).join("")}</div>`;
+}
+function openSetup(catId){
+  setupCat = cats.find(c=>c.id===catId);
+  $("setupTitle").textContent = `เริ่มฝึกซ้อม · ${setupCat.emoji} ${setupCat.name}`;
+  $("setupModal").classList.add("show");
+}
+document.querySelectorAll("#setupCount button, #setupMode button").forEach(b=>{
+  b.onclick = ()=>{ b.parentElement.querySelectorAll("button").forEach(x=>x.classList.remove("active")); b.classList.add("active"); };
+});
+$("btnStartSet").onclick = async ()=>{
+  const count = +document.querySelector("#setupCount .active").dataset.v;
+  const mode = document.querySelector("#setupMode .active").dataset.v;
+  const pool = questions.filter(q=>q.category_id===setupCat.id && q.is_active);
+  const picked = pool.sort(()=>Math.random()-.5).slice(0, Math.min(count, pool.length));
+  if(!picked.length) return toast("หมวดนี้ยังไม่มีคำถาม");
+  if(mode==="audio" && !(navigator.mediaDevices && window.MediaRecorder)){
+    toast("อุปกรณ์นี้ไม่รองรับการอัดเสียง — เปลี่ยนเป็นโหมดพิมพ์ให้แล้ว");
+  }
+  $("btnStartSet").disabled = true;
+  const {data:s, error} = await sb.from("iv_sessions").insert({student_id:profile.id, kind:"solo", category_id:setupCat.id}).select().single();
+  $("btnStartSet").disabled = false;
+  if(error) return toast("เริ่มไม่สำเร็จ: "+error.message);
+  closeModal("setupModal");
+  pr = {active:true, session:s, cat:setupCat, mode:(mode==="audio" && navigator.mediaDevices && window.MediaRecorder)?"audio":"text",
+        list:picked, idx:0, answers:[], startAt:0, timerId:null, rec:null, chunks:[], blob:null, stream:null};
+  renderPracticeRoom();
+}
+
+/* ═══════════ ห้องซ้อม ═══════════ */
+function renderPracticeRoom(){
+  const q = pr.list[pr.idx];
+  $("body").innerHTML = `<div class="practice-stage">
+    <div class="q-progress">${pr.list.map((_,i)=>`<span class="${i<pr.idx?"done":i===pr.idx?"now":""}"></span>`).join("")}</div>
+    <div class="q-card">
+      <div class="qno">${esc(pr.cat.emoji)} ${esc(pr.cat.name)} · ข้อ ${pr.idx+1}/${pr.list.length} · ระดับ${DIFF_LABEL[q.difficulty]}</div>
+      <div class="qtext">${esc(q.question_text)}</div>
+      <div class="timer" id="timer">⏱ <span id="timerVal">${fmtSec(q.suggested_seconds)}</span></div>
+      ${pr.mode==="text"
+        ? `<div class="field"><textarea id="ansText" style="min-height:130px" placeholder="พิมพ์คำตอบเหมือนที่จะพูดจริง…"></textarea></div>`
+        : `<div class="rec-zone">
+            <button class="rec-btn" id="btnRec">🎙️</button>
+            <div class="rec-hint" id="recHint">กดเพื่อเริ่มอัดเสียง แล้วตอบเหมือนพูดกับกรรมการจริง</div>
+            <audio id="recPreview" controls class="hidden"></audio>
+          </div>`}
+      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:10px">
+        <button class="btn ghost" id="btnSkip">ข้ามข้อนี้</button>
+        <button class="btn primary" id="btnNext">${pr.idx+1===pr.list.length? "ตอบเสร็จ ✔":"ข้อถัดไป ➜"}</button>
+      </div>
+    </div></div>`;
+  pr.startAt = Date.now(); pr.blob = null; pr.chunks = [];
+  startTimer(q.suggested_seconds);
+  if(pr.mode==="audio") $("btnRec").onclick = toggleRec;
+  $("btnNext").onclick = ()=> nextQuestion(false);
+  $("btnSkip").onclick = ()=> nextQuestion(true);
+}
+function startTimer(total){
+  stopTimer();
+  pr.timerId = setInterval(()=>{
+    const left = total - Math.floor((Date.now()-pr.startAt)/1000);
+    const el = $("timerVal"); if(!el) return stopTimer();
+    el.textContent = fmtSec(left);
+    $("timer").classList.toggle("warn", left<=10);
+  }, 500);
+}
+function stopTimer(){ if(pr?.timerId){ clearInterval(pr.timerId); pr.timerId=null; } }
+
+async function toggleRec(){
+  if(pr.rec && pr.rec.state==="recording"){ pr.rec.stop(); return; }
+  try{
+    pr.stream = await navigator.mediaDevices.getUserMedia({audio:true});
+  }catch(e){ return toast("เข้าถึงไมโครโฟนไม่ได้ — ตรวจการอนุญาตของเบราว์เซอร์"); }
+  const mime = MediaRecorder.isTypeSupported("audio/webm;codecs=opus") ? "audio/webm;codecs=opus"
+             : MediaRecorder.isTypeSupported("audio/mp4") ? "audio/mp4" : "";
+  pr.chunks = [];
+  pr.rec = new MediaRecorder(pr.stream, mime? {mimeType:mime}:{});
+  pr.rec.ondataavailable = e=>{ if(e.data.size) pr.chunks.push(e.data); };
+  pr.rec.onstop = ()=>{
+    pr.blob = new Blob(pr.chunks, {type: pr.rec.mimeType||"audio/webm"});
+    pr.stream.getTracks().forEach(t=>t.stop()); pr.stream=null;
+    const el = $("recPreview"); if(el){ el.src = URL.createObjectURL(pr.blob); el.classList.remove("hidden"); }
+    const btn = $("btnRec"); if(btn){ btn.classList.remove("recording"); btn.textContent="🔁"; }
+    const hint = $("recHint"); if(hint) hint.textContent = "ฟังเสียงตัวเองได้ด้านล่าง · กด 🔁 ถ้าอยากอัดใหม่";
+  };
+  pr.rec.start();
+  $("btnRec").classList.add("recording"); $("btnRec").textContent="⏹";
+  $("recHint").textContent = "กำลังอัด… กด ⏹ เมื่อตอบจบ";
+}
+function stopRecorder(silent){
+  try{ if(pr?.rec && pr.rec.state==="recording") pr.rec.stop(); if(pr?.stream) pr.stream.getTracks().forEach(t=>t.stop()); }catch(e){}
+}
+
+async function nextQuestion(skipped){
+  const q = pr.list[pr.idx];
+  const secondsUsed = Math.floor((Date.now()-pr.startAt)/1000);
+  stopTimer();
+  if(pr.rec && pr.rec.state==="recording"){ pr.rec.stop(); await new Promise(r=>setTimeout(r,400)); }
+  const btn = $("btnNext"); btn.disabled = true; btn.textContent = "กำลังบันทึก…";
+  const row = {session_id:pr.session.id, question_id:q.id, question_text:q.question_text, guide_answer:q.guide_answer,
+               order_no:pr.idx+1, seconds_used:secondsUsed, media_kind:"none", answer_text:null, media_path:null};
+  if(!skipped){
+    if(pr.mode==="text"){ row.answer_text = $("ansText").value.trim() || null; }
+    else if(pr.blob){
+      const ext = (pr.blob.type||"").includes("mp4")? "m4a" : "webm";
+      const path = `${profile.id}/${pr.session.id}/${pr.idx+1}.${ext}`;
+      const {error:upErr} = await sb.storage.from(BUCKET).upload(path, pr.blob, {contentType:(pr.blob.type||"audio/webm").split(";")[0], upsert:true});
+      if(upErr){ toast("อัปโหลดเสียงไม่สำเร็จ: "+upErr.message); }
+      else { row.media_path = path; row.media_kind = "audio"; }
+    }
+  }
+  const {error} = await sb.from("iv_answers").insert(row);
+  if(error){ btn.disabled=false; btn.textContent="ลองอีกครั้ง"; return toast("บันทึกไม่สำเร็จ: "+error.message); }
+  pr.answers.push(row);
+  pr.idx++;
+  if(pr.idx < pr.list.length) renderPracticeRoom();
+  else renderSelfAssess();
+}
+
+/* ═══════════ สรุป + ประเมินตนเอง ═══════════ */
+function renderSelfAssess(){
+  pr.active = false;
+  const selfScores = {};
+  $("body").innerHTML = `<div class="practice-stage">
+    <div class="panel" style="background:var(--pine-tint)"><h2>🎉 ตอบครบแล้ว! เทียบคำตอบกับแนวทาง แล้วประเมินตัวเองกันหน่อย</h2></div>
+    ${pr.answers.map((a,i)=>`<div class="answer-review">
+      <div class="q">ข้อ ${i+1}. ${esc(a.question_text)} <small style="color:var(--ink-soft)">(ใช้เวลา ${fmtSec(a.seconds_used||0)})</small></div>
+      <div class="mine">${a.media_kind==="audio"? "🎙️ ตอบด้วยเสียง (ฟังย้อนหลังได้ที่หน้า ผลของฉัน)" : esc(a.answer_text||"— ข้ามข้อนี้ —")}</div>
+      ${a.guide_answer? `<div class="guide"><b>💡 แนวทางการตอบ:</b> ${esc(a.guide_answer)}</div>`:""}
+    </div>`).join("")}
+    <div class="panel"><h2>ประเมินตนเอง</h2>
+      <div class="score-legend">1 = ${SCORE_LABEL[1]} · 2 = ${SCORE_LABEL[2]} · 3 = ${SCORE_LABEL[3]} · 4 = ${SCORE_LABEL[4]}</div>
+      ${rubric.map(r=>`<div class="rubric-row" data-crit="${r.id}">
+        <div class="info"><b>${esc(r.title)}</b><small>${esc(r.description||"")}</small></div>
+        <div class="score-pick">${[1,2,3,4].map(n=>`<button data-n="${n}">${n}</button>`).join("")}</div>
+      </div>`).join("")}
+      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px;flex-wrap:wrap">
+        <button class="btn ghost" id="btnKeepDraft">เก็บไว้ก่อน ยังไม่ส่ง</button>
+        <button class="btn primary" id="btnSubmit">📨 ส่งให้ครูตรวจ</button>
+      </div></div></div>`;
+  document.querySelectorAll(".rubric-row").forEach(row=>{
+    row.querySelectorAll(".score-pick button").forEach(b=>{
+      b.onclick = ()=>{ row.querySelectorAll("button").forEach(x=>x.classList.remove("sel")); b.classList.add("sel");
+        selfScores[row.dataset.crit] = +b.dataset.n; };
+    });
+  });
+  async function saveScoresAndFinish(submit){
+    const rows = Object.entries(selfScores).map(([cid,score])=>({
+      session_id:pr.session.id, criteria_id:cid, scorer_role:"self", scorer_id:profile.id, score}));
+    if(rows.length){
+      const {error} = await sb.from("iv_scores").upsert(rows, {onConflict:"session_id,criteria_id,scorer_role"});
+      if(error) return toast("บันทึกคะแนนไม่สำเร็จ: "+error.message);
+    }
+    if(submit){
+      if(Object.keys(selfScores).length < rubric.length) return toast("ประเมินตนเองให้ครบทุกด้านก่อนส่งนะคะ");
+      const {error} = await sb.from("iv_sessions").update({status:"submitted", submitted_at:new Date().toISOString()}).eq("id", pr.session.id);
+      if(error) return toast("ส่งไม่สำเร็จ: "+error.message);
+      toast("ส่งให้ครูตรวจเรียบร้อย 📨");
+    }else toast("บันทึกเก็บไว้แล้ว ส่งให้ครูภายหลังได้ที่หน้า ผลของฉัน");
+    pr = null; go("myresults");
+  }
+  $("btnKeepDraft").onclick = ()=> saveScoresAndFinish(false);
+  $("btnSubmit").onclick = ()=> saveScoresAndFinish(true);
+}
+
+/* ═══════════ ผลของฉัน (นักเรียน) ═══════════ */
+async function renderMyResults(){
+  $("body").innerHTML = `<div class="loading">กำลังโหลด…</div>`;
+  const {data:ss, error} = await sb.from("iv_sessions").select("*, iv_scores(criteria_id,scorer_role,score), iv_categories(name,emoji,color)")
+    .eq("student_id",profile.id).order("created_at",{ascending:false});
+  if(error) return $("body").innerHTML = `<div class="empty">โหลดไม่สำเร็จ: ${esc(error.message)}</div>`;
+  if(!ss?.length) return $("body").innerHTML = `<div class="empty"><div class="big">🎤</div>ยังไม่เคยซ้อมเลย — ไปที่แท็บ "ฝึกซ้อม" เพื่อเริ่มเซ็ตแรกกัน!</div>`;
+  const avg = (s,role)=>{ const x = s.iv_scores.filter(v=>v.scorer_role===role); return x.length? (x.reduce((a,b)=>a+b.score,0)/x.length).toFixed(1) : null; };
+  $("body").innerHTML = `<div class="tbl-wrap"><table>
+    <tr><th>วันที่</th><th>หมวด</th><th>สถานะ</th><th>ประเมินตนเอง</th><th>คะแนนจากครู</th><th></th></tr>
+    ${ss.map(s=>`<tr>
+      <td>${fmtDate(s.created_at)}</td>
+      <td>${esc(s.iv_categories?.emoji||"")} ${esc(s.iv_categories?.name||"-")}</td>
+      <td><span class="pill ${s.status}">${STATUS_LABEL[s.status]}</span></td>
+      <td>${avg(s,"self")??"-"}</td>
+      <td>${avg(s,"teacher")? `<b style="color:var(--pine-deep)">${avg(s,"teacher")}</b>`:"-"}</td>
+      <td style="display:flex;gap:6px">
+        <button class="btn ghost sm" onclick="openSessionDetail('${s.id}', false)">ดูรายละเอียด</button>
+        ${s.status==="draft"? `<button class="btn note sm" onclick="submitDraft('${s.id}')">ส่งครู</button>
+        <button class="btn danger sm" onclick="delSession('${s.id}')">ลบ</button>`:""}
+      </td></tr>`).join("")}
+  </table></div>`;
+}
+async function submitDraft(id){
+  const {error} = await sb.from("iv_sessions").update({status:"submitted", submitted_at:new Date().toISOString()}).eq("id", id);
+  if(error) return toast("ส่งไม่สำเร็จ: "+error.message);
+  toast("ส่งให้ครูตรวจเรียบร้อย 📨"); renderMyResults();
+}
+async function delSession(id){
+  if(!confirm("ลบเซ็ตซ้อมนี้ใช่ไหม? ข้อมูลและไฟล์เสียงจะหายถาวร")) return;
+  const {data:ans} = await sb.from("iv_answers").select("media_path").eq("session_id",id);
+  const paths = (ans||[]).map(a=>a.media_path).filter(Boolean);
+  if(paths.length) await sb.storage.from(BUCKET).remove(paths);
+  const {error} = await sb.from("iv_sessions").delete().eq("id", id);
+  if(error) return toast("ลบไม่สำเร็จ: "+error.message);
+  toast("ลบเรียบร้อย"); renderMyResults();
+}
+
+/* ═══════════ รายละเอียดเซ็ต (นักเรียนดู / ครูตรวจ) ═══════════ */
+async function openSessionDetail(id, teacherMode){
+  $("body").innerHTML = `<div class="loading">กำลังโหลด…</div>`;
+  const [{data:s},{data:ans}] = await Promise.all([
+    sb.from("iv_sessions").select("*, iv_categories(name,emoji), iv_scores(id,criteria_id,scorer_role,scorer_id,score), profiles!iv_sessions_student_id_fkey(display_name,class_room,username)").eq("id",id).maybeSingle(),
+    sb.from("iv_answers").select("*").eq("session_id",id).order("order_no")
+  ]);
+  if(!s) return $("body").innerHTML = `<div class="empty">ไม่พบข้อมูล</div>`;
+  const selfMap = {}, teachMap = {};
+  for(const v of s.iv_scores){ (v.scorer_role==="self"? selfMap:teachMap)[v.criteria_id] = v.score; }
+  // เตรียม signed URL ของไฟล์เสียง
+  const urls = {};
+  for(const a of (ans||[])){ if(a.media_path){
+    const {data:u} = await sb.storage.from(BUCKET).createSignedUrl(a.media_path, 3600);
+    if(u) urls[a.id] = u.signedUrl; } }
+  const teacherScores = {...teachMap};
+  $("body").innerHTML = `
+    <button class="btn ghost sm" onclick="go('${teacherMode? "review":"myresults"}')">← กลับ</button>
+    <div class="panel" style="margin-top:12px">
+      <h2>${esc(s.iv_categories?.emoji||"")} ${esc(s.iv_categories?.name||"เซ็ตซ้อม")} <span class="pill ${s.status}">${STATUS_LABEL[s.status]}</span></h2>
+      <div style="font-size:.85rem;color:var(--ink-soft)">
+        ${teacherMode? `นักเรียน: <b>${esc(s.profiles?.display_name||"-")}</b> (${esc(s.profiles?.class_room||"-")}) · `:""}
+        ซ้อมเมื่อ ${fmtDate(s.created_at)}${s.submitted_at? ` · ส่งเมื่อ ${fmtDate(s.submitted_at)}`:""}</div>
+    </div>
+    ${(ans||[]).map((a,i)=>`<div class="answer-review">
+      <div class="q">ข้อ ${i+1}. ${esc(a.question_text)} <small style="color:var(--ink-soft)">(${fmtSec(a.seconds_used||0)})</small></div>
+      ${a.media_kind==="audio" && urls[a.id]? `<audio controls src="${esc(urls[a.id])}"></audio>`
+        : `<div class="mine">${esc(a.answer_text||"— ไม่ได้ตอบ/ข้าม —")}</div>`}
+      ${a.guide_answer? `<div class="guide"><b>💡 แนวทางการตอบ:</b> ${esc(a.guide_answer)}</div>`:""}
+    </div>`).join("")}
+    <div class="panel"><h2>คะแนนตามเกณฑ์</h2>
+      <div class="score-legend">1 = ${SCORE_LABEL[1]} · 2 = ${SCORE_LABEL[2]} · 3 = ${SCORE_LABEL[3]} · 4 = ${SCORE_LABEL[4]}</div>
+      <div class="tbl-wrap"><table>
+        <tr><th>เกณฑ์</th><th>ประเมินตนเอง</th><th>${teacherMode? "ให้คะแนน (ครู)":"คะแนนจากครู"}</th></tr>
+        ${rubric.map(r=>`<tr>
+          <td><b>${esc(r.title)}</b><br><small style="color:var(--ink-soft)">${esc(r.description||"")}</small></td>
+          <td>${selfMap[r.id]? selfMap[r.id]+" ("+SCORE_LABEL[selfMap[r.id]]+")" : "-"}</td>
+          <td>${teacherMode
+            ? `<div class="score-pick" data-crit="${r.id}">${[1,2,3,4].map(n=>`<button data-n="${n}" class="${teachMap[r.id]===n?"sel":""}">${n}</button>`).join("")}</div>`
+            : (teachMap[r.id]? `<b style="color:var(--pine-deep)">${teachMap[r.id]} (${SCORE_LABEL[teachMap[r.id]]})</b>` : "-")}</td>
+        </tr>`).join("")}
+      </table></div>
+      ${teacherMode? `
+        <div class="field" style="margin-top:14px"><label>ความคิดเห็น/คำแนะนำถึงนักเรียน</label>
+          <textarea id="tComment">${esc(s.teacher_comment||"")}</textarea></div>
+        <div style="display:flex;justify-content:flex-end"><button class="btn primary" id="btnSaveReview">✔ บันทึกผลตรวจ</button></div>`
+      : (s.teacher_comment? `<div class="guide" style="margin-top:12px"><b>💬 จากครู:</b> ${esc(s.teacher_comment)}</div>`:"")}
+    </div>`;
+  if(teacherMode){
+    document.querySelectorAll(".score-pick[data-crit]").forEach(p=>{
+      p.querySelectorAll("button").forEach(b=>{ b.onclick = ()=>{
+        p.querySelectorAll("button").forEach(x=>x.classList.remove("sel")); b.classList.add("sel");
+        teacherScores[p.dataset.crit] = +b.dataset.n; }; });
+    });
+    $("btnSaveReview").onclick = async ()=>{
+      if(Object.keys(teacherScores).length < rubric.length) return toast("ให้คะแนนให้ครบทุกเกณฑ์ก่อนนะคะ");
+      $("btnSaveReview").disabled = true;
+      const rows = Object.entries(teacherScores).map(([cid,score])=>({
+        session_id:id, criteria_id:cid, scorer_role:"teacher", scorer_id:profile.id, score}));
+      const {error:e1} = await sb.from("iv_scores").upsert(rows, {onConflict:"session_id,criteria_id,scorer_role"});
+      const {error:e2} = await sb.from("iv_sessions").update({status:"reviewed", reviewed_at:new Date().toISOString(),
+        reviewer_id:profile.id, teacher_comment:$("tComment").value.trim()||null}).eq("id",id);
+      $("btnSaveReview").disabled = false;
+      if(e1||e2) return toast("บันทึกไม่สำเร็จ: "+(e1||e2).message);
+      toast("บันทึกผลตรวจเรียบร้อย ✅"); go("review");
+    };
+  }
+}
+
+/* ═══════════ งานตรวจ (ครู) ═══════════ */
+let reviewFilter = "submitted";
+async function renderReview(){
+  $("body").innerHTML = `<div class="loading">กำลังโหลด…</div>`;
+  const {data:ss, error} = await sb.from("iv_sessions")
+    .select("*, iv_categories(name,emoji), profiles!iv_sessions_student_id_fkey(display_name,class_room)")
+    .neq("status","draft").order("submitted_at",{ascending:true});
+  if(error) return $("body").innerHTML = `<div class="empty">โหลดไม่สำเร็จ: ${esc(error.message)}</div>`;
+  const list = (ss||[]).filter(s=> reviewFilter==="all" ? true : s.status===reviewFilter);
+  $("body").innerHTML = `
+    <div class="toolbar"><div class="chips">
+      ${[["submitted","📥 รอตรวจ"],["reviewed","✅ ตรวจแล้ว"],["all","ทั้งหมด"]].map(([v,l])=>
+        `<button class="chip ${reviewFilter===v?"active":""}" data-f="${v}">${l}</button>`).join("")}
+    </div></div>
+    ${!list.length? `<div class="empty"><div class="big">🍃</div>ไม่มีรายการในหมวดนี้</div>` : `<div class="tbl-wrap"><table>
+      <tr><th>ส่งเมื่อ</th><th>นักเรียน</th><th>ห้อง</th><th>หมวด</th><th>สถานะ</th><th></th></tr>
+      ${list.map(s=>`<tr>
+        <td>${s.submitted_at? fmtDate(s.submitted_at):"-"}</td>
+        <td><b>${esc(s.profiles?.display_name||"-")}</b></td>
+        <td>${esc(s.profiles?.class_room||"-")}</td>
+        <td>${esc(s.iv_categories?.emoji||"")} ${esc(s.iv_categories?.name||"-")}</td>
+        <td><span class="pill ${s.status}">${STATUS_LABEL[s.status]}</span></td>
+        <td><button class="btn ${s.status==="submitted"?"primary":"ghost"} sm" onclick="openSessionDetail('${s.id}', true)">${s.status==="submitted"?"ตรวจ":"เปิดดู"}</button></td>
+      </tr>`).join("")}</table></div>`}`;
+  document.querySelectorAll("[data-f]").forEach(b=> b.onclick = ()=>{ reviewFilter=b.dataset.f; renderReview(); });
+}
+
+/* ═══════════ คลังคำถาม (ครู/แอดมิน) ═══════════ */
+let bankCat = "all", editingQ = null;
+async function renderBank(){
+  const activeCats = cats;
+  const list = questions.filter(q=> bankCat==="all"? true : q.category_id===bankCat)
+    .sort((a,b)=> (a.category_id>b.category_id?1:-1) || a.question_text.localeCompare(b.question_text,"th"));
+  $("body").innerHTML = `
+    <div class="toolbar">
+      <div class="chips" style="flex:1">
+        <button class="chip ${bankCat==="all"?"active":""}" data-c="all">ทั้งหมด (${questions.length})</button>
+        ${activeCats.map(c=>`<button class="chip ${bankCat===c.id?"active":""}" data-c="${c.id}">${esc(c.emoji)} ${esc(c.name)} (${questions.filter(q=>q.category_id===c.id).length})</button>`).join("")}
+      </div>
+      <button class="btn primary" id="btnAddQ">＋ เพิ่มคำถาม</button>
+    </div>
+    <div class="tbl-wrap"><table>
+      <tr><th>คำถาม</th><th>หมวด</th><th>ระดับ</th><th>เวลา</th><th>สถานะ</th><th></th></tr>
+      ${list.map(q=>{ const c = cats.find(x=>x.id===q.category_id);
+        return `<tr style="${q.is_active?"":"opacity:.5"}">
+        <td style="white-space:normal;min-width:260px">${esc(q.question_text)}</td>
+        <td style="white-space:nowrap">${esc(c?.emoji||"")} ${esc((c?.name||"").split(" ·")[0])}</td>
+        <td>${DIFF_LABEL[q.difficulty]}</td><td>${fmtSec(q.suggested_seconds)}</td>
+        <td>${q.is_active? '<span class="badge type">ใช้งาน</span>':'<span class="badge link">ปิด</span>'}</td>
+        <td style="white-space:nowrap"><button class="btn ghost sm" data-eq="${q.id}">แก้ไข</button>
+            <button class="btn danger sm" data-dq="${q.id}">ลบ</button></td></tr>`;}).join("")}
+    </table></div>`;
+  document.querySelectorAll("[data-c]").forEach(b=> b.onclick = ()=>{ bankCat=b.dataset.c; renderBank(); });
+  document.querySelectorAll("[data-eq]").forEach(b=> b.onclick = ()=> openQModal(b.dataset.eq));
+  document.querySelectorAll("[data-dq]").forEach(b=> b.onclick = ()=> delQuestion(b.dataset.dq));
+  $("btnAddQ").onclick = ()=> openQModal(null);
+}
+function openQModal(qid){
+  editingQ = qid ? questions.find(q=>q.id===qid) : null;
+  $("qModalTitle").textContent = editingQ? "แก้ไขคำถาม" : "เพิ่มคำถาม";
+  $("qCat").innerHTML = cats.map(c=>`<option value="${c.id}">${esc(c.emoji)} ${esc(c.name)}</option>`).join("");
+  $("qCat").value = editingQ?.category_id || (bankCat!=="all"? bankCat : cats[0]?.id);
+  $("qText").value = editingQ?.question_text||""; $("qGuide").value = editingQ?.guide_answer||"";
+  $("qDiff").value = editingQ?.difficulty||"medium"; $("qSec").value = editingQ?.suggested_seconds||120;
+  $("qLang").value = editingQ?.lang||"th"; $("qActive").value = String(editingQ?.is_active ?? true);
+  $("qMsg").className = "msg";
+  $("qModal").classList.add("show");
+}
+$("btnQSave").onclick = async ()=>{
+  const row = {category_id:$("qCat").value, question_text:$("qText").value.trim(), guide_answer:$("qGuide").value.trim()||null,
+    difficulty:$("qDiff").value, suggested_seconds:+$("qSec").value||120, lang:$("qLang").value, is_active:$("qActive").value==="true"};
+  if(!row.question_text) return msg("qMsg","กรอกคำถามก่อนนะคะ","err");
+  $("btnQSave").disabled = true;
+  const {error} = editingQ
+    ? await sb.from("iv_questions").update(row).eq("id", editingQ.id)
+    : await sb.from("iv_questions").insert({...row, created_by:profile.id});
+  $("btnQSave").disabled = false;
+  if(error) return msg("qMsg", error.message, "err");
+  closeModal("qModal"); toast("บันทึกเรียบร้อย ✅");
+  await loadBase(); renderBank();
+};
+async function delQuestion(id){
+  const q = questions.find(x=>x.id===id); if(!q) return;
+  if(!confirm(`ลบคำถาม "${q.question_text.slice(0,50)}…" ใช่ไหม? (คำตอบเก่าของนักเรียนยังอยู่เพราะระบบเก็บสำเนาไว้)`)) return;
+  const {error} = await sb.from("iv_questions").delete().eq("id", id);
+  if(error) return toast("ลบไม่สำเร็จ: "+error.message);
+  toast("ลบเรียบร้อย"); await loadBase(); renderBank();
+}
+
+/* ═══════════ boot ═══════════ */
+boot();
+</script>
+</body>
+</html>
