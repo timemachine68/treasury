@@ -264,6 +264,17 @@ audio{width:100%;margin-top:6px}
   </div>
 </div></div>
 
+<!-- โมดัล: ข้อมูลสำหรับ AI ช่วยวิเคราะห์ (ครูใช้เอง คัดลอกไปวางในแอป AI ที่ถนัด) -->
+<div class="modal-back" id="aiModal"><div class="modal" style="max-width:640px">
+  <h2>🤖 ข้อมูลสำหรับให้ AI ช่วยวิเคราะห์</h2>
+  <div class="field hint" style="margin-bottom:10px">คัดลอกข้อความด้านล่าง แล้วนำไปวางในแอป AI ที่คุณสะดวกใช้ (เช่น Gemini, ChatGPT, Claude) เพื่อขอคำแนะนำเพิ่มเติมก่อนให้ feedback นักเรียน — ระบบนี้ไม่ส่งข้อมูลออกไปที่ไหนอัตโนมัติ และไม่มีค่าใช้จ่ายเพิ่ม</div>
+  <div class="field"><textarea id="aiText" style="min-height:280px;font-family:monospace;font-size:.78rem" readonly></textarea></div>
+  <div class="foot">
+    <button class="btn ghost" onclick="closeModal('aiModal')">ปิด</button>
+    <button class="btn primary" id="btnAICopy">📋 คัดลอกทั้งหมด</button>
+  </div>
+</div></div>
+
 <div id="toast"></div>
 
 <script>
@@ -646,6 +657,8 @@ async function openSessionDetail(id, teacherMode, backTab){
       <div style="font-size:.85rem;color:var(--ink-soft)">
         ${teacherMode? `นักเรียน: <b>${esc(s.profiles?.display_name||"-")}</b> (${esc(s.profiles?.class_room||"-")}) · `:""}
         ซ้อมเมื่อ ${fmtDate(s.created_at)}${s.submitted_at? ` · ส่งเมื่อ ${fmtDate(s.submitted_at)}`:""}</div>
+      ${teacherMode? `<div style="margin-top:10px"><button class="btn ghost sm" id="btnAIPrep">🤖 เตรียมข้อมูลให้ AI ช่วยวิเคราะห์</button>
+        <div class="hint" style="margin-top:4px">คัดลอกสรุปคำตอบ+เกณฑ์ไปวางในแอป AI ที่คุณสะดวกใช้เอง (เช่น Gemini, ChatGPT) — ระบบไม่ส่งข้อมูลออกอัตโนมัติ ไม่มีค่าใช้จ่ายเพิ่ม</div></div>`:""}
     </div>
     ${(ans||[]).map((a,i)=>`<div class="answer-review">
       <div class="q">ข้อ ${i+1}. ${esc(a.question_text)} <small style="color:var(--ink-soft)">(${fmtSec(a.seconds_used||0)})</small></div>
@@ -672,6 +685,7 @@ async function openSessionDetail(id, teacherMode, backTab){
       : (s.teacher_comment? `<div class="guide" style="margin-top:12px"><b>💬 จากครู:</b> ${esc(s.teacher_comment)}</div>`:"")}
     </div>`;
   if(teacherMode){
+    $("btnAIPrep").onclick = ()=> openAIModal(buildAIPrompt(s, ans||[], selfMap));
     document.querySelectorAll(".score-pick[data-crit]").forEach(p=>{
       p.querySelectorAll("button").forEach(b=>{ b.onclick = ()=>{
         p.querySelectorAll("button").forEach(x=>x.classList.remove("sel")); b.classList.add("sel");
@@ -958,6 +972,37 @@ $("btnCkSave").onclick = async ()=>{
   $("btnCkSave").disabled = false;
   if(error) return msg("ckMsg", error.message, "err");
   closeModal("ckModal"); toast("บันทึกเรียบร้อย ✅"); renderPrep();
+};
+
+/* ═══════════ เฟส 3: เตรียมข้อมูลให้ AI ช่วยวิเคราะห์ (ครูใช้เอง ไม่มีค่าใช้จ่าย) ═══════════ */
+function buildAIPrompt(s, ans, selfMap){
+  const catName = s.iv_categories?.name || "ทั่วไป";
+  let txt = "ช่วยวิเคราะห์การฝึกซ้อมสัมภาษณ์เข้ามหาวิทยาลัยของนักเรียน ม.6 คนหนึ่ง แล้วให้คำแนะนำสำหรับครูแนะแนวนำไปสอนเสริมค่ะ\n\n";
+  txt += `หมวดที่ฝึกซ้อม: ${catName}\n\n`;
+  txt += "เกณฑ์การประเมิน 4 ด้าน:\n";
+  rubric.forEach(r=> txt += `- ${r.title}: ${r.description||""}\n`);
+  txt += "\nคำถามและคำตอบของนักเรียน:\n";
+  ans.forEach((a,i)=>{
+    txt += `\n${i+1}. คำถาม: ${a.question_text}\n`;
+    txt += a.media_kind==="audio"
+      ? "   คำตอบ: (นักเรียนตอบด้วยเสียง — ครูฟังแล้ว กรุณาช่วยตั้งข้อสังเกต/คำถามวิเคราะห์ทั่วไปสำหรับคำถามข้อนี้)\n"
+      : `   คำตอบ: ${a.answer_text || "(ไม่ได้ตอบ/ข้ามข้อนี้)"}\n`;
+  });
+  if(Object.keys(selfMap).length){
+    txt += "\nนักเรียนประเมินตนเอง (คะแนนเต็ม 4):\n";
+    rubric.forEach(r=>{ if(selfMap[r.id]) txt += `- ${r.title}: ${selfMap[r.id]}/4\n`; });
+  }
+  txt += "\nกรุณาช่วย:\n1) สรุปจุดแข็งของคำตอบชุดนี้\n2) ชี้จุดที่ควรปรับปรุงตามเกณฑ์แต่ละด้านอย่างเจาะจง\n3) ยกตัวอย่างประโยคหรือแนวทางตอบที่ดีขึ้น สำหรับครูนำไปอธิบายให้นักเรียนเข้าใจง่าย ๆ";
+  return txt;
+}
+function openAIModal(text){
+  $("aiText").value = text;
+  $("aiModal").classList.add("show");
+  $("aiText").focus(); $("aiText").select();
+}
+$("btnAICopy").onclick = async ()=>{
+  try{ await navigator.clipboard.writeText($("aiText").value); toast("คัดลอกแล้ว 📋 นำไปวางในแอป AI ที่ถนัดได้เลย"); }
+  catch(e){ $("aiText").select(); toast("เลือกข้อความให้แล้ว กด Ctrl+C (หรือแตะค้างแล้วคัดลอก) เพื่อคัดลอกด้วยตนเอง"); }
 };
 
 /* ═══════════ boot ═══════════ */
