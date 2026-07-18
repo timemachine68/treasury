@@ -589,6 +589,10 @@ textarea.csvbox{font-family:monospace;font-size:.82rem;min-height:120px}
     </div>
     <div class="field"><label for="rdTitle">ชื่อรอบ *</label><input id="rdTitle" placeholder="เช่น รอบที่ 1 (มี.ค. 69)"></div>
     <div class="field"><label for="rdYear">ปีการศึกษา</label><input id="rdYear" placeholder="เช่น 2569"></div>
+    <div class="field"><label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+      <input type="checkbox" id="rdAllowPhoto" style="width:auto">
+      📷 เปิดให้นักเรียนแนบรูปตัวเอง (ไม่บังคับ สำหรับทำสื่อแสดงความยินดี)
+    </label></div>
     <p class="field hint">สร้างแล้วรอบจะ "ปิด" อยู่ก่อน กดเปิดรับคำตอบเมื่อพร้อมนะคะ</p>
     <div class="foot">
       <button class="btn ghost" id="btnRoundCancel">ยกเลิก</button>
@@ -615,6 +619,12 @@ textarea.csvbox{font-family:monospace;font-size:.82rem;min-height:120px}
       </select>
     </div>
     <div class="field hidden" id="svOtherWrap"><label for="svOther" id="svOtherLabel">ระบุรายละเอียด</label><input id="svOther"></div>
+    <div class="field hidden" id="svPhotoWrap">
+      <label for="svPhoto">📷 แนบรูปตัวเอง (ไม่บังคับ — ใช้ทำสื่อแสดงความยินดี)</label>
+      <input type="file" id="svPhoto" accept="image/*">
+      <img id="svPhotoPreview" class="hidden" style="max-width:120px;border-radius:8px;margin-top:8px;display:block">
+      <p class="field hint" id="svPhotoExisting"></p>
+    </div>
     <div class="foot">
       <button class="btn ghost" id="btnSvFormCancel">ยกเลิก</button>
       <button class="btn primary" id="btnSvFormSave">บันทึกคำตอบ</button>
@@ -634,7 +644,7 @@ textarea.csvbox{font-family:monospace;font-size:.82rem;min-height:120px}
     </div>
     <div class="tbl-wrap" style="max-height:52vh;overflow-y:auto">
       <table>
-        <thead><tr><th>ชื่อผู้ใช้</th><th>ชื่อ-นามสกุล</th><th>ห้อง</th><th>สถานะ</th><th>สถานศึกษา/รายละเอียด</th><th>เวลา</th></tr></thead>
+        <thead><tr><th>ชื่อผู้ใช้</th><th>ชื่อ-นามสกุล</th><th>ห้อง</th><th>สถานะ</th><th>สถานศึกษา/รายละเอียด</th><th>เวลา</th><th>รูป</th></tr></thead>
         <tbody id="svRows"></tbody>
       </table>
     </div>
@@ -1623,7 +1633,7 @@ const SV_STATUS = {
 const NEED_INST = ["ต่อ ม.4 โรงเรียนเดิม","ต่อ ม.4 โรงเรียนอื่น","ปวช.","กศน.","มหาวิทยาลัย","ปวส./ปวช.ต่อเนื่อง"];
 const NEED_DETAIL = ["ทำงาน","อื่นๆ"];
 const gradeOf = room => (room||"").split("/")[0];
-let svRounds=[], svMine={}, svAllResp=[], svStudents=[], svRid=null, svRoom="all", svFormRid=null;
+let svRounds=[], svMine={}, svAllResp=[], svStudents=[], svRid=null, svRoom="all", svFormRid=null, svPhotoFile=null;
 
 async function loadSurvey(){
   const staff = ["teacher","admin"].includes(profile.role);
@@ -1685,7 +1695,7 @@ function svTeacherCard(r){
 function svStudentCard(r){
   const ans = svMine[r.id];
   return `<article class="rescard" style="--gc:${r.grade==="ม.3"?"var(--g3)":"var(--g6)"}">
-    <div class="top">${ans? '<span class="status sent">✅ ตอบแล้ว</span>':'<span class="status missing">ยังไม่ตอบ</span>'}</div>
+    <div class="top">${ans? '<span class="status sent">✅ ตอบแล้ว</span>':'<span class="status missing">ยังไม่ตอบ</span>'}${r.allow_photo?'<span class="badge type">📷 แนบรูปได้</span>':''}</div>
     <h3>${esc(r.title)}</h3>
     ${r.academic_year?`<span class="duechip">ปีการศึกษา ${esc(r.academic_year)}</span>`:""}
     ${ans?`<p class="desc">คำตอบ: ${esc(ans.status)}${ans.institution? " · "+esc(ans.institution):""}</p>`:""}
@@ -1694,7 +1704,7 @@ function svStudentCard(r){
 }
 
 /* ── ครู: สร้าง/เปิดปิด/ลบรอบ ── */
-$("btnAddRound").onclick = ()=>{ msg("roundMsg",""); $("rdTitle").value=""; $("rdYear").value=""; $("roundModal").classList.add("show"); };
+$("btnAddRound").onclick = ()=>{ msg("roundMsg",""); $("rdTitle").value=""; $("rdYear").value=""; $("rdAllowPhoto").checked=false; $("roundModal").classList.add("show"); };
 $("btnRoundCancel").onclick = ()=> $("roundModal").classList.remove("show");
 $("btnRoundSave").onclick = async ()=>{
   const title = $("rdTitle").value.trim();
@@ -1702,6 +1712,7 @@ $("btnRoundSave").onclick = async ()=>{
   $("btnRoundSave").disabled = true;
   const {error} = await sb.from("survey_rounds").insert({
     grade:$("rdGrade").value, title, academic_year:$("rdYear").value.trim()||null,
+    allow_photo: $("rdAllowPhoto").checked,
     created_by:profile.id, creator_name:profile.display_name
   });
   $("btnRoundSave").disabled = false;
@@ -1726,7 +1737,7 @@ async function delRound(id){
 $("btnSvFormCancel").onclick = ()=> $("svFormModal").classList.remove("show");
 $("svStatus").addEventListener("change", updateSvFields);
 function openSvForm(rid){
-  svFormRid = rid; msg("svFormMsg","");
+  svFormRid = rid; msg("svFormMsg",""); svPhotoFile = null;
   const r = svRounds.find(x=>x.id===rid); const ans = svMine[rid];
   $("svFormTitle").textContent = "📝 " + r.title;
   const opts = SV_STATUS[r.grade]||[];
@@ -1734,9 +1745,23 @@ function openSvForm(rid){
   $("svStatus").value = ans?.status || opts[0];
   $("svInst").value = ans?.institution||""; $("svProg").value = ans?.program||"";
   $("svTcas").value = ans?.tcas_round||"รอบ 1 Portfolio"; $("svOther").value = ans?.other_detail||"";
+  $("svPhotoWrap").classList.toggle("hidden", !r.allow_photo);
+  $("svPhoto").value = "";
+  $("svPhotoPreview").classList.add("hidden"); $("svPhotoPreview").src = "";
+  $("svPhotoExisting").textContent = ans?.photo_path ? "มีรูปที่แนบไว้แล้ว (เลือกไฟล์ใหม่เพื่อเปลี่ยน)" : "";
   updateSvFields();
   $("svFormModal").classList.add("show");
 }
+$("svPhoto").addEventListener("change", ()=>{
+  const f = $("svPhoto").files[0];
+  svPhotoFile = f || null;
+  if(f){
+    const url = URL.createObjectURL(f);
+    $("svPhotoPreview").src = url; $("svPhotoPreview").classList.remove("hidden");
+  } else {
+    $("svPhotoPreview").classList.add("hidden"); $("svPhotoPreview").src = "";
+  }
+});
 function updateSvFields(){
   const r = svRounds.find(x=>x.id===svFormRid); if(!r) return;
   const st = $("svStatus").value, m6 = r.grade==="ม.6";
@@ -1752,6 +1777,7 @@ function updateSvFields(){
 }
 $("btnSvFormSave").onclick = async ()=>{
   const st = $("svStatus").value;
+  const old = svMine[svFormRid];
   const row = {
     round_id:svFormRid, student_id:profile.id, status:st,
     institution: NEED_INST.includes(st)? ($("svInst").value.trim()||null) : null,
@@ -1761,7 +1787,20 @@ $("btnSvFormSave").onclick = async ()=>{
     submitted_at: new Date().toISOString()
   };
   $("btnSvFormSave").disabled = true;
-  const old = svMine[svFormRid];
+  if(svPhotoFile){
+    if(svPhotoFile.size > 10*1024*1024){
+      $("btnSvFormSave").disabled = false;
+      return msg("svFormMsg","รูปใหญ่เกิน 10MB ค่ะ ลองเลือกรูปที่เล็กลงนะคะ","err");
+    }
+    const ext = svPhotoFile.name.includes(".")? svPhotoFile.name.split(".").pop() : "jpg";
+    const path = profile.id + "/survey_" + svFormRid + "_" + crypto.randomUUID() + "." + ext;
+    msg("svFormMsg","กำลังอัปโหลดรูป…","ok");
+    const {error:upErr} = await sb.storage.from("survey-photos").upload(path, svPhotoFile);
+    if(upErr){ $("btnSvFormSave").disabled = false; return msg("svFormMsg","อัปโหลดรูปไม่สำเร็จ: "+upErr.message,"err"); }
+    row.photo_path = path;
+  } else if(old?.photo_path){
+    row.photo_path = old.photo_path; // ไม่ได้เลือกไฟล์ใหม่ → คงรูปเดิมไว้
+  }
   const {error} = old
     ? await sb.from("survey_responses").update(row).eq("id", old.id)
     : await sb.from("survey_responses").insert(row);
@@ -1799,8 +1838,17 @@ function renderSvRoster(){
     const detail = a? [a.institution, a.program, a.tcas_round, a.other_detail].filter(Boolean).join(" · ") : "";
     return `<tr><td><b>${esc(s.username)}</b></td><td>${esc(s.display_name)}</td><td>${esc(s.class_room||"-")}</td>
       <td>${a? `<span class="status sent">${esc(a.status)}</span>`:'<span class="status missing">ยังไม่ตอบ</span>'}</td>
-      <td>${esc(detail)||"-"}</td><td>${a? thDateTime(a.submitted_at):"-"}</td></tr>`;
-  }).join("") || `<tr><td colspan="6" style="text-align:center;color:var(--ink-soft)">ไม่มีนักเรียน${r.grade}ในระบบ</td></tr>`;
+      <td>${esc(detail)||"-"}</td><td>${a? thDateTime(a.submitted_at):"-"}</td>
+      <td>${a?.photo_path? `<button class="btn ghost sm" data-svphoto="${esc(a.photo_path)}">📷 ดูรูป</button>`:"-"}</td></tr>`;
+  }).join("") || `<tr><td colspan="7" style="text-align:center;color:var(--ink-soft)">ไม่มีนักเรียน${r.grade}ในระบบ</td></tr>`;
+  $("svRows").querySelectorAll("[data-svphoto]").forEach(btn=> btn.onclick = ()=> openSvPhoto(btn.dataset.svphoto, btn));
+}
+async function openSvPhoto(path, btn){
+  btn.disabled = true;
+  const {data, error} = await sb.storage.from("survey-photos").createSignedUrl(path, 3600);
+  btn.disabled = false;
+  if(error) return toast("เปิดรูปไม่สำเร็จ: "+error.message);
+  window.open(data.signedUrl, "_blank");
 }
 $("btnSvCsv").onclick = ()=>{
   const r = svRounds.find(x=>x.id===svRid); if(!r) return;
