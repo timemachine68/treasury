@@ -1752,15 +1752,42 @@ function openSvForm(rid){
   updateSvFields();
   $("svFormModal").classList.add("show");
 }
-$("svPhoto").addEventListener("change", ()=>{
+// บีบอัดรูปฝั่ง browser ก่อนอัปโหลด: resize ด้านยาวสุดไม่เกิน maxDim แล้ว export เป็น JPEG
+// ช่วยประหยัดพื้นที่ storage ได้มาก (รูปมือถือ 3-8MB → เหลือ ~150-400KB) โดยยังคมพอสำหรับทำสื่อ
+function compressImage(file, maxDim=1280, quality=0.82){
+  return new Promise((resolve)=>{
+    if(!file.type.startsWith("image/")){ resolve(file); return; }
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = ()=>{
+      URL.revokeObjectURL(url);
+      let {width:w, height:h} = img;
+      if(w > maxDim || h > maxDim){
+        if(w >= h){ h = Math.round(h * maxDim / w); w = maxDim; }
+        else { w = Math.round(w * maxDim / h); h = maxDim; }
+      }
+      const canvas = document.createElement("canvas");
+      canvas.width = w; canvas.height = h;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0, 0, w, h);
+      canvas.toBlob(blob=>{
+        if(!blob){ resolve(file); return; } // fallback: browser บีบอัดไม่ได้ ใช้ไฟล์เดิม
+        const compressedFile = new File([blob], (file.name.replace(/\.[^.]+$/,"")||"photo")+".jpg", {type:"image/jpeg"});
+        resolve(compressedFile);
+      }, "image/jpeg", quality);
+    };
+    img.onerror = ()=>{ URL.revokeObjectURL(url); resolve(file); }; // fallback: โหลดรูปไม่ได้ ใช้ไฟล์เดิม
+    img.src = url;
+  });
+}
+$("svPhoto").addEventListener("change", async ()=>{
   const f = $("svPhoto").files[0];
-  svPhotoFile = f || null;
-  if(f){
-    const url = URL.createObjectURL(f);
-    $("svPhotoPreview").src = url; $("svPhotoPreview").classList.remove("hidden");
-  } else {
-    $("svPhotoPreview").classList.add("hidden"); $("svPhotoPreview").src = "";
-  }
+  if(!f){ svPhotoFile = null; $("svPhotoPreview").classList.add("hidden"); $("svPhotoPreview").src = ""; return; }
+  $("svPhotoExisting").textContent = "กำลังย่อขนาดรูป…";
+  svPhotoFile = await compressImage(f);
+  $("svPhotoExisting").textContent = `ขนาดไฟล์หลังย่อ: ${(svPhotoFile.size/1024).toFixed(0)} KB`;
+  const url = URL.createObjectURL(svPhotoFile);
+  $("svPhotoPreview").src = url; $("svPhotoPreview").classList.remove("hidden");
 });
 function updateSvFields(){
   const r = svRounds.find(x=>x.id===svFormRid); if(!r) return;
@@ -1790,7 +1817,7 @@ $("btnSvFormSave").onclick = async ()=>{
   if(svPhotoFile){
     if(svPhotoFile.size > 10*1024*1024){
       $("btnSvFormSave").disabled = false;
-      return msg("svFormMsg","รูปใหญ่เกิน 10MB ค่ะ ลองเลือกรูปที่เล็กลงนะคะ","err");
+      return msg("svFormMsg","ไฟล์รูปยังใหญ่เกิน 10MB แม้บีบอัดแล้วค่ะ ลองเลือกรูปอื่นนะคะ","err");
     }
     const ext = svPhotoFile.name.includes(".")? svPhotoFile.name.split(".").pop() : "jpg";
     const path = profile.id + "/survey_" + svFormRid + "_" + crypto.randomUUID() + "." + ext;
