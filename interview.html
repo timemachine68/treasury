@@ -151,6 +151,27 @@ td{padding:8px 10px;border-bottom:1px solid var(--line)}
 .score-pick button.sel{background:var(--pine);border-color:var(--pine);color:#fff}
 .score-legend{font-size:.75rem;color:var(--ink-soft);margin:6px 0 12px}
 audio{width:100%;margin-top:6px}
+
+/* ---------- เฟส 2: กราฟพัฒนาการ ---------- */
+.chart-wrap{position:relative}
+.chart-wrap svg{width:100%;height:auto;display:block}
+.chart-legend{display:flex;gap:18px;font-size:.8rem;color:var(--ink-soft);margin-bottom:6px;flex-wrap:wrap}
+.chart-legend .key{display:inline-flex;align-items:center;gap:7px}
+.chart-tip{position:absolute;background:var(--ink);color:#fff;font-size:.78rem;padding:7px 11px;border-radius:9px;pointer-events:none;opacity:0;transition:opacity .12s;white-space:nowrap;z-index:5;transform:translate(-50%,-115%)}
+.chart-tip.show{opacity:1}
+
+/* ---------- เฟส 2: checklist เตรียมตัว ---------- */
+.prog-bar{height:12px;border-radius:999px;background:var(--line);overflow:hidden;margin:8px 0 2px}
+.prog-bar i{display:block;height:100%;background:var(--pine);border-radius:999px;transition:width .3s}
+.check-group{margin-bottom:18px}
+.check-group h3{font-size:.98rem;color:var(--pine-deep);margin-bottom:8px}
+.check-item{display:flex;gap:10px;align-items:flex-start;padding:9px 12px;border:1px solid var(--line);border-radius:10px;margin-bottom:7px;background:#fff}
+.check-item.done{background:var(--pine-tint);border-color:var(--pine)}
+.check-item input[type=checkbox]{width:20px;height:20px;accent-color:var(--pine);margin-top:2px;flex:none}
+.check-item .t{flex:1}
+.check-item .t b{display:block;font-size:.92rem}
+.check-item.done .t b{text-decoration:line-through;opacity:.75}
+.check-item .t small{color:var(--ink-soft);font-size:.78rem}
 </style>
 </head>
 <body>
@@ -225,6 +246,24 @@ audio{width:100%;margin-top:6px}
   </div>
 </div></div>
 
+<!-- โมดัล: เพิ่ม/แก้ไขรายการเช็คลิสต์ -->
+<div class="modal-back" id="ckModal"><div class="modal">
+  <h2 id="ckModalTitle">เพิ่มรายการเช็คลิสต์</h2>
+  <div id="ckMsg" class="msg"></div>
+  <div class="field"><label>หมวด (พิมพ์ใหม่หรือเลือกจากที่มี)</label>
+    <input id="ckGroup" list="ckGroups" placeholder="เช่น 📁 เอกสารและ Portfolio"><datalist id="ckGroups"></datalist></div>
+  <div class="field"><label>รายการ *</label><input id="ckTitle" placeholder="เช่น เตรียมสำเนา ปพ.1"></div>
+  <div class="field"><label>คำอธิบายเพิ่มเติม</label><textarea id="ckDetail"></textarea></div>
+  <div class="row2">
+    <div class="field"><label>ลำดับ</label><input id="ckSort" type="number" value="0"></div>
+    <div class="field"><label>สถานะ</label><select id="ckActive"><option value="true">ใช้งาน</option><option value="false">ปิดไว้</option></select></div>
+  </div>
+  <div class="foot">
+    <button class="btn ghost" onclick="closeModal('ckModal')">ยกเลิก</button>
+    <button class="btn primary" id="btnCkSave">บันทึก</button>
+  </div>
+</div></div>
+
 <div id="toast"></div>
 
 <script>
@@ -294,9 +333,12 @@ function buildTabs(){
   if(profile.role==="student"){
     t.push({id:"practice", label:"🎯 ฝึกซ้อม", c:"#F2B84B"});
     t.push({id:"myresults", label:"📋 ผลของฉัน", c:"#4E9BB9"});
+    t.push({id:"prep", label:"✅ เตรียมตัว", c:"#7FB069"});
   }else{
     t.push({id:"review", label:"📥 งานตรวจ", c:"#F2B84B"});
+    t.push({id:"progress", label:"📈 พัฒนาการ", c:"#4E9BB9"});
     t.push({id:"bank", label:"🗂 คลังคำถาม", c:"#8E7CC3"});
+    t.push({id:"prep", label:"✅ เตรียมตัว", c:"#7FB069"});
   }
   $("tabs").innerHTML = t.map(x=>`<button class="ftab" data-t="${x.id}" style="--tabc:${x.c}"><span class="dot"></span>${x.label}</button>`).join("");
   $("tabs").querySelectorAll(".ftab").forEach(b=> b.onclick = ()=> go(b.dataset.t));
@@ -306,7 +348,7 @@ function go(tab){
   if(pr && pr.active && tab!=="practice"){ if(!confirm("กำลังซ้อมอยู่ ออกจากห้องซ้อมใช่ไหม? คำตอบที่ตอบแล้วจะถูกเก็บไว้")) return; stopTimer(); stopRecorder(true); pr=null; }
   curTab = tab;
   $("tabs").querySelectorAll(".ftab").forEach(b=> b.classList.toggle("active", b.dataset.t===tab));
-  ({home:renderHome, practice:renderPractice, myresults:renderMyResults, review:renderReview, bank:renderBank})[tab]();
+  ({home:renderHome, practice:renderPractice, myresults:renderMyResults, review:renderReview, bank:renderBank, prep:renderPrep, progress:renderProgress})[tab]();
 }
 
 /* ═══════════ หน้าแรก ═══════════ */
@@ -547,7 +589,10 @@ async function renderMyResults(){
   if(error) return $("body").innerHTML = `<div class="empty">โหลดไม่สำเร็จ: ${esc(error.message)}</div>`;
   if(!ss?.length) return $("body").innerHTML = `<div class="empty"><div class="big">🎤</div>ยังไม่เคยซ้อมเลย — ไปที่แท็บ "ฝึกซ้อม" เพื่อเริ่มเซ็ตแรกกัน!</div>`;
   const avg = (s,role)=>{ const x = s.iv_scores.filter(v=>v.scorer_role===role); return x.length? (x.reduce((a,b)=>a+b.score,0)/x.length).toFixed(1) : null; };
-  $("body").innerHTML = `<div class="tbl-wrap"><table>
+  const chartData = ss.slice().reverse().map((s,i)=>({label:"เซ็ต "+(i+1), date:s.created_at, self:avg(s,"self")?+avg(s,"self"):null, teacher:avg(s,"teacher")?+avg(s,"teacher"):null}));
+  $("body").innerHTML = `
+  ${chartData.filter(d=>d.self!=null||d.teacher!=null).length>=2? `<div class="panel"><h2>📈 พัฒนาการของฉัน</h2><div id="myChart"></div></div>`:""}
+  <div class="tbl-wrap"><table>
     <tr><th>วันที่</th><th>หมวด</th><th>สถานะ</th><th>ประเมินตนเอง</th><th>คะแนนจากครู</th><th></th></tr>
     ${ss.map(s=>`<tr>
       <td>${fmtDate(s.created_at)}</td>
@@ -561,6 +606,7 @@ async function renderMyResults(){
         <button class="btn danger sm" onclick="delSession('${s.id}')">ลบ</button>`:""}
       </td></tr>`).join("")}
   </table></div>`;
+  if($("myChart")) renderChartInto("myChart", chartData);
 }
 async function submitDraft(id){
   const {error} = await sb.from("iv_sessions").update({status:"submitted", submitted_at:new Date().toISOString()}).eq("id", id);
@@ -578,7 +624,7 @@ async function delSession(id){
 }
 
 /* ═══════════ รายละเอียดเซ็ต (นักเรียนดู / ครูตรวจ) ═══════════ */
-async function openSessionDetail(id, teacherMode){
+async function openSessionDetail(id, teacherMode, backTab){
   $("body").innerHTML = `<div class="loading">กำลังโหลด…</div>`;
   const [{data:s},{data:ans}] = await Promise.all([
     sb.from("iv_sessions").select("*, iv_categories(name,emoji), iv_scores(id,criteria_id,scorer_role,scorer_id,score), profiles!iv_sessions_student_id_fkey(display_name,class_room,username)").eq("id",id).maybeSingle(),
@@ -594,7 +640,7 @@ async function openSessionDetail(id, teacherMode){
     if(u) urls[a.id] = u.signedUrl; } }
   const teacherScores = {...teachMap};
   $("body").innerHTML = `
-    <button class="btn ghost sm" onclick="go('${teacherMode? "review":"myresults"}')">← กลับ</button>
+    <button class="btn ghost sm" onclick="go('${backTab || (teacherMode? "review":"myresults")}')">← กลับ</button>
     <div class="panel" style="margin-top:12px">
       <h2>${esc(s.iv_categories?.emoji||"")} ${esc(s.iv_categories?.name||"เซ็ตซ้อม")} <span class="pill ${s.status}">${STATUS_LABEL[s.status]}</span></h2>
       <div style="font-size:.85rem;color:var(--ink-soft)">
@@ -734,6 +780,185 @@ async function delQuestion(id){
   if(error) return toast("ลบไม่สำเร็จ: "+error.message);
   toast("ลบเรียบร้อย"); await loadBase(); renderBank();
 }
+
+/* ═══════════ เฟส 2: กราฟพัฒนาการ ═══════════ */
+const CHART_C = {self:"#3E8FD0", teacher:"#0B8468"}; // ผ่านการตรวจ CVD-safe แล้ว
+function renderChartInto(elId, data){
+  const pts = data.filter(d=>d.self!=null||d.teacher!=null);
+  const el = $(elId);
+  if(pts.length<2){ el.innerHTML = `<div class="empty">ซ้อมและรับผลอย่างน้อย 2 เซ็ตจึงจะเห็นกราฟ</div>`; return; }
+  const W=680, H=230, P={l:34,r:16,t:16,b:30};
+  const x = i => P.l + i*(W-P.l-P.r)/(pts.length-1);
+  const y = v => P.t + (4-v)*(H-P.t-P.b)/3;
+  const seg = key => { // สร้าง path แยกช่วงที่มีข้อมูล (ข้าม null)
+    let d="", pen=false;
+    pts.forEach((p,i)=>{ if(p[key]==null){ pen=false; return; }
+      d += (pen? " L":" M")+x(i).toFixed(1)+" "+y(p[key]).toFixed(1); pen=true; });
+    return d.trim();
+  };
+  const gridY = [1,2,3,4].map(v=>`<line x1="${P.l}" x2="${W-P.r}" y1="${y(v)}" y2="${y(v)}" stroke="#DCE4E1" stroke-width="1"/>
+    <text x="${P.l-8}" y="${y(v)+4}" text-anchor="end" font-size="11" fill="#5B6B72">${v}</text>`).join("");
+  const step = Math.max(1, Math.ceil(pts.length/6));
+  const gridX = pts.map((p,i)=> (i%step===0 || i===pts.length-1)
+    ? `<text x="${x(i)}" y="${H-8}" text-anchor="middle" font-size="11" fill="#5B6B72">${esc(p.label)}</text>` : "").join("");
+  const marks = pts.map((p,i)=>{
+    let m="";
+    if(p.teacher!=null) m += `<circle cx="${x(i)}" cy="${y(p.teacher)}" r="4.5" fill="${CHART_C.teacher}" stroke="#fff" stroke-width="2"/>`;
+    if(p.self!=null) m += `<rect x="${x(i)-4.5}" y="${y(p.self)-4.5}" width="9" height="9" fill="${CHART_C.self}" stroke="#fff" stroke-width="2"/>`;
+    m += `<rect class="hitcol" data-i="${i}" x="${x(i)-Math.min(28,(W-P.l-P.r)/pts.length/2)}" y="${P.t}" width="${Math.min(56,(W-P.l-P.r)/pts.length)}" height="${H-P.t-P.b}" fill="transparent"/>`;
+    return m;
+  }).join("");
+  el.innerHTML = `
+    <div class="chart-legend">
+      <span class="key"><svg width="26" height="12"><line x1="0" y1="6" x2="26" y2="6" stroke="${CHART_C.teacher}" stroke-width="2"/><circle cx="13" cy="6" r="4" fill="${CHART_C.teacher}"/></svg> คะแนนจากครู</span>
+      <span class="key"><svg width="26" height="12"><line x1="0" y1="6" x2="26" y2="6" stroke="${CHART_C.self}" stroke-width="2" stroke-dasharray="5 3"/><rect x="9" y="2" width="8" height="8" fill="${CHART_C.self}"/></svg> ประเมินตนเอง</span>
+      <span style="margin-left:auto;font-size:.74rem">คะแนนเฉลี่ยต่อเซ็ต (1–4)</span>
+    </div>
+    <div class="chart-wrap">
+      <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="กราฟคะแนนเฉลี่ยต่อเซ็ต เทียบประเมินตนเองกับคะแนนจากครู">
+        ${gridY}${gridX}
+        <path d="${seg("teacher")}" fill="none" stroke="${CHART_C.teacher}" stroke-width="2"/>
+        <path d="${seg("self")}" fill="none" stroke="${CHART_C.self}" stroke-width="2" stroke-dasharray="6 4"/>
+        ${marks}
+      </svg>
+      <div class="chart-tip" id="${elId}Tip"></div>
+    </div>`;
+  const tip = $(elId+"Tip"), svg = el.querySelector(".chart-wrap svg");
+  el.querySelectorAll(".hitcol").forEach(h=>{
+    h.addEventListener("mouseenter", ()=>{
+      const p = pts[+h.dataset.i];
+      tip.innerHTML = `<b>${esc(p.label)}</b> · ${new Date(p.date).toLocaleDateString("th-TH",{day:"numeric",month:"short"})}<br>` +
+        (p.teacher!=null? `ครู ${p.teacher.toFixed(1)}` : "") + (p.teacher!=null&&p.self!=null? " · ":"") + (p.self!=null? `ตนเอง ${p.self.toFixed(1)}`:"");
+      const r = svg.getBoundingClientRect();
+      tip.style.left = (x(+h.dataset.i)/W*r.width)+"px";
+      tip.style.top = (P.t/H*r.height)+"px";
+      tip.classList.add("show");
+    });
+    h.addEventListener("mouseleave", ()=> tip.classList.remove("show"));
+  });
+}
+
+/* ═══════════ เฟส 2: พัฒนาการรายคน (ครู) ═══════════ */
+let progRoom = "all", progStudent = "";
+async function renderProgress(){
+  $("body").innerHTML = `<div class="loading">กำลังโหลด…</div>`;
+  const {data:students} = await sb.from("profiles").select("id,display_name,class_room").eq("role","student").order("class_room").order("display_name");
+  const rooms = [...new Set((students||[]).map(s=>s.class_room||"ไม่ระบุห้อง"))].sort((a,b)=>a.localeCompare(b,"th"));
+  const list = (students||[]).filter(s=> progRoom==="all" || (s.class_room||"ไม่ระบุห้อง")===progRoom);
+  $("body").innerHTML = `
+    <div class="toolbar">
+      <div class="chips"><button class="chip ${progRoom==="all"?"active":""}" data-r="all">ทุกห้อง</button>
+        ${rooms.map(r=>`<button class="chip ${progRoom===r?"active":""}" data-r="${esc(r)}">${esc(r)}</button>`).join("")}</div>
+      <select id="progStu" style="padding:9px 12px;border:1.5px solid var(--line);border-radius:10px;min-width:220px">
+        <option value="">— เลือกนักเรียน —</option>
+        ${list.map(s=>`<option value="${s.id}" ${s.id===progStudent?"selected":""}>${esc(s.display_name)} (${esc(s.class_room||"-")})</option>`).join("")}
+      </select></div>
+    <div id="progBody">${progStudent? `<div class="loading">กำลังโหลด…</div>`:`<div class="empty"><div class="big">📈</div>เลือกนักเรียนเพื่อดูพัฒนาการ</div>`}</div>`;
+  document.querySelectorAll("[data-r]").forEach(b=> b.onclick = ()=>{ progRoom=b.dataset.r; progStudent=""; renderProgress(); });
+  $("progStu").onchange = e=>{ progStudent = e.target.value; renderProgress(); };
+  if(!progStudent) return;
+  const {data:ss} = await sb.from("iv_sessions").select("*, iv_scores(criteria_id,scorer_role,score), iv_categories(name,emoji)")
+    .eq("student_id",progStudent).order("created_at",{ascending:true});
+  const stu = (students||[]).find(s=>s.id===progStudent);
+  if(!ss?.length){ $("progBody").innerHTML = `<div class="empty">${esc(stu?.display_name||"")} ยังไม่เคยซ้อม</div>`; return; }
+  const avg = (s,role)=>{ const x = s.iv_scores.filter(v=>v.scorer_role===role); return x.length? +(x.reduce((a,b)=>a+b.score,0)/x.length).toFixed(1) : null; };
+  const chartData = ss.map((s,i)=>({label:"เซ็ต "+(i+1), date:s.created_at, self:avg(s,"self"), teacher:avg(s,"teacher")}));
+  $("progBody").innerHTML = `
+    <div class="panel"><h2>📈 ${esc(stu?.display_name||"")} (${esc(stu?.class_room||"-")})</h2><div id="progChart"></div></div>
+    <div class="tbl-wrap"><table>
+      <tr><th>วันที่</th><th>หมวด</th><th>สถานะ</th><th>ตนเอง</th><th>ครู</th><th></th></tr>
+      ${ss.slice().reverse().map(s=>`<tr>
+        <td>${fmtDate(s.created_at)}</td>
+        <td>${esc(s.iv_categories?.emoji||"")} ${esc(s.iv_categories?.name||"-")}</td>
+        <td><span class="pill ${s.status}">${STATUS_LABEL[s.status]}</span></td>
+        <td>${avg(s,"self")??"-"}</td><td>${avg(s,"teacher")??"-"}</td>
+        <td>${s.status!=="draft"? `<button class="btn ghost sm" onclick="openSessionDetail('${s.id}', true, 'progress')">เปิดดู</button>`:""}</td>
+      </tr>`).join("")}</table></div>`;
+  renderChartInto("progChart", chartData);
+}
+
+/* ═══════════ เฟส 2: checklist เตรียมตัว ═══════════ */
+let editingCk = null;
+async function renderPrep(){
+  $("body").innerHTML = `<div class="loading">กำลังโหลด…</div>`;
+  const [{data:items},{data:done}] = await Promise.all([
+    sb.from("iv_checklist_items").select("*").order("sort_order"),
+    profile.role==="student"
+      ? sb.from("iv_checklist_done").select("item_id").eq("student_id",profile.id)
+      : Promise.resolve({data:[]})
+  ]);
+  const act = (items||[]).filter(i=> isStaff()? true : i.is_active);
+  const doneSet = new Set((done||[]).map(d=>d.item_id));
+  const groups = {};
+  for(const it of act){ (groups[it.group_name] = groups[it.group_name]||[]).push(it); }
+  const total = act.filter(i=>i.is_active).length;
+  const doneN = act.filter(i=>i.is_active && doneSet.has(i.id)).length;
+  $("body").innerHTML = `
+    ${profile.role==="student"? `<div class="panel">
+      <h2>✅ เช็คลิสต์เตรียมตัวสอบสัมภาษณ์</h2>
+      <div class="prog-bar"><i style="width:${total? Math.round(doneN/total*100):0}%"></i></div>
+      <div style="font-size:.8rem;color:var(--ink-soft)">ทำแล้ว ${doneN}/${total} รายการ ${doneN===total&&total>0? "— พร้อมลุยแล้ว! 💪":""}</div>
+    </div>` : `<div class="toolbar"><h2 style="color:var(--pine-deep)">จัดการเช็คลิสต์เตรียมตัว</h2><div class="spacer" style="flex:1"></div>
+      <button class="btn primary" id="btnAddCk">＋ เพิ่มรายการ</button></div>`}
+    ${Object.entries(groups).map(([g,its])=>`<div class="check-group"><h3>${esc(g)}</h3>
+      ${its.map(it=>`<div class="check-item ${doneSet.has(it.id)?"done":""} ${it.is_active?"":"faded"}" style="${it.is_active?"":"opacity:.5"}">
+        ${profile.role==="student"
+          ? `<input type="checkbox" data-ck="${it.id}" ${doneSet.has(it.id)?"checked":""}>`
+          : ""}
+        <div class="t"><b>${esc(it.title)}${it.is_active?"":" (ปิดไว้)"}</b>${it.detail? `<small>${esc(it.detail)}</small>`:""}</div>
+        ${isStaff()? `<div style="display:flex;gap:6px;flex-direction:column">
+          <button class="btn ghost sm" data-eck="${it.id}">แก้ไข</button>
+          <button class="btn danger sm" data-dck="${it.id}">ลบ</button></div>`:""}
+      </div>`).join("")}</div>`).join("")}`;
+  if(profile.role==="student"){
+    document.querySelectorAll("[data-ck]").forEach(cb=>{
+      cb.onchange = async ()=>{
+        cb.disabled = true;
+        const id = cb.dataset.ck;
+        const {error} = cb.checked
+          ? await sb.from("iv_checklist_done").upsert({item_id:id, student_id:profile.id}, {onConflict:"item_id,student_id"})
+          : await sb.from("iv_checklist_done").delete().eq("item_id",id).eq("student_id",profile.id);
+        cb.disabled = false;
+        if(error){ cb.checked = !cb.checked; return toast("บันทึกไม่สำเร็จ: "+error.message); }
+        renderPrep();
+      };
+    });
+  }else{
+    $("btnAddCk").onclick = ()=> openCkModal(null, items||[]);
+    document.querySelectorAll("[data-eck]").forEach(b=> b.onclick = ()=> openCkModal((items||[]).find(x=>x.id===b.dataset.eck), items||[]));
+    document.querySelectorAll("[data-dck]").forEach(b=> b.onclick = async ()=>{
+      const it = (items||[]).find(x=>x.id===b.dataset.dck);
+      if(!confirm(`ลบ "${it.title}" ใช่ไหม? สถานะที่นักเรียนติ๊กไว้จะหายด้วย`)) return;
+      const {error} = await sb.from("iv_checklist_items").delete().eq("id", it.id);
+      if(error) return toast("ลบไม่สำเร็จ: "+error.message);
+      toast("ลบเรียบร้อย"); renderPrep();
+    });
+  }
+}
+function openCkModal(item, items){
+  editingCk = item;
+  $("ckModalTitle").textContent = item? "แก้ไขรายการ" : "เพิ่มรายการเช็คลิสต์";
+  const groups = [...new Set(items.map(i=>i.group_name))];
+  $("ckGroups").innerHTML = groups.map(g=>`<option value="${esc(g)}">`).join("");
+  $("ckGroup").value = item?.group_name || groups[0] || "";
+  $("ckTitle").value = item?.title||""; $("ckDetail").value = item?.detail||"";
+  $("ckSort").value = item?.sort_order ?? ((Math.max(0,...items.map(i=>i.sort_order))||0)+1);
+  $("ckActive").value = String(item?.is_active ?? true);
+  $("ckMsg").className = "msg";
+  $("ckModal").classList.add("show");
+}
+$("btnCkSave").onclick = async ()=>{
+  const row = {group_name:$("ckGroup").value.trim(), title:$("ckTitle").value.trim(), detail:$("ckDetail").value.trim()||null,
+    sort_order:+$("ckSort").value||0, is_active:$("ckActive").value==="true"};
+  if(!row.group_name || !row.title) return msg("ckMsg","กรอกหมวดและชื่อรายการก่อนนะคะ","err");
+  $("btnCkSave").disabled = true;
+  const {error} = editingCk
+    ? await sb.from("iv_checklist_items").update(row).eq("id", editingCk.id)
+    : await sb.from("iv_checklist_items").insert({...row, created_by:profile.id});
+  $("btnCkSave").disabled = false;
+  if(error) return msg("ckMsg", error.message, "err");
+  closeModal("ckModal"); toast("บันทึกเรียบร้อย ✅"); renderPrep();
+};
 
 /* ═══════════ boot ═══════════ */
 boot();
