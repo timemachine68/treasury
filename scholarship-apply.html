@@ -209,6 +209,12 @@
       </div>
 
       <div id="applyMsg" class="msg"></div>
+      <a id="registerLink" href="vulnerable-register.html"
+         style="display:none;align-items:center;gap:8px;background:var(--leaf);color:#fff;
+                padding:10px 18px;border-radius:10px;text-decoration:none;font-weight:600;
+                margin-bottom:14px;width:fit-content">
+        → ไปลงทะเบียนข้อมูลครอบครัว
+      </a>
 
       <div class="grid2">
         <label class="fld">
@@ -382,6 +388,9 @@ function openApply(s){
     msg($("#applyMsg"),
       `คุณยังไม่ได้ลงทะเบียนข้อมูลครอบครัว (รายได้ พี่น้อง ระยะทาง) สำหรับปีการศึกษา ${CURRENT.academic_year} — เกณฑ์เหล่านี้จะได้ 0 คะแนนหากไม่ลงทะเบียน กรุณาลงทะเบียนที่หน้า “ลงทะเบียนข้อมูลนักเรียน” ก่อนสมัคร เพื่อให้ได้รับการพิจารณาอย่างเต็มที่`,
       "err");
+    $("#registerLink").style.display = "inline-flex";
+  } else {
+    $("#registerLink").style.display = "none";
   }
   show("apply");
 }
