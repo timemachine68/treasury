@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ทุนการศึกษา · แนะให้แนว</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Mitr:wght@400;500;600&family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* ===== design tokens — ตรงกับ style.css ของแนะให้แนว ===== */
+  :root{
+    --ink:#1E2A3A; --paper:#EFF0E9; --paper-2:#E4E6DA;
+    --gold:#D9A02B; --gold-ink:#8A6417; --forest:#2F4B3C;
+    --line:#C9CCBC;
+    --cat-self:#3E6E63; --cat-career:#2C4A6E; --cat-path:#B9791E; --cat-story:#7A4432;
+    --radius:14px;
+    --shadow:0 2px 0 rgba(30,42,58,0.06), 0 12px 24px -16px rgba(30,42,58,0.25);
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--paper);color:var(--ink);
+    font-family:'Sarabun',sans-serif;line-height:1.6;-webkit-font-smoothing:antialiased}
+  a{color:inherit;text-decoration:none}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 24px}
+  .eyebrow{font-family:'Mitr',sans-serif;font-weight:600;font-size:.78rem;
+    letter-spacing:.14em;text-transform:uppercase;color:var(--gold-ink)}
+  h1,h2,h3,.display{font-family:'Mitr',sans-serif;font-weight:400;color:var(--ink);line-height:1.25;margin:0}
+
+  /* ===== header (ตรงกับแพลตฟอร์มเดิม) ===== */
+  .site-header{padding:22px 0;border-bottom:1px solid var(--line)}
+  .site-header .wrap{display:flex;align-items:center;justify-content:space-between;gap:16px}
+  .brand{display:flex;align-items:center;gap:10px;font-family:'Mitr',sans-serif;font-size:1.3rem}
+  .brand .mark{width:34px;height:34px;border-radius:50%;background:var(--forest);
+    display:flex;align-items:center;justify-content:center;color:#fff;
+    font-family:'Mitr',sans-serif;font-weight:600;font-size:.85rem;flex-shrink:0}
+  .crumb{font-family:'Mitr',sans-serif;font-size:.85rem;color:#5b6459}
+  .crumb a:hover{color:var(--gold-ink)}
+
+  /* ===== hero — ป้ายบอกทางบนเส้นทาง ===== */
+  .hero{position:relative;padding:56px 0 34px;overflow:hidden}
+  /* เส้นทาง (trail line) ลากผ่าน hero */
+  .hero .trail{position:absolute;left:0;right:0;top:96px;height:2px;
+    background:repeating-linear-gradient(90deg,var(--line) 0 14px,transparent 14px 26px);z-index:0}
+  .hero .wrap{position:relative;z-index:1}
+  .hero .eyebrow{margin-bottom:12px}
+  .hero h1{font-size:2.5rem;margin-bottom:12px}
+  .hero p.lead{max-width:620px;font-size:1.08rem;color:#4a5448;margin:0}
+  @media(max-width:600px){.hero h1{font-size:1.9rem}.hero{padding:40px 0 26px}.hero .trail{display:none}}
+
+  /* ===== signpost split — 2 เส้นทาง ===== */
+  .paths{padding:14px 0 40px}
+  .path-grid{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+  @media(max-width:760px){.path-grid{grid-template-columns:1fr}}
+
+  .lane{background:#fff;border:1px solid var(--line);border-radius:var(--radius);
+    padding:26px 24px 22px;box-shadow:var(--shadow);position:relative}
+  .lane-head{display:flex;align-items:center;gap:13px;margin-bottom:6px}
+  .lane-badge{width:46px;height:46px;border-radius:12px;flex:none;display:grid;place-items:center;color:#fff}
+  .lane-badge svg{width:26px;height:26px}
+  .lane.student .lane-badge{background:linear-gradient(150deg,var(--cat-self),var(--forest))}
+  .lane.teacher .lane-badge{background:linear-gradient(150deg,var(--cat-career),var(--ink))}
+  .lane h2{font-size:1.35rem}
+  .lane .who{font-family:'Mitr',sans-serif;font-size:.76rem;font-weight:600;
+    letter-spacing:.1em;text-transform:uppercase;color:var(--gold-ink)}
+  .lane .desc{font-size:.92rem;color:#5b6459;margin:10px 0 18px}
+
+  /* ===== signpost links ===== */
+  .signs{display:flex;flex-direction:column;gap:10px}
+  .sign{display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:12px;
+    background:var(--paper);border:1px solid var(--line);transition:.16s;position:relative}
+  .sign:hover{transform:translateX(4px);border-color:var(--gold);background:#fff}
+  .sign .step{width:28px;height:28px;border-radius:8px;flex:none;display:grid;place-items:center;
+    font-family:'Mitr',sans-serif;font-weight:600;font-size:.86rem;color:#fff;background:var(--forest)}
+  .lane.teacher .sign .step{background:var(--cat-career)}
+  .sign .txt{flex:1;min-width:0}
+  .sign .txt b{display:block;font-weight:600;font-size:1rem}
+  .sign .txt span{font-size:.82rem;color:#6b7365}
+  .sign .arrow{color:var(--line);font-size:1.3rem;transition:.16s;flex:none}
+  .sign:hover .arrow{color:var(--gold)}
+
+  .flow-note{display:flex;gap:10px;align-items:flex-start;margin-top:16px;padding:12px 14px;
+    background:var(--paper-2);border-radius:11px;font-size:.83rem;color:#5b6459}
+  .flow-note svg{flex:none;width:17px;height:17px;margin-top:3px;color:var(--gold-ink)}
+
+  /* ===== footer ===== */
+  .site-footer{border-top:1px solid var(--line);padding:26px 0;margin-top:20px}
+  .site-footer .wrap{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;
+    font-family:'Mitr',sans-serif;font-size:.82rem;color:#6b7365}
+  .site-footer a:hover{color:var(--gold-ink)}
+</style>
+</head>
+<body>
+
+  <header class="site-header">
+    <div class="wrap">
+      <a class="brand" href="index.html">
+        <span class="mark">นน</span>
+        <span>แนะให้แนว</span>
+      </a>
+      <nav class="crumb"><a href="index.html">หน้าหลัก</a> › ทุนการศึกษา</nav>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="trail" aria-hidden="true"></div>
+    <div class="wrap">
+      <div class="eyebrow">ระบบทุนการศึกษา</div>
+      <h1>เส้นทางสู่ทุนการศึกษา</h1>
+      <p class="lead">คัดกรองผู้รับทุนอย่างเป็นธรรมและโปร่งใส ด้วยเกณฑ์คะแนนที่ชัดเจน
+        นักเรียนสมัครและติดตามผลได้เอง ครูแนะแนวพิจารณาด้วยข้อมูลรอบด้าน</p>
+    </div>
+  </section>
+
+  <section class="paths">
+    <div class="wrap">
+      <div class="path-grid">
+
+        <!-- เส้นทางนักเรียน -->
+        <div class="lane student">
+          <div class="lane-head">
+            <div class="lane-badge" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 10L12 5 2 10l10 5 10-5z"/><path d="M6 12v5c0 1 2.7 2.5 6 2.5s6-1.5 6-2.5v-5"/></svg>
+            </div>
+            <div>
+              <div class="who">สำหรับนักเรียน</div>
+              <h2>สมัครขอรับทุน</h2>
+            </div>
+          </div>
+          <p class="desc">ลงทะเบียนข้อมูลของคุณครั้งเดียว แล้วสมัครได้ทุกทุนที่เปิดรับ ติดตามสถานะได้ตลอด</p>
+
+          <div class="signs">
+            <a class="sign" href="vulnerable-register.html">
+              <span class="step">1</span>
+              <span class="txt"><b>ลงทะเบียนข้อมูล</b><span>รายได้ครอบครัว พี่น้อง ระยะทาง — ทำก่อนสมัคร</span></span>
+              <span class="arrow" aria-hidden="true">›</span>
+            </a>
+            <a class="sign" href="scholarship-apply.html">
+              <span class="step">2</span>
+              <span class="txt"><b>สมัครทุน & ดูสถานะ</b><span>เลือกทุน กรอกเกรด ส่งใบสมัคร ติดตามผล</span></span>
+              <span class="arrow" aria-hidden="true">›</span>
+            </a>
+          </div>
+
+          <div class="flow-note">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+            <span>ลงทะเบียนข้อมูลก่อนสมัคร เพื่อให้ได้รับการพิจารณาอย่างเต็มที่ — เกณฑ์ครอบครัวจะได้คะแนนก็ต่อเมื่อมีข้อมูล</span>
+          </div>
+        </div>
+
+        <!-- เส้นทางครู -->
+        <div class="lane teacher">
+          <div class="lane-head">
+            <div class="lane-badge" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>
+            </div>
+            <div>
+              <div class="who">สำหรับครูแนะแนว</div>
+              <h2>จัดการและคัดกรอง</h2>
+            </div>
+          </div>
+          <p class="desc">ตั้งเกณฑ์ให้แต่ละทุน ตรวจสอบข้อมูลนักเรียน แล้วคัดกรองด้วยคะแนนที่คำนวณอัตโนมัติ</p>
+
+          <div class="signs">
+            <a class="sign" href="scholarship-admin.html">
+              <span class="step">1</span>
+              <span class="txt"><b>ตั้งเกณฑ์ทุน</b><span>สร้างทุน กำหนดเกณฑ์และน้ำหนักคะแนน เผยแพร่</span></span>
+              <span class="arrow" aria-hidden="true">›</span>
+            </a>
+            <a class="sign" href="vulnerable-registry-teacher.html">
+              <span class="step">2</span>
+              <span class="txt"><b>ทะเบียนกลุ่มเปราะบาง</b><span>ตรวจสอบ แก้ไข และยืนยันข้อมูลที่นักเรียนกรอก</span></span>
+              <span class="arrow" aria-hidden="true">›</span>
+            </a>
+            <a class="sign" href="scholarship-results.html">
+              <span class="step">3</span>
+              <span class="txt"><b>ผลการคัดกรอง</b><span>คำนวณคะแนน จัดอันดับ ปรับคะแนน ตัดสินให้ทุน</span></span>
+              <span class="arrow" aria-hidden="true">›</span>
+            </a>
+          </div>
+
+          <div class="flow-note">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <span>เฉพาะผู้ดูแลระบบและครูแนะแนวเท่านั้นที่เข้าใช้งานส่วนนี้ได้</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <span>แนะให้แนว · โรงเรียนพูลเจริญวิทยาคม</span>
+      <a href="index.html">← กลับหน้าหลัก</a>
+    </div>
+  </footer>
+
+</body>
+</html>
