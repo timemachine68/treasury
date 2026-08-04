@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ผลคัดกรองโควตา (ครู) | แนะให้แนว</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Mitr:wght@400;500;600&family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{
+  --ink:#22313A; --ink-soft:#5B6B72; --board:#EFF3F1; --card:#FFFFFF;
+  --pine:#0F6B5C; --pine-deep:#0A4F44; --pine-tint:#E2F0EC;
+  --note:#FFD34D; --note-deep:#8A6D00; --line:#DCE4E1; --danger:#C0392B;
+  --radius:14px; --shadow:0 2px 10px rgba(34,49,58,.08);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{font-family:'Sarabun',sans-serif;background:var(--board);color:var(--ink);font-size:16px;line-height:1.55;min-height:100vh}
+h1,h2,h3,.brand{font-family:'Mitr',sans-serif;font-weight:600}
+button{font-family:inherit;cursor:pointer}
+input,select,textarea{font-family:inherit;font-size:16px}
+a{color:var(--pine)}
+:focus-visible{outline:3px solid var(--note);outline-offset:2px;border-radius:6px}
+@media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
+
+.wrap{max-width:1080px;margin:0 auto;padding:0 16px 64px}
+header.app{background:var(--pine);color:#fff;padding:14px 0}
+header.app .wrap{display:flex;align-items:center;gap:12px;padding-bottom:0;flex-wrap:wrap}
+.brand{font-size:1.25rem;letter-spacing:.2px;display:flex;align-items:center;gap:10px}
+.brand .logo{width:34px;height:34px;border-radius:9px;background:var(--note);color:var(--pine-deep);display:grid;place-items:center;font-size:1.05rem;font-family:'Mitr';flex:none}
+.brand small{display:block;font-family:'Sarabun';font-weight:400;font-size:.72rem;opacity:.85;letter-spacing:.4px}
+.spacer{flex:1}
+.userchip{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.14);padding:6px 12px;border-radius:999px;font-size:.85rem}
+.userchip .role{background:var(--note);color:var(--pine-deep);border-radius:999px;padding:1px 9px;font-weight:700;font-size:.72rem}
+.iconbtn{background:rgba(255,255,255,.14);border:none;color:#fff;border-radius:999px;padding:7px 14px;font-size:.85rem}
+.iconbtn:hover{background:rgba(255,255,255,.26)}
+
+.login-stage{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;
+  background:linear-gradient(160deg,var(--pine) 0%,var(--pine-deep) 60%),var(--pine)}
+.login-card{background:#fff;border-radius:20px;padding:30px 26px;max-width:400px;width:100%;box-shadow:0 18px 50px rgba(0,0,0,.28)}
+.login-card .logo-big{width:58px;height:58px;border-radius:16px;background:var(--note);color:var(--pine-deep);display:grid;place-items:center;font-family:'Mitr';font-size:1.5rem;font-weight:600;margin:0 auto 12px}
+.login-card h1{text-align:center;font-size:1.35rem;color:var(--pine-deep)}
+.login-card .sub{text-align:center;font-size:.83rem;color:var(--ink-soft);margin-bottom:20px}
+.login-card .btn{width:100%;padding:12px;font-size:1rem}
+
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:20px 0 14px}
+.selbar{flex:1;min-width:220px}
+.selbar select{width:100%;padding:10px 12px;border:1.5px solid var(--line);border-radius:10px;background:#fff}
+
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px;margin-bottom:16px}
+.stat{background:var(--pine-tint);border-radius:12px;padding:14px;text-align:center}
+.stat .num{font-family:'Mitr';font-size:1.6rem;color:var(--pine-deep);line-height:1.1}
+.stat .lab{font-size:.76rem;color:var(--ink-soft)}
+
+.panel{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:18px;margin-bottom:16px;box-shadow:var(--shadow)}
+.panel h2{font-size:1.05rem;color:var(--pine-deep);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:.85rem}
+th{text-align:left;padding:8px 10px;background:var(--board);color:var(--ink-soft);font-size:.76rem;white-space:nowrap}
+td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:middle}
+tr.in-quota{background:#F4FAF8}
+tr.dq{opacity:.7}
+.rankbadge{font-family:'Mitr';font-size:1rem;color:var(--pine-deep);width:34px;height:34px;border-radius:9px;background:var(--pine-tint);display:inline-grid;place-items:center}
+.totalscore{font-family:'Mitr';font-size:1.05rem;color:var(--ink)}
+.cutline td{border:none;padding:0}
+.cutline .bar{border-top:2px dashed var(--note-deep);margin:2px 0;position:relative}
+.cutline .bar span{position:absolute;top:-11px;left:12px;background:var(--note);color:var(--pine-deep);font-size:.72rem;font-weight:700;padding:1px 10px;border-radius:999px;font-family:'Mitr'}
+
+.pill{border-radius:999px;padding:2px 10px;font-size:.72rem;font-weight:700;white-space:nowrap}
+.pill.submitted{background:#FFF3CE;color:var(--note-deep)}
+.pill.under_review{background:#E8EEF7;color:#3D5A80}
+.pill.shortlisted{background:#E6F4EA;color:#1E7E34}
+.pill.waitlisted{background:#FDEFD9;color:#9A6212}
+.pill.approved{background:var(--pine);color:#fff}
+.pill.promoted{background:var(--pine);color:#fff}
+.pill.rejected{background:#FDECEA;color:var(--danger)}
+.pill.withdrawn{background:#F0F0F0;color:#777}
+
+.btn{border:none;border-radius:9px;padding:9px 16px;font-size:.88rem;font-weight:600;display:inline-flex;align-items:center;gap:6px;justify-content:center}
+.btn.primary{background:var(--pine);color:#fff}.btn.primary:hover{background:var(--pine-deep)}
+.btn.ghost{background:#fff;border:1.5px solid var(--line);color:var(--ink-soft)}.btn.ghost:hover{border-color:var(--pine);color:var(--pine)}
+.btn.danger{background:#fff;border:1.5px solid #EAC7C2;color:var(--danger)}
+.btn.note{background:var(--note);color:var(--pine-deep)}
+.btn.sm{padding:6px 11px;font-size:.78rem}
+.btn:disabled{opacity:.55;cursor:not-allowed}
+.empty{padding:40px 16px;text-align:center;color:var(--ink-soft)}
+.empty .big{font-size:2rem;margin-bottom:6px}
+
+.promo-card{background:#FFF8E5;border:1px solid #F3E1A8;border-radius:12px;padding:13px 15px;margin-bottom:10px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.promo-card .who{flex:1;min-width:160px;font-size:.88rem}
+.promo-card .who b{color:var(--note-deep)}
+
+.modal-back{position:fixed;inset:0;background:rgba(20,32,30,.45);display:none;align-items:flex-start;justify-content:center;padding:24px 14px;overflow-y:auto;z-index:50}
+.modal-back.show{display:flex}
+.modal{background:#fff;border-radius:16px;max-width:560px;width:100%;padding:22px;box-shadow:0 12px 40px rgba(0,0,0,.2)}
+.modal h2{font-size:1.15rem;margin-bottom:4px;color:var(--pine-deep)}
+.modal .subt{font-size:.82rem;color:var(--ink-soft);margin-bottom:14px}
+.field{margin-bottom:13px}
+.field label{display:block;font-size:.83rem;font-weight:700;margin-bottom:5px;color:var(--ink)}
+.field input,.field select,.field textarea{width:100%;padding:10px 12px;border:1.5px solid var(--line);border-radius:10px;background:#fff}
+.field .hint{font-size:.74rem;color:var(--ink-soft);margin-top:4px}
+.score-row{display:flex;gap:10px;align-items:center;padding:10px;border:1px solid var(--line);border-radius:10px;margin-bottom:8px;flex-wrap:wrap}
+.score-row .cn{flex:1;min-width:130px;font-size:.86rem;font-weight:700}
+.score-row .auto{font-size:.78rem;color:var(--ink-soft)}
+.score-row input{width:88px;padding:7px 9px;border:1.5px solid var(--line);border-radius:8px}
+.modal .foot{display:flex;gap:10px;justify-content:flex-end;margin-top:16px;flex-wrap:wrap}
+.msg{border-radius:10px;padding:10px 13px;font-size:.85rem;margin-bottom:12px;display:none}
+.msg.err{display:block;background:#FDECEA;color:var(--danger)}
+.msg.ok{display:block;background:var(--pine-tint);color:var(--pine-deep)}
+.msg.info{display:block;background:#E8EEF7;color:#3D5A80}
+
+#toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;
+  padding:11px 20px;border-radius:999px;font-size:.88rem;box-shadow:0 6px 20px rgba(0,0,0,.3);opacity:0;pointer-events:none;transition:opacity .25s;z-index:99;max-width:92vw;text-align:center}
+#toast.show{opacity:1}
+.loading{text-align:center;padding:40px;color:var(--ink-soft)}
+.hidden{display:none!important}
+.backlink{font-size:.8rem}
+</style>
+</head>
+<body>
+
+<div id="loginStage" class="login-stage hidden">
+  <div class="login-card">
+    <div class="logo-big">📊</div>
+    <h1>ผลคัดกรองโควตา</h1>
+    <div class="sub">สำหรับครูแนะแนว · ใช้บัญชีเดียวกับคลังแนะแนว</div>
+    <div id="liMsg" class="msg"></div>
+    <div class="field"><label>ชื่อผู้ใช้</label><input id="liUser" autocomplete="username" placeholder="เช่น รหัสประจำตัว"></div>
+    <div class="field"><label>รหัสผ่าน</label><input id="liPass" type="password" autocomplete="current-password" placeholder="รหัสผ่าน"></div>
+    <button id="btnLogin" class="btn primary">เข้าสู่ระบบ</button>
+  </div>
+</div>
+
+<div id="appStage" class="hidden">
+  <header class="app"><div class="wrap">
+    <div class="brand"><span class="logo">📊</span><span>ผลคัดกรองโควตา<small>แนะให้แนว · คัดพิจารณาโควตานักเรียน</small></span></div>
+    <div class="spacer"></div>
+    <div class="userchip"><span id="uName"></span><span class="role" id="uRole"></span></div>
+    <button class="iconbtn" id="btnLogout">ออกจากระบบ</button>
+  </div></header>
+
+  <div class="wrap">
+    <div class="toolbar">
+      <div class="selbar"><select id="quotaSel"><option value="">— เลือกโควตาที่ต้องการดูผล —</option></select></div>
+      <button class="btn primary" id="btnCompute" disabled>🔄 คำนวณ/จัดอันดับใหม่</button>
+      <a class="backlink" href="quota-hub.html" style="margin-left:auto">← กลับหน้าหลัก</a>
+    </div>
+
+    <div id="promoWrap"></div>
+    <div id="resultWrap"><div class="panel"><div class="empty"><div class="big">📊</div>เลือกโควตาด้านบนเพื่อดูผลการคัดกรองค่ะ</div></div></div>
+  </div>
+</div>
+
+<!-- โมดัลปรับคะแนน -->
+<div class="modal-back" id="scoreModal"><div class="modal">
+  <h2 id="smName">ปรับคะแนนรายเกณฑ์</h2>
+  <div class="subt" id="smSub"></div>
+  <div id="smMsg" class="msg"></div>
+  <div id="smScores"></div>
+  <div class="field" style="margin-top:6px"><label>เหตุผลในการปรับ (บังคับเมื่อมีการปรับ)</label>
+    <input id="smReason" placeholder="เช่น เพิ่มคะแนนผลงานที่ยังไม่ได้บันทึกในระบบ"></div>
+  <div class="foot">
+    <button class="btn ghost" onclick="closeModal('scoreModal')">ปิด</button>
+    <button class="btn primary" id="btnScoreSave">บันทึกการปรับคะแนน</button>
+  </div>
+</div></div>
+
+<!-- โมดัลเปลี่ยนสถานะ -->
+<div class="modal-back" id="statusModal"><div class="modal" style="max-width:440px">
+  <h2>เปลี่ยนสถานะผู้สมัคร</h2>
+  <div class="subt" id="stName"></div>
+  <div id="stMsg" class="msg"></div>
+  <div class="field"><label>สถานะใหม่</label>
+    <select id="stSelect">
+      <option value="under_review">กำลังพิจารณา</option>
+      <option value="shortlisted">ผ่านเข้ารอบ</option>
+      <option value="waitlisted">บัญชีสำรอง</option>
+      <option value="approved">ได้รับโควตา ✓</option>
+      <option value="rejected">ไม่ผ่าน</option>
+    </select></div>
+  <div class="foot">
+    <button class="btn ghost" onclick="closeModal('statusModal')">ยกเลิก</button>
+    <button class="btn primary" id="btnStatusSave">บันทึก</button>
+  </div>
+</div></div>
+
+<div id="toast"></div>
+
+<script>
+const SUPABASE_URL = "https://ikkhjslmtjwrxzxvtokb.supabase.co";
+const ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlra2hqc2xtdGp3cnh6eHZ0b2tiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM3NDMzNjksImV4cCI6MjA5OTMxOTM2OX0.3OR_9mEv82Ns1LLjx5nnRwJYzrtKFtWCWd1bPuQfNKU";
+const EMAIL_DOMAIN = "guidance-pcw.local";
+const sb = supabase.createClient(SUPABASE_URL, ANON_KEY);
+const ROLE_LABEL = {admin:"ผู้ดูแล", teacher:"ครู", student:"นักเรียน"};
+const STATUS_LABEL = {submitted:"ส่งแล้ว",under_review:"กำลังพิจารณา",shortlisted:"ผ่านเข้ารอบ",waitlisted:"บัญชีสำรอง",approved:"ได้รับโควตา",promoted:"ได้รับ(เลื่อน)",rejected:"ไม่ผ่าน",withdrawn:"ยกเลิก"};
+
+let profile=null, quotasList=[], curQuota=null, curRows=[], curCrit=[], smApp=null, stApp=null;
+
+const $ = id => document.getElementById(id);
+const esc = s => (s??"").toString().replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+function toast(t){ $("toast").textContent=t; $("toast").classList.add("show"); setTimeout(()=>$("toast").classList.remove("show"),2600); }
+function msg(id,t,cls){ const el=$(id); el.textContent=t; el.className="msg "+cls; }
+function clearMsg(id){ const el=$(id); el.textContent=""; el.className="msg"; }
+function openModal(id){ $(id).classList.add("show"); }
+function closeModal(id){ $(id).classList.remove("show"); }
+
+async function boot(){
+  const {data:{session}} = await sb.auth.getSession();
+  if(!session){ $("loginStage").classList.remove("hidden"); return; }
+  const {data:p} = await sb.from("profiles").select("*").eq("id", session.user.id).maybeSingle();
+  if(!p){ await sb.auth.signOut(); $("loginStage").classList.remove("hidden"); return toast("ไม่พบข้อมูลผู้ใช้"); }
+  profile=p;
+  if(!(p.role==="admin"||p.is_guidance===true)){ $("loginStage").classList.remove("hidden"); return msg("liMsg","หน้านี้สำหรับครูแนะแนว/ผู้ดูแลเท่านั้น","err"); }
+  $("loginStage").classList.add("hidden"); $("appStage").classList.remove("hidden");
+  $("uName").textContent=p.display_name; $("uRole").textContent=ROLE_LABEL[p.role]+(p.is_guidance?" · แนะแนว":"");
+  await loadQuotas();
+}
+$("btnLogin").onclick = async ()=>{
+  const u=$("liUser").value.trim(), p=$("liPass").value;
+  if(!u||!p) return msg("liMsg","กรอกชื่อผู้ใช้และรหัสผ่านก่อนนะคะ","err");
+  $("btnLogin").disabled=true;
+  const {error}=await sb.auth.signInWithPassword({email:u+"@"+EMAIL_DOMAIN,password:p});
+  $("btnLogin").disabled=false;
+  if(error) return msg("liMsg","เข้าสู่ระบบไม่สำเร็จ","err");
+  location.reload();
+};
+$("liPass").addEventListener("keydown",e=>{ if(e.key==="Enter") $("btnLogin").click(); });
+$("btnLogout").onclick=async()=>{ await sb.auth.signOut(); location.reload(); };
+
+async function loadQuotas(){
+  const {data}=await sb.from("quotas").select("id,name,university,seats,status,academic_year").order("created_at",{ascending:false});
+  quotasList=data||[];
+  $("quotaSel").innerHTML='<option value="">— เลือกโควตาที่ต้องการดูผล —</option>'+
+    quotasList.map(q=>`<option value="${q.id}">${esc(q.name)} · ${q.seats} ที่นั่ง (${STATUS_LABEL[q.status]||q.status})</option>`).join("");
+}
+$("quotaSel").onchange = async (e)=>{
+  const id=e.target.value;
+  $("btnCompute").disabled=!id;
+  if(!id){ curQuota=null; $("resultWrap").innerHTML=""; $("promoWrap").innerHTML=""; return; }
+  curQuota=quotasList.find(q=>q.id===id);
+  await loadResult();
+};
+$("btnCompute").onclick = async ()=>{
+  if(!curQuota) return;
+  $("btnCompute").disabled=true; $("btnCompute").textContent="⏳ กำลังคำนวณ…";
+  const {error}=await sb.rpc("compute_quota_scores",{p_quota_id:curQuota.id});
+  $("btnCompute").disabled=false; $("btnCompute").textContent="🔄 คำนวณ/จัดอันดับใหม่";
+  if(error) return toast("คำนวณไม่สำเร็จ: "+error.message);
+  toast("คำนวณและจัดอันดับใหม่แล้ว");
+  loadResult();
+};
+
+async function loadResult(){
+  $("resultWrap").innerHTML=`<div class="loading">กำลังโหลด…</div>`;
+  // เกณฑ์
+  const {data:crit}=await sb.from("quota_criteria").select("*").eq("quota_id",curQuota.id).order("display_order");
+  curCrit=crit||[];
+  // ใบสมัคร + คะแนน + โปรไฟล์
+  const {data:apps}=await sb.from("quota_applications")
+    .select("*, profiles(display_name,class_room,student_id), quota_application_scores(criterion_id,auto_points,manual_adjustment,weight_snapshot,adjustment_reason)")
+    .eq("quota_id",curQuota.id).neq("status","withdrawn");
+  curRows=(apps||[]).map(a=>{
+    const total=(a.quota_application_scores||[]).reduce((s,x)=>s+(Number(x.auto_points)+Number(x.manual_adjustment))*Number(x.weight_snapshot)/100,0);
+    return {...a, total};
+  });
+  // เรียง: ไม่ตัดสิทธิ์ก่อน ตาม rank/total, ตัดสิทธิ์ไปท้าย
+  curRows.sort((x,y)=>{
+    if(x.disqualified!==y.disqualified) return x.disqualified?1:-1;
+    if(x.rank&&y.rank) return x.rank-y.rank;
+    return y.total-x.total;
+  });
+  renderResult();
+  await loadPromotions();
+}
+
+function renderResult(){
+  const seats=curQuota.seats;
+  const active=curRows.filter(r=>!r.disqualified);
+  const dq=curRows.filter(r=>r.disqualified);
+  const approved=curRows.filter(r=>["approved","promoted"].includes(r.status)).length;
+
+  let stats=`<div class="stats">
+    <div class="stat"><div class="num">${curRows.length}</div><div class="lab">ผู้สมัครทั้งหมด</div></div>
+    <div class="stat"><div class="num">${seats}</div><div class="lab">ที่นั่ง</div></div>
+    <div class="stat"><div class="num">${approved}</div><div class="lab">ได้รับโควตาแล้ว</div></div>
+    <div class="stat"><div class="num">${dq.length}</div><div class="lab">ตัดสิทธิ์</div></div>
+  </div>`;
+
+  if(!curRows.length){ $("resultWrap").innerHTML=stats+`<div class="panel"><div class="empty">ยังไม่มีผู้สมัคร หรือกด “คำนวณ” เพื่อประมวลผล</div></div>`; return; }
+
+  let body="", shownActive=0;
+  active.forEach(r=>{
+    shownActive++;
+    // เส้นตัดตามจำนวนที่นั่ง
+    if(shownActive===seats+1){
+      body+=`<tr class="cutline"><td colspan="6"><div class="bar"><span>เส้นลิมิต ${seats} ที่นั่ง</span></div></td></tr>`;
+    }
+    body+=rowHtml(r, shownActive<=seats);
+  });
+  if(dq.length){
+    body+=`<tr><td colspan="6" style="padding-top:16px;color:var(--danger);font-weight:700;font-size:.82rem">✖️ ผู้ที่ถูกตัดสิทธิ์ (${dq.length})</td></tr>`;
+    dq.forEach(r=>{ body+=rowHtml(r,false); });
+  }
+
+  $("resultWrap").innerHTML=stats+`<div class="panel">
+    <h2>📋 ผลการคัดกรอง · ${esc(curQuota.name)}</h2>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>อันดับ</th><th>ผู้สมัคร</th><th>ห้อง</th><th>คะแนนรวม</th><th>สถานะ</th><th></th></tr></thead>
+      <tbody>${body}</tbody></table></div>
+    <div style="font-size:.76rem;color:var(--ink-soft);margin-top:10px">💡 แถวไฮไลต์เขียว = อยู่ในโควตาตามอันดับ · การอนุมัติเกินจำนวนที่นั่งจะถูกระบบปฏิเสธ</div>
+  </div>`;
+}
+function rowHtml(r, inQuota){
+  const p=r.profiles||{};
+  const cls=r.disqualified?"dq":(inQuota?"in-quota":"");
+  return `<tr class="${cls}">
+    <td>${r.disqualified?"—":`<span class="rankbadge">${r.rank||"-"}</span>`}</td>
+    <td><b>${esc(p.display_name||"—")}</b>${p.student_id?`<div style="font-size:.72rem;color:var(--ink-soft)">${esc(p.student_id)}</div>`:""}</td>
+    <td>${esc(p.class_room||"—")}</td>
+    <td>${r.disqualified?`<span style="color:var(--danger);font-size:.78rem">ตัดสิทธิ์</span>`:`<span class="totalscore">${r.total.toFixed(1)}</span>`}</td>
+    <td><span class="pill ${r.status}">${STATUS_LABEL[r.status]||r.status}</span>
+        ${r.disqualified&&r.disqualified_reason?`<div style="font-size:.7rem;color:var(--ink-soft);margin-top:2px">${esc(r.disqualified_reason)}</div>`:""}</td>
+    <td style="white-space:nowrap">
+      ${r.disqualified?"":`<button class="btn ghost sm" onclick="openScore('${r.id}')">ปรับคะแนน</button>
+      <button class="btn note sm" onclick="openStatus('${r.id}')">สถานะ</button>`}
+    </td>
+  </tr>`;
+}
+
+/* ---------- ปรับคะแนน ---------- */
+window.openScore = (appId)=>{
+  smApp=curRows.find(r=>r.id===appId); clearMsg("smMsg");
+  const p=smApp.profiles||{};
+  $("smName").textContent="ปรับคะแนน · "+(p.display_name||"");
+  $("smSub").textContent="ปรับ manual แต่ละเกณฑ์ (บวก/ลบ) · เหตุผลจำเป็นเมื่อมีการปรับ";
+  $("smReason").value="";
+  const scoreMap={}; (smApp.quota_application_scores||[]).forEach(s=>scoreMap[s.criterion_id]=s);
+  $("smScores").innerHTML=curCrit.map(c=>{
+    const s=scoreMap[c.id]||{auto_points:0,manual_adjustment:0};
+    return `<div class="score-row">
+      <div class="cn">${esc(c.label)}<div class="auto">อัตโนมัติ ${Number(s.auto_points).toFixed(0)} · น้ำหนัก ${c.weight}%</div></div>
+      <div><div style="font-size:.72rem;color:var(--ink-soft);margin-bottom:3px">ปรับ (+/-)</div>
+        <input type="number" step="1" data-crit="${c.id}" value="${Number(s.manual_adjustment)||0}"></div>
+    </div>`;
+  }).join("");
+  openModal("scoreModal");
+};
+$("btnScoreSave").onclick = async ()=>{
+  const reason=$("smReason").value.trim();
+  const inputs=[...document.querySelectorAll("#smScores [data-crit]")];
+  const scoreMap={}; (smApp.quota_application_scores||[]).forEach(s=>scoreMap[s.criterion_id]=s);
+  const changed=inputs.filter(el=>{
+    const old=Number((scoreMap[el.dataset.crit]||{}).manual_adjustment)||0;
+    return Number(el.value)!==old;
+  });
+  if(!changed.length){ closeModal("scoreModal"); return; }
+  if(!reason) return msg("smMsg","กรุณาระบุเหตุผลในการปรับคะแนน","err");
+  $("btnScoreSave").disabled=true;
+  for(const el of changed){
+    const {error}=await sb.rpc("quota_adjust_score",{p_application_id:smApp.id,p_criterion_id:el.dataset.crit,p_adjustment:Number(el.value),p_reason:reason});
+    if(error){ $("btnScoreSave").disabled=false; return msg("smMsg","ปรับไม่สำเร็จ: "+error.message,"err"); }
+  }
+  $("btnScoreSave").disabled=false; closeModal("scoreModal"); toast("ปรับคะแนนแล้ว"); loadResult();
+};
+
+/* ---------- เปลี่ยนสถานะ ---------- */
+window.openStatus = (appId)=>{
+  stApp=curRows.find(r=>r.id===appId); clearMsg("stMsg");
+  $("stName").textContent=(stApp.profiles||{}).display_name||"";
+  $("stSelect").value=["approved","promoted"].includes(stApp.status)?"approved":stApp.status;
+  openModal("statusModal");
+};
+$("btnStatusSave").onclick = async ()=>{
+  $("btnStatusSave").disabled=true;
+  const {error}=await sb.rpc("quota_set_status",{p_application_id:stApp.id,p_status:$("stSelect").value});
+  $("btnStatusSave").disabled=false;
+  if(error) return msg("stMsg","ไม่สำเร็จ: "+error.message,"err");
+  closeModal("statusModal"); toast("เปลี่ยนสถานะแล้ว"); loadResult();
+};
+
+/* ---------- แจ้งเลื่อน (auto-promote) ---------- */
+async function loadPromotions(){
+  const {data}=await sb.from("quota_promotions")
+    .select("*, quota_applications(profiles(display_name,class_room))")
+    .eq("quota_id",curQuota.id).eq("acknowledged",false).order("created_at",{ascending:false});
+  const promos=data||[];
+  if(!promos.length){ $("promoWrap").innerHTML=""; return; }
+  $("promoWrap").innerHTML=`<div class="panel" style="border-color:#F3E1A8;background:#FFFDF6">
+    <h2 style="color:var(--note-deep)">🔔 รอยืนยันการเลื่อนขึ้น (${promos.length})</h2>
+    ${promos.map(pm=>{
+      const who=(pm.quota_applications||{}).profiles||{};
+      return `<div class="promo-card">
+        <div class="who"><b>${esc(who.display_name||"ผู้สมัคร")}</b> ${who.class_room?`· ${esc(who.class_room)}`:""}
+          <div style="font-size:.76rem;color:var(--ink-soft)">${esc(pm.reason||"")}</div></div>
+        <button class="btn primary sm" onclick="confirmPromo('${pm.id}')">✓ ยืนยันเลื่อนขึ้น</button>
+      </div>`;
+    }).join("")}
+  </div>`;
+}
+window.confirmPromo = async (pid)=>{
+  const {error}=await sb.rpc("quota_confirm_promotion",{p_promotion_id:pid});
+  if(error) return toast("ไม่สำเร็จ: "+error.message);
+  toast("ยืนยันเลื่อนขึ้นแล้ว 🎉"); loadResult();
+};
+
+boot();
+</script>
+</body>
+</html>

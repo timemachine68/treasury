@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ระบบคัดพิจารณาโควตา | แนะให้แนว</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Mitr:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#22313A; --ink-soft:#5B6B72; --board:#EFF3F1; --card:#FFFFFF;
+  --pine:#0F6B5C; --pine-deep:#0A4F44; --pine-tint:#E2F0EC;
+  --note:#FFD34D; --note-deep:#8A6D00; --line:#DCE4E1;
+  --radius:16px; --shadow:0 4px 16px rgba(34,49,58,.10);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{font-family:'Sarabun',sans-serif;color:var(--ink);font-size:16px;line-height:1.6;min-height:100vh;
+  background:
+    radial-gradient(circle at 12% 15%, rgba(255,211,77,.12), transparent 40%),
+    radial-gradient(circle at 88% 8%, rgba(15,107,92,.10), transparent 38%),
+    linear-gradient(180deg,#F3F7F5 0%, var(--board) 100%)}
+h1,h2,h3,.ff{font-family:'Mitr',sans-serif;font-weight:600}
+a{text-decoration:none;color:inherit}
+:focus-visible{outline:3px solid var(--note);outline-offset:3px;border-radius:8px}
+@media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
+
+.wrap{max-width:960px;margin:0 auto;padding:0 18px}
+
+/* Hero */
+.hero{text-align:center;padding:52px 18px 30px;position:relative}
+.trail-badge{width:76px;height:76px;margin:0 auto 16px;border-radius:22px;background:linear-gradient(150deg,var(--pine),var(--pine-deep));
+  display:grid;place-items:center;font-size:2.3rem;box-shadow:0 10px 26px rgba(15,107,92,.32);position:relative}
+.trail-badge::after{content:"🧭";position:absolute;bottom:-8px;right:-8px;font-size:1.3rem;background:var(--note);border-radius:50%;
+  width:34px;height:34px;display:grid;place-items:center;box-shadow:0 3px 8px rgba(0,0,0,.18)}
+.hero h1{font-size:2rem;color:var(--pine-deep);letter-spacing:.3px;line-height:1.25}
+.hero .lead{font-size:1.02rem;color:var(--ink-soft);max-width:560px;margin:12px auto 0}
+.hero .kicker{display:inline-block;font-family:'Mitr';font-size:.8rem;letter-spacing:1.5px;color:var(--pine);
+  background:var(--pine-tint);padding:4px 14px;border-radius:999px;margin-bottom:14px;text-transform:uppercase}
+
+/* Signpost trail */
+.trail{position:relative;padding:20px 0 8px;margin-top:14px}
+.trail::before{content:"";position:absolute;left:50%;top:0;bottom:40px;width:3px;
+  background:repeating-linear-gradient(var(--pine) 0 10px, transparent 10px 20px);transform:translateX(-50%);opacity:.35}
+.paths{display:grid;grid-template-columns:1fr 1fr;gap:22px;position:relative;z-index:1}
+@media (max-width:640px){.paths{grid-template-columns:1fr}}
+
+.path{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:26px 22px;box-shadow:var(--shadow);
+  display:flex;flex-direction:column;transition:transform .18s, box-shadow .18s;position:relative;overflow:hidden}
+.path:hover{transform:translateY(-4px);box-shadow:0 12px 30px rgba(34,49,58,.15)}
+.path .ptop{width:56px;height:56px;border-radius:15px;display:grid;place-items:center;font-size:1.7rem;margin-bottom:14px}
+.path.student .ptop{background:var(--note);color:var(--pine-deep)}
+.path.teacher .ptop{background:var(--pine-tint);color:var(--pine-deep)}
+.path h2{font-size:1.28rem;color:var(--pine-deep);margin-bottom:4px}
+.path .who{font-size:.8rem;color:var(--ink-soft);font-weight:600;letter-spacing:.3px;margin-bottom:12px}
+.path p{font-size:.9rem;color:var(--ink-soft);margin-bottom:18px;flex:1}
+.path .go{display:flex;flex-direction:column;gap:9px}
+.btn{border:none;border-radius:11px;padding:12px 16px;font-size:.95rem;font-weight:600;font-family:'Sarabun';
+  display:flex;align-items:center;gap:9px;justify-content:center;cursor:pointer;transition:background .15s}
+.btn .arw{margin-left:auto;transition:transform .15s}
+.btn:hover .arw{transform:translateX(3px)}
+.btn.primary{background:var(--pine);color:#fff}.btn.primary:hover{background:var(--pine-deep)}
+.btn.note{background:var(--note);color:var(--pine-deep)}.btn.note:hover{background:#F5C525}
+.btn.ghost{background:#fff;border:1.5px solid var(--line);color:var(--ink)}.btn.ghost:hover{border-color:var(--pine);color:var(--pine)}
+
+/* How it works */
+.steps{margin-top:40px;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:26px 24px;box-shadow:var(--shadow)}
+.steps h3{font-size:1.15rem;color:var(--pine-deep);margin-bottom:18px;display:flex;align-items:center;gap:8px}
+.steprow{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+@media (max-width:720px){.steprow{grid-template-columns:1fr 1fr}}
+@media (max-width:420px){.steprow{grid-template-columns:1fr}}
+.step{text-align:center;position:relative}
+.step .n{width:42px;height:42px;margin:0 auto 10px;border-radius:50%;background:var(--pine-tint);color:var(--pine-deep);
+  font-family:'Mitr';font-weight:600;font-size:1.1rem;display:grid;place-items:center}
+.step .st{font-family:'Mitr';font-size:.92rem;color:var(--ink);margin-bottom:3px}
+.step .sd{font-size:.78rem;color:var(--ink-soft);line-height:1.45}
+
+.feats{margin-top:22px;display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+@media (max-width:640px){.feats{grid-template-columns:1fr}}
+.feat{background:var(--pine-tint);border-radius:12px;padding:15px 16px}
+.feat .fi{font-size:1.3rem;margin-bottom:5px}
+.feat .ft{font-family:'Mitr';font-size:.9rem;color:var(--pine-deep)}
+.feat .fd{font-size:.78rem;color:var(--ink-soft)}
+
+footer{text-align:center;padding:34px 18px 44px;color:var(--ink-soft);font-size:.82rem}
+footer a{color:var(--pine);font-weight:600}
+.backhome{display:inline-flex;align-items:center;gap:6px;margin-top:8px}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="hero">
+    <div class="trail-badge">🎓</div>
+    <div class="kicker">แนะให้แนว</div>
+    <h1>ระบบคัดพิจารณาโควตานักเรียน</h1>
+    <p class="lead">เส้นทางสู่โควตาเข้ามหาวิทยาลัย — สมัคร คัดเลือก และประกาศผลอย่างยุติธรรม โปร่งใส ด้วยเกณฑ์ที่ชัดเจน</p>
+  </div>
+
+  <div class="trail">
+    <div class="paths">
+      <!-- นักเรียน -->
+      <div class="path student">
+        <div class="ptop">🎒</div>
+        <h2>สำหรับนักเรียน</h2>
+        <div class="who">ผู้สมัครโควตา</div>
+        <p>ดูโควตาที่เปิดรับ สมัครด้วยเกรดและความสามารถของตัวเอง แล้วติดตามสถานะการพิจารณาได้ทุกเมื่อ</p>
+        <div class="go">
+          <a class="btn note" href="quota-apply.html">เข้าสมัคร / ดูสถานะ <span class="arw">→</span></a>
+        </div>
+      </div>
+
+      <!-- ครู -->
+      <div class="path teacher">
+        <div class="ptop">🧭</div>
+        <h2>สำหรับครูแนะแนว</h2>
+        <div class="who">ผู้ดูแลและคัดเลือก</div>
+        <p>สร้างโควตา กำหนดเกณฑ์และน้ำหนัก ดูผลการคัดกรองตามอันดับ ปรับคะแนน และจัดการบัญชีสำรองอัตโนมัติ</p>
+        <div class="go">
+          <a class="btn primary" href="quota-teacher.html">ตั้งค่าโควตา <span class="arw">→</span></a>
+          <a class="btn ghost" href="quota-results.html">ดูผลการคัดกรอง <span class="arw">→</span></a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ขั้นตอน -->
+  <div class="steps">
+    <h3>🗺️ เส้นทางการคัดเลือก 4 ก้าว</h3>
+    <div class="steprow">
+      <div class="step"><div class="n">1</div><div class="st">ครูตั้งโควตา</div><div class="sd">กำหนดชนิดโควตา ที่นั่ง เกณฑ์เกรด+ความสามารถ และน้ำหนัก</div></div>
+      <div class="step"><div class="n">2</div><div class="st">นักเรียนสมัคร</div><div class="sd">กรอกเกรดและเลือกระดับความสามารถตามเกณฑ์ที่กำหนด</div></div>
+      <div class="step"><div class="n">3</div><div class="st">ระบบคัดกรอง</div><div class="sd">คำนวณคะแนนอัตโนมัติ จัดอันดับ ตัดผู้ที่ขาดคุณสมบัติ</div></div>
+      <div class="step"><div class="n">4</div><div class="st">ประกาศผล</div><div class="sd">ครูยืนยันผู้ได้รับโควตา เลื่อนบัญชีสำรองเมื่อมีที่ว่าง</div></div>
+    </div>
+
+    <div class="feats">
+      <div class="feat"><div class="fi">⚖️</div><div class="ft">ยุติธรรม โปร่งใส</div><div class="fd">คิดคะแนนด้วยเกณฑ์เดียวกันทุกคน</div></div>
+      <div class="feat"><div class="fi">🔒</div><div class="ft">ข้อมูลปลอดภัย</div><div class="fd">นักเรียนเห็นแค่สถานะ ไม่เห็นคะแนนหรือกฎการให้คะแนน</div></div>
+      <div class="feat"><div class="fi">🔔</div><div class="ft">บัญชีสำรองอัตโนมัติ</div><div class="fd">มีที่ว่างเมื่อไร ระบบเลื่อนคนถัดไปให้ครูยืนยันทันที</div></div>
+    </div>
+  </div>
+
+  <footer>
+    ระบบคัดพิจารณาโควตา · ส่วนหนึ่งของแพลตฟอร์ม <b>แนะให้แนว</b><br>
+    <a class="backhome" href="index.html">← กลับสู่คลังแนะแนว</a>
+  </footer>
+</div>
+
+</body>
+</html>

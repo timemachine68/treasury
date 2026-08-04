@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ตั้งค่าโควตา (ครู) | แนะให้แนว</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Mitr:wght@400;500;600&family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{
+  --ink:#22313A; --ink-soft:#5B6B72; --board:#EFF3F1; --card:#FFFFFF;
+  --pine:#0F6B5C; --pine-deep:#0A4F44; --pine-tint:#E2F0EC;
+  --note:#FFD34D; --note-deep:#8A6D00; --line:#DCE4E1; --danger:#C0392B;
+  --radius:14px; --shadow:0 2px 10px rgba(34,49,58,.08);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{font-family:'Sarabun',sans-serif;background:var(--board);color:var(--ink);font-size:16px;line-height:1.55;min-height:100vh}
+h1,h2,h3,.brand{font-family:'Mitr',sans-serif;font-weight:600}
+button{font-family:inherit;cursor:pointer}
+input,select,textarea{font-family:inherit;font-size:16px}
+a{color:var(--pine)}
+:focus-visible{outline:3px solid var(--note);outline-offset:2px;border-radius:6px}
+@media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
+
+.wrap{max-width:1080px;margin:0 auto;padding:0 16px 64px}
+header.app{background:var(--pine);color:#fff;padding:14px 0}
+header.app .wrap{display:flex;align-items:center;gap:12px;padding-bottom:0;flex-wrap:wrap}
+.brand{font-size:1.25rem;letter-spacing:.2px;display:flex;align-items:center;gap:10px}
+.brand .logo{width:34px;height:34px;border-radius:9px;background:var(--note);color:var(--pine-deep);display:grid;place-items:center;font-size:1.05rem;font-family:'Mitr';flex:none}
+.brand small{display:block;font-family:'Sarabun';font-weight:400;font-size:.72rem;opacity:.85;letter-spacing:.4px}
+.spacer{flex:1}
+.userchip{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.14);padding:6px 12px;border-radius:999px;font-size:.85rem}
+.userchip .role{background:var(--note);color:var(--pine-deep);border-radius:999px;padding:1px 9px;font-weight:700;font-size:.72rem}
+.iconbtn{background:rgba(255,255,255,.14);border:none;color:#fff;border-radius:999px;padding:7px 14px;font-size:.85rem}
+.iconbtn:hover{background:rgba(255,255,255,.26)}
+
+.login-stage{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;
+  background:linear-gradient(160deg,var(--pine) 0%,var(--pine-deep) 60%),var(--pine)}
+.login-card{background:#fff;border-radius:20px;padding:30px 26px;max-width:400px;width:100%;box-shadow:0 18px 50px rgba(0,0,0,.28)}
+.login-card .logo-big{width:58px;height:58px;border-radius:16px;background:var(--note);color:var(--pine-deep);display:grid;place-items:center;font-family:'Mitr';font-size:1.5rem;font-weight:600;margin:0 auto 12px}
+.login-card h1{text-align:center;font-size:1.35rem;color:var(--pine-deep)}
+.login-card .sub{text-align:center;font-size:.83rem;color:var(--ink-soft);margin-bottom:20px}
+.login-card .btn{width:100%;padding:12px;font-size:1rem}
+
+.panel{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:18px;margin-bottom:16px;box-shadow:var(--shadow)}
+.panel h2{font-size:1.05rem;color:var(--pine-deep);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:.85rem}
+th{text-align:left;padding:8px 10px;background:var(--board);color:var(--ink-soft);font-size:.76rem;white-space:nowrap}
+td{padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:middle}
+.pill{border-radius:999px;padding:2px 10px;font-size:.72rem;font-weight:700;white-space:nowrap}
+.pill.draft{background:#E8EEF7;color:#3D5A80}
+.pill.open{background:var(--pine-tint);color:var(--pine-deep)}
+.pill.screening{background:#FFF3CE;color:var(--note-deep)}
+.pill.announced{background:#E6F4EA;color:#1E7E34}
+.pill.closed{background:#F0F0F0;color:#777}
+
+.btn{border:none;border-radius:9px;padding:9px 16px;font-size:.88rem;font-weight:600;display:inline-flex;align-items:center;gap:6px;justify-content:center}
+.btn.primary{background:var(--pine);color:#fff}
+.btn.primary:hover{background:var(--pine-deep)}
+.btn.ghost{background:#fff;border:1.5px solid var(--line);color:var(--ink-soft)}
+.btn.ghost:hover{border-color:var(--pine);color:var(--pine)}
+.btn.danger{background:#fff;border:1.5px solid #EAC7C2;color:var(--danger)}
+.btn.note{background:var(--note);color:var(--pine-deep)}
+.btn.sm{padding:6px 11px;font-size:.78rem}
+.btn:disabled{opacity:.55;cursor:not-allowed}
+
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+.empty{padding:44px 16px;text-align:center;color:var(--ink-soft)}
+.empty .big{font-size:2rem;margin-bottom:6px}
+
+.modal-back{position:fixed;inset:0;background:rgba(20,32,30,.45);display:none;align-items:flex-start;justify-content:center;padding:24px 14px;overflow-y:auto;z-index:50}
+.modal-back.show{display:flex}
+.modal{background:#fff;border-radius:16px;max-width:640px;width:100%;padding:22px;box-shadow:0 12px 40px rgba(0,0,0,.2)}
+.modal h2{font-size:1.15rem;margin-bottom:14px;color:var(--pine-deep)}
+.field{margin-bottom:13px}
+.field label{display:block;font-size:.83rem;font-weight:700;margin-bottom:5px;color:var(--ink)}
+.field input,.field select,.field textarea{width:100%;padding:10px 12px;border:1.5px solid var(--line);border-radius:10px;background:#fff}
+.field textarea{min-height:64px;resize:vertical}
+.field .hint{font-size:.74rem;color:var(--ink-soft);margin-top:4px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+@media (max-width:560px){.row2,.row3{grid-template-columns:1fr}}
+.modal .foot{display:flex;gap:10px;justify-content:flex-end;margin-top:16px;flex-wrap:wrap}
+.msg{border-radius:10px;padding:10px 13px;font-size:.85rem;margin-bottom:12px;display:none}
+.msg.err{display:block;background:#FDECEA;color:var(--danger)}
+.msg.ok{display:block;background:var(--pine-tint);color:var(--pine-deep)}
+.msg.warn{display:block;background:#FFF3CE;color:var(--note-deep)}
+
+/* เกณฑ์ + น้ำหนัก */
+.crit-row{border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px;background:#fff}
+.crit-row .top{display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap}
+.crit-row .top .grow{flex:1;min-width:180px}
+.weight-bar{height:8px;border-radius:5px;background:var(--board);overflow:hidden;margin-top:10px}
+.weight-bar>span{display:block;height:100%;background:var(--pine)}
+.wsum{font-family:'Mitr';font-size:1.05rem}
+.wsum.ok{color:var(--pine-deep)}
+.wsum.bad{color:var(--danger)}
+.rules-box{background:var(--board);border-radius:10px;padding:10px;margin-top:10px}
+.rule-line{display:flex;gap:8px;align-items:center;margin-bottom:6px;flex-wrap:wrap}
+.rule-line input{padding:6px 9px;border:1.5px solid var(--line);border-radius:8px}
+.rule-line .lab{font-size:.78rem;color:var(--ink-soft);white-space:nowrap}
+.tag{display:inline-block;background:var(--pine-tint);color:var(--pine-deep);border-radius:6px;padding:1px 8px;font-size:.72rem;font-weight:700}
+.tag.rubric{background:#FFF3CE;color:var(--note-deep)}
+#toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;
+  padding:11px 20px;border-radius:999px;font-size:.88rem;box-shadow:0 6px 20px rgba(0,0,0,.3);opacity:0;pointer-events:none;transition:opacity .25s;z-index:99;max-width:92vw;text-align:center}
+#toast.show{opacity:1}
+.loading{text-align:center;padding:40px;color:var(--ink-soft)}
+.hidden{display:none!important}
+.backlink{font-size:.8rem}
+</style>
+</head>
+<body>
+
+<!-- ═══════════ เข้าสู่ระบบ ═══════════ -->
+<div id="loginStage" class="login-stage hidden">
+  <div class="login-card">
+    <div class="logo-big">🎓</div>
+    <h1>ตั้งค่าโควตา</h1>
+    <div class="sub">สำหรับครูแนะแนว · ใช้บัญชีเดียวกับคลังแนะแนว</div>
+    <div id="liMsg" class="msg"></div>
+    <div class="field"><label>ชื่อผู้ใช้</label>
+      <input id="liUser" autocomplete="username" placeholder="เช่น รหัสประจำตัว"></div>
+    <div class="field"><label>รหัสผ่าน</label>
+      <input id="liPass" type="password" autocomplete="current-password" placeholder="รหัสผ่าน"></div>
+    <button id="btnLogin" class="btn primary">เข้าสู่ระบบ</button>
+  </div>
+</div>
+
+<!-- ═══════════ แอปหลัก ═══════════ -->
+<div id="appStage" class="hidden">
+  <header class="app"><div class="wrap">
+    <div class="brand"><span class="logo">🎓</span><span>ตั้งค่าโควตา<small>แนะให้แนว · ระบบคัดพิจารณาโควตานักเรียน</small></span></div>
+    <div class="spacer"></div>
+    <div class="userchip"><span id="uName"></span><span class="role" id="uRole"></span></div>
+    <button class="iconbtn" id="btnLogout">ออกจากระบบ</button>
+  </div></header>
+
+  <div class="wrap">
+    <div class="toolbar" style="margin-top:20px">
+      <button class="btn primary" id="btnNew">➕ สร้างโควตาใหม่</button>
+      <div class="spacer"></div>
+      <a class="backlink" href="quota-hub.html">← กลับหน้าหลักโควตา</a>
+    </div>
+    <div id="listWrap"><div class="loading">กำลังโหลด…</div></div>
+  </div>
+</div>
+
+<!-- โมดัล: สร้าง/แก้ โควตา -->
+<div class="modal-back" id="quotaModal"><div class="modal">
+  <h2 id="qmTitle">สร้างโควตาใหม่</h2>
+  <div id="qmMsg" class="msg"></div>
+  <div class="field"><label>ชื่อโควตา *</label>
+    <input id="qName" placeholder="เช่น โควตาพื้นที่ภาคตะวันออก ม.บูรพา"></div>
+  <div class="row2">
+    <div class="field"><label>มหาวิทยาลัย</label><input id="qUni" placeholder="เช่น ม.บูรพา"></div>
+    <div class="field"><label>คณะ / สาขา</label><input id="qFac" placeholder="เช่น คณะพยาบาลศาสตร์"></div>
+  </div>
+  <div class="row2">
+    <div class="field"><label>ชนิดโควตา</label>
+      <input id="qType" list="qTypeList" placeholder="เช่น Portfolio / โควตาภาค / โควตาโรงเรียน">
+      <datalist id="qTypeList">
+        <option value="Portfolio (รอบ 1)"><option value="โควตา (รอบ 2)">
+        <option value="โควตาพื้นที่"><option value="โควตาโรงเรียน"><option value="โควตาความสามารถพิเศษ">
+      </datalist></div>
+    <div class="field"><label>จำนวนที่นั่ง (ลิมิตโควตา) *</label>
+      <input id="qSeats" type="number" min="1" value="1"></div>
+  </div>
+  <div class="field"><label>รายละเอียด</label><textarea id="qDesc" placeholder="เงื่อนไข/หมายเหตุเพิ่มเติมที่นักเรียนควรรู้"></textarea></div>
+  <div class="row3">
+    <div class="field"><label>ปีการศึกษา</label><input id="qYear" placeholder="2568"></div>
+    <div class="field"><label>เปิดรับสมัคร</label><input id="qOpen" type="date"></div>
+    <div class="field"><label>ปิดรับสมัคร</label><input id="qClose" type="date"></div>
+  </div>
+  <div class="panel" style="background:var(--board);box-shadow:none;margin:4px 0 0">
+    <h2 style="font-size:.95rem">🔎 คุณสมบัติขั้นต่ำ (คัดออกก่อนให้คะแนน)</h2>
+    <div class="row2">
+      <div class="field"><label>GPAX ขั้นต่ำ</label><input id="qMinGpax" type="number" step="0.01" min="0" max="4" placeholder="เช่น 3.00 (เว้นว่าง = ไม่กำหนด)"></div>
+      <div class="field"><label>ระดับชั้นที่รับ</label><input id="qLevels" placeholder="เช่น ม.6/1, ม.6/2 (คั่นด้วยจุลภาค เว้นว่าง = ทุกห้อง)"></div>
+    </div>
+  </div>
+  <div class="foot">
+    <button class="btn ghost" onclick="closeModal('quotaModal')">ยกเลิก</button>
+    <button class="btn primary" id="btnQSave">บันทึกโควตา</button>
+  </div>
+</div></div>
+
+<!-- โมดัล: ตั้งเกณฑ์ + น้ำหนัก + rubric -->
+<div class="modal-back" id="critModal"><div class="modal" style="max-width:720px">
+  <h2 id="cmTitle">เกณฑ์การคัดเลือก</h2>
+  <div id="cmMsg" class="msg"></div>
+  <div class="field hint" style="margin-bottom:6px">น้ำหนักทุกเกณฑ์รวมกันต้องได้ <b>100%</b> ก่อนเผยแพร่โควตา · เกรดคำนวณอัตโนมัติ · ความสามารถใช้ rubric (ตัวเลือก+คะแนน) ที่นักเรียนเลือกตอนสมัคร</div>
+  <div id="critList"></div>
+  <div class="toolbar" style="margin:6px 0 2px">
+    <button class="btn ghost sm" id="btnAddScore">➕ เพิ่มเกณฑ์เกรด</button>
+    <button class="btn note sm" id="btnAddRubric">➕ เพิ่มเกณฑ์ความสามารถ (rubric)</button>
+    <div class="spacer"></div>
+    <span>รวมน้ำหนัก: <span class="wsum" id="wSum">0%</span></span>
+  </div>
+  <div class="weight-bar"><span id="wBar" style="width:0%"></span></div>
+  <div class="foot">
+    <button class="btn ghost" onclick="closeModal('critModal')">ปิด</button>
+    <button class="btn primary" id="btnCritSave">บันทึกเกณฑ์</button>
+  </div>
+</div></div>
+
+<div id="toast"></div>
+
+<script>
+/* ═══════════ ค่าคงที่ ═══════════ */
+const SUPABASE_URL = "https://ikkhjslmtjwrxzxvtokb.supabase.co";
+const ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlra2hqc2xtdGp3cnh6eHZ0b2tiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM3NDMzNjksImV4cCI6MjA5OTMxOTM2OX0.3OR_9mEv82Ns1LLjx5nnRwJYzrtKFtWCWd1bPuQfNKU";
+const EMAIL_DOMAIN = "guidance-pcw.local";
+const sb = supabase.createClient(SUPABASE_URL, ANON_KEY);
+const ROLE_LABEL = {admin:"ผู้ดูแล", teacher:"ครู", student:"นักเรียน"};
+const STATUS_LABEL = {draft:"ฉบับร่าง", open:"เปิดรับสมัคร", screening:"กำลังคัดเลือก", announced:"ประกาศผล", closed:"ปิด"};
+
+/* เกณฑ์เกรดมาตรฐานให้เลือกจาก dropdown */
+const GRADE_KEYS = [
+  {key:"gpax", label:"GPAX (เฉลี่ยสะสม)"},
+  {key:"gpa_science", label:"GPA กลุ่มวิทยาศาสตร์"},
+  {key:"gpa_math", label:"GPA กลุ่มคณิตศาสตร์"},
+  {key:"gpa_english", label:"GPA กลุ่มภาษาอังกฤษ"},
+  {key:"gpa_thai", label:"GPA กลุ่มภาษาไทย"},
+  {key:"gpa_social", label:"GPA กลุ่มสังคมศึกษา"},
+];
+
+let profile = null, quotas = [], curQuota = null, critDraft = [];
+
+const $ = id => document.getElementById(id);
+const esc = s => (s??"").toString().replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+function toast(t){ $("toast").textContent=t; $("toast").classList.add("show"); setTimeout(()=>$("toast").classList.remove("show"),2600); }
+function msg(id,t,cls){ const el=$(id); el.textContent=t; el.className="msg "+cls; }
+function clearMsg(id){ const el=$(id); el.textContent=""; el.className="msg"; }
+function openModal(id){ $(id).classList.add("show"); }
+function closeModal(id){ $(id).classList.remove("show"); }
+function curYear(){ const d=new Date(); const y=d.getFullYear()+543; return String(d.getMonth()>=4? y : y-1); }
+function fmtDate(d){ return d? new Date(d).toLocaleDateString("th-TH",{day:"numeric",month:"short",year:"2-digit"}) : "—"; }
+
+/* ═══════════ เข้าสู่ระบบ ═══════════ */
+async function boot(){
+  const {data:{session}} = await sb.auth.getSession();
+  if(!session){ $("loginStage").classList.remove("hidden"); return; }
+  const {data:p} = await sb.from("profiles").select("*").eq("id", session.user.id).maybeSingle();
+  if(!p){ await sb.auth.signOut(); $("loginStage").classList.remove("hidden"); return toast("ไม่พบข้อมูลผู้ใช้"); }
+  profile = p;
+  // สิทธิ์: admin หรือ is_guidance เท่านั้น (เจ้าหน้าที่โควตา)
+  if(!(p.role==="admin" || p.is_guidance===true)){
+    $("loginStage").classList.remove("hidden");
+    return msg("liMsg","หน้านี้สำหรับครูแนะแนว/ผู้ดูแลเท่านั้น","err");
+  }
+  $("loginStage").classList.add("hidden");
+  $("appStage").classList.remove("hidden");
+  $("uName").textContent = p.display_name;
+  $("uRole").textContent = ROLE_LABEL[p.role] + (p.is_guidance? " · แนะแนว":"");
+  await loadQuotas();
+}
+$("btnLogin").onclick = async ()=>{
+  const u=$("liUser").value.trim(), p=$("liPass").value;
+  if(!u||!p) return msg("liMsg","กรอกชื่อผู้ใช้และรหัสผ่านก่อนนะคะ","err");
+  $("btnLogin").disabled = true;
+  const {error} = await sb.auth.signInWithPassword({email:u+"@"+EMAIL_DOMAIN, password:p});
+  $("btnLogin").disabled = false;
+  if(error) return msg("liMsg","เข้าสู่ระบบไม่สำเร็จ: ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง","err");
+  location.reload();
+};
+$("liPass").addEventListener("keydown", e=>{ if(e.key==="Enter") $("btnLogin").click(); });
+$("btnLogout").onclick = async ()=>{ await sb.auth.signOut(); location.reload(); };
+
+/* ═══════════ รายการโควตา ═══════════ */
+async function loadQuotas(){
+  const {data, error} = await sb.from("quotas")
+    .select("*, quota_criteria(id,weight)").order("created_at",{ascending:false});
+  if(error){ $("listWrap").innerHTML=`<div class="empty">โหลดไม่สำเร็จ: ${esc(error.message)}</div>`; return; }
+  quotas = data||[];
+  renderList();
+}
+function weightSumOf(q){ return (q.quota_criteria||[]).reduce((s,c)=>s+Number(c.weight||0),0); }
+function renderList(){
+  if(!quotas.length){ $("listWrap").innerHTML=`<div class="panel"><div class="empty"><div class="big">🎓</div>ยังไม่มีโควตา กด “สร้างโควตาใหม่” เพื่อเริ่มได้เลยค่ะ</div></div>`; return; }
+  let rows = quotas.map(q=>{
+    const ws = weightSumOf(q);
+    const nCrit = (q.quota_criteria||[]).length;
+    const wOk = nCrit>0 && Math.round(ws)===100;
+    return `<tr>
+      <td><b>${esc(q.name)}</b><div style="font-size:.76rem;color:var(--ink-soft)">${esc(q.university||"")}${q.faculty? " · "+esc(q.faculty):""}</div></td>
+      <td>${esc(q.quota_type||"—")}</td>
+      <td style="text-align:center">${q.seats}</td>
+      <td>${esc(q.academic_year)}</td>
+      <td><span class="pill ${q.status}">${STATUS_LABEL[q.status]||q.status}</span></td>
+      <td style="white-space:nowrap">${nCrit} เกณฑ์ · <span style="color:${wOk?'var(--pine-deep)':'var(--danger)'}">${Math.round(ws)}%</span></td>
+      <td style="white-space:nowrap">
+        <button class="btn ghost sm" onclick="editQuota('${q.id}')">แก้ไข</button>
+        <button class="btn note sm" onclick="openCrit('${q.id}')">เกณฑ์</button>
+        <button class="btn ${q.status==='draft'?'primary':'ghost'} sm" onclick="toggleStatus('${q.id}')">${q.status==='draft'?'เผยแพร่':'ปิดรับ'}</button>
+      </td>
+    </tr>`;
+  }).join("");
+  $("listWrap").innerHTML = `<div class="panel"><h2>📋 โควตาทั้งหมด (${quotas.length})</h2>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>ชื่อโควตา</th><th>ชนิด</th><th>ที่นั่ง</th><th>ปี</th><th>สถานะ</th><th>เกณฑ์/น้ำหนัก</th><th></th></tr></thead>
+      <tbody>${rows}</tbody></table></div></div>`;
+}
+
+/* ═══════════ สร้าง/แก้ โควตา ═══════════ */
+$("btnNew").onclick = ()=>{ curQuota=null; fillQuotaForm(null); openModal("quotaModal"); };
+window.editQuota = (id)=>{ curQuota = quotas.find(q=>q.id===id); fillQuotaForm(curQuota); openModal("quotaModal"); };
+function fillQuotaForm(q){
+  clearMsg("qmMsg");
+  $("qmTitle").textContent = q? "แก้ไขโควตา" : "สร้างโควตาใหม่";
+  $("qName").value = q?.name||""; $("qUni").value=q?.university||""; $("qFac").value=q?.faculty||"";
+  $("qType").value=q?.quota_type||""; $("qSeats").value=q?.seats??1; $("qDesc").value=q?.description||"";
+  $("qYear").value = q?.academic_year || curYear();
+  $("qOpen").value = q?.opens_at? q.opens_at.slice(0,10):""; $("qClose").value = q?.closes_at? q.closes_at.slice(0,10):"";
+  const er = q?.eligibility_rules||{};
+  $("qMinGpax").value = er.min_gpax ?? "";
+  $("qLevels").value = Array.isArray(er.allowed_levels)? er.allowed_levels.join(", "):"";
+}
+$("btnQSave").onclick = async ()=>{
+  const name=$("qName").value.trim();
+  if(!name) return msg("qmMsg","กรอกชื่อโควตาก่อนนะคะ","err");
+  const seats=parseInt($("qSeats").value,10);
+  if(!(seats>=1)) return msg("qmMsg","จำนวนที่นั่งต้องอย่างน้อย 1","err");
+  const er={};
+  if($("qMinGpax").value!=="") er.min_gpax = Number($("qMinGpax").value);
+  const lv = $("qLevels").value.split(",").map(s=>s.trim()).filter(Boolean);
+  if(lv.length) er.allowed_levels = lv;
+  const payload = {
+    name, university:$("qUni").value.trim()||null, faculty:$("qFac").value.trim()||null,
+    quota_type:$("qType").value.trim()||null, seats, description:$("qDesc").value.trim()||null,
+    academic_year:$("qYear").value.trim()||curYear(),
+    opens_at:$("qOpen").value||null, closes_at:$("qClose").value||null,
+    eligibility_rules:er, updated_at:new Date().toISOString()
+  };
+  $("btnQSave").disabled=true;
+  let error;
+  if(curQuota){ ({error} = await sb.from("quotas").update(payload).eq("id",curQuota.id)); }
+  else { ({error} = await sb.from("quotas").insert(payload)); }
+  $("btnQSave").disabled=false;
+  if(error) return msg("qmMsg","บันทึกไม่สำเร็จ: "+error.message,"err");
+  closeModal("quotaModal"); toast("บันทึกโควตาแล้ว"); loadQuotas();
+};
+
+/* ═══════════ เปลี่ยนสถานะ เผยแพร่/ปิด ═══════════ */
+window.toggleStatus = async (id)=>{
+  const q = quotas.find(x=>x.id===id);
+  if(q.status==="draft"){
+    // ตรวจน้ำหนัก 100 ก่อนเผยแพร่
+    const {data:crit} = await sb.from("quota_criteria").select("weight").eq("quota_id",id);
+    const ws = (crit||[]).reduce((s,c)=>s+Number(c.weight||0),0);
+    if(!crit||!crit.length) return toast("ตั้งเกณฑ์การคัดเลือกก่อนเผยแพร่นะคะ");
+    if(Math.round(ws)!==100) return toast(`น้ำหนักรวม ${Math.round(ws)}% — ต้องได้ 100% ก่อนเผยแพร่`);
+    const {error} = await sb.from("quotas").update({status:"open"}).eq("id",id);
+    if(error) return toast("ไม่สำเร็จ: "+error.message);
+    toast("เผยแพร่แล้ว นักเรียนสมัครได้เลย");
+  } else {
+    const {error} = await sb.from("quotas").update({status:"closed"}).eq("id",id);
+    if(error) return toast("ไม่สำเร็จ: "+error.message);
+    toast("ปิดรับสมัครแล้ว");
+  }
+  loadQuotas();
+};
+
+/* ═══════════ เกณฑ์ + น้ำหนัก + rubric ═══════════ */
+window.openCrit = async (id)=>{
+  curQuota = quotas.find(q=>q.id===id);
+  clearMsg("cmMsg");
+  $("cmTitle").textContent = "เกณฑ์การคัดเลือก · "+curQuota.name;
+  const {data, error} = await sb.from("quota_criteria").select("*").eq("quota_id",id).order("display_order");
+  if(error){ msg("cmMsg","โหลดเกณฑ์ไม่สำเร็จ: "+error.message,"err"); }
+  critDraft = (data||[]).map(c=>({
+    id:c.id, criterion_key:c.criterion_key, label:c.label, weight:Number(c.weight),
+    is_rubric:c.is_rubric, scoring_rules:c.scoring_rules||[], rubric_options:c.rubric_options||[]
+  }));
+  if(!critDraft.length){ addGrade(); }  // เริ่มด้วยเกรด 1 ตัว
+  renderCrit();
+  openModal("critModal");
+};
+function addGrade(){ critDraft.push({criterion_key:"gpax", label:"GPAX (เฉลี่ยสะสม)", weight:0, is_rubric:false,
+  scoring_rules:[{max:2.5,points:40},{max:3.0,points:60},{max:3.5,points:80},{points:100}], rubric_options:[]}); }
+function addRubric(){ critDraft.push({criterion_key:"ability_"+Date.now().toString(36), label:"ความสามารถ/ผลงาน", weight:0, is_rubric:true,
+  scoring_rules:[{max:1,points:40},{max:2,points:70},{max:3,points:100}],
+  rubric_options:[{label:"ระดับโรงเรียน",value:1},{label:"ระดับจังหวัด/ภาค",value:2},{label:"ระดับชาติ/นานาชาติ",value:3}] }); }
+$("btnAddScore").onclick = ()=>{ addGrade(); renderCrit(); };
+$("btnAddRubric").onclick = ()=>{ addRubric(); renderCrit(); };
+
+function renderCrit(){
+  let html = critDraft.map((c,i)=>{
+    const gradeOpts = GRADE_KEYS.map(g=>`<option value="${g.key}" ${c.criterion_key===g.key?"selected":""}>${g.label}</option>`).join("");
+    // ส่วนกฎคะแนน
+    let rulesHtml;
+    if(c.is_rubric){
+      rulesHtml = `<div class="rules-box">
+        <div class="lab" style="margin-bottom:6px">ตัวเลือกความสามารถ (นักเรียนเลือก 1 ข้อ) — ค่า value ยิ่งสูงยิ่งได้คะแนนมาก</div>
+        ${(c.rubric_options||[]).map((o,j)=>`<div class="rule-line">
+           <input style="flex:1" placeholder="ชื่อระดับ เช่น รางวัลระดับชาติ" value="${esc(o.label)}" oninput="setRubricOpt(${i},${j},'label',this.value)">
+           <span class="lab">= ค่า</span>
+           <input type="number" style="width:78px" value="${o.value}" oninput="setRubricOpt(${i},${j},'value',this.value)">
+           <button class="btn danger sm" onclick="delRubricOpt(${i},${j})">ลบ</button>
+         </div>`).join("")}
+        <button class="btn ghost sm" onclick="addRubricOpt(${i})">➕ เพิ่มตัวเลือก</button>
+        <div class="lab" style="margin-top:8px">การให้คะแนน (ค่า value ≤ เท่าไร → กี่คะแนน, เรียงน้อย→มาก, ช่องสุดท้ายเว้น "ไม่เกิน" = ค่าสูงสุด)</div>
+        ${ruleEditor(c,i)}
+      </div>`;
+    } else {
+      rulesHtml = `<div class="rules-box">
+        <div class="lab" style="margin-bottom:6px">เกณฑ์ให้คะแนนเกรด (ค่า ≤ เท่าไร → กี่คะแนน, เรียงน้อย→มาก, ช่องสุดท้ายเว้น "ไม่เกิน" = สูงสุด)</div>
+        ${ruleEditor(c,i)}
+      </div>`;
+    }
+    return `<div class="crit-row">
+      <div class="top">
+        <div class="grow">
+          ${c.is_rubric
+            ? `<span class="tag rubric">ความสามารถ (rubric)</span>
+               <input style="margin-top:6px;width:100%;padding:8px 10px;border:1.5px solid var(--line);border-radius:8px" placeholder="ชื่อเกณฑ์" value="${esc(c.label)}" oninput="setCrit(${i},'label',this.value)">`
+            : `<span class="tag">เกรด (คำนวณอัตโนมัติ)</span>
+               <select style="margin-top:6px;width:100%;padding:8px 10px;border:1.5px solid var(--line);border-radius:8px" onchange="onGradeKey(${i},this.value)">${gradeOpts}</select>`}
+        </div>
+        <div style="width:120px">
+          <div class="lab" style="font-size:.74rem;color:var(--ink-soft);margin-bottom:4px">น้ำหนัก (%)</div>
+          <input type="number" min="0" max="100" style="width:100%;padding:8px 10px;border:1.5px solid var(--line);border-radius:8px" value="${c.weight}" oninput="setCrit(${i},'weight',this.value)">
+        </div>
+        <button class="btn danger sm" style="align-self:flex-end" onclick="delCrit(${i})">ลบเกณฑ์</button>
+      </div>
+      ${rulesHtml}
+    </div>`;
+  }).join("");
+  $("critList").innerHTML = html || `<div class="empty">ยังไม่มีเกณฑ์</div>`;
+  const ws = critDraft.reduce((s,c)=>s+Number(c.weight||0),0);
+  $("wSum").textContent = Math.round(ws)+"%";
+  $("wSum").className = "wsum "+(Math.round(ws)===100?"ok":"bad");
+  $("wBar").style.width = Math.min(100,ws)+"%";
+  $("wBar").style.background = Math.round(ws)===100? "var(--pine)":"var(--note)";
+}
+function ruleEditor(c,i){
+  return (c.scoring_rules||[]).map((r,j)=>{
+    const isCatch = !("max" in r);
+    return `<div class="rule-line">
+      <span class="lab">${isCatch? "นอกเหนือจากนั้น":"ไม่เกิน"}</span>
+      ${isCatch? "" : `<input type="number" step="0.01" style="width:90px" value="${r.max}" oninput="setRule(${i},${j},'max',this.value)">`}
+      <span class="lab">→</span>
+      <input type="number" style="width:78px" value="${r.points}" oninput="setRule(${i},${j},'points',this.value)">
+      <span class="lab">คะแนน</span>
+      <button class="btn danger sm" onclick="delRule(${i},${j})">ลบ</button>
+    </div>`;
+  }).join("") + `<button class="btn ghost sm" onclick="addRule(${i})">➕ เพิ่มช่วงคะแนน</button>`;
+}
+window.setCrit=(i,k,v)=>{ critDraft[i][k] = k==="weight"? Number(v)||0 : v; if(k==="weight") renderCrit(); };
+window.onGradeKey=(i,key)=>{ const g=GRADE_KEYS.find(x=>x.key===key); critDraft[i].criterion_key=key; critDraft[i].label=g.label; };
+window.delCrit=(i)=>{ critDraft.splice(i,1); renderCrit(); };
+window.addRule=(i)=>{ const rs=critDraft[i].scoring_rules; rs.splice(rs.length-1,0,{max:0,points:0}); renderCrit(); };
+window.setRule=(i,j,k,v)=>{ critDraft[i].scoring_rules[j][k]=Number(v)||0; };
+window.delRule=(i,j)=>{ critDraft[i].scoring_rules.splice(j,1); renderCrit(); };
+window.addRubricOpt=(i)=>{ critDraft[i].rubric_options.push({label:"",value:0}); renderCrit(); };
+window.setRubricOpt=(i,j,k,v)=>{ critDraft[i].rubric_options[j][k]= k==="value"? Number(v)||0 : v; };
+window.delRubricOpt=(i,j)=>{ critDraft[i].rubric_options.splice(j,1); renderCrit(); };
+
+$("btnCritSave").onclick = async ()=>{
+  // ตรวจ
+  for(const c of critDraft){
+    if(!c.label.trim()) return msg("cmMsg","มีเกณฑ์ที่ยังไม่ได้ตั้งชื่อ","err");
+    if(c.is_rubric && !(c.rubric_options||[]).length) return msg("cmMsg",`เกณฑ์ "${c.label}" ต้องมีตัวเลือกอย่างน้อย 1 ข้อ`,"err");
+  }
+  const ws = critDraft.reduce((s,c)=>s+Number(c.weight||0),0);
+  if(Math.round(ws)!==100) msg("cmMsg",`บันทึกได้ แต่น้ำหนักรวม ${Math.round(ws)}% ยังไม่ครบ 100% — เผยแพร่ไม่ได้จนกว่าจะครบ`,"warn");
+  $("btnCritSave").disabled=true;
+  // ลบของเดิมทั้งหมดแล้วเขียนใหม่ (ชุดเล็ก จัดการง่าย ปลอดภัย)
+  await sb.from("quota_criteria").delete().eq("quota_id",curQuota.id);
+  const rows = critDraft.map((c,idx)=>({
+    quota_id:curQuota.id, criterion_key:c.criterion_key, label:c.label.trim(),
+    weight:Number(c.weight)||0, scoring_rules:c.scoring_rules, is_rubric:c.is_rubric,
+    rubric_options:c.is_rubric? c.rubric_options : [], display_order:idx
+  }));
+  const {error} = await sb.from("quota_criteria").insert(rows);
+  $("btnCritSave").disabled=false;
+  if(error) return msg("cmMsg","บันทึกไม่สำเร็จ: "+error.message,"err");
+  toast("บันทึกเกณฑ์แล้ว");
+  if(Math.round(ws)===100) closeModal("critModal");
+  loadQuotas();
+};
+
+boot();
+</script>
+</body>
+</html>

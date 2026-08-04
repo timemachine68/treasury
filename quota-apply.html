@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>สมัครโควตา | แนะให้แนว</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Mitr:wght@400;500;600&family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{
+  --ink:#22313A; --ink-soft:#5B6B72; --board:#EFF3F1; --card:#FFFFFF;
+  --pine:#0F6B5C; --pine-deep:#0A4F44; --pine-tint:#E2F0EC;
+  --note:#FFD34D; --note-deep:#8A6D00; --line:#DCE4E1; --danger:#C0392B;
+  --radius:14px; --shadow:0 2px 10px rgba(34,49,58,.08);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{font-family:'Sarabun',sans-serif;background:var(--board);color:var(--ink);font-size:16px;line-height:1.55;min-height:100vh}
+h1,h2,h3,.brand{font-family:'Mitr',sans-serif;font-weight:600}
+button{font-family:inherit;cursor:pointer}
+input,select,textarea{font-family:inherit;font-size:16px}
+a{color:var(--pine)}
+:focus-visible{outline:3px solid var(--note);outline-offset:2px;border-radius:6px}
+@media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
+
+.wrap{max-width:820px;margin:0 auto;padding:0 16px 64px}
+header.app{background:var(--pine);color:#fff;padding:14px 0}
+header.app .wrap{display:flex;align-items:center;gap:12px;padding-bottom:0;flex-wrap:wrap}
+.brand{font-size:1.25rem;letter-spacing:.2px;display:flex;align-items:center;gap:10px}
+.brand .logo{width:34px;height:34px;border-radius:9px;background:var(--note);color:var(--pine-deep);display:grid;place-items:center;font-size:1.05rem;font-family:'Mitr';flex:none}
+.brand small{display:block;font-family:'Sarabun';font-weight:400;font-size:.72rem;opacity:.85;letter-spacing:.4px}
+.spacer{flex:1}
+.userchip{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.14);padding:6px 12px;border-radius:999px;font-size:.85rem}
+.userchip .role{background:var(--note);color:var(--pine-deep);border-radius:999px;padding:1px 9px;font-weight:700;font-size:.72rem}
+.iconbtn{background:rgba(255,255,255,.14);border:none;color:#fff;border-radius:999px;padding:7px 14px;font-size:.85rem}
+.iconbtn:hover{background:rgba(255,255,255,.26)}
+
+.login-stage{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;
+  background:linear-gradient(160deg,var(--pine) 0%,var(--pine-deep) 60%),var(--pine)}
+.login-card{background:#fff;border-radius:20px;padding:30px 26px;max-width:400px;width:100%;box-shadow:0 18px 50px rgba(0,0,0,.28)}
+.login-card .logo-big{width:58px;height:58px;border-radius:16px;background:var(--note);color:var(--pine-deep);display:grid;place-items:center;font-family:'Mitr';font-size:1.5rem;font-weight:600;margin:0 auto 12px}
+.login-card h1{text-align:center;font-size:1.35rem;color:var(--pine-deep)}
+.login-card .sub{text-align:center;font-size:.83rem;color:var(--ink-soft);margin-bottom:20px}
+.login-card .btn{width:100%;padding:12px;font-size:1rem}
+
+.section-title{font-family:'Mitr';font-size:1.05rem;color:var(--pine-deep);margin:22px 0 12px;display:flex;align-items:center;gap:8px}
+.qcard{background:var(--card);border:1px solid var(--line);border-left:5px solid var(--pine);border-radius:12px;padding:16px;margin-bottom:12px;box-shadow:var(--shadow)}
+.qcard h3{font-size:1.05rem;line-height:1.35}
+.qcard .uni{font-size:.85rem;color:var(--ink-soft);margin-top:2px}
+.qcard .meta{display:flex;gap:14px;flex-wrap:wrap;font-size:.78rem;color:var(--ink-soft);margin-top:8px;border-top:1px dashed var(--line);padding-top:8px}
+.qcard .desc{font-size:.84rem;color:var(--ink-soft);margin-top:8px}
+.qcard .foot{display:flex;gap:8px;align-items:center;margin-top:12px;flex-wrap:wrap}
+.tagt{display:inline-block;background:var(--pine-tint);color:var(--pine-deep);border-radius:6px;padding:2px 9px;font-size:.72rem;font-weight:700}
+
+.pill{border-radius:999px;padding:3px 12px;font-size:.76rem;font-weight:700;white-space:nowrap;display:inline-flex;align-items:center;gap:5px}
+.pill.submitted{background:#FFF3CE;color:var(--note-deep)}
+.pill.under_review{background:#E8EEF7;color:#3D5A80}
+.pill.shortlisted{background:#E6F4EA;color:#1E7E34}
+.pill.waitlisted{background:#FDEFD9;color:#9A6212}
+.pill.approved{background:var(--pine);color:#fff}
+.pill.promoted{background:var(--pine);color:#fff}
+.pill.rejected{background:#FDECEA;color:var(--danger)}
+.pill.withdrawn{background:#F0F0F0;color:#777}
+
+.btn{border:none;border-radius:9px;padding:9px 16px;font-size:.88rem;font-weight:600;display:inline-flex;align-items:center;gap:6px;justify-content:center}
+.btn.primary{background:var(--pine);color:#fff}.btn.primary:hover{background:var(--pine-deep)}
+.btn.ghost{background:#fff;border:1.5px solid var(--line);color:var(--ink-soft)}.btn.ghost:hover{border-color:var(--pine);color:var(--pine)}
+.btn.danger{background:#fff;border:1.5px solid #EAC7C2;color:var(--danger)}
+.btn.sm{padding:6px 12px;font-size:.8rem}
+.btn:disabled{opacity:.55;cursor:not-allowed}
+.empty{padding:40px 16px;text-align:center;color:var(--ink-soft)}
+.empty .big{font-size:2rem;margin-bottom:6px}
+
+.modal-back{position:fixed;inset:0;background:rgba(20,32,30,.45);display:none;align-items:flex-start;justify-content:center;padding:24px 14px;overflow-y:auto;z-index:50}
+.modal-back.show{display:flex}
+.modal{background:#fff;border-radius:16px;max-width:560px;width:100%;padding:22px;box-shadow:0 12px 40px rgba(0,0,0,.2)}
+.modal h2{font-size:1.15rem;margin-bottom:4px;color:var(--pine-deep)}
+.modal .subt{font-size:.82rem;color:var(--ink-soft);margin-bottom:14px}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:.86rem;font-weight:700;margin-bottom:6px;color:var(--ink)}
+.field input,.field select,.field textarea{width:100%;padding:10px 12px;border:1.5px solid var(--line);border-radius:10px;background:#fff}
+.field textarea{min-height:70px;resize:vertical}
+.field .hint{font-size:.75rem;color:var(--ink-soft);margin-top:4px}
+.modal .foot{display:flex;gap:10px;justify-content:flex-end;margin-top:16px;flex-wrap:wrap}
+.msg{border-radius:10px;padding:10px 13px;font-size:.85rem;margin-bottom:12px;display:none}
+.msg.err{display:block;background:#FDECEA;color:var(--danger)}
+.msg.ok{display:block;background:var(--pine-tint);color:var(--pine-deep)}
+.msg.info{display:block;background:#E8EEF7;color:#3D5A80}
+.crit-field{background:var(--board);border-radius:10px;padding:12px;margin-bottom:10px}
+.crit-field .klab{font-size:.86rem;font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:6px}
+.mini{font-size:.72rem;font-weight:700;border-radius:6px;padding:1px 7px}
+.mini.grade{background:var(--pine-tint);color:var(--pine-deep)}
+.mini.ability{background:#FFF3CE;color:var(--note-deep)}
+
+#toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;
+  padding:11px 20px;border-radius:999px;font-size:.88rem;box-shadow:0 6px 20px rgba(0,0,0,.3);opacity:0;pointer-events:none;transition:opacity .25s;z-index:99;max-width:92vw;text-align:center}
+#toast.show{opacity:1}
+.loading{text-align:center;padding:40px;color:var(--ink-soft)}
+.hidden{display:none!important}
+.backlink{font-size:.8rem}
+.note-box{background:#FFF8E5;border:1px solid #F3E1A8;border-radius:10px;padding:11px 13px;font-size:.8rem;color:var(--note-deep);margin-bottom:14px}
+</style>
+</head>
+<body>
+
+<!-- เข้าสู่ระบบ -->
+<div id="loginStage" class="login-stage hidden">
+  <div class="login-card">
+    <div class="logo-big">🎓</div>
+    <h1>สมัครโควตา</h1>
+    <div class="sub">ระบบสมัครโควตาเข้ามหาวิทยาลัย · ใช้บัญชีเดียวกับคลังแนะแนว</div>
+    <div id="liMsg" class="msg"></div>
+    <div class="field"><label>รหัสประจำตัวนักเรียน</label>
+      <input id="liUser" autocomplete="username" placeholder="เช่น 12345"></div>
+    <div class="field"><label>รหัสผ่าน</label>
+      <input id="liPass" type="password" autocomplete="current-password" placeholder="รหัสผ่าน"></div>
+    <button id="btnLogin" class="btn primary">เข้าสู่ระบบ</button>
+  </div>
+</div>
+
+<!-- แอปหลัก -->
+<div id="appStage" class="hidden">
+  <header class="app"><div class="wrap">
+    <div class="brand"><span class="logo">🎓</span><span>สมัครโควตา<small>แนะให้แนว · โควตาเข้ามหาวิทยาลัย</small></span></div>
+    <div class="spacer"></div>
+    <div class="userchip"><span id="uName"></span><span class="role" id="uRole"></span></div>
+    <button class="iconbtn" id="btnLogout">ออกจากระบบ</button>
+  </div></header>
+
+  <div class="wrap">
+    <div class="note-box">💡 กรอกเกรดและความสามารถตามจริงนะคะ ระบบจะนำไปคัดเลือกอย่างยุติธรรม · หลังส่งใบสมัครแล้ว จะเห็น <b>สถานะ</b> การพิจารณาได้ที่นี่</div>
+
+    <div class="section-title">📄 ใบสมัครของฉัน</div>
+    <div id="myApps"><div class="loading">กำลังโหลด…</div></div>
+
+    <div class="section-title">🎯 โควตาที่เปิดรับสมัคร</div>
+    <div id="openList"><div class="loading">กำลังโหลด…</div></div>
+
+    <div style="margin-top:20px"><a class="backlink" href="quota-hub.html">← กลับหน้าหลักโควตา</a></div>
+  </div>
+</div>
+
+<!-- โมดัลสมัคร -->
+<div class="modal-back" id="applyModal"><div class="modal">
+  <h2 id="amTitle">สมัครโควตา</h2>
+  <div class="subt" id="amSub"></div>
+  <div id="amMsg" class="msg"></div>
+  <div id="amFields"></div>
+  <div class="field"><label>เหตุผล/ข้อความถึงกรรมการ (ถ้ามี)</label>
+    <textarea id="amStatement" placeholder="เล่าสั้นๆ ว่าทำไมสนใจโควตานี้ (ไม่บังคับ)"></textarea></div>
+  <div class="foot">
+    <button class="btn ghost" onclick="closeModal('applyModal')">ยกเลิก</button>
+    <button class="btn primary" id="btnApplySave">ส่งใบสมัคร</button>
+  </div>
+</div></div>
+
+<div id="toast"></div>
+
+<script>
+const SUPABASE_URL = "https://ikkhjslmtjwrxzxvtokb.supabase.co";
+const ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlra2hqc2xtdGp3cnh6eHZ0b2tiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM3NDMzNjksImV4cCI6MjA5OTMxOTM2OX0.3OR_9mEv82Ns1LLjx5nnRwJYzrtKFtWCWd1bPuQfNKU";
+const EMAIL_DOMAIN = "guidance-pcw.local";
+const sb = supabase.createClient(SUPABASE_URL, ANON_KEY);
+const ROLE_LABEL = {admin:"ผู้ดูแล", teacher:"ครู", student:"นักเรียน"};
+const STATUS_LABEL = {
+  submitted:"ส่งใบสมัครแล้ว", under_review:"กำลังพิจารณา", shortlisted:"ผ่านเข้ารอบ",
+  waitlisted:"อยู่ในบัญชีสำรอง (รอเลื่อน)", approved:"ได้รับโควตา 🎉", promoted:"ได้รับโควตา (เลื่อนขึ้น) 🎉",
+  rejected:"ไม่ผ่านการคัดเลือก", withdrawn:"ยกเลิกใบสมัคร"
+};
+const STATUS_ICON = {submitted:"📨",under_review:"🔍",shortlisted:"✅",waitlisted:"⏳",approved:"🎉",promoted:"🎉",rejected:"✖️",withdrawn:"↩️"};
+
+let profile=null, openQuotas=[], myApps=[], curForm=null;
+
+const $ = id => document.getElementById(id);
+const esc = s => (s??"").toString().replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+function toast(t){ $("toast").textContent=t; $("toast").classList.add("show"); setTimeout(()=>$("toast").classList.remove("show"),2600); }
+function msg(id,t,cls){ const el=$(id); el.textContent=t; el.className="msg "+cls; }
+function clearMsg(id){ const el=$(id); el.textContent=""; el.className="msg"; }
+function openModal(id){ $(id).classList.add("show"); }
+function closeModal(id){ $(id).classList.remove("show"); }
+function fmtDate(d){ return d? new Date(d).toLocaleDateString("th-TH",{day:"numeric",month:"short",year:"2-digit"}) : "—"; }
+
+async function boot(){
+  const {data:{session}} = await sb.auth.getSession();
+  if(!session){ $("loginStage").classList.remove("hidden"); return; }
+  const {data:p} = await sb.from("profiles").select("*").eq("id", session.user.id).maybeSingle();
+  if(!p){ await sb.auth.signOut(); $("loginStage").classList.remove("hidden"); return toast("ไม่พบข้อมูลผู้ใช้"); }
+  profile = p;
+  $("loginStage").classList.add("hidden");
+  $("appStage").classList.remove("hidden");
+  $("uName").textContent = p.display_name;
+  $("uRole").textContent = ROLE_LABEL[p.role] + (p.class_room? " · "+p.class_room : "");
+  await Promise.all([loadMyApps(), loadOpen()]);
+}
+$("btnLogin").onclick = async ()=>{
+  const u=$("liUser").value.trim(), p=$("liPass").value;
+  if(!u||!p) return msg("liMsg","กรอกรหัสประจำตัวและรหัสผ่านก่อนนะคะ","err");
+  $("btnLogin").disabled = true;
+  const {error} = await sb.auth.signInWithPassword({email:u+"@"+EMAIL_DOMAIN, password:p});
+  $("btnLogin").disabled = false;
+  if(error) return msg("liMsg","เข้าสู่ระบบไม่สำเร็จ: รหัสประจำตัวหรือรหัสผ่านไม่ถูกต้อง","err");
+  location.reload();
+};
+$("liPass").addEventListener("keydown", e=>{ if(e.key==="Enter") $("btnLogin").click(); });
+$("btnLogout").onclick = async ()=>{ await sb.auth.signOut(); location.reload(); };
+
+/* ---------- ใบสมัครของฉัน (เห็นแค่สถานะ ไม่มีคะแนน) ---------- */
+async function loadMyApps(){
+  const {data, error} = await sb.from("quota_applications")
+    .select("id,status,submitted_at,disqualified_reason,quota_id,quotas(name,university,faculty,quota_type)")
+    .eq("profile_id", profile.id).order("submitted_at",{ascending:false});
+  if(error){ $("myApps").innerHTML=`<div class="empty">โหลดไม่สำเร็จ</div>`; return; }
+  myApps = data||[];
+  if(!myApps.length){ $("myApps").innerHTML=`<div class="qcard" style="border-left-color:var(--line)"><div class="empty" style="padding:20px">ยังไม่ได้สมัครโควตาใด เลือกจากรายการด้านล่างได้เลยค่ะ</div></div>`; return; }
+  $("myApps").innerHTML = myApps.map(a=>{
+    const q=a.quotas||{};
+    const canWithdraw = ["submitted","under_review"].includes(a.status);
+    return `<div class="qcard" style="border-left-color:var(--note)">
+      <h3>${esc(q.name||"—")}</h3>
+      <div class="uni">${esc(q.university||"")}${q.faculty? " · "+esc(q.faculty):""}${q.quota_type? " · "+esc(q.quota_type):""}</div>
+      <div class="foot">
+        <span class="pill ${a.status}">${STATUS_ICON[a.status]||""} ${STATUS_LABEL[a.status]||a.status}</span>
+        <span style="font-size:.76rem;color:var(--ink-soft)">ส่งเมื่อ ${fmtDate(a.submitted_at)}</span>
+        <div class="spacer"></div>
+        ${canWithdraw? `<button class="btn danger sm" onclick="withdraw('${a.id}')">ยกเลิกใบสมัคร</button>`:""}
+      </div>
+      ${a.status==="rejected"&&a.disqualified_reason? `<div class="msg info" style="display:block;margin-top:10px">เหตุผล: ${esc(a.disqualified_reason)}</div>`:""}
+    </div>`;
+  }).join("");
+}
+window.withdraw = async (id)=>{
+  if(!confirm("ยืนยันยกเลิกใบสมัครนี้?")) return;
+  const {error} = await sb.from("quota_applications").update({status:"withdrawn"}).eq("id",id);
+  if(error) return toast("ยกเลิกไม่สำเร็จ: "+error.message);
+  toast("ยกเลิกใบสมัครแล้ว"); loadMyApps(); loadOpen();
+};
+
+/* ---------- โควตาที่เปิดรับ (ผ่าน RPC ปลอดภัย ไม่มี scoring_rules) ---------- */
+async function loadOpen(){
+  const {data, error} = await sb.rpc("list_open_quotas");
+  if(error){ $("openList").innerHTML=`<div class="empty">โหลดไม่สำเร็จ</div>`; return; }
+  openQuotas = data||[];
+  const appliedIds = new Set(myApps.filter(a=>a.status!=="withdrawn").map(a=>a.quota_id));
+  const avail = openQuotas.filter(q=>!appliedIds.has(q.id));
+  if(!avail.length){ $("openList").innerHTML=`<div class="qcard" style="border-left-color:var(--line)"><div class="empty" style="padding:20px"><div class="big">📭</div>ตอนนี้ไม่มีโควตาใหม่ให้สมัคร (หรือสมัครครบแล้ว)</div></div>`; return; }
+  $("openList").innerHTML = avail.map(q=>`<div class="qcard">
+    <h3>${esc(q.name)}</h3>
+    <div class="uni">${esc(q.university||"")}${q.faculty? " · "+esc(q.faculty):""}</div>
+    ${q.description? `<div class="desc">${esc(q.description)}</div>`:""}
+    <div class="meta">
+      ${q.quota_type? `<span class="tagt">${esc(q.quota_type)}</span>`:""}
+      <span>🪑 ${q.seats} ที่นั่ง</span>
+      <span>🗓️ ปี ${esc(q.academic_year)}</span>
+      ${q.closes_at? `<span>⏰ ปิดรับ ${fmtDate(q.closes_at)}</span>`:""}
+    </div>
+    <div class="foot"><div class="spacer"></div>
+      <button class="btn primary sm" onclick="openApply('${q.id}')">สมัครโควตานี้</button></div>
+  </div>`).join("");
+}
+
+/* ---------- ฟอร์มสมัคร (ดึง criteria ผ่าน RPC) ---------- */
+window.openApply = async (quotaId)=>{
+  clearMsg("amMsg");
+  const {data, error} = await sb.rpc("get_quota_form",{p_quota_id:quotaId});
+  if(error||!data||!data.length){ return toast("โหลดฟอร์มไม่สำเร็จ"); }
+  curForm = data[0];
+  $("amTitle").textContent = "สมัคร · "+curForm.quota_name;
+  $("amSub").textContent = (curForm.university||"") + (curForm.faculty? " · "+curForm.faculty:"") +
+    (curForm.min_gpax!=null? "  |  ต้องมี GPAX ≥ "+curForm.min_gpax : "");
+  $("amStatement").value = "";
+  const crit = curForm.criteria||[];
+  $("amFields").innerHTML = crit.map(c=>{
+    if(c.is_rubric){
+      const opts = (c.rubric_options||[]).map(o=>`<option value="${o.value}">${esc(o.label)}</option>`).join("");
+      return `<div class="crit-field">
+        <div class="klab"><span class="mini ability">ความสามารถ</span> ${esc(c.label)}</div>
+        <select data-ability="${esc(c.criterion_key)}"><option value="">— เลือกระดับ —</option>${opts}</select>
+      </div>`;
+    } else {
+      return `<div class="crit-field">
+        <div class="klab"><span class="mini grade">เกรด</span> ${esc(c.label)}</div>
+        <input type="number" step="0.01" min="0" max="4" data-grade="${esc(c.criterion_key)}" placeholder="เช่น 3.50">
+      </div>`;
+    }
+  }).join("") || `<div class="msg info" style="display:block">โควตานี้ยังไม่ได้ตั้งเกณฑ์ กรุณาติดต่อครูแนะแนว</div>`;
+  openModal("applyModal");
+};
+$("btnApplySave").onclick = async ()=>{
+  clearMsg("amMsg");
+  const self = {ability_choices:{}};
+  let missing=false;
+  document.querySelectorAll("#amFields [data-grade]").forEach(el=>{
+    const v=el.value.trim(); if(v==="") missing=true; else self[el.dataset.grade]=Number(v);
+  });
+  document.querySelectorAll("#amFields [data-ability]").forEach(el=>{
+    if(el.value==="") missing=true; else self.ability_choices[el.dataset.ability]=Number(el.value);
+  });
+  if(missing) return msg("amMsg","กรุณากรอกให้ครบทุกช่องนะคะ","err");
+  // เช็ก GPAX ขั้นต่ำเบื้องต้น (กันเสียเวลา — ระบบคัดจริงเช็กอีกชั้น)
+  if(curForm.min_gpax!=null && self.gpax!=null && self.gpax < Number(curForm.min_gpax)){
+    return msg("amMsg",`GPAX ของคุณ (${self.gpax}) ต่ำกว่าเกณฑ์ขั้นต่ำ (${curForm.min_gpax}) ของโควตานี้`,"err");
+  }
+  $("btnApplySave").disabled=true;
+  const {error} = await sb.from("quota_applications").insert({
+    quota_id:curForm.quota_id, profile_id:profile.id, status:"submitted",
+    student_statement:$("amStatement").value.trim()||null, self_reported:self
+  });
+  $("btnApplySave").disabled=false;
+  if(error){
+    if(error.code==="23505") return msg("amMsg","คุณสมัครโควตานี้ไปแล้ว","err");
+    return msg("amMsg","ส่งไม่สำเร็จ: "+error.message,"err");
+  }
+  closeModal("applyModal"); toast("ส่งใบสมัครเรียบร้อย 🎉");
+  await loadMyApps(); loadOpen();
+};
+
+boot();
+</script>
+</body>
+</html>
