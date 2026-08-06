@@ -147,6 +147,10 @@ header.app .wrap{display:flex;align-items:center;gap:12px;padding-bottom:0;flex-
   <h2 id="amTitle">สมัครโควตา</h2>
   <div class="subt" id="amSub"></div>
   <div id="amMsg" class="msg"></div>
+  <div class="field"><label>คณะที่ต้องการสมัคร <span id="amFacultyReq" style="color:var(--danger)"></span></label>
+    <input id="amFaculty" placeholder="เช่น คณะวิศวกรรมศาสตร์"></div>
+  <div class="field"><label>สาขาที่ต้องการสมัคร</label>
+    <input id="amMajor" placeholder="เช่น วิศวกรรมคอมพิวเตอร์ (ถ้ามี)"></div>
   <div id="amFields"></div>
   <div class="field"><label>เหตุผล/ข้อความถึงกรรมการ (ถ้ามี)</label>
     <textarea id="amStatement" placeholder="เล่าสั้นๆ ว่าทำไมสนใจโควตานี้ (ไม่บังคับ)"></textarea></div>
@@ -171,7 +175,7 @@ const STATUS_LABEL = {
 };
 const STATUS_ICON = {submitted:"📨",under_review:"🔍",shortlisted:"✅",waitlisted:"⏳",approved:"🎉",promoted:"🎉",rejected:"✖️",withdrawn:"↩️"};
 
-let profile=null, openQuotas=[], myApps=[], curForm=null;
+let profile=null, openQuotas=[], myApps=[], curForm=null, facultyRequired=false;
 
 const $ = id => document.getElementById(id);
 const esc = s => (s??"").toString().replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -209,7 +213,7 @@ $("btnLogout").onclick = async ()=>{ await sb.auth.signOut(); location.reload();
 /* ---------- ใบสมัครของฉัน (เห็นแค่สถานะ ไม่มีคะแนน) ---------- */
 async function loadMyApps(){
   const {data, error} = await sb.from("quota_applications")
-    .select("id,status,submitted_at,disqualified_reason,quota_id,quotas(name,university,faculty,quota_type)")
+    .select("id,status,submitted_at,disqualified_reason,quota_id,applied_faculty,applied_major,quotas(name,university,faculty,quota_type)")
     .eq("profile_id", profile.id).order("submitted_at",{ascending:false});
   if(error){ $("myApps").innerHTML=`<div class="empty">โหลดไม่สำเร็จ</div>`; return; }
   myApps = data||[];
@@ -220,6 +224,7 @@ async function loadMyApps(){
     return `<div class="qcard" style="border-left-color:var(--note)">
       <h3>${esc(q.name||"—")}</h3>
       <div class="uni">${esc(q.university||"")}${q.faculty? " · "+esc(q.faculty):""}${q.quota_type? " · "+esc(q.quota_type):""}</div>
+      ${(a.applied_faculty||a.applied_major)? `<div class="uni">🎯 สมัคร: ${esc(a.applied_faculty||"—")}${a.applied_major? " · "+esc(a.applied_major):""}</div>`:""}
       <div class="foot">
         <span class="pill ${a.status}">${STATUS_ICON[a.status]||""} ${STATUS_LABEL[a.status]||a.status}</span>
         <span style="font-size:.76rem;color:var(--ink-soft)">ส่งเมื่อ ${fmtDate(a.submitted_at)}</span>
@@ -270,6 +275,10 @@ window.openApply = async (quotaId)=>{
   $("amSub").textContent = (curForm.university||"") + (curForm.faculty? " · "+curForm.faculty:"") +
     (curForm.min_gpax!=null? "  |  ต้องมี GPAX ≥ "+curForm.min_gpax : "");
   $("amStatement").value = "";
+  $("amFaculty").value = ""; $("amMajor").value = "";
+  // โควตาที่ตั้งค่า faculty ไว้ชัดเจนแล้ว (ไม่ใช่ "หลายคณะ"/ว่าง) ไม่บังคับให้กรอกซ้ำ
+  facultyRequired = !curForm.faculty || curForm.faculty.includes("หลาย");
+  $("amFacultyReq").textContent = facultyRequired ? "*จำเป็น" : "(ไม่บังคับ)";
   const crit = curForm.criteria||[];
   $("amFields").innerHTML = crit.map(c=>{
     if(c.is_rubric){
@@ -298,6 +307,8 @@ $("btnApplySave").onclick = async ()=>{
     if(el.value==="") missing=true; else self.ability_choices[el.dataset.ability]=Number(el.value);
   });
   if(missing) return msg("amMsg","กรุณากรอกให้ครบทุกช่องนะคะ","err");
+  const faculty = $("amFaculty").value.trim(), major = $("amMajor").value.trim();
+  if(facultyRequired && !faculty) return msg("amMsg","โควตานี้เปิดรับหลายคณะ กรุณาระบุคณะที่ต้องการสมัคร","err");
   // เช็ก GPAX ขั้นต่ำเบื้องต้น (กันเสียเวลา — ระบบคัดจริงเช็กอีกชั้น)
   if(curForm.min_gpax!=null && self.gpax!=null && self.gpax < Number(curForm.min_gpax)){
     return msg("amMsg",`GPAX ของคุณ (${self.gpax}) ต่ำกว่าเกณฑ์ขั้นต่ำ (${curForm.min_gpax}) ของโควตานี้`,"err");
@@ -305,7 +316,8 @@ $("btnApplySave").onclick = async ()=>{
   $("btnApplySave").disabled=true;
   const {error} = await sb.from("quota_applications").insert({
     quota_id:curForm.quota_id, profile_id:profile.id, status:"submitted",
-    student_statement:$("amStatement").value.trim()||null, self_reported:self
+    student_statement:$("amStatement").value.trim()||null, self_reported:self,
+    applied_faculty:faculty||null, applied_major:major||null
   });
   $("btnApplySave").disabled=false;
   if(error){

@@ -295,19 +295,19 @@ function renderResult(){
     shownActive++;
     // เส้นตัดตามจำนวนที่นั่ง
     if(shownActive===seats+1){
-      body+=`<tr class="cutline"><td colspan="6"><div class="bar"><span>เส้นลิมิต ${seats} ที่นั่ง</span></div></td></tr>`;
+      body+=`<tr class="cutline"><td colspan="7"><div class="bar"><span>เส้นลิมิต ${seats} ที่นั่ง</span></div></td></tr>`;
     }
     body+=rowHtml(r, shownActive<=seats);
   });
   if(dq.length){
-    body+=`<tr><td colspan="6" style="padding-top:16px;color:var(--danger);font-weight:700;font-size:.82rem">✖️ ผู้ที่ถูกตัดสิทธิ์ (${dq.length})</td></tr>`;
+    body+=`<tr><td colspan="7" style="padding-top:16px;color:var(--danger);font-weight:700;font-size:.82rem">✖️ ผู้ที่ถูกตัดสิทธิ์ (${dq.length})</td></tr>`;
     dq.forEach(r=>{ body+=rowHtml(r,false); });
   }
 
   $("resultWrap").innerHTML=stats+`<div class="panel">
     <h2>📋 ผลการคัดกรอง · ${esc(curQuota.name)}</h2>
     <div class="tbl-wrap"><table>
-      <thead><tr><th>อันดับ</th><th>ผู้สมัคร</th><th>ห้อง</th><th>คะแนนรวม</th><th>สถานะ</th><th></th></tr></thead>
+      <thead><tr><th>อันดับ</th><th>ผู้สมัคร</th><th>ห้อง</th><th>คณะ/สาขาที่สมัคร</th><th>คะแนนรวม</th><th>สถานะ</th><th></th></tr></thead>
       <tbody>${body}</tbody></table></div>
     <div style="font-size:.76rem;color:var(--ink-soft);margin-top:10px">💡 แถวไฮไลต์เขียว = อยู่ในโควตาตามอันดับ · การอนุมัติเกินจำนวนที่นั่งจะถูกระบบปฏิเสธ</div>
   </div>`;
@@ -319,6 +319,7 @@ function rowHtml(r, inQuota){
     <td>${r.disqualified?"—":`<span class="rankbadge">${r.rank||"-"}</span>`}</td>
     <td><b>${esc(p.display_name||"—")}</b>${p.student_id?`<div style="font-size:.72rem;color:var(--ink-soft)">${esc(p.student_id)}</div>`:""}</td>
     <td>${esc(p.class_room||"—")}</td>
+    <td style="font-size:.82rem">${esc(r.applied_faculty||"—")}${r.applied_major?`<div style="font-size:.72rem;color:var(--ink-soft)">${esc(r.applied_major)}</div>`:""}</td>
     <td>${r.disqualified?`<span style="color:var(--danger);font-size:.78rem">ตัดสิทธิ์</span>`:`<span class="totalscore">${r.total.toFixed(1)}</span>`}</td>
     <td><span class="pill ${r.status}">${STATUS_LABEL[r.status]||r.status}</span>
         ${r.disqualified&&r.disqualified_reason?`<div style="font-size:.7rem;color:var(--ink-soft);margin-top:2px">${esc(r.disqualified_reason)}</div>`:""}</td>
