@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>สรุปทุนการศึกษาประจำปี — คลังแนะแนว</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Mitr:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<style>
+  :root{
+    --green-deep:#1f4a34;
+    --green:#2d6a4a;
+    --green-soft:#e7f0e9;
+    --cream:#faf7f0;
+    --card:#ffffff;
+    --border:#e6e1d6;
+    --text:#2b2b28;
+    --muted:#6b7268;
+    --amber:#c98a3a;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; padding:24px; background:var(--cream); color:var(--text);
+    font-family:'Sarabun',sans-serif;
+  }
+  h1,h2,h3,.mitr{font-family:'Mitr',sans-serif}
+  .wrap{max-width:1180px;margin:0 auto}
+  header{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:12px;margin-bottom:20px}
+  header h1{font-size:26px;margin:0 0 4px;color:var(--green-deep)}
+  header p{margin:0;color:var(--muted);font-size:14px}
+  .controls{display:flex;gap:10px;align-items:center}
+  select,button{
+    font-family:'Sarabun',sans-serif;font-size:15px;
+    border:1px solid var(--border);border-radius:10px;
+    padding:10px 14px;background:#fff;color:var(--text);
+  }
+  button.primary{background:var(--green-deep);color:#fff;border:none;cursor:pointer}
+  button.primary:hover{background:var(--green)}
+  button.ghost{cursor:pointer}
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:20px}
+  .kpi{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:18px 20px}
+  .kpi .label{font-size:13px;color:var(--muted);margin-bottom:6px}
+  .kpi .value{font-size:28px;font-weight:700;color:var(--green-deep);font-family:'Mitr',sans-serif}
+  .kpi .sub{font-size:12px;color:var(--muted);margin-top:4px}
+  .grid2{display:grid;grid-template-columns:1.1fr 0.9fr;gap:16px;margin-bottom:16px}
+  @media(max-width:860px){.grid2{grid-template-columns:1fr}}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px}
+  .card h3{margin:0 0 14px;font-size:16px;color:var(--green-deep)}
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  th,td{text-align:left;padding:10px 8px;border-bottom:1px solid var(--border)}
+  th{color:var(--muted);font-weight:600;font-size:13px}
+  tr:last-child td{border-bottom:none}
+  .badge{display:inline-block;background:var(--green-soft);color:var(--green-deep);border-radius:999px;padding:3px 10px;font-size:12px}
+  .empty{color:var(--muted);text-align:center;padding:40px 0;font-size:14px}
+  .footer-note{color:var(--muted);font-size:12px;margin-top:18px;text-align:center}
+  @media print{
+    .no-print{display:none !important}
+    body{background:#fff;padding:0}
+    .card{break-inside:avoid}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>🎓 สรุปทุนการศึกษาประจำปี</h1>
+      <p>โรงเรียนพูลเจริญวิทยาคม · ข้อมูลอัปเดตอัตโนมัติจากผู้ที่สถานะ "ให้ทุน"</p>
+    </div>
+    <div class="controls no-print">
+      <select id="yearSelect"><option value="">กำลังโหลดปี...</option></select>
+      <button class="ghost" id="printBtn">🖨️ พิมพ์ / บันทึกเป็น PDF</button>
+      <button class="ghost" id="csvBtn">⬇️ ดาวน์โหลด CSV</button>
+    </div>
+  </header>
+
+  <div class="kpis" id="kpis">
+    <div class="kpi"><div class="label">นักเรียนที่ได้รับทุน</div><div class="value" id="kpiCount">–</div></div>
+    <div class="kpi"><div class="label">ยอดเงินทุนรวม</div><div class="value" id="kpiAmount">–</div></div>
+    <div class="kpi"><div class="label">จำนวนทุนที่มอบ</div><div class="value" id="kpiFunds">–</div></div>
+    <div class="kpi"><div class="label">คะแนนเฉลี่ยผู้ได้ทุน</div><div class="value" id="kpiScore">–</div></div>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <h3>จำนวนผู้ได้รับทุน แยกตามทุน (ปีที่เลือก)</h3>
+      <canvas id="byFundChart" height="220"></canvas>
+    </div>
+    <div class="card">
+      <h3>สัดส่วนตามระดับชั้น</h3>
+      <canvas id="byLevelChart" height="220"></canvas>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:16px">
+    <h3>แนวโน้มย้อนหลัง (ทุกปีที่มีข้อมูล)</h3>
+    <canvas id="trendChart" height="90"></canvas>
+  </div>
+
+  <div class="card">
+    <h3>รายชื่อผู้ได้รับทุน (ปีที่เลือก)</h3>
+    <div id="tableWrap"><div class="empty">กำลังโหลดข้อมูล...</div></div>
+  </div>
+
+  <p class="footer-note">ระบบนี้ดึงข้อมูลสดจาก Supabase (v_scholarship_awards / v_scholarship_annual_summary) — พอครูกด "ให้ทุน" ในหน้าคัดกรอง ข้อมูลจะขึ้นที่นี่ทันทีโดยไม่ต้องทำอะไรเพิ่ม</p>
+</div>
+
+<script>
+// ── ตั้งค่าการเชื่อมต่อ Supabase ──────────────────────────────
+// ใช้ URL / ANON KEY ชุดเดียวกับหน้าอื่นๆ ในคลังแนะแนว (index.html)
+const SUPABASE_URL = "https://ikkhjslmtjwrxzxvtokb.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlra2hqc2xtdGp3cnh6eHZ0b2tiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM3NDMzNjksImV4cCI6MjA5OTMxOTM2OX0.3OR_9mEv82Ns1LLjx5nnRwJYzrtKFtWCWd1bPuQfNKU";
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+let allSummary = [];
+let allAwards = [];
+let byFundChart, byLevelChart, trendChart;
+
+const fmtBaht = n => "฿" + Number(n || 0).toLocaleString("th-TH");
+
+async function loadData() {
+  const { data: summary, error: e1 } = await sb.from("v_scholarship_annual_summary").select("*");
+  const { data: awards, error: e2 } = await sb.from("v_scholarship_awards").select("*").order("awarded_at", { ascending: false });
+
+  if (e1 || e2) {
+    document.getElementById("tableWrap").innerHTML =
+      `<div class="empty">โหลดข้อมูลไม่สำเร็จ: ${(e1 || e2).message}<br>ตรวจสอบว่าใส่ ANON KEY ถูกต้อง และล็อกอินเป็นครูแนะแนว/เจ้าหน้าที่ทุนแล้ว</div>`;
+    return;
+  }
+
+  allSummary = summary || [];
+  allAwards = awards || [];
+
+  const years = [...new Set(allSummary.map(r => r.academic_year))].sort().reverse();
+  const yearSelect = document.getElementById("yearSelect");
+
+  if (years.length === 0) {
+    yearSelect.innerHTML = `<option value="">ยังไม่มีข้อมูล</option>`;
+    renderEmpty();
+    renderTrend();
+    return;
+  }
+
+  yearSelect.innerHTML = years.map(y => `<option value="${y}">ปีการศึกษา ${y}</option>`).join("");
+  yearSelect.value = years[0];
+  yearSelect.onchange = () => renderYear(yearSelect.value);
+
+  renderYear(years[0]);
+  renderTrend();
+}
+
+function renderEmpty() {
+  document.getElementById("kpiCount").textContent = "0";
+  document.getElementById("kpiAmount").textContent = fmtBaht(0);
+  document.getElementById("kpiFunds").textContent = "0";
+  document.getElementById("kpiScore").textContent = "–";
+  document.getElementById("tableWrap").innerHTML = `<div class="empty">ยังไม่มีนักเรียนที่ได้รับทุนในระบบ — พอครูกด "ให้ทุน" ในหน้าคัดกรอง ข้อมูลจะขึ้นที่นี่อัตโนมัติ</div>`;
+}
+
+function renderYear(year) {
+  const rows = allSummary.filter(r => r.academic_year === year);
+  const yearAwards = allAwards.filter(r => r.academic_year === year);
+
+  const totalCount = rows.reduce((s, r) => s + Number(r.awarded_count), 0);
+  const totalAmount = rows.reduce((s, r) => s + Number(r.total_amount || 0), 0);
+  const fundCount = new Set(rows.map(r => r.scholarship_id)).size;
+  const avgScore = yearAwards.length
+    ? (yearAwards.reduce((s, r) => s + Number(r.total_score || 0), 0) / yearAwards.length).toFixed(2)
+    : "–";
+
+  document.getElementById("kpiCount").textContent = totalCount.toLocaleString("th-TH");
+  document.getElementById("kpiAmount").textContent = fmtBaht(totalAmount);
+  document.getElementById("kpiFunds").textContent = fundCount.toLocaleString("th-TH");
+  document.getElementById("kpiScore").textContent = avgScore;
+
+  // จำนวนผู้ได้ทุนแยกตามทุน (รวมทุกระดับชั้นเข้าด้วยกัน)
+  const byFund = {};
+  rows.forEach(r => { byFund[r.scholarship_name] = (byFund[r.scholarship_name] || 0) + Number(r.awarded_count); });
+  drawBar("byFundChart", (c1 = byFundChart), Object.keys(byFund), Object.values(byFund), "var(--green)");
+  byFundChart = c1;
+
+  // สัดส่วนตามระดับชั้น
+  const byLevel = {};
+  rows.forEach(r => { const lv = r.class_level || "ไม่ระบุ"; byLevel[lv] = (byLevel[lv] || 0) + Number(r.awarded_count); });
+  drawDonut("byLevelChart", byLevelChart, Object.keys(byLevel), Object.values(byLevel));
+
+  // ตารางรายชื่อ
+  const tableWrap = document.getElementById("tableWrap");
+  if (yearAwards.length === 0) {
+    tableWrap.innerHTML = `<div class="empty">ปีนี้ยังไม่มีผู้ได้รับทุน</div>`;
+  } else {
+    tableWrap.innerHTML = `
+      <table>
+        <thead><tr><th>ชื่อ-สกุล</th><th>รหัสนักเรียน</th><th>ชั้น</th><th>ทุน</th><th>คะแนนรวม</th><th>จำนวนเงิน</th></tr></thead>
+        <tbody>
+          ${yearAwards.map(r => `
+            <tr>
+              <td>${r.display_name ?? "-"}</td>
+              <td>${r.student_id ?? "-"}</td>
+              <td>${r.class_room ?? "-"}</td>
+              <td><span class="badge">${r.scholarship_name}</span></td>
+              <td>${r.total_score ?? "-"}</td>
+              <td>${fmtBaht(r.amount_per_grant)}</td>
+            </tr>`).join("")}
+        </tbody>
+      </table>`;
+  }
+}
+
+function renderTrend() {
+  const byYear = {};
+  allSummary.forEach(r => { byYear[r.academic_year] = (byYear[r.academic_year] || 0) + Number(r.awarded_count); });
+  const years = Object.keys(byYear).sort();
+  const ctx = document.getElementById("trendChart");
+  if (trendChart) trendChart.destroy();
+  trendChart = new Chart(ctx, {
+    type: "line",
+    data: {
+      labels: years.map(y => "ปี " + y),
+      datasets: [{
+        label: "จำนวนผู้ได้รับทุน",
+        data: years.map(y => byYear[y]),
+        borderColor: "#2d6a4a",
+        backgroundColor: "rgba(45,106,74,0.15)",
+        fill: true, tension: 0.3, pointRadius: 4
+      }]
+    },
+    options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
+  });
+}
+
+function drawBar(id, existing, labels, data, color) {
+  const ctx = document.getElementById(id);
+  if (existing) existing.destroy();
+  const chart = new Chart(ctx, {
+    type: "bar",
+    data: { labels, datasets: [{ label: "จำนวน (คน)", data, backgroundColor: "#2d6a4a", borderRadius: 6 }] },
+    options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
+  });
+  return chart;
+}
+
+function drawDonut(id, existing, labels, data) {
+  const ctx = document.getElementById(id);
+  if (existing) existing.destroy();
+  const palette = ["#2d6a4a", "#c98a3a", "#7a9e8a", "#e0b06b", "#4a7a63", "#b5cbb9"];
+  const chart = new Chart(ctx, {
+    type: "doughnut",
+    data: { labels, datasets: [{ data, backgroundColor: palette }] },
+    options: { plugins: { legend: { position: "bottom" } } }
+  });
+  byLevelChart = chart;
+  return chart;
+}
+
+document.getElementById("printBtn").onclick = () => window.print();
+
+document.getElementById("csvBtn").onclick = () => {
+  const year = document.getElementById("yearSelect").value;
+  const rows = allAwards.filter(r => r.academic_year === year);
+  if (rows.length === 0) return;
+  const header = ["ชื่อ-สกุล", "รหัสนักเรียน", "ชั้น", "ทุน", "หน่วยงาน", "คะแนนรวม", "จำนวนเงิน"];
+  const csv = [header.join(",")].concat(
+    rows.map(r => [r.display_name, r.student_id, r.class_room, r.scholarship_name, r.provider, r.total_score, r.amount_per_grant]
+      .map(v => `"${(v ?? "").toString().replace(/"/g, '""')}"`).join(","))
+  ).join("\n");
+  const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `scholarship-summary-${year}.csv`;
+  a.click();
+};
+
+loadData();
+</script>
+</body>
+</html>
