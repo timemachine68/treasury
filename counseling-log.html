@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ระบบบันทึกการให้คำปรึกษานักเรียน | แนะให้แนว</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;500;600;700&family=Sarabun:wght@400;500;600&display=swap" rel="stylesheet">
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+  :root{
+    --navy:#1b2a4a; --navy-dark:#101a30; --gold:#d4af37; --forest:#2e5339;
+    --bg:#f4f6f9; --card:#ffffff; --border:#e2e6ee; --text:#1c2333; --muted:#6b7385;
+    --danger:#c0392b;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--text);}
+  h1,h2,h3,.brand{font-family:'Kanit',sans-serif;}
+  header{background:var(--navy);color:#fff;padding:18px 24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;}
+  header .brand{font-size:18px;font-weight:600;}
+  header .who{font-size:13px;color:#c9d2e6;}
+  main{max-width:960px;margin:0 auto;padding:24px 16px 60px;}
+  .tabs{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;}
+  .tab-btn{font-family:'Kanit',sans-serif;padding:9px 18px;border-radius:8px;border:1px solid var(--border);background:#fff;color:var(--text);cursor:pointer;font-size:14px;}
+  .tab-btn.active{background:var(--navy);color:#fff;border-color:var(--navy);}
+  .panel{display:none;}
+  .panel.active{display:block;}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px 24px;margin-bottom:16px;}
+  label{display:block;font-size:13px;color:var(--muted);margin-bottom:5px;margin-top:14px;}
+  label:first-of-type{margin-top:0;}
+  select,input[type=date],input[type=text],textarea{width:100%;padding:9px 11px;border:1px solid var(--border);border-radius:8px;font-family:'Sarabun',sans-serif;font-size:14px;background:#fff;color:var(--text);}
+  textarea{resize:vertical;min-height:80px;}
+  .cat-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 16px;margin-top:6px;}
+  .cat-grid label{display:flex;align-items:center;gap:7px;font-size:14px;color:var(--text);margin:0;font-weight:400;}
+  .cat-grid input{width:auto;}
+  .btn-primary{margin-top:20px;width:100%;padding:12px;border:none;border-radius:8px;background:var(--navy);color:#fff;font-family:'Kanit',sans-serif;font-size:15px;font-weight:500;cursor:pointer;}
+  .btn-primary:disabled{opacity:.6;cursor:not-allowed;}
+  .msg{font-size:13px;margin-top:10px;padding:8px 12px;border-radius:8px;display:none;}
+  .msg.ok{display:block;background:#e8f3ec;color:var(--forest);}
+  .msg.err{display:block;background:#fbe9e7;color:var(--danger);}
+  table{width:100%;border-collapse:collapse;font-size:13.5px;}
+  th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--border);}
+  th{color:var(--muted);font-weight:500;font-size:12.5px;}
+  .status-pill{display:inline-block;padding:2px 10px;border-radius:20px;font-size:12px;}
+  .status-ติดตามต่อ{background:#e6f1fb;color:#0c447c;}
+  .status-นัดครั้งถัดไป{background:#fdf3d9;color:#854f0b;}
+  .status-ส่งต่อ{background:#f0e6fb;color:#3c3489;}
+  .status-ปิดเคส{background:#eaf3de;color:#27500a;}
+  .stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px;}
+  .stat-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;}
+  .stat-card .num{font-family:'Kanit',sans-serif;font-size:26px;font-weight:600;}
+  .stat-card .label{font-size:12.5px;color:var(--muted);}
+  .bar-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;font-size:13.5px;}
+  .bar-label{width:110px;flex-shrink:0;color:var(--muted);}
+  .bar-track{flex:1;height:10px;background:var(--bg);border-radius:6px;overflow:hidden;}
+  .bar-fill{height:100%;background:var(--gold);}
+  .privacy-note{font-size:12px;color:var(--muted);margin-top:16px;}
+  .empty{color:var(--muted);font-size:13.5px;padding:20px 0;text-align:center;}
+
+  .btn-secondary{margin-top:10px;width:100%;padding:11px;border:1px solid var(--border);border-radius:8px;background:#fff;color:var(--text);font-family:'Kanit',sans-serif;font-size:14.5px;cursor:pointer;}
+  .btn-danger{margin-top:14px;width:100%;padding:10px;border:1px solid #f0c8c2;border-radius:8px;background:#fff;color:var(--danger);font-family:'Kanit',sans-serif;font-size:14px;cursor:pointer;}
+  .btn-link{background:none;border:none;color:var(--navy);cursor:pointer;font-size:13px;text-decoration:underline;padding:0;font-family:'Sarabun',sans-serif;}
+
+  .modal-backdrop{display:none;position:fixed;inset:0;background:rgba(16,26,48,.5);z-index:50;padding:20px;overflow-y:auto;}
+  .modal-backdrop.open{display:flex;align-items:flex-start;justify-content:center;}
+  .modal{background:#fff;border-radius:12px;padding:22px 24px;max-width:520px;width:100%;margin:auto;}
+
+  .report-head{text-align:center;margin-bottom:22px;}
+  .report-head h2{margin:0 0 4px;font-size:20px;}
+  .report-head .sub{font-size:13.5px;color:var(--muted);}
+  .rep-table{width:100%;border-collapse:collapse;font-size:13.5px;margin-bottom:6px;}
+  .rep-table th,.rep-table td{border:1px solid var(--border);padding:7px 10px;}
+  .rep-table th{background:var(--bg);font-weight:500;}
+  .rep-table td.num{text-align:right;}
+
+  @media print{
+    @page{size:A4;margin:16mm;}
+    body{background:#fff;font-size:12pt;}
+    header,.tabs,.no-print,.modal-backdrop{display:none !important;}
+    main{max-width:none;padding:0;}
+    .card{border:none;padding:0;margin-bottom:14px;break-inside:avoid;}
+    .panel{display:none;}
+    .panel#panel-report{display:block;}
+    .rep-table{break-inside:avoid;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">แนะให้แนว · บันทึกการให้คำปรึกษา</div>
+  <div class="who" id="who-label">กำลังโหลด...</div>
+</header>
+
+<main>
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="new">บันทึกใหม่</button>
+    <button class="tab-btn" data-tab="mine">ประวัติของฉัน</button>
+    <button class="tab-btn" data-tab="overview">ภาพรวมทั้งหมด</button>
+    <button class="tab-btn" data-tab="report">รายงานประจำปี</button>
+  </div>
+
+  <!-- ================= บันทึกใหม่ ================= -->
+  <section class="panel active" id="panel-new">
+    <div class="card">
+      <label>นักเรียน</label>
+      <select id="f-student">
+        <option value="">เลือกนักเรียน...</option>
+      </select>
+
+      <label>วันที่ให้คำปรึกษา</label>
+      <input type="date" id="f-date">
+
+      <label>หมวดปัญหา (เลือกได้หลายข้อ)</label>
+      <div class="cat-grid" id="f-categories">
+        <label><input type="checkbox" value="การเรียน"> การเรียน</label>
+        <label><input type="checkbox" value="ครอบครัว"> ครอบครัว</label>
+        <label><input type="checkbox" value="เพื่อน/สังคม"> เพื่อน/สังคม</label>
+        <label><input type="checkbox" value="สุขภาพจิต"> สุขภาพจิต</label>
+        <label><input type="checkbox" value="พฤติกรรม"> พฤติกรรม</label>
+        <label><input type="checkbox" value="อาชีพ/ศึกษาต่อ"> อาชีพ/ศึกษาต่อ</label>
+      </div>
+
+      <label>บันทึกการพูดคุย</label>
+      <textarea id="f-note" placeholder="สรุปประเด็นที่พูดคุยและแนวทางช่วยเหลือ"></textarea>
+
+      <label>สถานะติดตาม</label>
+      <select id="f-status">
+        <option>ติดตามต่อ</option>
+        <option>นัดครั้งถัดไป</option>
+        <option>ส่งต่อ</option>
+        <option>ปิดเคส</option>
+      </select>
+
+      <button class="btn-primary" id="btn-save">บันทึก</button>
+      <div class="msg" id="save-msg"></div>
+    </div>
+  </section>
+
+  <!-- ================= ประวัติของฉัน ================= -->
+  <section class="panel" id="panel-mine">
+    <div class="card">
+      <table>
+        <thead>
+          <tr><th>วันที่</th><th>นักเรียน</th><th>หมวดปัญหา</th><th>สถานะ</th><th></th></tr>
+        </thead>
+        <tbody id="mine-tbody"></tbody>
+      </table>
+      <div class="empty" id="mine-empty" style="display:none;">ยังไม่มีบันทึกของคุณ</div>
+    </div>
+  </section>
+
+  <!-- ================= ภาพรวมทั้งหมด ================= -->
+  <section class="panel" id="panel-overview">
+    <div class="stat-grid">
+      <div class="stat-card"><div class="num" id="ov-total">–</div><div class="label">เคสทั้งหมด</div></div>
+      <div class="stat-card"><div class="num" id="ov-month">–</div><div class="label">เดือนนี้</div></div>
+      <div class="stat-card"><div class="num" id="ov-open">–</div><div class="label">ยังติดตามอยู่</div></div>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0;">หมวดปัญหาที่พบบ่อย</h3>
+      <div id="ov-categories"></div>
+      <p class="privacy-note">1 เคสเลือกได้หลายหมวด ผลรวมของทุกหมวดจึงมากกว่าจำนวนเคสทั้งหมด</p>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0;">เคสตามห้อง/ระดับชั้น</h3>
+      <div id="ov-rooms"></div>
+      <p class="privacy-note">🔒 ไม่แสดงชื่อนักเรียนหรือครูผู้บันทึก — และซ่อนห้องที่มีเคสน้อยกว่า 3 ราย เพื่อป้องกันการเดาตัวนักเรียน</p>
+    </div>
+  </section>
+
+  <!-- ================= รายงานประจำปี ================= -->
+  <section class="panel" id="panel-report">
+    <div class="card no-print">
+      <label>ปีการศึกษา (พ.ศ.)</label>
+      <select id="rp-year"></select>
+      <p class="privacy-note">ปีการศึกษาไทยนับ 16 พ.ค. ถึง 31 มี.ค. ปีถัดไป</p>
+      <button class="btn-primary" id="btn-report">สร้างรายงาน</button>
+      <button class="btn-secondary" id="btn-print" style="display:none;">บันทึกเป็น PDF / พิมพ์</button>
+      <div class="msg" id="rp-msg"></div>
+    </div>
+    <div id="report-output"></div>
+  </section>
+
+  <!-- ================= Modal แก้ไข ================= -->
+  <div class="modal-backdrop" id="edit-modal">
+    <div class="modal">
+      <h3 style="margin-top:0;">แก้ไขบันทึก</h3>
+      <p id="e-student-label" style="font-size:13.5px;color:var(--muted);margin:0 0 10px;"></p>
+
+      <label>วันที่ให้คำปรึกษา</label>
+      <input type="date" id="e-date">
+
+      <label>หมวดปัญหา</label>
+      <div class="cat-grid" id="e-categories">
+        <label><input type="checkbox" value="การเรียน"> การเรียน</label>
+        <label><input type="checkbox" value="ครอบครัว"> ครอบครัว</label>
+        <label><input type="checkbox" value="เพื่อน/สังคม"> เพื่อน/สังคม</label>
+        <label><input type="checkbox" value="สุขภาพจิต"> สุขภาพจิต</label>
+        <label><input type="checkbox" value="พฤติกรรม"> พฤติกรรม</label>
+        <label><input type="checkbox" value="อาชีพ/ศึกษาต่อ"> อาชีพ/ศึกษาต่อ</label>
+      </div>
+
+      <label>บันทึกการพูดคุย</label>
+      <textarea id="e-note"></textarea>
+
+      <label>สถานะติดตาม</label>
+      <select id="e-status">
+        <option>ติดตามต่อ</option>
+        <option>นัดครั้งถัดไป</option>
+        <option>ส่งต่อ</option>
+        <option>ปิดเคส</option>
+      </select>
+
+      <div class="msg" id="edit-msg"></div>
+
+      <div style="display:flex;gap:8px;margin-top:18px;">
+        <button class="btn-secondary" id="btn-edit-cancel" style="flex:1;margin:0;">ยกเลิก</button>
+        <button class="btn-primary" id="btn-edit-save" style="flex:1;margin:0;">บันทึกการแก้ไข</button>
+      </div>
+      <button class="btn-danger" id="btn-edit-remove">นำบันทึกนี้ออกจากรายการ</button>
+      <p class="privacy-note">การนำออกเป็นการซ่อนจากหน้าจอและสถิติเท่านั้น ข้อมูลยังถูกเก็บไว้ในระบบตามระเบียบเอกสารของโรงเรียน</p>
+    </div>
+  </div>
+</main>
+
+<script>
+// ⚠️ ใส่ค่า URL / anon key ของโปรเจ็กต์ Supabase "แนะให้แนว" ที่นี่
+const SUPABASE_URL = 'https://ikkhjslmtjwrxzxvtokb.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlra2hqc2xtdGp3cnh6eHZ0b2tiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM3NDMzNjksImV4cCI6MjA5OTMxOTM2OX0.3OR_9mEv82Ns1LLjx5nnRwJYzrtKFtWCWd1bPuQfNKU';
+
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+let currentUser = null;
+let mineNeedsRefresh = true;
+let myLogs = {};
+let editingId = null;
+
+function esc(str){
+  const div = document.createElement('div');
+  div.textContent = str ?? '';
+  return div.innerHTML;
+}
+
+async function init(){
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session){
+    document.getElementById('who-label').textContent = 'กรุณาเข้าสู่ระบบ';
+    return;
+  }
+  currentUser = session.user;
+
+  const { data: profile } = await sb.from('profiles').select('display_name').eq('id', currentUser.id).single();
+  document.getElementById('who-label').textContent = profile?.display_name ? `ครู: ${profile.display_name}` : currentUser.email;
+
+  document.getElementById('f-date').valueAsDate = new Date();
+  document.getElementById('f-date').max = new Date().toISOString().split('T')[0];
+
+  await loadStudents();
+  bindTabs();
+  bindSave();
+  bindEdit();
+  initYearSelect();
+  bindReport();
+}
+
+async function loadStudents(){
+  const { data, error } = await sb.from('profiles')
+    .select('id, display_name, class_room')
+    .eq('role', 'student')
+    .order('room', { ascending: true });
+  const sel = document.getElementById('f-student');
+  if (error || !data){ return; }
+  data.forEach(s => {
+    const opt = document.createElement('option');
+    opt.value = s.id;
+    opt.textContent = `${s.display_name} — ${s.class_room || ''}`;
+    sel.appendChild(opt);
+  });
+}
+
+function bindTabs(){
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('panel-' + btn.dataset.tab).classList.add('active');
+      if (btn.dataset.tab === 'mine' && mineNeedsRefresh){ loadMine(); mineNeedsRefresh = false; }
+      if (btn.dataset.tab === 'overview') loadOverview();
+    });
+  });
+}
+
+function bindSave(){
+  document.getElementById('btn-save').addEventListener('click', async () => {
+    const msgEl = document.getElementById('save-msg');
+    msgEl.className = 'msg';
+    msgEl.textContent = '';
+
+    const studentId = document.getElementById('f-student').value;
+    const sessionDate = document.getElementById('f-date').value;
+    const categories = Array.from(document.querySelectorAll('#f-categories input:checked')).map(c => c.value);
+    const note = document.getElementById('f-note').value.trim();
+    const status = document.getElementById('f-status').value;
+
+    if (!studentId){
+      msgEl.classList.add('err'); msgEl.textContent = 'กรุณาเลือกนักเรียนก่อนบันทึก'; return;
+    }
+    if (!sessionDate){
+      msgEl.classList.add('err'); msgEl.textContent = 'กรุณาระบุวันที่'; return;
+    }
+    if (categories.length === 0){
+      msgEl.classList.add('err'); msgEl.textContent = 'กรุณาเลือกหมวดปัญหาอย่างน้อย 1 ข้อ'; return;
+    }
+
+    const btn = document.getElementById('btn-save');
+    btn.disabled = true; btn.textContent = 'กำลังบันทึก...';
+
+    const { error } = await sb.from('counseling_logs').insert({
+      student_id: studentId,
+      counselor_id: currentUser.id,
+      session_date: sessionDate,
+      categories,
+      note,
+      status
+    });
+
+    btn.disabled = false; btn.textContent = 'บันทึก';
+
+    if (error){
+      msgEl.classList.add('err'); msgEl.textContent = 'บันทึกไม่สำเร็จ: ' + error.message;
+      return;
+    }
+
+    msgEl.classList.add('ok'); msgEl.textContent = 'บันทึกเรียบร้อย';
+    document.getElementById('f-note').value = '';
+    document.querySelectorAll('#f-categories input:checked').forEach(c => c.checked = false);
+    document.getElementById('f-status').value = 'ติดตามต่อ';
+    mineNeedsRefresh = true;
+  });
+}
+
+async function loadMine(){
+  const tbody = document.getElementById('mine-tbody');
+  const emptyEl = document.getElementById('mine-empty');
+  tbody.innerHTML = '';
+
+  const { data, error } = await sb.from('counseling_logs')
+    .select('id, session_date, categories, status, note, student_id, profiles!student_id(display_name, class_room)')
+    .eq('counselor_id', currentUser.id)
+    .is('deleted_at', null)
+    .order('session_date', { ascending: false })
+    .order('created_at', { ascending: false });
+
+  if (error){
+    emptyEl.style.display = 'block';
+    emptyEl.textContent = 'โหลดข้อมูลไม่สำเร็จ: ' + error.message;
+    return;
+  }
+  if (!data || data.length === 0){
+    emptyEl.style.display = 'block';
+    emptyEl.textContent = 'ยังไม่มีบันทึกของคุณ';
+    return;
+  }
+  emptyEl.style.display = 'none';
+
+  myLogs = {};
+  data.forEach(row => {
+    myLogs[row.id] = row;
+    const tr = document.createElement('tr');
+    const studentLabel = row.profiles ? `${esc(row.profiles.display_name)} (${esc(row.profiles.class_room) || '-'})` : '-';
+    tr.innerHTML = `
+      <td>${esc(row.session_date)}</td>
+      <td>${studentLabel}</td>
+      <td>${esc((row.categories || []).join(', '))}</td>
+      <td><span class="status-pill status-${esc(row.status)}">${esc(row.status)}</span></td>
+      <td><button class="btn-link" data-edit="${esc(row.id)}">แก้ไข</button></td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  tbody.querySelectorAll('[data-edit]').forEach(btn => {
+    btn.addEventListener('click', () => openEdit(btn.dataset.edit));
+  });
+}
+
+async function loadOverview(){
+  const { data: totals } = await sb.from('counseling_overview_totals').select('*').single();
+  document.getElementById('ov-total').textContent = totals?.total_all_time ?? '0';
+  document.getElementById('ov-month').textContent = totals?.total_this_month ?? '0';
+  document.getElementById('ov-open').textContent = totals?.total_open ?? '0';
+
+  const { data: cats } = await sb.from('counseling_overview_categories').select('*');
+  const catEl = document.getElementById('ov-categories');
+  catEl.innerHTML = '';
+  const maxCat = Math.max(1, ...(cats || []).map(c => c.total));
+  (cats || []).forEach(c => {
+    const pct = Math.round((c.total / maxCat) * 100);
+    catEl.innerHTML += `
+      <div class="bar-row">
+        <span class="bar-label">${esc(c.category)}</span>
+        <div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div>
+        <span>${esc(c.total)}</span>
+      </div>`;
+  });
+
+  const { data: rooms } = await sb.from('counseling_overview_by_room').select('*');
+  const roomEl = document.getElementById('ov-rooms');
+  roomEl.innerHTML = '';
+  const maxRoom = Math.max(1, ...(rooms || []).map(r => r.total));
+  (rooms || []).forEach(r => {
+    const pct = Math.round((r.total / maxRoom) * 100);
+    roomEl.innerHTML += `
+      <div class="bar-row">
+        <span class="bar-label">${esc(r.room) || 'ไม่ระบุ'}</span>
+        <div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div>
+        <span>${esc(r.total)}</span>
+      </div>`;
+  });
+}
+
+// ============ แก้ไข / นำออก ============
+function openEdit(id){
+  const row = myLogs[id];
+  if (!row) return;
+  editingId = id;
+
+  document.getElementById('e-student-label').textContent =
+    row.profiles ? `${row.profiles.display_name} (${row.profiles.class_room || '-'})` : '';
+  document.getElementById('e-date').value = row.session_date;
+  document.getElementById('e-date').max = new Date().toISOString().split('T')[0];
+  document.getElementById('e-note').value = row.note || '';
+  document.getElementById('e-status').value = row.status;
+  document.querySelectorAll('#e-categories input').forEach(c => {
+    c.checked = (row.categories || []).includes(c.value);
+  });
+  const msg = document.getElementById('edit-msg');
+  msg.className = 'msg'; msg.textContent = '';
+
+  document.getElementById('edit-modal').classList.add('open');
+}
+
+function closeEdit(){
+  editingId = null;
+  document.getElementById('edit-modal').classList.remove('open');
+}
+
+function bindEdit(){
+  document.getElementById('btn-edit-cancel').addEventListener('click', closeEdit);
+  document.getElementById('edit-modal').addEventListener('click', e => {
+    if (e.target.id === 'edit-modal') closeEdit();
+  });
+
+  document.getElementById('btn-edit-save').addEventListener('click', async () => {
+    const msg = document.getElementById('edit-msg');
+    msg.className = 'msg'; msg.textContent = '';
+
+    const categories = Array.from(document.querySelectorAll('#e-categories input:checked')).map(c => c.value);
+    if (categories.length === 0){
+      msg.classList.add('err'); msg.textContent = 'กรุณาเลือกหมวดปัญหาอย่างน้อย 1 ข้อ'; return;
+    }
+
+    const btn = document.getElementById('btn-edit-save');
+    btn.disabled = true; btn.textContent = 'กำลังบันทึก...';
+
+    const { error } = await sb.from('counseling_logs').update({
+      session_date: document.getElementById('e-date').value,
+      categories,
+      note: document.getElementById('e-note').value.trim(),
+      status: document.getElementById('e-status').value
+    }).eq('id', editingId);
+
+    btn.disabled = false; btn.textContent = 'บันทึกการแก้ไข';
+
+    if (error){
+      msg.classList.add('err'); msg.textContent = 'แก้ไขไม่สำเร็จ: ' + error.message; return;
+    }
+    closeEdit();
+    mineNeedsRefresh = true;
+    loadMine();
+  });
+
+  document.getElementById('btn-edit-remove').addEventListener('click', async () => {
+    if (!confirm('นำบันทึกนี้ออกจากรายการและสถิติ?\n(ข้อมูลยังถูกเก็บไว้ในระบบ ไม่ได้ลบถาวร)')) return;
+
+    const msg = document.getElementById('edit-msg');
+    const { error } = await sb.from('counseling_logs')
+      .update({ deleted_at: new Date().toISOString() })
+      .eq('id', editingId);
+
+    if (error){
+      msg.className = 'msg err'; msg.textContent = 'นำออกไม่สำเร็จ: ' + error.message; return;
+    }
+    closeEdit();
+    mineNeedsRefresh = true;
+    loadMine();
+  });
+}
+
+// ============ รายงานประจำปี ============
+function initYearSelect(){
+  const sel = document.getElementById('rp-year');
+  const now = new Date();
+  // ปีการศึกษาเปลี่ยนกลาง พ.ค. — ก่อน 16 พ.ค. ยังนับเป็นปีการศึกษาก่อนหน้า
+  const beYear = now.getFullYear() + 543;
+  const current = (now.getMonth() > 4 || (now.getMonth() === 4 && now.getDate() >= 16))
+    ? beYear : beYear - 1;
+  for (let y = current; y >= current - 5; y--){
+    const opt = document.createElement('option');
+    opt.value = y; opt.textContent = `ปีการศึกษา ${y}`;
+    sel.appendChild(opt);
+  }
+}
+
+function bindReport(){
+  document.getElementById('btn-report').addEventListener('click', async () => {
+    const msg = document.getElementById('rp-msg');
+    msg.className = 'msg'; msg.textContent = '';
+    const year = parseInt(document.getElementById('rp-year').value, 10);
+
+    const { data, error } = await sb.rpc('counseling_annual_report', { p_academic_year: year });
+
+    if (error){
+      msg.classList.add('err'); msg.textContent = 'สร้างรายงานไม่สำเร็จ: ' + error.message; return;
+    }
+    renderReport(data);
+    document.getElementById('btn-print').style.display = 'block';
+  });
+
+  document.getElementById('btn-print').addEventListener('click', () => window.print());
+}
+
+function rowsTable(headers, rows){
+  if (!rows || rows.length === 0) return '<p class="empty">ไม่มีข้อมูลในช่วงเวลานี้</p>';
+  return `<table class="rep-table">
+    <thead><tr>${headers.map(h => `<th>${esc(h)}</th>`).join('')}</tr></thead>
+    <tbody>${rows.map(r =>
+      `<tr><td>${esc(r[0])}</td><td class="num">${esc(r[1])}</td></tr>`
+    ).join('')}</tbody></table>`;
+}
+
+function renderReport(d){
+  const out = document.getElementById('report-output');
+  const thMonths = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+  const monthLabel = m => {
+    const [y, mo] = m.split('-');
+    return `${thMonths[parseInt(mo,10)-1]} ${parseInt(y,10)+543}`;
+  };
+
+  out.innerHTML = `
+    <div class="card">
+      <div class="report-head">
+        <h2>รายงานสรุปการให้คำปรึกษานักเรียน</h2>
+        <div class="sub">ปีการศึกษา ${esc(d.academic_year)} (${esc(d.period_start)} ถึง ${esc(d.period_end)})</div>
+        <div class="sub">งานแนะแนว โรงเรียนพูลเจริญวิทยาคม</div>
+      </div>
+
+      <table class="rep-table">
+        <tbody>
+          <tr><th>จำนวนครั้งที่ให้คำปรึกษา</th><td class="num">${esc(d.total_cases)} ครั้ง</td></tr>
+          <tr><th>จำนวนนักเรียนที่เข้ารับคำปรึกษา</th><td class="num">${esc(d.total_students)} คน</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h3 style="margin-top:0;">จำแนกตามหมวดปัญหา</h3>
+      ${rowsTable(['หมวดปัญหา','จำนวนครั้ง'], (d.by_category||[]).map(c => [c.category, c.total]))}
+      <p class="privacy-note">1 ครั้งเลือกได้หลายหมวด ผลรวมจึงมากกว่าจำนวนครั้งทั้งหมด</p>
+    </div>
+
+    <div class="card">
+      <h3 style="margin-top:0;">จำแนกตามสถานะการติดตาม</h3>
+      ${rowsTable(['สถานะ','จำนวนครั้ง'], (d.by_status||[]).map(s => [s.status, s.total]))}
+    </div>
+
+    <div class="card">
+      <h3 style="margin-top:0;">จำแนกตามเดือน</h3>
+      ${rowsTable(['เดือน','จำนวนครั้ง'], (d.by_month||[]).map(m => [monthLabel(m.month), m.total]))}
+    </div>
+
+    <div class="card">
+      <h3 style="margin-top:0;">จำแนกตามห้องเรียน</h3>
+      ${rowsTable(['ห้อง','จำนวนครั้ง'], (d.by_room||[]).map(r => [r.room || 'ไม่ระบุ', r.total]))}
+      <p class="privacy-note">ไม่แสดงห้องที่มีเคสน้อยกว่า 3 ราย เพื่อป้องกันการระบุตัวนักเรียน จำนวนรวมของตารางนี้จึงอาจน้อยกว่าจำนวนครั้งทั้งหมด</p>
+    </div>
+
+    <div class="card">
+      <p class="privacy-note">รายงานนี้เป็นข้อมูลสรุปเชิงสถิติ ไม่ระบุชื่อนักเรียนและครูผู้ให้คำปรึกษา<br>
+      ออกรายงานเมื่อ ${new Date().toLocaleDateString('th-TH', { dateStyle: 'long' })}</p>
+    </div>
+  `;
+}
+
+init();
+</script>
+</body>
+</html>
