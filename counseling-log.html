@@ -114,14 +114,13 @@
       <label>วันที่ให้คำปรึกษา</label>
       <input type="date" id="f-date">
 
-      <label>หมวดปัญหา (เลือกได้หลายข้อ)</label>
+      <label>หมวดปัญหา</label>
       <div class="cat-grid" id="f-categories">
-        <label><input type="checkbox" value="การเรียน"> การเรียน</label>
-        <label><input type="checkbox" value="ครอบครัว"> ครอบครัว</label>
-        <label><input type="checkbox" value="เพื่อน/สังคม"> เพื่อน/สังคม</label>
-        <label><input type="checkbox" value="สุขภาพจิต"> สุขภาพจิต</label>
-        <label><input type="checkbox" value="พฤติกรรม"> พฤติกรรม</label>
-        <label><input type="checkbox" value="อาชีพ/ศึกษาต่อ"> อาชีพ/ศึกษาต่อ</label>
+        <label><input type="radio" name="f-cat" value="การเรียน"> การเรียน</label>
+        <label><input type="radio" name="f-cat" value="ครอบครัว"> ครอบครัว</label>
+        <label><input type="radio" name="f-cat" value="เพื่อน/สังคม"> เพื่อน/สังคม</label>
+        <label><input type="radio" name="f-cat" value="อาชีพ/ศึกษาต่อ"> อาชีพ/ศึกษาต่อ</label>
+        <label><input type="radio" name="f-cat" value="อื่นๆ"> อื่นๆ</label>
       </div>
 
       <label>บันทึกการพูดคุย</label>
@@ -163,7 +162,6 @@
     <div class="card">
       <h3 style="margin-top:0;">หมวดปัญหาที่พบบ่อย</h3>
       <div id="ov-categories"></div>
-      <p class="privacy-note">1 เคสเลือกได้หลายหมวด ผลรวมของทุกหมวดจึงมากกว่าจำนวนเคสทั้งหมด</p>
     </div>
     <div class="card">
       <h3 style="margin-top:0;">เคสตามห้อง/ระดับชั้น</h3>
@@ -196,12 +194,11 @@
 
       <label>หมวดปัญหา</label>
       <div class="cat-grid" id="e-categories">
-        <label><input type="checkbox" value="การเรียน"> การเรียน</label>
-        <label><input type="checkbox" value="ครอบครัว"> ครอบครัว</label>
-        <label><input type="checkbox" value="เพื่อน/สังคม"> เพื่อน/สังคม</label>
-        <label><input type="checkbox" value="สุขภาพจิต"> สุขภาพจิต</label>
-        <label><input type="checkbox" value="พฤติกรรม"> พฤติกรรม</label>
-        <label><input type="checkbox" value="อาชีพ/ศึกษาต่อ"> อาชีพ/ศึกษาต่อ</label>
+        <label><input type="radio" name="e-cat" value="การเรียน"> การเรียน</label>
+        <label><input type="radio" name="e-cat" value="ครอบครัว"> ครอบครัว</label>
+        <label><input type="radio" name="e-cat" value="เพื่อน/สังคม"> เพื่อน/สังคม</label>
+        <label><input type="radio" name="e-cat" value="อาชีพ/ศึกษาต่อ"> อาชีพ/ศึกษาต่อ</label>
+        <label><input type="radio" name="e-cat" value="อื่นๆ"> อื่นๆ</label>
       </div>
 
       <label>บันทึกการพูดคุย</label>
@@ -271,9 +268,16 @@ async function loadStudents(){
   const { data, error } = await sb.from('profiles')
     .select('id, display_name, class_room')
     .eq('role', 'student')
-    .order('room', { ascending: true });
+    .order('class_room', { ascending: true })
+    .order('display_name', { ascending: true });
   const sel = document.getElementById('f-student');
-  if (error || !data){ return; }
+  if (error){
+    const opt = document.createElement('option');
+    opt.textContent = 'โหลดรายชื่อนักเรียนไม่สำเร็จ: ' + error.message;
+    sel.appendChild(opt);
+    return;
+  }
+  if (!data) return;
   data.forEach(s => {
     const opt = document.createElement('option');
     opt.value = s.id;
@@ -314,7 +318,7 @@ function bindSave(){
       msgEl.classList.add('err'); msgEl.textContent = 'กรุณาระบุวันที่'; return;
     }
     if (categories.length === 0){
-      msgEl.classList.add('err'); msgEl.textContent = 'กรุณาเลือกหมวดปัญหาอย่างน้อย 1 ข้อ'; return;
+      msgEl.classList.add('err'); msgEl.textContent = 'กรุณาเลือกหมวดปัญหา'; return;
     }
 
     const btn = document.getElementById('btn-save');
@@ -461,7 +465,7 @@ function bindEdit(){
 
     const categories = Array.from(document.querySelectorAll('#e-categories input:checked')).map(c => c.value);
     if (categories.length === 0){
-      msg.classList.add('err'); msg.textContent = 'กรุณาเลือกหมวดปัญหาอย่างน้อย 1 ข้อ'; return;
+      msg.classList.add('err'); msg.textContent = 'กรุณาเลือกหมวดปัญหา'; return;
     }
 
     const btn = document.getElementById('btn-edit-save');
@@ -570,7 +574,6 @@ function renderReport(d){
     <div class="card">
       <h3 style="margin-top:0;">จำแนกตามหมวดปัญหา</h3>
       ${rowsTable(['หมวดปัญหา','จำนวนครั้ง'], (d.by_category||[]).map(c => [c.category, c.total]))}
-      <p class="privacy-note">1 ครั้งเลือกได้หลายหมวด ผลรวมจึงมากกว่าจำนวนครั้งทั้งหมด</p>
     </div>
 
     <div class="card">
