@@ -137,6 +137,9 @@
     padding:0;margin-bottom:16px;display:inline-flex;align-items:center;gap:5px}
 
   h1,h2,h3,h2.sec,.eyebrow,.brand h1,.totalbox .n{font-family:"Mitr",sans-serif !important;font-weight:500}
+
+  .modal-back{position:fixed;inset:0;background:rgba(28,43,38,.45);z-index:50;overflow-y:auto;padding:16px}
+  .modal-back.hidden{display:none}
 </style>
 </head>
 <body>
@@ -172,6 +175,7 @@
         <label class="fld"><span class="lbl">ทุนการศึกษา</span>
           <select id="schSelect"><option value="">— เลือกทุน —</option></select></label>
         <button class="btn" id="computeBtn" disabled>คำนวณคะแนนใหม่</button>
+        <button class="btn ghost" id="extBtn">+ เพิ่มผู้ได้รับทุนนอกระบบ</button>
       </div>
       <p class="muted" id="schMeta" style="margin:4px 2px 0"></p>
     </div>
@@ -211,6 +215,50 @@
   </section>
 </div>
 
+<!-- MODAL: เพิ่มผู้ได้รับทุนนอกระบบ -->
+<div id="extBack" class="modal-back hidden">
+  <div class="card pad-lg" style="max-width:480px;margin:8vh auto;position:relative">
+    <span class="eyebrow">ทุนนอกระบบ</span>
+    <h2 class="sec">เพิ่มผู้ได้รับทุนนอกระบบ</h2>
+    <p class="muted" style="margin-top:-6px;margin-bottom:16px">สำหรับนักเรียนที่ไม่ได้สมัครผ่านระบบ (คณะกรรมการคัดเลือกเอง / ทุนหน่วยงานภายนอก) — จะไม่มีคะแนนหรือประวัติการคัดกรอง แต่จะถูกนับในสรุปประจำปีทันที</p>
+    <div id="extMsg" class="msg"></div>
+
+    <div class="status-actions" style="margin-bottom:14px">
+      <button class="sbtn on" id="extModeExisting" type="button">ใช้ทุนที่มีอยู่แล้ว</button>
+      <button class="sbtn" id="extModeNew" type="button">สร้างทุนใหม่ (นอกระบบ)</button>
+    </div>
+
+    <div id="extExistingBox">
+      <label class="fld"><span class="lbl">เลือกทุน</span>
+        <select id="extSchSelect"><option value="">— เลือกทุน —</option></select></label>
+    </div>
+    <div id="extNewBox" class="hidden">
+      <label class="fld"><span class="lbl">ชื่อทุน</span>
+        <input id="extNewName" placeholder="เช่น ทุนมูลนิธิ xxx (คัดเลือกโดยกรรมการ)"></label>
+      <label class="fld"><span class="lbl">หน่วยงานผู้ให้ทุน (ถ้ามี)</span>
+        <input id="extNewProvider"></label>
+      <label class="fld"><span class="lbl">จำนวนเงินต่อทุน / คน (บาท, ถ้ามี)</span>
+        <input id="extNewAmount" type="number" step="any"></label>
+    </div>
+
+    <label class="fld"><span class="lbl">ค้นหานักเรียน (รหัสประจำตัว)</span>
+      <div style="display:flex;gap:8px">
+        <input id="extStudentId" placeholder="เช่น 24028" style="flex:1">
+        <button class="btn ghost sm" id="extSearchBtn" type="button">ค้นหา</button>
+      </div>
+    </label>
+    <div id="extStudentResult" class="statement hidden"></div>
+
+    <label class="fld"><span class="lbl">หมายเหตุ (ถ้ามี)</span>
+      <textarea id="extNote" placeholder="เช่น คัดเลือกโดยคณะกรรมการทุนระดับเขตพื้นที่"></textarea></label>
+
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:6px">
+      <button class="btn ghost" id="extCancelBtn" type="button">ยกเลิก</button>
+      <button class="btn" id="extSubmitBtn" type="button" disabled>เพิ่มผู้ได้รับทุน</button>
+    </div>
+  </div>
+</div>
+
 <script>
 const SUPABASE_URL="https://ikkhjslmtjwrxzxvtokb.supabase.co";
 const SUPABASE_KEY="sb_publishable_gkUomr4OsxcNV2a6EkVgRA__gCuRM7q";
@@ -225,6 +273,7 @@ const STATUS_LABEL={submitted:"ส่งใบสมัครแล้ว",under
 const STATUS_FLOW=[["under_review","ทบทวน"],["shortlisted","ผ่านเบื้องต้น"],["approved","ให้ทุน"],["rejected","ไม่ผ่าน"]];
 
 let ME=null, CUR_SCH=null, CUR_CRITERIA=[], CUR_APP=null;
+let EXT_MODE="existing", EXT_STUDENT=null;
 
 /* auth */
 async function login(){
@@ -467,6 +516,99 @@ async function setStatus(val){
 }
 
 function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+
+/* ทุนนอกระบบ */
+function openExtModal(){
+  $("#extMsg").className="msg";$("#extMsg").textContent="";
+  $("#extStudentId").value="";$("#extNote").value="";
+  $("#extStudentResult").classList.add("hidden");EXT_STUDENT=null;
+  $("#extNewName").value="";$("#extNewProvider").value="";$("#extNewAmount").value="";
+  setExtMode("existing");
+  // เติม dropdown ทุนจากตัวเดียวกับหน้าเลือกทุนหลัก (โหลดใหม่กันพลาด)
+  sb.from("scholarships").select("id,name,status,academic_year")
+    .in("status",["open","screening","announced","closed"]).order("created_at",{ascending:false})
+    .then(({data})=>{
+      const sel=$("#extSchSelect");sel.innerHTML='<option value="">— เลือกทุน —</option>';
+      (data||[]).forEach(s=>{
+        const o=document.createElement("option");o.value=s.id;
+        o.textContent=`${s.name} (${STATUS_LABEL[s.status]||s.status})`;sel.appendChild(o);
+      });
+      if(CUR_SCH) sel.value=CUR_SCH.id;
+      updateExtSubmitState();
+    });
+  $("#extBack").classList.remove("hidden");
+}
+function closeExtModal(){$("#extBack").classList.add("hidden");}
+function setExtMode(mode){
+  EXT_MODE=mode;
+  $("#extModeExisting").className="sbtn"+(mode==="existing"?" on":"");
+  $("#extModeNew").className="sbtn"+(mode==="new"?" on":"");
+  $("#extExistingBox").classList.toggle("hidden",mode!=="existing");
+  $("#extNewBox").classList.toggle("hidden",mode!=="new");
+  updateExtSubmitState();
+}
+async function extSearchStudent(){
+  const sid=$("#extStudentId").value.trim();
+  if(!sid){msg($("#extMsg"),"กรอกรหัสประจำตัวนักเรียนก่อนค่ะ","err");return;}
+  msg($("#extMsg"),"","");
+  const {data,error}=await sb.from("profiles").select("id,display_name,student_id,class_room")
+    .eq("student_id",sid).eq("role","student").maybeSingle();
+  if(error||!data){
+    EXT_STUDENT=null;$("#extStudentResult").classList.add("hidden");
+    msg($("#extMsg"),"ไม่พบนักเรียนรหัสนี้ในระบบ ตรวจสอบรหัสอีกครั้ง","err");
+    updateExtSubmitState();return;
+  }
+  EXT_STUDENT=data;
+  $("#extStudentResult").classList.remove("hidden");
+  $("#extStudentResult").innerHTML=`<b>พบนักเรียน</b>${esc(data.display_name)} · ${esc(data.student_id)}${data.class_room?" · ชั้น "+esc(data.class_room):""}`;
+  updateExtSubmitState();
+}
+function updateExtSubmitState(){
+  const schOk = EXT_MODE==="existing" ? !!$("#extSchSelect").value : !!$("#extNewName").value.trim();
+  $("#extSubmitBtn").disabled = !(schOk && EXT_STUDENT);
+}
+async function submitExt(){
+  const btn=$("#extSubmitBtn");btn.disabled=true;const old=btn.textContent;btn.textContent="กำลังบันทึก…";
+  try{
+    let schId;
+    if(EXT_MODE==="existing"){
+      schId=$("#extSchSelect").value;
+      if(!schId) throw new Error("กรุณาเลือกทุน");
+    }else{
+      const name=$("#extNewName").value.trim();
+      if(!name) throw new Error("กรุณากรอกชื่อทุน");
+      const {data,error}=await sb.rpc("create_external_scholarship",{
+        p_name:name,
+        p_provider:$("#extNewProvider").value.trim()||null,
+        p_amount:$("#extNewAmount").value?Number($("#extNewAmount").value):null,
+        p_academic_year:(CUR_SCH?.academic_year)||"2569"
+      });
+      if(error)throw error;
+      schId=data;
+    }
+    const {error:e2}=await sb.rpc("add_external_scholarship_award",{
+      p_scholarship_id:schId, p_profile_id:EXT_STUDENT.id,
+      p_note:$("#extNote").value.trim()||null
+    });
+    if(e2)throw e2;
+    closeExtModal();
+    msg($("#resultMsg"),`เพิ่ม ${EXT_STUDENT.display_name} เป็นผู้ได้รับทุนนอกระบบเรียบร้อยแล้ว`,"ok");
+    if(EXT_MODE==="new") await loadScholarships();
+    if(CUR_SCH) await loadRanking();
+  }catch(e){msg($("#extMsg"),"บันทึกไม่สำเร็จ: "+(e.message||""),"err");}
+  finally{btn.disabled=false;btn.textContent=old;updateExtSubmitState();}
+}
+
+$("#extBtn").onclick=openExtModal;
+$("#extCancelBtn").onclick=closeExtModal;
+$("#extBack").addEventListener("click",e=>{if(e.target.id==="extBack")closeExtModal();});
+$("#extModeExisting").onclick=()=>setExtMode("existing");
+$("#extModeNew").onclick=()=>setExtMode("new");
+$("#extSearchBtn").onclick=extSearchStudent;
+$("#extStudentId").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();extSearchStudent();}});
+$("#extSchSelect").addEventListener("change",updateExtSubmitState);
+$("#extNewName").addEventListener("input",updateExtSubmitState);
+$("#extSubmitBtn").onclick=submitExt;
 
 $("#loginBtn").onclick=login;
 $("#password").addEventListener("keydown",e=>{if(e.key==="Enter")login();});
