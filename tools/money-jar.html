@@ -1,1 +1,562 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>กระปุกใจดี</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  :root{
+    --bg:#FFF6EE;
+    --card:#FFFFFF;
+    --pink:#FFD3E2;
+    --pink-deep:#FF8FAB;
+    --mint:#C7F5E9;
+    --mint-deep:#4FCDB6;
+    --lav:#E1D4FB;
+    --lav-deep:#9D7FE0;
+    --yellow:#FFE9A8;
+    --yellow-deep:#F2B33D;
+    --text:#4A3B5C;
+    --text-soft:#8A7A9B;
+    --line:#F0E4F5;
+    --shadow: 0 10px 30px -12px rgba(157,127,224,.25);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:
+      radial-gradient(circle at 8% 0%, #FFE7F0 0%, transparent 45%),
+      radial-gradient(circle at 100% 10%, #DCF7EE 0%, transparent 40%),
+      var(--bg);
+    font-family:'Sarabun', sans-serif;
+    color:var(--text);
+    min-height:100vh;
+    padding:20px 14px 60px;
+  }
+  .wrap{max-width:480px; margin:0 auto;}
 
+  /* header */
+  header{display:flex; align-items:center; gap:12px; padding:6px 4px 18px;}
+  .piggy{
+    width:52px; height:52px; border-radius:18px;
+    background:linear-gradient(145deg,var(--pink),var(--pink-deep));
+    display:flex; align-items:center; justify-content:center;
+    font-size:26px; box-shadow:var(--shadow);
+    animation:bob 3.2s ease-in-out infinite;
+  }
+  @keyframes bob{0%,100%{transform:translateY(0) rotate(-3deg);}50%{transform:translateY(-5px) rotate(3deg);}}
+  header h1{font-family:'Baloo 2',sans-serif; font-size:22px; margin:0; font-weight:700; letter-spacing:.2px;}
+  header p{margin:2px 0 0; font-size:12.5px; color:var(--text-soft);}
+
+  /* balance hero */
+  .hero{
+    position:relative; overflow:hidden;
+    border-radius:26px; padding:26px 22px;
+    background:linear-gradient(155deg,var(--lav-deep),#B79CF0 55%, var(--pink-deep));
+    color:#fff; box-shadow:var(--shadow);
+    margin-bottom:18px;
+  }
+  .hero::before, .hero::after{
+    content:""; position:absolute; border-radius:50%;
+    background:rgba(255,255,255,.16);
+  }
+  .hero::before{width:120px; height:120px; top:-40px; right:-30px;}
+  .hero::after{width:70px; height:70px; bottom:-25px; left:-15px; background:rgba(255,255,255,.12);}
+  .hero .label{font-size:12.5px; opacity:.85; margin:0 0 4px;}
+  .hero .balance{font-family:'Baloo 2',sans-serif; font-size:36px; font-weight:800; margin:0; position:relative; z-index:1;}
+  .hero .sub{display:flex; gap:14px; margin-top:16px; position:relative; z-index:1;}
+  .hero .sub div{
+    background:rgba(255,255,255,.18); border-radius:14px; padding:8px 12px; flex:1;
+    backdrop-filter: blur(2px);
+  }
+  .hero .sub .t{font-size:11px; opacity:.85; display:flex; align-items:center; gap:4px;}
+  .hero .sub .v{font-family:'Baloo 2',sans-serif; font-size:16px; font-weight:700; margin-top:2px;}
+
+  /* card */
+  .card{
+    background:var(--card); border-radius:22px; padding:18px;
+    box-shadow:var(--shadow); margin-bottom:16px; border:1px solid var(--line);
+  }
+  .card h2{font-family:'Baloo 2',sans-serif; font-size:16px; margin:0 0 12px; font-weight:700;}
+
+  /* type toggle */
+  .type-toggle{display:flex; background:#F7F1FC; border-radius:14px; padding:4px; margin-bottom:14px;}
+  .type-toggle button{
+    flex:1; border:none; background:transparent; padding:10px 0; border-radius:11px;
+    font-family:'Sarabun',sans-serif; font-weight:600; font-size:14px; color:var(--text-soft);
+    cursor:pointer; transition:.2s; display:flex; align-items:center; justify-content:center; gap:6px;
+  }
+  .type-toggle button.active.expense{background:var(--pink-deep); color:#fff; box-shadow:0 6px 14px -6px rgba(255,143,171,.7);}
+  .type-toggle button.active.income{background:var(--mint-deep); color:#fff; box-shadow:0 6px 14px -6px rgba(79,205,182,.7);}
+
+  .cat-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:14px;}
+  .cat-chip{
+    border:1.5px solid var(--line); background:#FCFAFE; border-radius:14px;
+    padding:10px 4px; text-align:center; cursor:pointer; transition:.15s;
+  }
+  .cat-chip .ic{font-size:19px; display:block;}
+  .cat-chip .lb{font-size:10.5px; color:var(--text-soft); margin-top:3px; display:block; line-height:1.2;}
+  .cat-chip.sel{border-color:var(--lav-deep); background:linear-gradient(145deg,#F3ECFF,#EAE0FF); transform:translateY(-2px);}
+  .cat-chip.sel .lb{color:var(--lav-deep); font-weight:700;}
+
+  .field{margin-bottom:12px;}
+  .field label{font-size:12.5px; color:var(--text-soft); font-weight:600; display:block; margin-bottom:5px;}
+  .field input{
+    width:100%; border:1.5px solid var(--line); border-radius:13px; padding:11px 13px;
+    font-family:'Sarabun',sans-serif; font-size:15px; color:var(--text); background:#FCFAFE;
+  }
+  .field input:focus{outline:none; border-color:var(--lav-deep);}
+  .row2{display:flex; gap:10px;}
+  .row2 .field{flex:1;}
+
+  .add-btn{
+    width:100%; border:none; padding:13px; border-radius:15px; cursor:pointer;
+    font-family:'Baloo 2',sans-serif; font-weight:700; font-size:15.5px; color:#fff;
+    background:linear-gradient(135deg,var(--lav-deep),var(--pink-deep));
+    box-shadow:0 10px 20px -8px rgba(157,127,224,.55);
+    transition:transform .12s;
+  }
+  .add-btn:active{transform:scale(.97);}
+
+  /* list */
+  .list-head{display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;}
+  .filter-row{display:flex; gap:6px;}
+  .filter-row button{
+    border:1.5px solid var(--line); background:#fff; border-radius:10px; padding:5px 10px;
+    font-size:11.5px; color:var(--text-soft); cursor:pointer; font-family:'Sarabun',sans-serif; font-weight:600;
+  }
+  .filter-row button.on{background:var(--text); color:#fff; border-color:var(--text);}
+
+  #captureArea{background:var(--card); border-radius:18px; padding:4px;}
+
+  /* report header (shown inside exported PDF/image) */
+  .report-header{
+    border-radius:20px; padding:22px 20px 20px;
+    background:linear-gradient(155deg,#F3ECFF 0%, #FDECF3 55%, #FFF3E3 100%);
+    border:1px solid var(--line); margin-bottom:18px;
+  }
+  .report-brand{display:flex; align-items:center; gap:10px; margin-bottom:16px;}
+  .report-brand .mark{
+    width:38px; height:38px; border-radius:12px; flex-shrink:0;
+    background:linear-gradient(145deg,var(--pink),var(--pink-deep));
+    display:flex; align-items:center; justify-content:center; font-size:19px;
+  }
+  .report-brand .rb-text h3{font-family:'Baloo 2',sans-serif; font-size:16px; margin:0; font-weight:700;}
+  .report-brand .rb-text p{font-size:11px; margin:1px 0 0; color:var(--text-soft);}
+  .report-meta{font-size:11px; color:var(--text-soft); margin-bottom:14px; padding-bottom:14px; border-bottom:1px dashed #E3D4EE;}
+  .report-stats{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+  .rs-card{
+    border-radius:15px; padding:12px 14px; background:#fff; border:1px solid var(--line);
+  }
+  .rs-card .rs-label{font-size:11px; color:var(--text-soft); display:flex; align-items:center; gap:5px; margin-bottom:4px;}
+  .rs-card .rs-value{font-family:'Baloo 2',sans-serif; font-size:19px; font-weight:800;}
+  .rs-card.income .rs-value{color:var(--mint-deep);}
+  .rs-card.expense .rs-value{color:var(--pink-deep);}
+  .rs-card.balance{grid-column:1 / -1; background:linear-gradient(135deg,var(--lav-deep),var(--pink-deep)); border:none;}
+  .rs-card.balance .rs-label{color:rgba(255,255,255,.85);}
+  .rs-card.balance .rs-value{color:#fff; font-size:26px;}
+  .rs-card.balance .rs-sub{font-size:10.5px; color:rgba(255,255,255,.8); margin-top:3px;}
+
+  .report-footer{
+    margin-top:6px; padding:14px 16px; border-top:1px solid var(--line);
+    display:flex; justify-content:space-between; align-items:center;
+    font-size:11px; color:var(--text-soft);
+  }
+  .report-footer .rf-total{font-family:'Baloo 2',sans-serif; font-weight:700; font-size:14px; color:var(--text);}
+
+  .day-group{margin-bottom:6px; padding:0 6px;}
+  .day-label{font-size:11.5px; color:var(--text-soft); font-weight:700; margin:14px 0 8px; padding-left:2px;}
+  .day-group:first-child .day-label{margin-top:0;}
+
+  .item{
+    display:flex; align-items:center; gap:11px; padding:10px 6px;
+    border-bottom:1px solid var(--line);
+  }
+  .item:last-child{border-bottom:none;}
+  .item .badge{
+    width:38px; height:38px; border-radius:12px; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center; font-size:18px;
+  }
+  .item .info{flex:1; min-width:0;}
+  .item .cat{font-weight:600; font-size:13.5px;}
+  .item .note{font-size:11.5px; color:var(--text-soft); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .item .amt{font-family:'Baloo 2',sans-serif; font-weight:700; font-size:15px; white-space:nowrap;}
+  .item .amt.expense{color:var(--pink-deep);}
+  .item .amt.income{color:var(--mint-deep);}
+  .item .del{
+    background:none; border:none; color:#D8CBE8; font-size:15px; cursor:pointer; padding:4px 2px 4px 8px;
+  }
+
+  .empty{
+    text-align:center; padding:36px 10px; color:var(--text-soft);
+  }
+  .empty .em{font-size:40px; display:block; margin-bottom:8px;}
+  .empty p{font-size:13px; margin:0; line-height:1.5;}
+
+  .export-row{display:flex; gap:10px; margin-top:16px;}
+  .export-row button{
+    flex:1; border:none; border-radius:14px; padding:12px 8px; cursor:pointer;
+    font-family:'Baloo 2',sans-serif; font-weight:700; font-size:13.5px;
+    display:flex; align-items:center; justify-content:center; gap:6px;
+  }
+  .export-row .pdf{background:var(--yellow); color:#8A5B00;}
+  .export-row .img{background:var(--mint); color:#1E7A67;}
+  .export-row button:active{transform:scale(.97);}
+
+  .toast{
+    position:fixed; left:50%; bottom:26px; transform:translateX(-50%) translateY(20px);
+    background:var(--text); color:#fff; padding:10px 18px; border-radius:30px;
+    font-size:13px; opacity:0; transition:.25s; pointer-events:none; z-index:50;
+    box-shadow:0 10px 20px -8px rgba(0,0,0,.3);
+  }
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+
+  footer{text-align:center; font-size:11px; color:var(--text-soft); margin-top:10px; opacity:.7;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="piggy">🐷</div>
+    <div>
+      <h1>กระปุกใจดี</h1>
+      <p>บันทึกรายรับ-รายจ่าย น่ารักทุกวัน</p>
+    </div>
+  </header>
+
+  <div class="hero">
+    <p class="label">ยอดคงเหลือทั้งหมด</p>
+    <p class="balance" id="balanceText">฿0.00</p>
+    <div class="sub">
+      <div>
+        <div class="t">⬆️ รายรับ</div>
+        <div class="v" id="incomeText">฿0</div>
+      </div>
+      <div>
+        <div class="t">⬇️ รายจ่าย</div>
+        <div class="v" id="expenseText">฿0</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>เพิ่มรายการใหม่</h2>
+    <div class="type-toggle">
+      <button type="button" class="active expense" data-type="expense" onclick="setType('expense')">⬇️ รายจ่าย</button>
+      <button type="button" class="income" data-type="income" onclick="setType('income')">⬆️ รายรับ</button>
+    </div>
+
+    <div class="cat-grid" id="catGrid"></div>
+
+    <div class="row2">
+      <div class="field">
+        <label>จำนวนเงิน (บาท)</label>
+        <input type="number" id="amountInput" placeholder="0.00" inputmode="decimal" step="0.01" min="0">
+      </div>
+      <div class="field">
+        <label>วันที่</label>
+        <input type="date" id="dateInput">
+      </div>
+    </div>
+    <div class="field">
+      <label>โน้ตเพิ่มเติม (ถ้ามี)</label>
+      <input type="text" id="noteInput" placeholder="เช่น ข้าวเที่ยงกับเพื่อน">
+    </div>
+
+    <button class="add-btn" onclick="addTransaction()">＋ เพิ่มรายการ</button>
+  </div>
+
+  <div class="card">
+    <div class="list-head">
+      <h2 style="margin:0;">รายการทั้งหมด</h2>
+      <div class="filter-row">
+        <button class="on" data-f="all" onclick="setFilter('all')">ทั้งหมด</button>
+        <button data-f="income" onclick="setFilter('income')">รายรับ</button>
+        <button data-f="expense" onclick="setFilter('expense')">รายจ่าย</button>
+      </div>
+    </div>
+
+    <div id="captureArea">
+      <div class="report-header">
+        <div class="report-brand">
+          <div class="mark">🐷</div>
+          <div class="rb-text">
+            <h3>กระปุกใจดี</h3>
+            <p>รายงานสรุปรายรับ-รายจ่าย</p>
+          </div>
+        </div>
+        <div class="report-meta" id="reportMeta"></div>
+        <div class="report-stats">
+          <div class="rs-card income">
+            <div class="rs-label">⬆️ รายรับรวม</div>
+            <div class="rs-value" id="rIncome">฿0</div>
+          </div>
+          <div class="rs-card expense">
+            <div class="rs-label">⬇️ รายจ่ายรวม</div>
+            <div class="rs-value" id="rExpense">฿0</div>
+          </div>
+          <div class="rs-card balance">
+            <div class="rs-label">💰 ยอดคงเหลือทั้งหมด</div>
+            <div class="rs-value" id="rBalance">฿0</div>
+            <div class="rs-sub" id="rCount">0 รายการ</div>
+          </div>
+        </div>
+      </div>
+
+      <div id="listContainer"></div>
+
+      <div class="report-footer">
+        <span>สร้างโดยแอปกระปุกใจดี</span>
+        <span class="rf-total" id="rFooterBalance">คงเหลือ ฿0</span>
+      </div>
+    </div>
+
+    <div class="export-row">
+      <button class="pdf" onclick="exportPDF()">📄 บันทึกเป็น PDF</button>
+      <button class="img" onclick="exportImage()">🖼️ บันทึกเป็นรูปภาพ</button>
+    </div>
+  </div>
+
+  <footer>ข้อมูลของคุณถูกเก็บไว้ในเครื่องนี้เท่านั้น 💗</footer>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const CATEGORIES = {
+  expense: [
+    {id:'food', label:'อาหาร', icon:'🍜', color:'#FFE1E1'},
+    {id:'transport', label:'เดินทาง', icon:'🚌', color:'#DDEBFF'},
+    {id:'home', label:'ที่พัก', icon:'🏠', color:'#FFEAD1'},
+    {id:'shopping', label:'ช้อปปิ้ง', icon:'🛍️', color:'#F3DBFF'},
+    {id:'fun', label:'บันเทิง', icon:'🎬', color:'#DFF4FF'},
+    {id:'health', label:'สุขภาพ', icon:'💊', color:'#E1FFEF'},
+    {id:'edu', label:'การศึกษา', icon:'📚', color:'#FFF3D1'},
+    {id:'other_e', label:'อื่นๆ', icon:'✨', color:'#EDEDED'},
+  ],
+  income: [
+    {id:'salary', label:'เงินเดือน', icon:'💼', color:'#D6FFF0'},
+    {id:'business', label:'ธุรกิจ', icon:'📈', color:'#DFF6FF'},
+    {id:'gift', label:'ของขวัญ', icon:'🎁', color:'#FFE4F1'},
+    {id:'bonus', label:'โบนัส', icon:'🏆', color:'#FFF6D1'},
+    {id:'other_i', label:'อื่นๆ', icon:'✨', color:'#EDEDED'},
+  ]
+};
+
+let state = { type:'expense', category:null, filter:'all', transactions:[] };
+
+async function loadData(){
+  try{
+    const res = await window.storage.get('transactions', false);
+    state.transactions = res && res.value ? JSON.parse(res.value) : [];
+  }catch(e){ state.transactions = []; }
+  renderCats();
+  renderList();
+  renderSummary();
+}
+
+async function saveData(){
+  try{ await window.storage.set('transactions', JSON.stringify(state.transactions), false); }
+  catch(e){ console.error('save failed', e); }
+}
+
+function setType(t){
+  state.type = t;
+  state.category = null;
+  document.querySelectorAll('.type-toggle button').forEach(b=>b.classList.toggle('active', b.dataset.type===t));
+  renderCats();
+}
+
+function renderCats(){
+  const grid = document.getElementById('catGrid');
+  grid.innerHTML = '';
+  CATEGORIES[state.type].forEach(c=>{
+    const div = document.createElement('div');
+    div.className = 'cat-chip' + (state.category===c.id ? ' sel':'');
+    div.onclick = ()=>{ state.category=c.id; renderCats(); };
+    div.innerHTML = `<span class="ic">${c.icon}</span><span class="lb">${c.label}</span>`;
+    grid.appendChild(div);
+  });
+}
+
+function findCat(type, id){
+  return CATEGORIES[type].find(c=>c.id===id) || {label:'อื่นๆ', icon:'✨', color:'#EEE'};
+}
+
+function setFilter(f){
+  state.filter = f;
+  document.querySelectorAll('.filter-row button').forEach(b=>b.classList.toggle('on', b.dataset.f===f));
+  renderList();
+}
+
+function addTransaction(){
+  const amt = parseFloat(document.getElementById('amountInput').value);
+  const dateVal = document.getElementById('dateInput').value || new Date().toISOString().slice(0,10);
+  const note = document.getElementById('noteInput').value.trim();
+
+  if(!amt || amt<=0){ showToast('ใส่จำนวนเงินให้ถูกต้องก่อนนะคะ 💸'); return; }
+  if(!state.category){ showToast('เลือกหมวดหมู่ก่อนนะคะ 🌸'); return; }
+
+  state.transactions.unshift({
+    id: Date.now(),
+    type: state.type,
+    category: state.category,
+    amount: amt,
+    note: note,
+    date: dateVal
+  });
+
+  document.getElementById('amountInput').value='';
+  document.getElementById('noteInput').value='';
+  saveData();
+  renderList();
+  renderSummary();
+  showToast(state.type==='expense' ? 'บันทึกรายจ่ายแล้วค่ะ 🌷' : 'บันทึกรายรับแล้วค่ะ 🌟');
+}
+
+function deleteTransaction(id){
+  state.transactions = state.transactions.filter(t=>t.id!==id);
+  saveData();
+  renderList();
+  renderSummary();
+}
+
+function renderSummary(){
+  const income = state.transactions.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
+  const expense = state.transactions.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+  const balance = income - expense;
+  document.getElementById('balanceText').textContent = formatMoney(balance);
+  document.getElementById('incomeText').textContent = formatMoney(income);
+  document.getElementById('expenseText').textContent = formatMoney(expense);
+  renderReportHeader(income, expense, balance);
+}
+
+function renderReportHeader(income, expense, balance){
+  document.getElementById('rIncome').textContent = formatMoney(income);
+  document.getElementById('rExpense').textContent = formatMoney(expense);
+  document.getElementById('rBalance').textContent = formatMoney(balance);
+  document.getElementById('rFooterBalance').textContent = 'คงเหลือ ' + formatMoney(balance);
+  document.getElementById('rCount').textContent = state.transactions.length + ' รายการ';
+
+  const dates = state.transactions.map(t=>t.date).sort();
+  const now = new Date();
+  const genDate = now.toLocaleDateString('th-TH',{day:'numeric',month:'long',year:'numeric'}) +
+    ' เวลา ' + now.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});
+
+  let rangeText = 'ยังไม่มีรายการ';
+  if(dates.length){
+    const first = formatDateLabel(dates[0]);
+    const last = formatDateLabel(dates[dates.length-1]);
+    rangeText = first===last ? `ข้อมูลวันที่ ${first}` : `ข้อมูลตั้งแต่ ${first} ถึง ${last}`;
+  }
+  document.getElementById('reportMeta').innerHTML =
+    `${rangeText}<br>ออกรายงานเมื่อ ${genDate}`;
+}
+
+function formatMoney(n){
+  const sign = n<0 ? '-' : '';
+  return sign + '฿' + Math.abs(n).toLocaleString('th-TH',{minimumFractionDigits:2, maximumFractionDigits:2});
+}
+
+function formatDateLabel(dateStr){
+  const d = new Date(dateStr+'T00:00:00');
+  return d.toLocaleDateString('th-TH', {day:'numeric', month:'long', year:'numeric'});
+}
+
+function renderList(){
+  const container = document.getElementById('listContainer');
+  let items = state.transactions;
+  if(state.filter!=='all') items = items.filter(t=>t.type===state.filter);
+
+  if(items.length===0){
+    container.innerHTML = `<div class="empty"><span class="em">🌱</span><p>ยังไม่มีรายการเลย<br>ลองเพิ่มรายการแรกของคุณดูสิคะ</p></div>`;
+    return;
+  }
+
+  const groups = {};
+  items.forEach(t=>{ (groups[t.date] = groups[t.date]||[]).push(t); });
+  const dates = Object.keys(groups).sort((a,b)=> b.localeCompare(a));
+
+  container.innerHTML = dates.map(date=>{
+    const rows = groups[date].map(t=>{
+      const cat = findCat(t.type, t.category);
+      return `<div class="item">
+        <div class="badge" style="background:${cat.color}">${cat.icon}</div>
+        <div class="info">
+          <div class="cat">${cat.label}</div>
+          ${t.note ? `<div class="note">${escapeHtml(t.note)}</div>` : ''}
+        </div>
+        <div class="amt ${t.type}">${t.type==='income'?'+':'-'}${t.amount.toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2})}</div>
+        <button class="del" onclick="deleteTransaction(${t.id})">✕</button>
+      </div>`;
+    }).join('');
+    return `<div class="day-group"><div class="day-label">${formatDateLabel(date)}</div>${rows}</div>`;
+  }).join('');
+}
+
+function escapeHtml(s){
+  return s.replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(window._toastTimer);
+  window._toastTimer = setTimeout(()=>t.classList.remove('show'), 2200);
+}
+
+async function exportImage(){
+  showToast('กำลังสร้างรูปภาพ... ⏳');
+  const el = document.getElementById('captureArea');
+  const canvas = await html2canvas(el, {backgroundColor:'#ffffff', scale:2});
+  const link = document.createElement('a');
+  link.download = `กระปุกใจดี-${new Date().toISOString().slice(0,10)}.png`;
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+  showToast('เซฟรูปภาพเรียบร้อยค่ะ 🖼️💗');
+}
+
+async function exportPDF(){
+  showToast('กำลังสร้าง PDF... ⏳');
+  const el = document.getElementById('captureArea');
+  const canvas = await html2canvas(el, {backgroundColor:'#ffffff', scale:2});
+  const imgData = canvas.toDataURL('image/png');
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF('p','pt','a4');
+  const pageWidth = pdf.internal.pageSize.getWidth();
+  const pageHeight = pdf.internal.pageSize.getHeight();
+  const imgW = pageWidth - 60;
+  const imgH = (canvas.height * imgW) / canvas.width;
+
+  let heightLeft = imgH;
+  let position = 30;
+  pdf.setFontSize(16);
+  pdf.setTextColor(74,59,92);
+  pdf.text('กระปุกใจดี - สรุปรายการ', 30, position);
+  position += 20;
+  pdf.addImage(imgData, 'PNG', 30, position, imgW, imgH);
+  heightLeft -= (pageHeight - position - 30);
+
+  while(heightLeft > 0){
+    position = heightLeft - imgH + 30;
+    pdf.addPage();
+    pdf.addImage(imgData, 'PNG', 30, position, imgW, imgH);
+    heightLeft -= (pageHeight - 60);
+  }
+
+  pdf.save(`กระปุกใจดี-${new Date().toISOString().slice(0,10)}.pdf`);
+  showToast('เซฟ PDF เรียบร้อยค่ะ 📄💗');
+}
+
+document.getElementById('dateInput').value = new Date().toISOString().slice(0,10);
+loadData();
+</script>
+</body>
+</html>
