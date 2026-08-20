@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>นำเข้าทะเบียนนักเรียน · ระบบผลงาน</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Mitr:wght@400;500;600&family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --pine:#1d4b38; --pine-dk:#123024; --pine-lt:#2f6b4f;
+  --note:#f7f4ea; --paper:#fffdf7; --bark:#6d5c46;
+  --gold:#c1902c; --rust:#a6482f; --line:#ddd5c4;
+  --ink:#20241f; --muted:#7c7566; --r:12px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{font-family:'Sarabun',system-ui,sans-serif;color:var(--ink);background:var(--note);line-height:1.6}
+h1,h2,h3{font-family:'Mitr',sans-serif;font-weight:500}
+button{font-family:inherit;font-size:1rem;cursor:pointer}
+input,select{font-family:inherit;font-size:1rem}
+
+.wrap{max-width:980px;margin:0 auto;padding:0 16px 72px}
+header.top{background:var(--pine);color:#fff;padding:14px 0;position:sticky;top:0;z-index:30;
+  box-shadow:0 2px 10px rgba(18,48,36,.18)}
+header.top .wrap{display:flex;align-items:center;gap:12px;padding-bottom:0}
+header.top h1{margin:0;font-size:1.12rem;flex:1}
+header.top .who{font-size:.85rem;opacity:.85}
+.linkbtn{background:none;border:1px solid rgba(255,255,255,.45);color:#fff;border-radius:8px;
+  padding:5px 11px;font-size:.85rem}
+.linkbtn:hover{background:rgba(255,255,255,.14)}
+
+.login{max-width:390px;margin:9vh auto;background:var(--paper);border:1px solid var(--line);
+  border-radius:16px;padding:30px 26px;box-shadow:0 10px 34px rgba(18,48,36,.10)}
+.login h2{margin:0 0 4px;font-size:1.3rem;color:var(--pine-dk)}
+.login p.sub{margin:0 0 20px;color:var(--muted);font-size:.9rem}
+
+label.f{display:block;margin:12px 0 4px;font-size:.87rem;font-weight:600;color:var(--bark)}
+input[type=text],input[type=password],select{width:100%;padding:9px 11px;border:1px solid var(--line);
+  border-radius:9px;background:var(--paper);color:var(--ink)}
+input:focus,select:focus{outline:2px solid var(--pine-lt);outline-offset:1px;border-color:var(--pine-lt)}
+
+.btn{background:var(--pine);color:#fff;border:none;border-radius:9px;padding:10px 18px;font-weight:600}
+.btn:hover{background:var(--pine-lt)}
+.btn:disabled{background:#9aa79f;cursor:not-allowed}
+.btn.ghost{background:transparent;color:var(--pine);border:1px solid var(--line)}
+.btn.ghost:hover{background:#efeade}
+.btn.gold{background:var(--gold)}
+.btn.sm{padding:6px 12px;font-size:.87rem;border-radius:8px}
+.btn.block{width:100%}
+
+.card{background:var(--paper);border:1px solid var(--line);border-radius:var(--r);
+  padding:18px 20px;margin:16px 0}
+.card > h2{margin:0 0 3px;font-size:1.05rem;color:var(--pine-dk)}
+.card > .sub{margin:0 0 14px;color:var(--muted);font-size:.87rem}
+
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.stat{background:var(--paper);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px}
+.stat .n{font-family:'Mitr',sans-serif;font-size:1.7rem;line-height:1.1;color:var(--pine-dk)}
+.stat .l{font-size:.83rem;color:var(--muted)}
+.stat.warn .n{color:var(--rust)}
+.stat.ok .n{color:var(--pine-lt)}
+
+.drop{border:2px dashed var(--line);border-radius:var(--r);padding:30px 18px;text-align:center;
+  background:#fdfbf4;color:var(--muted);transition:border-color .15s,background .15s}
+.drop.over{border-color:var(--pine-lt);background:#eef4ee}
+.drop b{display:block;font-family:'Mitr',sans-serif;color:var(--bark);font-size:1rem;margin-bottom:4px}
+
+.maprow{display:grid;grid-template-columns:180px 1fr;gap:10px;align-items:center;margin-bottom:8px}
+.maprow span{font-size:.88rem;color:var(--bark);font-weight:600}
+.maprow .need{color:var(--rust)}
+
+table.t{width:100%;border-collapse:collapse;font-size:.89rem}
+table.t th{text-align:left;font-size:.78rem;color:var(--muted);font-weight:600;padding:6px 8px;
+  border-bottom:1px solid var(--line);white-space:nowrap}
+table.t td{padding:5px 8px;border-bottom:1px solid #eee7d8;vertical-align:top}
+table.t tr:last-child td{border-bottom:none}
+.scroll{max-height:340px;overflow:auto;border:1px solid var(--line);border-radius:10px;background:var(--paper)}
+.mono{font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:.85rem}
+
+.tag{display:inline-block;font-size:.75rem;padding:1px 8px;border-radius:99px;border:1px solid var(--line)}
+.tag.inserted{background:#e2f0e6;border-color:#b3d7bf;color:#1d5c34}
+.tag.updated{background:#e4eef6;border-color:#bcd4e6;color:#2c5a7a}
+.tag.unchanged{background:#efeade;color:var(--bark)}
+.tag.error{background:#f8e5df;border-color:#e8bfb2;color:#94402a}
+
+.msg{padding:10px 13px;border-radius:9px;margin:10px 0;font-size:.9rem}
+.msg.err{background:#fbe7e0;border:1px solid #e8bfb2;color:#8d3b26}
+.msg.ok{background:#e2f0e6;border:1px solid #b3d7bf;color:#1d5c34}
+.msg.info{background:#eef1e6;border:1px solid #d5d9c4;color:#4d5340}
+.hint{font-size:.8rem;color:var(--muted);margin-top:4px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.spacer{flex:1}
+#toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(120%);
+  background:var(--pine-dk);color:#fff;padding:11px 20px;border-radius:99px;font-size:.92rem;
+  z-index:90;transition:transform .25s ease;box-shadow:0 6px 20px rgba(0,0,0,.25)}
+#toast.show{transform:translateX(-50%) translateY(0)}
+.hide{display:none !important}
+.spin{display:inline-block;width:15px;height:15px;border:2px solid rgba(255,255,255,.4);
+  border-top-color:#fff;border-radius:50%;animation:sp .7s linear infinite;vertical-align:-2px}
+@keyframes sp{to{transform:rotate(360deg)}}
+.bar{height:7px;background:#e8e2d2;border-radius:99px;overflow:hidden;margin-top:10px}
+.bar > i{display:block;height:100%;background:var(--pine-lt);width:0;transition:width .2s}
+@media (max-width:640px){
+  .stats{grid-template-columns:1fr}
+  .maprow{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none !important;transition:none !important}}
+</style>
+</head>
+<body>
+
+<div id="toast"></div>
+
+<section id="loginView" class="hide">
+  <div class="login">
+    <h2>นำเข้าทะเบียนนักเรียน</h2>
+    <p class="sub">สำหรับงานแนะแนว / ผู้ดูแลระบบ เท่านั้น</p>
+    <div id="loginMsg"></div>
+    <label class="f" for="u">ชื่อผู้ใช้</label>
+    <input id="u" type="text" autocomplete="username">
+    <label class="f" for="p">รหัสผ่าน</label>
+    <input id="p" type="password" autocomplete="current-password">
+    <div style="margin-top:18px"><button id="btnLogin" class="btn block">เข้าสู่ระบบ</button></div>
+  </div>
+</section>
+
+<section id="appView" class="hide">
+  <header class="top">
+    <div class="wrap">
+      <h1>นำเข้าทะเบียนนักเรียน</h1>
+      <div class="who" id="whoName"></div>
+      <button id="btnLogout" class="linkbtn">ออก</button>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <div class="stats" id="stats"></div>
+
+    <div class="card">
+      <h2>1 · เตรียมไฟล์</h2>
+      <p class="sub">ดาวน์โหลดแบบฟอร์มที่มีรายชื่อนักเรียนที่ยังขาดข้อมูลอยู่แล้ว ส่งให้งานทะเบียนกรอกเฉพาะเลขบัตรและชื่อตามทะเบียนราษฎร์</p>
+      <div class="row">
+        <button id="btnTemplate" class="btn ghost">ดาวน์โหลดแบบฟอร์ม (คนที่ยังขาด)</button>
+        <button id="btnBlank" class="btn ghost">ดาวน์โหลดแบบฟอร์มเปล่า</button>
+      </div>
+      <div class="hint">คอลัมน์ที่ต้องมี: รหัสนักเรียน · เลขบัตรประชาชน · คำนำหน้า · ชื่อ · นามสกุล</div>
+    </div>
+
+    <div class="card">
+      <h2>2 · อัปโหลดไฟล์</h2>
+      <p class="sub">รองรับ .csv และ .xlsx — ไฟล์ไม่ถูกส่งไปที่ไหนนอกจากฐานข้อมูลของโรงเรียน</p>
+      <div class="drop" id="drop">
+        <b>ลากไฟล์มาวางที่นี่</b>
+        หรือ <button class="btn sm ghost" id="btnPick">เลือกไฟล์</button>
+        <input type="file" id="file" accept=".csv,.xlsx,.xls" class="hide">
+      </div>
+      <div id="fileMsg"></div>
+
+      <div id="mapBox" class="hide" style="margin-top:16px">
+        <h3 style="margin:0 0 8px;font-size:.97rem">จับคู่คอลัมน์</h3>
+        <div id="mapFields"></div>
+        <div class="row" style="margin-top:14px">
+          <button id="btnCheck" class="btn ghost">ตรวจก่อนนำเข้า</button>
+          <button id="btnImport" class="btn gold" disabled>นำเข้าจริง</button>
+          <div class="spacer"></div>
+          <span class="hint" id="rowCount"></span>
+        </div>
+        <div class="bar hide" id="bar"><i></i></div>
+      </div>
+    </div>
+
+    <div class="card hide" id="resultCard">
+      <h2>3 · ผลการนำเข้า</h2>
+      <p class="sub" id="resultSub"></p>
+      <div id="resultSummary"></div>
+      <div class="scroll" style="margin-top:10px"><table class="t">
+        <thead><tr><th style="width:56px">แถว</th><th style="width:110px">รหัสนักเรียน</th>
+          <th style="width:96px">ผล</th><th>รายละเอียด</th></tr></thead>
+        <tbody id="resultRows"></tbody>
+      </table></div>
+      <div class="row" style="margin-top:12px">
+        <button id="btnDlResult" class="btn ghost sm">ดาวน์โหลดผลเป็น CSV</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>นักเรียนที่ยังไม่มีข้อมูลในทะเบียน</h2>
+      <p class="sub">คนเหล่านี้จะถูกเพิ่มเข้างานผลงานไม่ได้จนกว่าจะมีข้อมูล</p>
+      <input type="text" id="qMissing" placeholder="ค้นด้วยรหัส ชื่อ หรือห้อง">
+      <div class="scroll" style="margin-top:10px"><table class="t">
+        <thead><tr><th style="width:120px">รหัสนักเรียน</th><th>ชื่อในระบบ</th><th style="width:90px">ห้อง</th></tr></thead>
+        <tbody id="missingRows"></tbody>
+      </table></div>
+    </div>
+  </div>
+</section>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script>
+const SUPABASE_URL  = 'https://ikkhjslmtjwrxzxvtokb.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlra2hqc2xtdGp3cnh6eHZ0b2tiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM3NDMzNjksImV4cCI6MjA5OTMxOTM2OX0.3OR_9mEv82Ns1LLjx5nnRwJYzrtKFtWCWd1bPuQfNKU';
+const EMAIL_DOMAIN  = 'guidance-pcw.local';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let toastTimer;
+function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('show');
+  clearTimeout(toastTimer);toastTimer=setTimeout(()=>e.classList.remove('show'),2600);}
+function msg(sel,text,kind){const e=$(sel); e.innerHTML = text ? `<div class="msg ${kind||'info'}">${esc(text)}</div>` : '';}
+
+/* ปิดบังเลขบัตรตอนแสดงผล — เห็นพอให้ตรวจสอบ ไม่เห็นทั้งเลข */
+function maskCid(c){
+  c = String(c||'').replace(/[^0-9A-Za-z]/g,'');
+  if(c.length < 6) return c;
+  return c.slice(0,4) + '•'.repeat(c.length-6) + c.slice(-2);
+}
+
+/* ---------- ฟิลด์ที่ต้อง map ---------- */
+const FIELDS = [
+  {k:'student_id', t:'รหัสนักเรียน',     req:true,  alias:['รหัสนักเรียน','รหัสประจำตัว','เลขประจำตัว','student_id','studentid','รหัส']},
+  {k:'citizen_id', t:'เลขบัตรประชาชน',   req:true,  alias:['เลขบัตรประชาชน','เลขประจำตัวประชาชน','บัตรประชาชน','citizen_id','citizenid','idcard','เลขบัตร']},
+  {k:'prefix',     t:'คำนำหน้า',         req:true,  alias:['คำนำหน้า','คํานําหน้า','คำนำหน้าชื่อ','prefix','title']},
+  {k:'first_name', t:'ชื่อ',             req:true,  alias:['ชื่อ','ชื่อจริง','first_name','firstname','name']},
+  {k:'last_name',  t:'นามสกุล',          req:true,  alias:['นามสกุล','สกุล','last_name','lastname','surname']}
+];
+
+const S = {profile:null, headers:[], rows:[], map:{}, results:[]};
+
+/* ============ CSV ============ */
+function parseCSV(text){
+  if(text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+  const rows=[]; let row=[], cur='', q=false;
+  for(let i=0;i<text.length;i++){
+    const c=text[i];
+    if(q){
+      if(c === '"'){ if(text[i+1] === '"'){ cur+='"'; i++; } else q=false; }
+      else cur+=c;
+    } else {
+      if(c === '"') q=true;
+      else if(c === ','){ row.push(cur); cur=''; }
+      else if(c === '\n'){ row.push(cur); rows.push(row); row=[]; cur=''; }
+      else if(c === '\r'){ /* ข้าม */ }
+      else cur+=c;
+    }
+  }
+  if(cur !== '' || row.length){ row.push(cur); rows.push(row); }
+  return rows.filter(r => r.some(v => String(v).trim() !== ''));
+}
+function toCSV(header, rows){
+  const q = v => {
+    const s = String(v ?? '');
+    return /[",\n]/.test(s) ? '"' + s.replace(/"/g,'""') + '"' : s;
+  };
+  return '\uFEFF' + [header, ...rows].map(r => r.map(q).join(',')).join('\r\n');
+}
+function download(name, text){
+  const b = new Blob([text], {type:'text/csv;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(b); a.download = name; a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 1500);
+}
+
+/* ============ auth ============ */
+async function boot(){
+  const {data:{session}} = await sb.auth.getSession();
+  if(!session){ show('#loginView'); return; }
+  const {data:prof} = await sb.from('profiles')
+    .select('id,display_name,role,is_guidance').eq('id', session.user.id).single();
+  if(!prof){ await sb.auth.signOut(); show('#loginView'); return; }
+  if(prof.role !== 'admin' && !prof.is_guidance){
+    await sb.auth.signOut();
+    show('#loginView');
+    msg('#loginMsg','หน้านี้เปิดให้เฉพาะงานแนะแนวและผู้ดูแลระบบ','err');
+    return;
+  }
+  S.profile = prof;
+  $('#whoName').textContent = prof.display_name;
+  show('#appView');
+  await Promise.all([loadStats(), loadMissing('')]);
+}
+function show(sel){
+  $('#loginView').classList.toggle('hide', sel !== '#loginView');
+  $('#appView').classList.toggle('hide', sel !== '#appView');
+}
+async function login(){
+  const u=$('#u').value.trim(), p=$('#p').value;
+  if(!u||!p){ msg('#loginMsg','กรอกชื่อผู้ใช้และรหัสผ่านให้ครบก่อน','err'); return; }
+  const b=$('#btnLogin'); b.disabled=true; b.innerHTML='<span class="spin"></span> กำลังเข้าสู่ระบบ';
+  msg('#loginMsg','');
+  const {error} = await sb.auth.signInWithPassword({email:u+'@'+EMAIL_DOMAIN, password:p});
+  b.disabled=false; b.textContent='เข้าสู่ระบบ';
+  if(error){ msg('#loginMsg','ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง','err'); return; }
+  $('#p').value=''; await boot();
+}
+
+/* ============ ภาพรวม ============ */
+async function loadStats(){
+  const {data, error} = await sb.rpc('awards_identity_overview');
+  if(error){ $('#stats').innerHTML = `<div class="msg err">โหลดสถิติไม่สำเร็จ: ${esc(error.message)}</div>`; return; }
+  const s = Array.isArray(data) ? data[0] : data;
+  $('#stats').innerHTML = `
+    <div class="stat"><div class="n">${s.total}</div><div class="l">นักเรียนทั้งหมด</div></div>
+    <div class="stat ok"><div class="n">${s.filled}</div><div class="l">มีข้อมูลในทะเบียนแล้ว</div></div>
+    <div class="stat ${s.missing>0?'warn':''}"><div class="n">${s.missing}</div><div class="l">ยังขาดข้อมูล</div></div>`;
+}
+
+async function loadMissing(q){
+  const {data, error} = await sb.rpc('awards_identity_missing', {p_q:q||null, p_limit:500});
+  const tb = $('#missingRows');
+  if(error){ tb.innerHTML = `<tr><td colspan="3">โหลดไม่สำเร็จ: ${esc(error.message)}</td></tr>`; return; }
+  if(!data.length){ tb.innerHTML = '<tr><td colspan="3" style="color:var(--muted)">ไม่มีรายชื่อค้าง</td></tr>'; return; }
+  tb.innerHTML = data.map(r=>`<tr>
+    <td class="mono">${esc(r.student_id||'—')}</td>
+    <td>${esc(r.display_name)}</td>
+    <td>${esc(r.class_room||'—')}</td></tr>`).join('');
+}
+
+/* ============ แบบฟอร์ม ============ */
+const TPL_HEADER = ['รหัสนักเรียน','ชื่อในระบบ','เลขบัตรประชาชน','คำนำหน้า','ชื่อ','นามสกุล'];
+async function downloadTemplate(withNames){
+  let rows = [];
+  if(withNames){
+    const {data, error} = await sb.rpc('awards_identity_missing', {p_q:null, p_limit:5000});
+    if(error){ toast('ดึงรายชื่อไม่สำเร็จ'); return; }
+    if(!data.length){ toast('ไม่มีรายชื่อค้าง — ทะเบียนครบแล้ว'); return; }
+    rows = data.map(r=>[r.student_id||'', r.display_name, '', '', '', '']);
+  } else {
+    rows = [['','','','','','']];
+  }
+  download(withNames ? 'ทะเบียนนักเรียน-ที่ยังขาด.csv' : 'ทะเบียนนักเรียน-แบบฟอร์มเปล่า.csv',
+           toCSV(TPL_HEADER, rows));
+}
+
+/* ============ อ่านไฟล์ ============ */
+async function readFile(file){
+  msg('#fileMsg','');
+  S.results = []; $('#resultCard').classList.add('hide');
+  let table;
+  try{
+    if(/\.xlsx?$/i.test(file.name)){
+      const buf = await file.arrayBuffer();
+      const wb = XLSX.read(buf, {type:'array'});
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      table = XLSX.utils.sheet_to_json(ws, {header:1, raw:false, defval:''});
+      table = table.filter(r => r.some(v => String(v).trim() !== ''));
+    } else {
+      table = parseCSV(await file.text());
+    }
+  }catch(err){
+    msg('#fileMsg','อ่านไฟล์ไม่สำเร็จ: ' + err.message, 'err'); return;
+  }
+  if(!table || table.length < 2){
+    msg('#fileMsg','ไฟล์ต้องมีบรรทัดหัวตารางและข้อมูลอย่างน้อย 1 แถว','err'); return;
+  }
+  S.headers = table[0].map(h => String(h).trim());
+  S.rows    = table.slice(1);
+  renderMapping();
+  msg('#fileMsg', `อ่านไฟล์ ${file.name} แล้ว — พบ ${S.rows.length} แถว`, 'ok');
+}
+
+function norm(s){ return String(s||'').toLowerCase().replace(/[\s._-]/g,''); }
+function renderMapping(){
+  const opts = ['<option value="">— ไม่ใช้ —</option>']
+    .concat(S.headers.map((h,i)=>`<option value="${i}">${esc(h||('คอลัมน์ '+(i+1)))}</option>`)).join('');
+
+  $('#mapFields').innerHTML = FIELDS.map(f=>{
+    // เดาคอลัมน์: ตรงเป๊ะก่อน ถ้าไม่เจอค่อยหาแบบมีคำนั้นอยู่ข้างใน
+    let guess = S.headers.findIndex(h => f.alias.some(a => norm(h) === norm(a)));
+    if(guess < 0) guess = S.headers.findIndex(h => f.alias.some(a => norm(h).includes(norm(a))));
+    S.map[f.k] = guess >= 0 ? guess : '';
+    return `<div class="maprow">
+      <span>${esc(f.t)} ${f.req?'<span class="need">*</span>':''}</span>
+      <select data-k="${f.k}">${opts}</select>
+    </div>`;
+  }).join('');
+
+  $('#mapFields').querySelectorAll('select').forEach(sel=>{
+    sel.value = S.map[sel.dataset.k] === '' ? '' : String(S.map[sel.dataset.k]);
+    sel.addEventListener('change', ()=>{
+      S.map[sel.dataset.k] = sel.value === '' ? '' : Number(sel.value);
+      $('#btnImport').disabled = true;
+    });
+  });
+
+  $('#mapBox').classList.remove('hide');
+  $('#rowCount').textContent = `${S.rows.length} แถวในไฟล์`;
+  $('#btnImport').disabled = true;
+}
+
+function buildPayload(){
+  const missing = FIELDS.filter(f => f.req && S.map[f.k] === '');
+  if(missing.length){
+    msg('#fileMsg','ยังไม่ได้เลือกคอลัมน์: ' + missing.map(f=>f.t).join(', '), 'err');
+    return null;
+  }
+  return S.rows.map(r=>{
+    const o = {};
+    FIELDS.forEach(f=>{ o[f.k] = String(r[S.map[f.k]] ?? '').trim(); });
+    return o;
+  });
+}
+
+/* ============ นำเข้า ============ */
+async function runImport(dryRun){
+  const payload = buildPayload();
+  if(!payload) return;
+  msg('#fileMsg','');
+
+  const btn = dryRun ? $('#btnCheck') : $('#btnImport');
+  const label = btn.textContent;
+  btn.disabled = true; btn.innerHTML = '<span class="spin"></span> กำลังทำงาน';
+  $('#bar').classList.remove('hide');
+
+  const CHUNK = 200;
+  const all = [];
+  let offset = 0;
+  try{
+    for(let i=0;i<payload.length;i+=CHUNK){
+      const slice = payload.slice(i, i+CHUNK);
+      const {data, error} = await sb.rpc('awards_import_identity',
+        {p_rows: slice, p_dry_run: dryRun});
+      if(error) throw error;
+      (data||[]).forEach(d => all.push({...d, row_no: d.row_no + offset}));
+      offset += slice.length;
+      $('#bar').firstElementChild.style.width = Math.round(offset/payload.length*100) + '%';
+    }
+  }catch(err){
+    btn.disabled = false; btn.textContent = label;
+    $('#bar').classList.add('hide');
+    msg('#fileMsg','นำเข้าไม่สำเร็จ: ' + (err.message||err), 'err');
+    return;
+  }
+
+  btn.disabled = false; btn.textContent = label;
+  $('#bar').classList.add('hide');
+  $('#bar').firstElementChild.style.width = '0';
+
+  S.results = all;
+  renderResults(dryRun);
+
+  const errs = all.filter(r=>r.result === 'error').length;
+  if(dryRun){
+    $('#btnImport').disabled = (all.length - errs) === 0;
+    toast(errs ? `ตรวจแล้ว พบปัญหา ${errs} แถว` : 'ตรวจแล้ว ไม่พบปัญหา');
+  } else {
+    toast('นำเข้าเรียบร้อย');
+    await Promise.all([loadStats(), loadMissing($('#qMissing').value)]);
+  }
+}
+
+function renderResults(dryRun){
+  const c = {inserted:0, updated:0, unchanged:0, error:0};
+  S.results.forEach(r => c[r.result] = (c[r.result]||0) + 1);
+
+  $('#resultSub').textContent = dryRun
+    ? 'ผลการตรวจ — ยังไม่ได้บันทึกลงฐานข้อมูล'
+    : 'บันทึกลงฐานข้อมูลแล้ว';
+
+  $('#resultSummary').innerHTML =
+    `<div class="msg ${c.error ? 'err' : 'ok'}">
+      ${dryRun ? 'จะเพิ่มใหม่' : 'เพิ่มใหม่'} ${c.inserted} · 
+      ${dryRun ? 'จะแก้ไข' : 'แก้ไข'} ${c.updated} · 
+      ไม่เปลี่ยนแปลง ${c.unchanged} · ผิดพลาด ${c.error}
+      ${c.error ? ' — แถวที่ผิดพลาดจะถูกข้าม แถวที่เหลือบันทึกได้ตามปกติ' : ''}
+    </div>`;
+
+  const order = {error:0, inserted:1, updated:2, unchanged:3};
+  const sorted = [...S.results].sort((a,b)=>(order[a.result]-order[b.result]) || (a.row_no-b.row_no));
+  $('#resultRows').innerHTML = sorted.slice(0,400).map(r=>`<tr>
+    <td class="mono">${r.row_no}</td>
+    <td class="mono">${esc(r.student_id||'—')}</td>
+    <td><span class="tag ${r.result}">${
+      {inserted:'เพิ่มใหม่',updated:'แก้ไข',unchanged:'เหมือนเดิม',error:'ผิดพลาด'}[r.result]
+    }</span></td>
+    <td>${esc(r.detail)}</td></tr>`).join('') +
+    (sorted.length > 400 ? `<tr><td colspan="4" class="hint">แสดง 400 แถวแรกจาก ${sorted.length} แถว — ดาวน์โหลด CSV เพื่อดูทั้งหมด</td></tr>` : '');
+
+  $('#resultCard').classList.remove('hide');
+  $('#resultCard').scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+
+/* ============ events ============ */
+$('#btnLogin').addEventListener('click', login);
+$('#p').addEventListener('keydown', e=>{ if(e.key==='Enter') login(); });
+$('#u').addEventListener('keydown', e=>{ if(e.key==='Enter') $('#p').focus(); });
+$('#btnLogout').addEventListener('click', async ()=>{ await sb.auth.signOut(); show('#loginView'); });
+
+$('#btnTemplate').addEventListener('click', ()=>downloadTemplate(true));
+$('#btnBlank').addEventListener('click', ()=>downloadTemplate(false));
+
+$('#btnPick').addEventListener('click', ()=>$('#file').click());
+$('#file').addEventListener('change', e=>{ if(e.target.files[0]) readFile(e.target.files[0]); });
+const drop = $('#drop');
+['dragenter','dragover'].forEach(ev=>drop.addEventListener(ev, e=>{
+  e.preventDefault(); drop.classList.add('over');
+}));
+['dragleave','drop'].forEach(ev=>drop.addEventListener(ev, e=>{
+  e.preventDefault(); drop.classList.remove('over');
+}));
+drop.addEventListener('drop', e=>{ if(e.dataTransfer.files[0]) readFile(e.dataTransfer.files[0]); });
+
+$('#btnCheck').addEventListener('click', ()=>runImport(true));
+$('#btnImport').addEventListener('click', ()=>{
+  const ok = S.results.filter(r=>r.result!=='error').length;
+  if(!confirm(`นำเข้าข้อมูล ${ok} แถวลงทะเบียน?`)) return;
+  runImport(false);
+});
+$('#btnDlResult').addEventListener('click', ()=>{
+  download('ผลการนำเข้าทะเบียน.csv',
+    toCSV(['แถว','รหัสนักเรียน','ผล','รายละเอียด'],
+      S.results.map(r=>[r.row_no, r.student_id, r.result, r.detail])));
+});
+
+let mt;
+$('#qMissing').addEventListener('input', e=>{
+  clearTimeout(mt);
+  const q = e.target.value;
+  mt = setTimeout(()=>loadMissing(q), 280);
+});
+
+boot();
+</script>
+</body>
+</html>

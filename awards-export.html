@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ส่งออกข้อมูล TCASVerified · งานแนะแนว</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Mitr:wght@400;500;600&family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --pine:#1d4b38; --pine-dk:#123024; --pine-lt:#2f6b4f;
+  --note:#f7f4ea; --paper:#fffdf7; --bark:#6d5c46;
+  --gold:#c1902c; --rust:#a6482f; --line:#ddd5c4;
+  --ink:#20241f; --muted:#7c7566; --r:12px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{font-family:'Sarabun',system-ui,sans-serif;color:var(--ink);background:var(--note);line-height:1.6}
+h1,h2,h3{font-family:'Mitr',sans-serif;font-weight:500}
+button{font-family:inherit;font-size:1rem;cursor:pointer}
+input,select{font-family:inherit;font-size:1rem}
+
+.wrap{max-width:1040px;margin:0 auto;padding:0 16px 80px}
+header.top{background:var(--pine);color:#fff;padding:14px 0;position:sticky;top:0;z-index:30;
+  box-shadow:0 2px 10px rgba(18,48,36,.18)}
+header.top .wrap{display:flex;align-items:center;gap:12px;padding-bottom:0}
+header.top h1{margin:0;font-size:1.12rem;flex:1}
+header.top .who{font-size:.85rem;opacity:.85}
+.linkbtn{background:none;border:1px solid rgba(255,255,255,.45);color:#fff;border-radius:8px;
+  padding:5px 11px;font-size:.85rem}
+.linkbtn:hover{background:rgba(255,255,255,.14)}
+
+.login{max-width:390px;margin:9vh auto;background:var(--paper);border:1px solid var(--line);
+  border-radius:16px;padding:30px 26px;box-shadow:0 10px 34px rgba(18,48,36,.10)}
+.login h2{margin:0 0 4px;font-size:1.3rem;color:var(--pine-dk)}
+.login p.sub{margin:0 0 20px;color:var(--muted);font-size:.9rem}
+label.f{display:block;margin:12px 0 4px;font-size:.87rem;font-weight:600;color:var(--bark)}
+input[type=text],input[type=password],select{width:100%;padding:9px 11px;border:1px solid var(--line);
+  border-radius:9px;background:var(--paper);color:var(--ink)}
+input:focus,select:focus{outline:2px solid var(--pine-lt);outline-offset:1px;border-color:var(--pine-lt)}
+
+.btn{background:var(--pine);color:#fff;border:none;border-radius:9px;padding:10px 18px;font-weight:600}
+.btn:hover{background:var(--pine-lt)}
+.btn:disabled{background:#9aa79f;cursor:not-allowed}
+.btn.ghost{background:transparent;color:var(--pine);border:1px solid var(--line)}
+.btn.ghost:hover{background:#efeade}
+.btn.gold{background:var(--gold)}
+.btn.rust{background:var(--rust)}
+.btn.sm{padding:6px 12px;font-size:.87rem;border-radius:8px}
+.btn.block{width:100%}
+
+.typepick{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:6px 0 4px}
+.typepick button{border:1px solid var(--line);background:var(--paper);border-radius:10px;
+  padding:10px 6px;font-size:.87rem;color:var(--bark);line-height:1.35}
+.typepick button.on{background:var(--pine);color:#fff;border-color:var(--pine);font-weight:600}
+
+.toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;background:var(--paper);
+  border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;margin:16px 0}
+.toolbar .fld{min-width:150px}
+.toolbar .fld label.f{margin-top:0}
+.spacer{flex:1}
+label.chk{display:flex;align-items:center;gap:7px;font-size:.9rem;color:var(--bark);white-space:nowrap}
+
+.card{background:var(--paper);border:1px solid var(--line);border-radius:var(--r);padding:18px 20px;margin:16px 0}
+.card > h2{margin:0 0 3px;font-size:1.05rem;color:var(--pine-dk)}
+.card > .sub{margin:0 0 14px;color:var(--muted);font-size:.87rem}
+
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.stat{background:var(--paper);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px}
+.stat .n{font-family:'Mitr',sans-serif;font-size:1.6rem;line-height:1.1;color:var(--pine-dk)}
+.stat .l{font-size:.82rem;color:var(--muted)}
+.stat.warn .n{color:var(--rust)}
+
+table.t{width:100%;border-collapse:collapse;font-size:.89rem}
+table.t th{text-align:left;font-size:.78rem;color:var(--muted);font-weight:600;padding:6px 8px;
+  border-bottom:1px solid var(--line);white-space:nowrap}
+table.t td{padding:6px 8px;border-bottom:1px solid #eee7d8;vertical-align:top}
+table.t tr:last-child td{border-bottom:none}
+.scroll{max-height:340px;overflow:auto;border:1px solid var(--line);border-radius:10px;background:var(--paper)}
+
+.pill{display:inline-block;font-size:.75rem;padding:2px 9px;border-radius:99px;border:1px solid var(--line);
+  background:#f2ecdd;color:var(--bark);white-space:nowrap}
+.pill.prepared{background:#f7efd8;border-color:#e3d0a0;color:#7a6118}
+.pill.uploaded{background:#e2f0e6;border-color:#b3d7bf;color:#1d5c34}
+.pill.rejected,.pill.deleted{background:#f8e5df;border-color:#e8bfb2;color:#94402a}
+
+.msg{padding:10px 13px;border-radius:9px;margin:10px 0;font-size:.9rem}
+.msg.err{background:#fbe7e0;border:1px solid #e8bfb2;color:#8d3b26}
+.msg.ok{background:#e2f0e6;border:1px solid #b3d7bf;color:#1d5c34}
+.msg.info{background:#eef1e6;border:1px solid #d5d9c4;color:#4d5340}
+.hint{font-size:.8rem;color:var(--muted)}
+.mono{font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:.85rem}
+.step{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;
+  border-radius:50%;background:var(--pine);color:#fff;font-size:.78rem;font-weight:700;margin-right:8px}
+
+.empty{text-align:center;padding:34px 20px;color:var(--muted);background:var(--paper);
+  border:1px dashed var(--line);border-radius:var(--r)}
+#toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(140%);
+  background:var(--pine-dk);color:#fff;padding:11px 20px;border-radius:99px;font-size:.92rem;
+  z-index:90;transition:transform .25s ease;box-shadow:0 6px 20px rgba(0,0,0,.25)}
+#toast.show{transform:translateX(-50%) translateY(0)}
+.hide{display:none !important}
+.spin{display:inline-block;width:15px;height:15px;border:2px solid rgba(255,255,255,.4);
+  border-top-color:#fff;border-radius:50%;animation:sp .7s linear infinite;vertical-align:-2px}
+@keyframes sp{to{transform:rotate(360deg)}}
+@media (max-width:640px){ .typepick{grid-template-columns:1fr 1fr} .stats{grid-template-columns:1fr 1fr} }
+@media (prefers-reduced-motion:reduce){*{animation:none !important;transition:none !important}}
+</style>
+</head>
+<body>
+
+<div id="toast"></div>
+
+<section id="loginView" class="hide">
+  <div class="login">
+    <h2>ส่งออกข้อมูล TCASVerified</h2>
+    <p class="sub">สำหรับงานแนะแนว / ผู้ดูแลระบบ</p>
+    <div id="loginMsg"></div>
+    <label class="f" for="u">ชื่อผู้ใช้</label>
+    <input id="u" type="text" autocomplete="username">
+    <label class="f" for="p">รหัสผ่าน</label>
+    <input id="p" type="password" autocomplete="current-password">
+    <div style="margin-top:18px"><button id="btnLogin" class="btn block">เข้าสู่ระบบ</button></div>
+  </div>
+</section>
+
+<section id="appView" class="hide">
+  <header class="top">
+    <div class="wrap">
+      <h1>ส่งออกข้อมูล TCASVerified</h1>
+      <div class="who" id="whoName"></div>
+      <button id="btnLogout" class="linkbtn">ออก</button>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <div class="card">
+      <h2><span class="step">1</span>เลือกไฟล์ที่จะเตรียม</h2>
+      <p class="sub">แต่ละประเภทของ TCASVerified ใช้คนละไฟล์ ห้ามปนกัน</p>
+      <div class="typepick" id="typePick">
+        <button data-v="prize" class="on">รางวัล<br><span style="font-size:.72rem;opacity:.75">prizes.csv</span></button>
+        <button data-v="activity">กิจกรรม<br><span style="font-size:.72rem;opacity:.75">activities.csv</span></button>
+        <button data-v="project">โครงงาน<br><span style="font-size:.72rem;opacity:.75">projects.csv</span></button>
+        <button data-v="course">หลักสูตร/อบรม<br><span style="font-size:.72rem;opacity:.75">certs-courses.csv</span></button>
+      </div>
+
+      <div class="toolbar" style="margin-top:14px">
+        <div class="fld">
+          <label class="f" for="selYear">ปีการศึกษา</label>
+          <select id="selYear"></select>
+        </div>
+        <div class="fld" style="min-width:220px">
+          <label class="f" for="selGroup">กลุ่มสาระ</label>
+          <select id="selGroup"><option value="">ทุกกลุ่มสาระ</option></select>
+        </div>
+        <label class="chk"><input type="checkbox" id="chkOnlyNew" checked>
+          เฉพาะที่ยังไม่เคยส่ง</label>
+        <div class="spacer"></div>
+        <button id="btnCheck" class="btn ghost">ตรวจความพร้อม</button>
+      </div>
+      <div id="checkMsg"></div>
+    </div>
+
+    <div class="card hide" id="issueCard">
+      <h2>รายการที่ยังส่งไม่ได้</h2>
+      <p class="sub" id="issueSub"></p>
+      <div class="scroll"><table class="t">
+        <thead><tr><th>งาน</th><th>ปัญหา</th></tr></thead>
+        <tbody id="issueRows"></tbody>
+      </table></div>
+    </div>
+
+    <div class="card hide" id="readyCard">
+      <h2><span class="step">2</span>ดาวน์โหลดไฟล์</h2>
+      <p class="sub" id="readySub"></p>
+      <div class="stats" id="readyStats"></div>
+      <div style="margin-top:14px">
+        <button id="btnDownload" class="btn gold">ดาวน์โหลดไฟล์ .csv</button>
+        <span class="hint" id="fmtHint" style="margin-left:8px"></span>
+      </div>
+      <div class="scroll" style="margin-top:14px"><table class="t" id="previewTable"></table></div>
+    </div>
+
+    <div class="card hide" id="markCard">
+      <h2><span class="step">3</span>บันทึกว่าส่งแล้ว</h2>
+      <p class="sub">หลังอัปโหลดไฟล์ขึ้น TCASVerified สำเร็จแล้ว กดปุ่มนี้เพื่อกันไม่ให้แถวเดิมถูกส่งซ้ำในรอบหน้า และเริ่มนับสิทธิ์ลบไฟล์ 7 วันที่ปลายทาง</p>
+      <div id="markMsg"></div>
+      <button id="btnMark" class="btn">บันทึกว่าอัปโหลดขึ้น TCASVerified แล้ว</button>
+    </div>
+
+    <div class="card">
+      <h2>ประวัติการส่งออก</h2>
+      <p class="sub">รายการที่เคยเตรียมไว้ พร้อมสถานะและกำหนดลบที่ปลายทาง</p>
+      <div class="scroll"><table class="t">
+        <thead><tr><th>วันที่เตรียม</th><th>ประเภท</th><th>ปี</th><th>กลุ่มสาระ</th>
+          <th>จำนวน</th><th>สถานะ</th><th>ลบได้ถึง</th><th></th></tr></thead>
+        <tbody id="histRows"><tr><td colspan="8" class="hint">กำลังโหลด…</td></tr></tbody>
+      </table></div>
+    </div>
+  </div>
+</section>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+const SUPABASE_URL  = 'https://ikkhjslmtjwrxzxvtokb.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlra2hqc2xtdGp3cnh6eHZ0b2tiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM3NDMzNjksImV4cCI6MjA5OTMxOTM2OX0.3OR_9mEv82Ns1LLjx5nnRwJYzrtKFtWCWd1bPuQfNKU';
+const EMAIL_DOMAIN  = 'guidance-pcw.local';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let tt;
+function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('show');
+  clearTimeout(tt);tt=setTimeout(()=>e.classList.remove('show'),2800);}
+function msg(sel,text,kind){const e=$(sel);e.innerHTML = text?`<div class="msg ${kind||'info'}">${esc(text)}</div>`:'';}
+
+const TYPE_T   = {prize:'รางวัล', activity:'กิจกรรม', project:'โครงงาน', course:'หลักสูตร/อบรม'};
+const FILE_T   = {prize:'prizes', activity:'activities', project:'projects', course:'certs-courses'};
+const BSTATUS_T= {prepared:'เตรียมไว้', uploaded:'ส่งแล้ว', rejected:'ถูกปฏิเสธ', deleted:'ลบแล้ว'};
+
+function thaiAcademicYear(d){
+  d = d || new Date();
+  const y = d.getFullYear();
+  return y + 543 - (d < new Date(y,4,16) ? 1 : 0);
+}
+function fmtDateTime(iso){
+  if(!iso) return '—';
+  const d = new Date(iso);
+  return d.toLocaleDateString('th-TH', {day:'2-digit',month:'2-digit',year:'numeric'}) + ' ' +
+         d.toLocaleTimeString('th-TH', {hour:'2-digit',minute:'2-digit'});
+}
+function daysLeft(iso){
+  if(!iso) return null;
+  const ms = new Date(iso) - new Date();
+  return Math.ceil(ms / 86400000);
+}
+
+const S = {profile:null, groups:[], year:thaiAcademicYear(), group:'', type:'prize', onlyNew:true,
+           rows:null, batches:[]};
+
+/* ================= CSV ================= */
+function buildCSV(type, rows){
+  const cols = COLUMNS[type];
+  const fmt  = FMT[type]; // {bom, eol}
+  const q = v => {
+    const s = String(v ?? '');
+    return /[",\r\n]/.test(s) ? '"' + s.replace(/"/g,'""') + '"' : s;
+  };
+  const lines = [cols.map(q).join(',')];
+  rows.forEach(r => lines.push(cols.map(c => q(r[c])).join(',')));
+  const eol = fmt.eol === 'crlf' ? '\r\n' : '\n';
+  let text = lines.join(eol) + eol;
+  if(fmt.bom) text = '\uFEFF' + text;
+  return text;
+}
+function download(name, text, bom){
+  const b = new Blob([text], {type:'text/csv;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(b); a.download = name; a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 1500);
+}
+
+let COLUMNS = null, FMT = null;
+async function loadFormats(){
+  const [{data:cp}, {data:ca}, {data:cj}, {data:cc},
+         {data:fp}, {data:fa}, {data:fj}, {data:fc}] = await Promise.all([
+    sb.rpc('tcas_export_columns', {p_type:'prize'}),
+    sb.rpc('tcas_export_columns', {p_type:'activity'}),
+    sb.rpc('tcas_export_columns', {p_type:'project'}),
+    sb.rpc('tcas_export_columns', {p_type:'course'}),
+    sb.rpc('tcas_file_format', {p_type:'prize'}),
+    sb.rpc('tcas_file_format', {p_type:'activity'}),
+    sb.rpc('tcas_file_format', {p_type:'project'}),
+    sb.rpc('tcas_file_format', {p_type:'course'})
+  ]);
+  COLUMNS = {prize:cp, activity:ca, project:cj, course:cc};
+  FMT     = {prize:fp, activity:fa, project:fj, course:fc};
+}
+
+/* ================= auth ================= */
+async function boot(){
+  const {data:{session}} = await sb.auth.getSession();
+  if(!session){ show('#loginView'); return; }
+  const {data:prof} = await sb.from('profiles')
+    .select('id,display_name,role,is_guidance').eq('id', session.user.id).single();
+  if(!prof){ await sb.auth.signOut(); show('#loginView'); return; }
+  if(prof.role !== 'admin' && !prof.is_guidance){
+    await sb.auth.signOut(); show('#loginView');
+    msg('#loginMsg','หน้านี้เปิดให้เฉพาะงานแนะแนวและผู้ดูแลระบบ','err');
+    return;
+  }
+  S.profile = prof;
+  $('#whoName').textContent = prof.display_name;
+  show('#appView');
+
+  const {data:groups} = await sb.from('subject_groups')
+    .select('id,name_th').eq('is_active', true).order('sort_order');
+  S.groups = groups || [];
+  $('#selGroup').innerHTML = '<option value="">ทุกกลุ่มสาระ</option>' +
+    S.groups.map(g=>`<option value="${g.id}">${esc(g.name_th)}</option>`).join('');
+
+  const now = thaiAcademicYear();
+  $('#selYear').innerHTML = [now, now-1, now-2, now-3]
+    .map(y=>`<option value="${y}" ${y===S.year?'selected':''}>${y}</option>`).join('');
+
+  await loadFormats();
+  await loadHistory();
+}
+function show(sel){
+  $('#loginView').classList.toggle('hide', sel !== '#loginView');
+  $('#appView').classList.toggle('hide', sel !== '#appView');
+}
+async function login(){
+  const u=$('#u').value.trim(), p=$('#p').value;
+  if(!u||!p){ msg('#loginMsg','กรอกชื่อผู้ใช้และรหัสผ่านให้ครบก่อน','err'); return; }
+  const b=$('#btnLogin'); b.disabled=true; b.innerHTML='<span class="spin"></span> กำลังเข้าสู่ระบบ';
+  msg('#loginMsg','');
+  const {error} = await sb.auth.signInWithPassword({email:u+'@'+EMAIL_DOMAIN, password:p});
+  b.disabled=false; b.textContent='เข้าสู่ระบบ';
+  if(error){ msg('#loginMsg','ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง','err'); return; }
+  $('#p').value=''; await boot();
+}
+
+/* ================= ตรวจความพร้อม ================= */
+function resetStage(){
+  S.rows = null;
+  $('#issueCard').classList.add('hide');
+  $('#readyCard').classList.add('hide');
+  $('#markCard').classList.add('hide');
+  msg('#checkMsg','');
+}
+
+async function checkReady(){
+  resetStage();
+  const btn = $('#btnCheck');
+  btn.disabled = true; btn.innerHTML = '<span class="spin"></span> กำลังตรวจ';
+
+  const gid = S.group ? Number(S.group) : null;
+
+  const [{data:issues, error:e1}, {data:rows, error:e2}] = await Promise.all([
+    sb.rpc('tcas_validate', {p_type:S.type, p_academic_year:S.year, p_subject_group_id:gid}),
+    sb.rpc('tcas_export_rows', {p_type:S.type, p_academic_year:S.year,
+      p_subject_group_id:gid, p_only_new:S.onlyNew})
+  ]);
+
+  btn.disabled = false; btn.textContent = 'ตรวจความพร้อม';
+
+  if(e1 || e2){
+    msg('#checkMsg','ตรวจไม่สำเร็จ: ' + ((e1||e2).message), 'err');
+    return;
+  }
+
+  if(issues && issues.length){
+    $('#issueSub').textContent = `พบ ${issues.length} รายการที่ยังส่งไม่ได้ — แก้ไขก่อนจึงจะส่งออกได้ครบ`;
+    $('#issueRows').innerHTML = issues.map(i=>`<tr>
+      <td>${esc(i.event_title)}</td><td>${esc(i.issue)}</td></tr>`).join('');
+    $('#issueCard').classList.remove('hide');
+  }
+
+  S.rows = (rows||[]).map(r => r.row_json);
+  S.rowIds = (rows||[]).map(r => r.participant_id);
+
+  if(!S.rows.length){
+    msg('#checkMsg', S.onlyNew
+      ? 'ไม่มีรายการใหม่ให้ส่งออก (อาจส่งไปหมดแล้ว หรือยังไม่มีรายการที่ยืนยันแล้ว)'
+      : 'ไม่มีรายการที่ยืนยันแล้วในเงื่อนไขนี้', 'info');
+    return;
+  }
+
+  $('#readySub').textContent =
+    `${TYPE_T[S.type]} · ปีการศึกษา ${S.year} · ${S.group ? S.groups.find(g=>g.id==S.group).name_th : 'ทุกกลุ่มสาระ'}`;
+  $('#readyStats').innerHTML = `
+    <div class="stat"><div class="n">${S.rows.length}</div><div class="l">รายการที่พร้อมส่งออก</div></div>
+    <div class="stat ${issues&&issues.length?'warn':''}"><div class="n">${issues?issues.length:0}</div><div class="l">รายการที่ยังส่งไม่ได้</div></div>
+    <div class="stat"><div class="n">${COLUMNS[S.type].length}</div><div class="l">คอลัมน์ในไฟล์</div></div>
+    <div class="stat"><div class="n">${FMT[S.type].bom?'BOM':'ไม่มี BOM'}</div><div class="l">${FMT[S.type].eol==='crlf'?'CRLF':'LF'}</div></div>`;
+
+  $('#fmtHint').textContent = `ไฟล์: ${fileName()}`;
+  renderPreview();
+  $('#readyCard').classList.remove('hide');
+  $('#markCard').classList.remove('hide');
+  $('#readyCard').scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+
+function fileName(){
+  return `${FILE_T[S.type]}-${S.year}${S.group ? '-' + S.groups.find(g=>g.id==S.group).name_th : ''}.csv`;
+}
+
+function renderPreview(){
+  const cols = COLUMNS[S.type];
+  const rows = S.rows.slice(0, 20);
+  const t = $('#previewTable');
+  t.innerHTML = `<thead><tr>${cols.map(c=>`<th>${esc(c)}</th>`).join('')}</tr></thead>
+    <tbody>${rows.map(r=>`<tr>${cols.map(c=>`<td>${esc(r[c])}</td>`).join('')}</tr>`).join('')}</tbody>`;
+  if(S.rows.length > 20){
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td colspan="${cols.length}" class="hint">แสดง 20 แถวแรกจาก ${S.rows.length} แถว — ไฟล์ที่ดาวน์โหลดจะมีครบทุกแถว</td>`;
+    t.querySelector('tbody').appendChild(tr);
+  }
+}
+
+/* ================= ดาวน์โหลด / บันทึกว่าส่งแล้ว ================= */
+function doDownload(){
+  if(!S.rows || !S.rows.length) return;
+  const text = buildCSV(S.type, S.rows);
+  download(fileName(), text);
+  toast('ดาวน์โหลดไฟล์แล้ว — อย่าลืมกด "บันทึกว่าส่งแล้ว" หลังอัปโหลดขึ้น TCASVerified สำเร็จ');
+}
+
+async function markUploaded(){
+  if(!S.rowIds || !S.rowIds.length) return;
+  const btn = $('#btnMark');
+  btn.disabled = true; btn.innerHTML = '<span class="spin"></span> กำลังบันทึก';
+  msg('#markMsg','');
+
+  const gid = S.group ? Number(S.group) : null;
+  const {data:batchId, error:e1} = await sb.rpc('tcas_mark_exported', {
+    p_type:S.type, p_academic_year:S.year, p_subject_group_id:gid,
+    p_file_name:fileName(), p_participant_ids:S.rowIds
+  });
+  if(e1){
+    btn.disabled = false; btn.textContent = 'บันทึกว่าอัปโหลดขึ้น TCASVerified แล้ว';
+    msg('#markMsg', 'บันทึกไม่สำเร็จ: ' + e1.message, 'err');
+    return;
+  }
+  const {error:e2} = await sb.rpc('tcas_batch_uploaded', {p_batch:batchId});
+  btn.disabled = false; btn.textContent = 'บันทึกว่าอัปโหลดขึ้น TCASVerified แล้ว';
+  if(e2){
+    msg('#markMsg', 'สร้างรอบส่งแล้วแต่บันทึกสถานะอัปโหลดไม่สำเร็จ: ' + e2.message, 'err');
+    await loadHistory();
+    return;
+  }
+  msg('#markMsg', `บันทึกแล้ว — ลบไฟล์นี้ที่ TCASVerified ได้ภายใน 7 วัน (ถึง ${fmtDateTime(new Date(Date.now()+7*86400000).toISOString())})`, 'ok');
+  toast('บันทึกเรียบร้อย');
+  resetStage();
+  await loadHistory();
+}
+
+/* ================= ประวัติ ================= */
+async function loadHistory(){
+  const {data, error} = await sb.from('tcas_batches')
+    .select('*').order('created_at', {ascending:false}).limit(60);
+  const tb = $('#histRows');
+  if(error){ tb.innerHTML = `<tr><td colspan="8" class="hint">โหลดไม่สำเร็จ: ${esc(error.message)}</td></tr>`; return; }
+  S.batches = data || [];
+  if(!S.batches.length){ tb.innerHTML = '<tr><td colspan="8" class="hint">ยังไม่เคยส่งออก</td></tr>'; return; }
+
+  tb.innerHTML = S.batches.map(b=>{
+    const left = daysLeft(b.deletable_until);
+    let leftTxt = '—';
+    if(b.status === 'uploaded' && left !== null){
+      leftTxt = left > 0 ? `เหลือ ${left} วัน` : 'เกินกำหนดแล้ว';
+    }
+    const gname = b.subject_group_id ? (S.groups.find(g=>g.id===b.subject_group_id)?.name_th || '—') : 'ทุกกลุ่มสาระ';
+    const actions = b.status === 'prepared'
+      ? `<button class="btn ghost sm" data-act="cancel" data-id="${b.id}">ยกเลิก</button>`
+      : b.status === 'uploaded'
+      ? `<button class="btn ghost sm" data-act="reject" data-id="${b.id}"
+           style="color:var(--rust);border-color:#e8bfb2">ปลายทางปฏิเสธ/ลบแล้ว</button>`
+      : '';
+    return `<tr>
+      <td>${fmtDateTime(b.created_at)}</td>
+      <td>${esc(TYPE_T[b.tcas_type])}</td>
+      <td>${b.academic_year}</td>
+      <td>${esc(gname)}</td>
+      <td>${b.row_count}</td>
+      <td><span class="pill ${b.status}">${esc(BSTATUS_T[b.status])}</span></td>
+      <td>${leftTxt}</td>
+      <td>${actions}</td>
+    </tr>`;
+  }).join('');
+}
+
+async function releaseBatch(id, status){
+  const label = status === 'deleted' ? 'ยกเลิกรอบนี้' : 'บันทึกว่าปลายทางปฏิเสธ/ลบไฟล์แล้ว';
+  if(!confirm(`${label}? รายการทั้งหมดในรอบนี้จะกลับไปเป็น "ยังไม่ได้ส่ง" และส่งออกใหม่ได้อีกครั้ง`)) return;
+  const {error} = await sb.rpc('tcas_batch_release', {p_batch:id, p_status:status});
+  if(error){ toast('ทำรายการไม่สำเร็จ: ' + error.message); return; }
+  toast('บันทึกแล้ว');
+  await loadHistory();
+}
+
+/* ================= events ================= */
+$('#btnLogin').addEventListener('click', login);
+$('#p').addEventListener('keydown', e=>{ if(e.key==='Enter') login(); });
+$('#u').addEventListener('keydown', e=>{ if(e.key==='Enter') $('#p').focus(); });
+$('#btnLogout').addEventListener('click', async ()=>{ await sb.auth.signOut(); show('#loginView'); });
+
+$('#typePick').addEventListener('click', e=>{
+  const b = e.target.closest('button'); if(!b) return;
+  S.type = b.dataset.v;
+  $('#typePick').querySelectorAll('button').forEach(x=>x.classList.toggle('on', x===b));
+  resetStage();
+});
+$('#selYear').addEventListener('change', e=>{ S.year = Number(e.target.value); resetStage(); });
+$('#selGroup').addEventListener('change', e=>{ S.group = e.target.value; resetStage(); });
+$('#chkOnlyNew').addEventListener('change', e=>{ S.onlyNew = e.target.checked; resetStage(); });
+
+$('#btnCheck').addEventListener('click', checkReady);
+$('#btnDownload').addEventListener('click', doDownload);
+$('#btnMark').addEventListener('click', ()=>{
+  if(!confirm(`บันทึกว่าอัปโหลดไฟล์ ${S.rows.length} รายการขึ้น TCASVerified แล้ว?\nทำเฉพาะตอนที่อัปโหลดสำเร็จจริงเท่านั้น`)) return;
+  markUploaded();
+});
+
+$('#histRows').addEventListener('click', e=>{
+  const t = e.target.closest('[data-act]');
+  if(!t) return;
+  if(t.dataset.act === 'cancel') releaseBatch(t.dataset.id, 'deleted');
+  if(t.dataset.act === 'reject') releaseBatch(t.dataset.id, 'rejected');
+});
+
+boot();
+</script>
+</body>
+</html>

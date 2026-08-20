@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ระบบผลงานนักเรียน · TCASVerified</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Mitr:wght@400;500;600&family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --pine:#1d4b38; --pine-dk:#123024; --pine-lt:#2f6b4f;
+  --note:#f7f4ea; --paper:#fffdf7; --bark:#6d5c46;
+  --gold:#c1902c; --rust:#a6482f; --line:#ddd5c4;
+  --ink:#20241f; --muted:#7c7566; --r:14px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{font-family:'Sarabun',system-ui,sans-serif;color:var(--ink);background:var(--note);line-height:1.6}
+h1,h2,h3{font-family:'Mitr',sans-serif;font-weight:500}
+button{font-family:inherit;font-size:1rem;cursor:pointer}
+input{font-family:inherit;font-size:1rem}
+a{color:inherit;text-decoration:none}
+
+.wrap{max-width:860px;margin:0 auto;padding:0 16px 72px}
+header.top{background:var(--pine);color:#fff;padding:16px 0;box-shadow:0 2px 10px rgba(18,48,36,.18)}
+header.top .wrap{display:flex;align-items:center;gap:12px}
+header.top h1{margin:0;font-size:1.15rem;flex:1}
+header.top .who{font-size:.85rem;opacity:.85;text-align:right}
+.linkbtn{background:none;border:1px solid rgba(255,255,255,.45);color:#fff;border-radius:8px;
+  padding:5px 11px;font-size:.85rem}
+.linkbtn:hover{background:rgba(255,255,255,.14)}
+
+.login{max-width:390px;margin:9vh auto;background:var(--paper);border:1px solid var(--line);
+  border-radius:16px;padding:30px 26px;box-shadow:0 10px 34px rgba(18,48,36,.10)}
+.login h2{margin:0 0 4px;font-size:1.3rem;color:var(--pine-dk)}
+.login p.sub{margin:0 0 20px;color:var(--muted);font-size:.9rem}
+label.f{display:block;margin:12px 0 4px;font-size:.87rem;font-weight:600;color:var(--bark)}
+input[type=text],input[type=password]{width:100%;padding:9px 11px;border:1px solid var(--line);
+  border-radius:9px;background:var(--paper);color:var(--ink)}
+input:focus{outline:2px solid var(--pine-lt);outline-offset:1px;border-color:var(--pine-lt)}
+.btn{background:var(--pine);color:#fff;border:none;border-radius:9px;padding:10px 18px;font-weight:600}
+.btn:hover{background:var(--pine-lt)}
+.btn:disabled{background:#9aa79f;cursor:not-allowed}
+.btn.block{width:100%}
+.spin{display:inline-block;width:15px;height:15px;border:2px solid rgba(255,255,255,.4);
+  border-top-color:#fff;border-radius:50%;animation:sp .7s linear infinite;vertical-align:-2px}
+@keyframes sp{to{transform:rotate(360deg)}}
+
+.hero{text-align:center;padding:40px 10px 8px}
+.hero .badge{display:inline-block;background:#eef4ee;color:var(--pine-dk);border:1px solid #cfe0d3;
+  border-radius:99px;padding:4px 14px;font-size:.82rem;margin-bottom:12px}
+.hero h1{margin:0 0 8px;font-size:1.55rem;color:var(--pine-dk)}
+.hero p{margin:0;color:var(--muted);max-width:520px;margin:0 auto}
+
+.section-label{font-size:.82rem;color:var(--muted);margin:28px 0 10px;padding-left:2px}
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.card{display:block;background:var(--paper);border:1px solid var(--line);border-radius:var(--r);
+  padding:20px;transition:border-color .15s,box-shadow .15s,transform .15s}
+.card:hover{border-color:var(--pine-lt);box-shadow:0 8px 22px rgba(18,48,36,.10);transform:translateY(-2px)}
+.card .ic{font-size:1.7rem;margin-bottom:10px;display:block}
+.card h3{margin:0 0 4px;font-size:1.02rem;color:var(--pine-dk)}
+.card p{margin:0;font-size:.87rem;color:var(--muted);line-height:1.5}
+
+.empty{text-align:center;padding:44px 20px;color:var(--muted);background:var(--paper);
+  border:1px dashed var(--line);border-radius:var(--r);margin-top:20px}
+.empty b{display:block;font-family:'Mitr',sans-serif;color:var(--bark);font-size:1.05rem;margin-bottom:5px}
+.msg{padding:10px 13px;border-radius:9px;margin:10px 0;font-size:.9rem}
+.msg.err{background:#fbe7e0;border:1px solid #e8bfb2;color:#8d3b26}
+.hide{display:none !important}
+@media (max-width:560px){ .cards{grid-template-columns:1fr} }
+@media (prefers-reduced-motion:reduce){*{animation:none !important;transition:none !important}}
+</style>
+</head>
+<body>
+
+<section id="loginView" class="hide">
+  <div class="login">
+    <h2>ระบบผลงานนักเรียน</h2>
+    <p class="sub">สำหรับใช้สมัคร TCAS รอบ Portfolio · โรงเรียนพูลเจริญวิทยาคม</p>
+    <div id="loginMsg"></div>
+    <label class="f" for="u">ชื่อผู้ใช้</label>
+    <input id="u" type="text" autocomplete="username">
+    <label class="f" for="p">รหัสผ่าน</label>
+    <input id="p" type="password" autocomplete="current-password">
+    <div style="margin-top:18px"><button id="btnLogin" class="btn block">เข้าสู่ระบบ</button></div>
+  </div>
+</section>
+
+<section id="appView" class="hide">
+  <header class="top">
+    <div class="wrap">
+      <h1>ระบบผลงานนักเรียน</h1>
+      <div class="who" id="whoName"></div>
+      <button id="btnLogout" class="linkbtn">ออก</button>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <div class="hero">
+      <span class="badge">TCASVerified</span>
+      <h1>เก็บและยืนยันผลงานนักเรียน</h1>
+      <p>รางวัล กิจกรรม โครงงาน และหลักสูตร/อบรม สำหรับใช้สมัคร TCAS รอบ Portfolio</p>
+    </div>
+
+    <div id="repSection" class="hide">
+      <div class="section-label">สำหรับตัวแทนกลุ่มสาระ</div>
+      <div class="cards">
+        <a class="card" href="awards-entry.html">
+          <span class="ic">📝</span>
+          <h3>บันทึกผลงานนักเรียน</h3>
+          <p>เพิ่มงาน แนบรายชื่อนักเรียน และส่งให้งานแนะแนวตรวจ</p>
+        </a>
+      </div>
+    </div>
+
+    <div id="staffSection" class="hide">
+      <div class="section-label">สำหรับงานแนะแนว / ผู้ดูแลระบบ</div>
+      <div class="cards">
+        <a class="card" href="awards-registry.html">
+          <span class="ic">🪪</span>
+          <h3>นำเข้าทะเบียนนักเรียน</h3>
+          <p>นำเข้าเลขบัตรประชาชนและชื่อตามทะเบียนราษฎร์ ทำครั้งแรกก่อนใช้งานส่วนอื่น</p>
+        </a>
+        <a class="card" href="awards-review.html">
+          <span class="ic">✅</span>
+          <h3>ตรวจและยืนยัน</h3>
+          <p>ตรวจงานที่กลุ่มสาระส่งมา ยืนยันหรือตีกลับให้แก้ไข</p>
+        </a>
+        <a class="card" href="awards-export.html">
+          <span class="ic">📤</span>
+          <h3>ส่งออก TCASVerified</h3>
+          <p>สร้างไฟล์ตามแบบฟอร์มของ ทปอ. และติดตามสถานะการส่งออก</p>
+        </a>
+      </div>
+    </div>
+
+    <div id="noneMsg" class="hide"></div>
+  </div>
+</section>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+const SUPABASE_URL  = 'https://ikkhjslmtjwrxzxvtokb.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlra2hqc2xtdGp3cnh6eHZ0b2tiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM3NDMzNjksImV4cCI6MjA5OTMxOTM2OX0.3OR_9mEv82Ns1LLjx5nnRwJYzrtKFtWCWd1bPuQfNKU';
+const EMAIL_DOMAIN  = 'guidance-pcw.local';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+const $ = s => document.querySelector(s);
+function msg(sel,text,kind){const e=$(sel);e.innerHTML = text?`<div class="msg ${kind||'info'}">${text}</div>`:'';}
+function show(sel){
+  $('#loginView').classList.toggle('hide', sel !== '#loginView');
+  $('#appView').classList.toggle('hide', sel !== '#appView');
+}
+
+async function boot(){
+  const {data:{session}} = await sb.auth.getSession();
+  if(!session){ show('#loginView'); return; }
+
+  const {data:prof} = await sb.from('profiles')
+    .select('id,display_name,role,is_guidance').eq('id', session.user.id).single();
+  if(!prof){ await sb.auth.signOut(); show('#loginView'); return; }
+
+  const {data:groups} = await sb.rpc('awards_my_groups');
+  const isStaff = prof.role === 'admin' || prof.is_guidance;
+  const isRep   = (groups && groups.length > 0);
+
+  show('#appView');
+  $('#whoName').textContent = prof.display_name;
+  $('#repSection').classList.toggle('hide', !isRep);
+  $('#staffSection').classList.toggle('hide', !isStaff);
+
+  if(!isRep && !isStaff){
+    $('#noneMsg').classList.remove('hide');
+    $('#noneMsg').innerHTML = `<div class="empty">
+      <b>บัญชีนี้ยังไม่มีสิทธิ์ใช้งานระบบผลงาน</b>
+      ถ้าเป็นตัวแทนกลุ่มสาระ ติดต่องานแนะแนวเพื่อผูกบัญชีกับกลุ่มสาระของท่าน</div>`;
+  }
+}
+
+async function login(){
+  const u=$('#u').value.trim(), p=$('#p').value;
+  if(!u||!p){ msg('#loginMsg','กรอกชื่อผู้ใช้และรหัสผ่านให้ครบก่อน','err'); return; }
+  const b=$('#btnLogin'); b.disabled=true; b.innerHTML='<span class="spin"></span> กำลังเข้าสู่ระบบ';
+  msg('#loginMsg','');
+  const {error} = await sb.auth.signInWithPassword({email:u+'@'+EMAIL_DOMAIN, password:p});
+  b.disabled=false; b.textContent='เข้าสู่ระบบ';
+  if(error){ msg('#loginMsg','ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง','err'); return; }
+  $('#p').value=''; await boot();
+}
+
+$('#btnLogin').addEventListener('click', login);
+$('#p').addEventListener('keydown', e=>{ if(e.key==='Enter') login(); });
+$('#u').addEventListener('keydown', e=>{ if(e.key==='Enter') $('#p').focus(); });
+$('#btnLogout').addEventListener('click', async ()=>{ await sb.auth.signOut(); show('#loginView'); });
+
+boot();
+</script>
+</body>
+</html>

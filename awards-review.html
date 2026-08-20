@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ตรวจและยืนยันผลงาน · งานแนะแนว</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Mitr:wght@400;500;600&family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --pine:#1d4b38; --pine-dk:#123024; --pine-lt:#2f6b4f;
+  --note:#f7f4ea; --paper:#fffdf7; --bark:#6d5c46;
+  --gold:#c1902c; --rust:#a6482f; --line:#ddd5c4;
+  --ink:#20241f; --muted:#7c7566; --r:12px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{font-family:'Sarabun',system-ui,sans-serif;color:var(--ink);background:var(--note);line-height:1.6}
+h1,h2,h3{font-family:'Mitr',sans-serif;font-weight:500}
+button{font-family:inherit;font-size:1rem;cursor:pointer}
+input,select,textarea{font-family:inherit;font-size:1rem}
+
+.wrap{max-width:1040px;margin:0 auto;padding:0 16px 80px}
+header.top{background:var(--pine);color:#fff;padding:14px 0;position:sticky;top:0;z-index:30;
+  box-shadow:0 2px 10px rgba(18,48,36,.18)}
+header.top .wrap{display:flex;align-items:center;gap:12px;padding-bottom:0}
+header.top h1{margin:0;font-size:1.12rem;flex:1}
+header.top .who{font-size:.85rem;opacity:.85}
+.linkbtn{background:none;border:1px solid rgba(255,255,255,.45);color:#fff;border-radius:8px;
+  padding:5px 11px;font-size:.85rem}
+.linkbtn:hover{background:rgba(255,255,255,.14)}
+
+.login{max-width:390px;margin:9vh auto;background:var(--paper);border:1px solid var(--line);
+  border-radius:16px;padding:30px 26px;box-shadow:0 10px 34px rgba(18,48,36,.10)}
+.login h2{margin:0 0 4px;font-size:1.3rem;color:var(--pine-dk)}
+.login p.sub{margin:0 0 20px;color:var(--muted);font-size:.9rem}
+
+label.f{display:block;margin:12px 0 4px;font-size:.87rem;font-weight:600;color:var(--bark)}
+input[type=text],input[type=password],select,textarea{width:100%;padding:9px 11px;
+  border:1px solid var(--line);border-radius:9px;background:var(--paper);color:var(--ink)}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--pine-lt);outline-offset:1px;border-color:var(--pine-lt)}
+textarea{min-height:88px;resize:vertical}
+
+.btn{background:var(--pine);color:#fff;border:none;border-radius:9px;padding:10px 18px;font-weight:600}
+.btn:hover{background:var(--pine-lt)}
+.btn:disabled{background:#9aa79f;cursor:not-allowed}
+.btn.ghost{background:transparent;color:var(--pine);border:1px solid var(--line)}
+.btn.ghost:hover{background:#efeade}
+.btn.rust{background:var(--rust)}
+.btn.sm{padding:6px 12px;font-size:.87rem;border-radius:8px}
+.btn.block{width:100%}
+
+/* แดชบอร์ด */
+.board{background:var(--paper);border:1px solid var(--line);border-radius:var(--r);
+  padding:6px 4px;margin:18px 0;overflow-x:auto}
+table.sum{width:100%;border-collapse:collapse;font-size:.9rem;min-width:620px}
+table.sum th{text-align:right;font-size:.78rem;color:var(--muted);font-weight:600;padding:8px;
+  border-bottom:1px solid var(--line);white-space:nowrap}
+table.sum th:first-child{text-align:left}
+table.sum td{padding:7px 8px;border-bottom:1px solid #f0ead9;text-align:right}
+table.sum td:first-child{text-align:left;font-weight:600}
+table.sum tr:last-child td{border-bottom:none}
+table.sum tr.on td{background:#eef4ee}
+table.sum tbody tr{cursor:pointer}
+table.sum tbody tr:hover td{background:#faf7ee}
+.n0{color:#cfc9b8}
+.nwait{color:var(--gold);font-weight:700}
+.nback{color:var(--rust);font-weight:700}
+
+.toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;background:var(--paper);
+  border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;margin:16px 0}
+.toolbar .fld{min-width:140px}
+.toolbar .fld label.f{margin-top:0}
+.spacer{flex:1}
+
+.ev{background:var(--paper);border:1px solid var(--line);border-radius:var(--r);
+  margin-bottom:12px;overflow:hidden}
+.ev.sel{border-color:var(--pine-lt);box-shadow:0 0 0 2px rgba(47,107,79,.18)}
+.ev-head{display:flex;gap:12px;align-items:flex-start;padding:13px 16px}
+.ev-head .ck{margin-top:4px}
+.ev-title{flex:1;min-width:0;cursor:pointer}
+.ev-title h3{margin:0 0 3px;font-size:1.02rem;line-height:1.4}
+.ev-meta{font-size:.83rem;color:var(--muted)}
+.ev-body{border-top:1px dashed var(--line);padding:14px 16px;background:#fdfbf4}
+
+.pill{display:inline-block;font-size:.75rem;padding:2px 9px;border-radius:99px;
+  border:1px solid var(--line);background:#f2ecdd;color:var(--bark);white-space:nowrap}
+.pill.type{background:var(--pine);color:#fff;border-color:var(--pine)}
+.pill.draft{background:#efeade}
+.pill.submitted{background:#f7efd8;border-color:#e3d0a0;color:#7a6118}
+.pill.verified{background:#e2f0e6;border-color:#b3d7bf;color:#1d5c34}
+.pill.returned{background:#f8e5df;border-color:#e8bfb2;color:#94402a}
+
+table.pt{width:100%;border-collapse:collapse;font-size:.9rem}
+table.pt th{text-align:left;font-size:.78rem;color:var(--muted);font-weight:600;padding:5px 8px;
+  border-bottom:1px solid var(--line)}
+table.pt td{padding:5px 8px;border-bottom:1px solid #eee7d8}
+table.pt tr:last-child td{border-bottom:none}
+
+.bulkbar{position:sticky;bottom:0;background:var(--pine-dk);color:#fff;border-radius:12px;
+  padding:11px 16px;display:flex;gap:12px;align-items:center;margin-top:14px;
+  box-shadow:0 -4px 18px rgba(0,0,0,.16);z-index:20}
+.bulkbar b{font-family:'Mitr',sans-serif;font-weight:500}
+
+.mask{position:fixed;inset:0;background:rgba(18,32,26,.5);display:flex;align-items:flex-start;
+  justify-content:center;padding:24px 14px;overflow:auto;z-index:60}
+.modal{background:var(--paper);border-radius:16px;width:100%;max-width:520px;padding:22px 24px 26px;
+  box-shadow:0 18px 50px rgba(0,0,0,.28)}
+.modal h2{margin:0 0 2px;font-size:1.12rem;color:var(--pine-dk)}
+.modal .sub{margin:0 0 14px;color:var(--muted);font-size:.87rem}
+.modal-foot{display:flex;gap:10px;justify-content:flex-end;margin-top:18px;padding-top:15px;
+  border-top:1px solid var(--line)}
+.reasons{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.reasons button{border:1px solid var(--line);background:var(--paper);border-radius:99px;
+  padding:4px 11px;font-size:.83rem;color:var(--bark)}
+.reasons button:hover{background:#efeade}
+
+.empty{text-align:center;padding:44px 20px;color:var(--muted);background:var(--paper);
+  border:1px dashed var(--line);border-radius:var(--r)}
+.empty b{display:block;font-family:'Mitr',sans-serif;color:var(--bark);font-size:1.05rem;margin-bottom:5px}
+.msg{padding:10px 13px;border-radius:9px;margin:10px 0;font-size:.9rem}
+.msg.err{background:#fbe7e0;border:1px solid #e8bfb2;color:#8d3b26}
+.msg.ok{background:#e2f0e6;border:1px solid #b3d7bf;color:#1d5c34}
+.msg.info{background:#eef1e6;border:1px solid #d5d9c4;color:#4d5340}
+.hint{font-size:.8rem;color:var(--muted)}
+#toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(140%);
+  background:var(--pine-dk);color:#fff;padding:11px 20px;border-radius:99px;font-size:.92rem;
+  z-index:90;transition:transform .25s ease;box-shadow:0 6px 20px rgba(0,0,0,.25)}
+#toast.show{transform:translateX(-50%) translateY(0)}
+.hide{display:none !important}
+.spin{display:inline-block;width:15px;height:15px;border:2px solid rgba(255,255,255,.4);
+  border-top-color:#fff;border-radius:50%;animation:sp .7s linear infinite;vertical-align:-2px}
+@keyframes sp{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){*{animation:none !important;transition:none !important}}
+</style>
+</head>
+<body>
+
+<div id="toast"></div>
+
+<section id="loginView" class="hide">
+  <div class="login">
+    <h2>ตรวจและยืนยันผลงาน</h2>
+    <p class="sub">สำหรับงานแนะแนว / ผู้ดูแลระบบ</p>
+    <div id="loginMsg"></div>
+    <label class="f" for="u">ชื่อผู้ใช้</label>
+    <input id="u" type="text" autocomplete="username">
+    <label class="f" for="p">รหัสผ่าน</label>
+    <input id="p" type="password" autocomplete="current-password">
+    <div style="margin-top:18px"><button id="btnLogin" class="btn block">เข้าสู่ระบบ</button></div>
+  </div>
+</section>
+
+<section id="appView" class="hide">
+  <header class="top">
+    <div class="wrap">
+      <h1>ตรวจและยืนยันผลงาน</h1>
+      <div class="who" id="whoName"></div>
+      <button id="btnLogout" class="linkbtn">ออก</button>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <div class="toolbar">
+      <div class="fld">
+        <label class="f" for="selYear">ปีการศึกษา</label>
+        <select id="selYear"></select>
+      </div>
+      <div class="fld" style="min-width:200px">
+        <label class="f" for="selGroup">กลุ่มสาระ</label>
+        <select id="selGroup"><option value="">ทุกกลุ่มสาระ</option></select>
+      </div>
+      <div class="fld">
+        <label class="f" for="selStatus">สถานะ</label>
+        <select id="selStatus">
+          <option value="submitted">รอตรวจ</option>
+          <option value="verified">ยืนยันแล้ว</option>
+          <option value="returned">ตีกลับแล้ว</option>
+          <option value="draft">ร่าง (ยังไม่ส่ง)</option>
+          <option value="">ทุกสถานะ</option>
+        </select>
+      </div>
+      <div class="spacer"></div>
+      <button id="btnReload" class="btn ghost">รีเฟรช</button>
+    </div>
+
+    <div class="board"><table class="sum">
+      <thead><tr>
+        <th>กลุ่มสาระ</th><th>ร่าง</th><th>รอตรวจ</th><th>ยืนยันแล้ว</th>
+        <th>ตีกลับ</th><th>นักเรียน</th><th>ส่ง TCAS แล้ว</th>
+      </tr></thead>
+      <tbody id="sumRows"><tr><td colspan="7" class="hint">กำลังโหลด…</td></tr></tbody>
+    </table></div>
+
+    <div id="listMsg"></div>
+    <div id="list"></div>
+    <div id="bulk"></div>
+  </div>
+</section>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+const SUPABASE_URL  = 'https://ikkhjslmtjwrxzxvtokb.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlra2hqc2xtdGp3cnh6eHZ0b2tiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM3NDMzNjksImV4cCI6MjA5OTMxOTM2OX0.3OR_9mEv82Ns1LLjx5nnRwJYzrtKFtWCWd1bPuQfNKU';
+const EMAIL_DOMAIN  = 'guidance-pcw.local';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let tt;
+function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('show');
+  clearTimeout(tt);tt=setTimeout(()=>e.classList.remove('show'),2800);}
+function msg(sel,text,kind){const e=$(sel);e.innerHTML = text?`<div class="msg ${kind||'info'}">${esc(text)}</div>`:'';}
+
+const TYPE_T   = {activity:'กิจกรรม', prize:'รางวัล', project:'โครงงาน', course:'หลักสูตร/อบรม'};
+const STATUS_T = {draft:'ร่าง', submitted:'รอตรวจ', verified:'ยืนยันแล้ว', returned:'ตีกลับให้แก้'};
+const LEVEL_T  = {international:'นานาชาติ', national:'ระดับชาติ', region:'ระดับภาค',
+                  province:'ระดับจังหวัด', area:'ระดับเขตพื้นที่', school:'ระดับโรงเรียน'};
+const PCOL     = {activity:['exp_name','ผลการเข้าร่วม'], prize:['prize_name','รางวัลที่ได้รับ'],
+                  course:['score','ผลการอบรม'], project:[null,null]};
+const REASONS  = ['ชื่อกิจกรรมไม่ตรงกับเกียรติบัตร','ระดับรางวัลไม่ถูกต้อง','วันที่ไม่ถูกต้อง',
+                  'รายชื่อนักเรียนไม่ครบ','ระบุรางวัลรายคนไม่ชัดเจน','ซ้ำกับรายการที่ส่งมาแล้ว'];
+
+function thaiAcademicYear(d){
+  d = d || new Date();
+  const y = d.getFullYear();
+  return y + 543 - (d < new Date(y,4,16) ? 1 : 0);
+}
+function fmtThaiDate(iso){
+  if(!iso) return '—';
+  const [y,m,dd] = iso.split('-');
+  return `${dd}/${m}/${(+y)+543}`;
+}
+
+const S = {profile:null, year:thaiAcademicYear(), group:'', status:'submitted',
+           events:[], groups:[], parts:{}, open:null, sel:new Set()};
+
+/* ================= auth ================= */
+async function boot(){
+  const {data:{session}} = await sb.auth.getSession();
+  if(!session){ show('#loginView'); return; }
+  const {data:prof} = await sb.from('profiles')
+    .select('id,display_name,role,is_guidance').eq('id', session.user.id).single();
+  if(!prof){ await sb.auth.signOut(); show('#loginView'); return; }
+  if(prof.role !== 'admin' && !prof.is_guidance){
+    await sb.auth.signOut(); show('#loginView');
+    msg('#loginMsg','หน้านี้เปิดให้เฉพาะงานแนะแนวและผู้ดูแลระบบ','err');
+    return;
+  }
+  S.profile = prof;
+  $('#whoName').textContent = prof.display_name;
+  show('#appView');
+
+  const {data:groups} = await sb.from('subject_groups')
+    .select('id,name_th').eq('is_active', true).order('sort_order');
+  S.groups = groups || [];
+  $('#selGroup').innerHTML = '<option value="">ทุกกลุ่มสาระ</option>' +
+    S.groups.map(g=>`<option value="${g.id}">${esc(g.name_th)}</option>`).join('');
+
+  const now = thaiAcademicYear();
+  $('#selYear').innerHTML = [now+1, now, now-1, now-2]
+    .map(y=>`<option value="${y}" ${y===S.year?'selected':''}>${y}</option>`).join('');
+
+  await refresh();
+}
+function show(sel){
+  $('#loginView').classList.toggle('hide', sel !== '#loginView');
+  $('#appView').classList.toggle('hide', sel !== '#appView');
+}
+async function login(){
+  const u=$('#u').value.trim(), p=$('#p').value;
+  if(!u||!p){ msg('#loginMsg','กรอกชื่อผู้ใช้และรหัสผ่านให้ครบก่อน','err'); return; }
+  const b=$('#btnLogin'); b.disabled=true; b.innerHTML='<span class="spin"></span> กำลังเข้าสู่ระบบ';
+  msg('#loginMsg','');
+  const {error} = await sb.auth.signInWithPassword({email:u+'@'+EMAIL_DOMAIN, password:p});
+  b.disabled=false; b.textContent='เข้าสู่ระบบ';
+  if(error){ msg('#loginMsg','ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง','err'); return; }
+  $('#p').value=''; await boot();
+}
+
+/* ================= data ================= */
+async function refresh(){
+  S.sel.clear();
+  await Promise.all([loadSummary(), loadEvents()]);
+}
+
+async function loadSummary(){
+  const {data, error} = await sb.rpc('awards_review_summary', {p_year:S.year});
+  const tb = $('#sumRows');
+  if(error){ tb.innerHTML = `<tr><td colspan="7" class="hint">โหลดสรุปไม่สำเร็จ: ${esc(error.message)}</td></tr>`; return; }
+  const num = (n, cls) => n > 0 ? `<span class="${cls||''}">${n}</span>` : '<span class="n0">0</span>';
+  tb.innerHTML = (data||[]).map(r=>`
+    <tr data-gid="${r.subject_group_id}" class="${String(r.subject_group_id)===String(S.group)?'on':''}">
+      <td>${esc(r.name_th)}</td>
+      <td>${num(r.draft)}</td>
+      <td>${num(r.submitted,'nwait')}</td>
+      <td>${num(r.verified)}</td>
+      <td>${num(r.returned,'nback')}</td>
+      <td>${num(r.students)}</td>
+      <td>${num(r.exported)}</td>
+    </tr>`).join('');
+}
+
+async function loadEvents(){
+  msg('#listMsg','');
+  $('#list').innerHTML = '<div class="empty">กำลังโหลด…</div>';
+  let q = sb.from('award_events').select('*').eq('academic_year', S.year);
+  if(S.group)  q = q.eq('subject_group_id', Number(S.group));
+  if(S.status) q = q.eq('status', S.status);
+  const {data, error} = await q.order('updated_at', {ascending:false});
+
+  if(error){
+    $('#list').innerHTML = '';
+    msg('#listMsg','โหลดรายการไม่สำเร็จ: ' + error.message, 'err');
+    return;
+  }
+  S.events = data || [];
+  renderList();
+}
+
+async function loadParts(eventId){
+  const {data, error} = await sb.from('award_participants')
+    .select('id,prefix_snapshot,first_name_snapshot,last_name_snapshot,exp_name,prize_name,score,batch_id')
+    .eq('event_id', eventId).order('created_at');
+  if(error){ toast('โหลดรายชื่อไม่สำเร็จ'); return; }
+  S.parts[eventId] = data || [];
+  renderList();
+}
+
+/* ================= render ================= */
+function groupName(id){
+  const g = S.groups.find(x=>x.id === id);
+  return g ? g.name_th : '—';
+}
+
+function renderList(){
+  const el = $('#list');
+  if(!S.events.length){
+    el.innerHTML = `<div class="empty"><b>ไม่มีรายการในเงื่อนไขนี้</b>
+      ลองเปลี่ยนปีการศึกษา กลุ่มสาระ หรือสถานะดูค่ะ</div>`;
+    renderBulk();
+    return;
+  }
+  el.innerHTML = S.events.map(e=>{
+    const open = S.open === e.id;
+    const canPick = e.status === 'submitted';
+    return `<div class="ev ${S.sel.has(e.id)?'sel':''}">
+      <div class="ev-head">
+        ${canPick ? `<input class="ck" type="checkbox" data-act="pick" data-id="${e.id}"
+            ${S.sel.has(e.id)?'checked':''}>` : '<span class="ck" style="width:13px"></span>'}
+        <div class="ev-title" data-act="toggle" data-id="${e.id}">
+          <h3>${esc(e.title)}</h3>
+          <div class="ev-meta">${esc(groupName(e.subject_group_id))} ·
+            ${fmtThaiDate(e.start_date)} · ${esc(LEVEL_T[e.level] || 'ไม่ระบุระดับ')}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:5px;align-items:flex-end">
+          <span class="pill type">${esc(TYPE_T[e.tcas_type])}</span>
+          <span class="pill ${e.status}">${esc(STATUS_T[e.status])}</span>
+        </div>
+      </div>
+      ${open ? body(e) : ''}
+    </div>`;
+  }).join('');
+  renderBulk();
+}
+
+function body(e){
+  const rows = S.parts[e.id];
+  const [col, colLabel] = PCOL[e.tcas_type];
+  let tbl;
+  if(!rows) tbl = '<div class="hint">กำลังโหลดรายชื่อ…</div>';
+  else if(!rows.length) tbl = '<div class="msg err">งานนี้ยังไม่มีนักเรียน — ยืนยันไม่ได้</div>';
+  else tbl = `<table class="pt"><thead><tr>
+      <th style="width:44%">ชื่อ–สกุล</th>${col?`<th>${esc(colLabel)}</th>`:''}
+      <th style="width:90px">TCAS</th></tr></thead><tbody>` +
+    rows.map(r=>`<tr>
+      <td>${esc(r.prefix_snapshot + r.first_name_snapshot + ' ' + r.last_name_snapshot)}</td>
+      ${col?`<td>${esc(r[col] || '—')}</td>`:''}
+      <td>${r.batch_id ? '<span class="pill verified">ส่งแล้ว</span>' : '<span class="hint">ยังไม่ส่ง</span>'}</td>
+    </tr>`).join('') + '</tbody></table>';
+
+  const detail = [];
+  if(e.tcas_type === 'project' && e.project_type) detail.push('ประเภทโครงงาน: ' + e.project_type);
+  if(e.tcas_type === 'course'){
+    if(e.course_category) detail.push('หมวด: ' + e.course_category);
+    if(e.course_level)    detail.push('ระดับหลักสูตร: ' + e.course_level);
+    detail.push('วันหมดอายุ: ' + (e.expired_date ? fmtThaiDate(e.expired_date) : 'ไม่มี'));
+  } else if(e.end_date && e.end_date !== e.start_date){
+    detail.push('ถึงวันที่ ' + fmtThaiDate(e.end_date));
+  }
+  if(e.hours != null)  detail.push('ชั่วโมง: ' + e.hours);
+  if(e.fee != null)    detail.push('ค่าใช้จ่าย: ' + e.fee + ' บาท');
+  if(e.organizer)      detail.push('ผู้จัด: ' + e.organizer);
+
+  const warn = e.status === 'verified' && (S.parts[e.id]||[]).some(r=>r.batch_id)
+    ? '<div class="msg info">มีนักเรียนที่ส่งขึ้น TCASVerified ไปแล้ว — ตีกลับได้แต่ข้อมูลที่ปลายทางจะไม่หายไปเอง</div>' : '';
+
+  return `<div class="ev-body">
+    ${e.status === 'returned' && e.return_reason
+      ? `<div class="msg err">เคยตีกลับ: ${esc(e.return_reason)}</div>` : ''}
+    ${warn}
+    ${e.description ? `<div class="hint" style="margin-bottom:6px">${esc(e.description)}</div>` : ''}
+    ${detail.length ? `<div class="hint" style="margin-bottom:12px">${esc(detail.join(' · '))}</div>` : ''}
+    ${tbl}
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px">
+      ${e.status !== 'verified'
+        ? `<button class="btn sm" data-act="ok" data-id="${e.id}">ยืนยันงานนี้</button>` : ''}
+      ${e.status !== 'draft'
+        ? `<button class="btn ghost sm" data-act="back" data-id="${e.id}"
+             style="color:var(--rust);border-color:#e8bfb2">ตีกลับให้แก้</button>` : ''}
+    </div>
+  </div>`;
+}
+
+function renderBulk(){
+  const n = S.sel.size;
+  $('#bulk').innerHTML = n ? `<div class="bulkbar">
+      <b>เลือกไว้ ${n} รายการ</b>
+      <div class="spacer"></div>
+      <button class="btn ghost sm" data-act="clearsel" style="color:#fff;border-color:rgba(255,255,255,.5)">ยกเลิกการเลือก</button>
+      <button class="btn sm" data-act="okmany" style="background:var(--gold)">ยืนยันทั้งหมด</button>
+    </div>` : '';
+}
+
+/* ================= actions ================= */
+async function verify(ids){
+  const {data, error} = await sb.rpc('awards_verify_events', {p_ids:ids});
+  if(error){ toast('ยืนยันไม่สำเร็จ: ' + error.message); return; }
+  const ok  = (data||[]).filter(r=>r.result === 'verified').length;
+  const bad = (data||[]).filter(r=>r.result === 'error');
+  if(bad.length){
+    msg('#listMsg', `ยืนยันแล้ว ${ok} รายการ · ติดปัญหา ${bad.length} รายการ: ` +
+      bad.map(b=>b.detail).join(' / '), bad.length && !ok ? 'err' : 'info');
+  } else {
+    msg('#listMsg','');
+    toast(`ยืนยันแล้ว ${ok} รายการ`);
+  }
+  S.sel.clear();
+  await refresh();
+}
+
+function askReturn(e){
+  const mask = document.createElement('div');
+  mask.className = 'mask';
+  mask.innerHTML = `<div class="modal">
+    <h2>ตีกลับให้แก้</h2>
+    <p class="sub">${esc(e.title)}</p>
+    <label class="f" for="rr">เหตุผล (กลุ่มสาระจะเห็นข้อความนี้)</label>
+    <textarea id="rr" placeholder="บอกให้ชัดว่าต้องแก้อะไร จะได้ไม่ต้องส่งกลับไปกลับมา"></textarea>
+    <div class="reasons">${REASONS.map(r=>`<button type="button" data-r="${esc(r)}">${esc(r)}</button>`).join('')}</div>
+    <div id="rMsg"></div>
+    <div class="modal-foot">
+      <button class="btn ghost" data-close>ยกเลิก</button>
+      <button class="btn rust" id="rGo">ตีกลับ</button>
+    </div>
+  </div>`;
+  document.body.appendChild(mask);
+
+  mask.querySelectorAll('.reasons button').forEach(b=>b.addEventListener('click',()=>{
+    const ta = mask.querySelector('#rr');
+    ta.value = ta.value ? ta.value.replace(/\s*$/,'') + ' · ' + b.dataset.r : b.dataset.r;
+    ta.focus();
+  }));
+  mask.addEventListener('click', ev=>{
+    if(ev.target === mask || ev.target.hasAttribute('data-close')) mask.remove();
+  });
+  mask.querySelector('#rGo').addEventListener('click', async ()=>{
+    const reason = mask.querySelector('#rr').value.trim();
+    if(!reason){
+      mask.querySelector('#rMsg').innerHTML = '<div class="msg err">ต้องระบุเหตุผลก่อน</div>';
+      return;
+    }
+    const b = mask.querySelector('#rGo');
+    b.disabled = true; b.innerHTML = '<span class="spin"></span> กำลังส่ง';
+    const {error} = await sb.rpc('awards_return_event', {p_id:e.id, p_reason:reason});
+    if(error){
+      b.disabled = false; b.textContent = 'ตีกลับ';
+      mask.querySelector('#rMsg').innerHTML = `<div class="msg err">${esc(error.message)}</div>`;
+      return;
+    }
+    mask.remove();
+    toast('ตีกลับให้กลุ่มสาระแก้แล้ว');
+    await refresh();
+  });
+}
+
+/* ================= events ================= */
+$('#btnLogin').addEventListener('click', login);
+$('#p').addEventListener('keydown', e=>{ if(e.key==='Enter') login(); });
+$('#u').addEventListener('keydown', e=>{ if(e.key==='Enter') $('#p').focus(); });
+$('#btnLogout').addEventListener('click', async ()=>{ await sb.auth.signOut(); show('#loginView'); });
+
+$('#selYear').addEventListener('change', async e=>{
+  S.year = Number(e.target.value); S.open = null; S.parts = {}; await refresh();
+});
+$('#selGroup').addEventListener('change', async e=>{
+  S.group = e.target.value; S.open = null; await refresh();
+});
+$('#selStatus').addEventListener('change', async e=>{
+  S.status = e.target.value; S.open = null; await refresh();
+});
+$('#btnReload').addEventListener('click', refresh);
+
+/* คลิกแถวในตารางสรุป = กรองกลุ่มสาระนั้น */
+$('#sumRows').addEventListener('click', async e=>{
+  const tr = e.target.closest('tr[data-gid]');
+  if(!tr) return;
+  S.group = (S.group === tr.dataset.gid) ? '' : tr.dataset.gid;
+  $('#selGroup').value = S.group;
+  S.open = null;
+  await refresh();
+});
+
+$('#list').addEventListener('click', async e=>{
+  const t = e.target.closest('[data-act]');
+  if(!t) return;
+  const id = t.dataset.id;
+  const ev = S.events.find(x=>x.id === id);
+
+  if(t.dataset.act === 'pick'){
+    if(t.checked) S.sel.add(id); else S.sel.delete(id);
+    t.closest('.ev').classList.toggle('sel', t.checked);
+    renderBulk();
+    return;
+  }
+  if(t.dataset.act === 'toggle'){
+    S.open = (S.open === id) ? null : id;
+    renderList();
+    if(S.open && !S.parts[S.open]) await loadParts(S.open);
+    return;
+  }
+  if(t.dataset.act === 'ok')   return verify([id]);
+  if(t.dataset.act === 'back') return askReturn(ev);
+});
+
+$('#bulk').addEventListener('click', e=>{
+  const t = e.target.closest('[data-act]');
+  if(!t) return;
+  if(t.dataset.act === 'clearsel'){ S.sel.clear(); renderList(); return; }
+  if(t.dataset.act === 'okmany'){
+    const ids = [...S.sel];
+    if(!confirm(`ยืนยัน ${ids.length} รายการ?`)) return;
+    verify(ids);
+  }
+});
+
+boot();
+</script>
+</body>
+</html>

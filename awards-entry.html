@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>บันทึกผลงานนักเรียน · กลุ่มสาระ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Mitr:wght@400;500;600&family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --pine:#1d4b38; --pine-dk:#123024; --pine-lt:#2f6b4f;
+  --note:#f7f4ea; --paper:#fffdf7; --bark:#6d5c46;
+  --gold:#c1902c; --rust:#a6482f; --line:#ddd5c4;
+  --ink:#20241f; --muted:#7c7566;
+  --r:12px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  font-family:'Sarabun',system-ui,sans-serif; color:var(--ink);
+  background:var(--note); font-size:16px; line-height:1.6;
+}
+h1,h2,h3,.mitr{font-family:'Mitr',sans-serif;font-weight:500;letter-spacing:.01em}
+button{font-family:inherit;font-size:1rem;cursor:pointer}
+input,select,textarea{font-family:inherit;font-size:1rem}
+a{color:var(--pine)}
+
+/* ---------- layout ---------- */
+.wrap{max-width:1040px;margin:0 auto;padding:0 16px 72px}
+header.top{
+  background:var(--pine); color:#fff; padding:14px 0;
+  box-shadow:0 2px 10px rgba(18,48,36,.18); position:sticky; top:0; z-index:30;
+}
+header.top .wrap{display:flex;align-items:center;gap:12px;padding-bottom:0}
+header.top h1{margin:0;font-size:1.12rem;flex:1}
+header.top .who{font-size:.85rem;opacity:.85;text-align:right;line-height:1.3}
+.linkbtn{background:none;border:1px solid rgba(255,255,255,.45);color:#fff;
+  border-radius:8px;padding:5px 11px;font-size:.85rem}
+.linkbtn:hover{background:rgba(255,255,255,.14)}
+
+/* ---------- login ---------- */
+.login{max-width:390px;margin:9vh auto;background:var(--paper);
+  border:1px solid var(--line);border-radius:16px;padding:30px 26px;
+  box-shadow:0 10px 34px rgba(18,48,36,.10)}
+.login h2{margin:0 0 4px;font-size:1.3rem;color:var(--pine-dk)}
+.login p.sub{margin:0 0 20px;color:var(--muted);font-size:.9rem}
+
+/* ---------- forms ---------- */
+label.f{display:block;margin:12px 0 4px;font-size:.87rem;font-weight:600;color:var(--bark)}
+label.f .req{color:var(--rust)}
+input[type=text],input[type=password],input[type=number],input[type=date],select,textarea{
+  width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:9px;
+  background:var(--paper);color:var(--ink)
+}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--pine-lt);outline-offset:1px;border-color:var(--pine-lt)}
+textarea{min-height:80px;resize:vertical}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 14px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0 14px}
+.hint{font-size:.79rem;color:var(--muted);margin-top:3px}
+
+.btn{background:var(--pine);color:#fff;border:none;border-radius:9px;
+  padding:10px 18px;font-weight:600}
+.btn:hover{background:var(--pine-lt)}
+.btn:disabled{background:#9aa79f;cursor:not-allowed}
+.btn.ghost{background:transparent;color:var(--pine);border:1px solid var(--line)}
+.btn.ghost:hover{background:#efeade}
+.btn.warn{background:var(--rust)}
+.btn.sm{padding:5px 11px;font-size:.85rem;border-radius:8px}
+.btn.block{width:100%}
+
+/* ---------- toolbar ---------- */
+.toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;
+  background:var(--paper);border:1px solid var(--line);border-radius:var(--r);
+  padding:14px 16px;margin:20px 0}
+.toolbar .fld{min-width:150px}
+.toolbar .fld label.f{margin-top:0}
+.toolbar .spacer{flex:1}
+
+/* ---------- event cards ---------- */
+.ev{background:var(--paper);border:1px solid var(--line);border-radius:var(--r);
+  margin-bottom:12px;overflow:hidden}
+.ev-head{display:flex;gap:12px;align-items:flex-start;padding:14px 16px;cursor:pointer}
+.ev-head:hover{background:#faf7ee}
+.ev-title{flex:1;min-width:0}
+.ev-title h3{margin:0 0 3px;font-size:1.02rem;line-height:1.4}
+.ev-meta{font-size:.83rem;color:var(--muted)}
+.ev-body{border-top:1px dashed var(--line);padding:14px 16px;background:#fdfbf4}
+
+.pill{display:inline-block;font-size:.75rem;padding:2px 9px;border-radius:99px;
+  border:1px solid var(--line);background:#f2ecdd;color:var(--bark);white-space:nowrap}
+.pill.draft{background:#efeade}
+.pill.submitted{background:#e4eef6;border-color:#bcd4e6;color:#2c5a7a}
+.pill.verified{background:#e2f0e6;border-color:#b3d7bf;color:#1d5c34}
+.pill.returned{background:#f8e5df;border-color:#e8bfb2;color:#94402a}
+.pill.type{background:var(--pine);color:#fff;border-color:var(--pine)}
+
+/* ---------- participants ---------- */
+table.pt{width:100%;border-collapse:collapse;font-size:.92rem}
+table.pt th{text-align:left;font-size:.79rem;color:var(--muted);font-weight:600;
+  padding:5px 8px;border-bottom:1px solid var(--line)}
+table.pt td{padding:6px 8px;border-bottom:1px solid #eee7d8;vertical-align:middle}
+table.pt tr:last-child td{border-bottom:none}
+table.pt input[type=text]{padding:5px 8px;font-size:.9rem}
+.locked{font-size:.78rem;color:var(--muted)}
+
+/* ---------- modal ---------- */
+.mask{position:fixed;inset:0;background:rgba(18,32,26,.5);display:flex;
+  align-items:flex-start;justify-content:center;padding:24px 14px;overflow:auto;z-index:60}
+.modal{background:var(--paper);border-radius:16px;width:100%;max-width:640px;
+  padding:22px 24px 26px;box-shadow:0 18px 50px rgba(0,0,0,.28)}
+.modal h2{margin:0 0 2px;font-size:1.15rem;color:var(--pine-dk)}
+.modal .sub{margin:0 0 14px;color:var(--muted);font-size:.87rem}
+.modal-foot{display:flex;gap:10px;justify-content:flex-end;margin-top:20px;
+  padding-top:16px;border-top:1px solid var(--line)}
+
+.typepick{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:6px}
+.typepick button{border:1px solid var(--line);background:var(--paper);border-radius:10px;
+  padding:9px 4px;font-size:.86rem;line-height:1.3;color:var(--bark)}
+.typepick button.on{background:var(--pine);color:#fff;border-color:var(--pine);font-weight:600}
+.typepick button:disabled{opacity:.45;cursor:not-allowed}
+
+/* ---------- student picker ---------- */
+.stu{display:flex;align-items:center;gap:10px;padding:7px 9px;border-bottom:1px solid #eee7d8}
+.stu:last-child{border-bottom:none}
+.stu .nm{flex:1;min-width:0}
+.stu .nm b{font-weight:600}
+.stu .rm{font-size:.8rem;color:var(--muted)}
+.stu.no{opacity:.55}
+.stulist{max-height:320px;overflow:auto;border:1px solid var(--line);
+  border-radius:10px;background:var(--paper);margin-top:8px}
+.chosen{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.chip{background:var(--pine);color:#fff;border-radius:99px;padding:3px 10px;font-size:.83rem}
+
+/* ---------- misc ---------- */
+.empty{text-align:center;padding:44px 20px;color:var(--muted);
+  background:var(--paper);border:1px dashed var(--line);border-radius:var(--r)}
+.empty b{display:block;font-family:'Mitr',sans-serif;color:var(--bark);
+  font-size:1.05rem;margin-bottom:5px}
+.msg{padding:10px 13px;border-radius:9px;margin:10px 0;font-size:.9rem}
+.msg.err{background:#fbe7e0;border:1px solid #e8bfb2;color:#8d3b26}
+.msg.ok{background:#e2f0e6;border:1px solid #b3d7bf;color:#1d5c34}
+.msg.info{background:#eef1e6;border:1px solid #d5d9c4;color:#4d5340}
+#toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(120%);
+  background:var(--pine-dk);color:#fff;padding:11px 20px;border-radius:99px;
+  font-size:.92rem;z-index:90;transition:transform .25s ease;box-shadow:0 6px 20px rgba(0,0,0,.25)}
+#toast.show{transform:translateX(-50%) translateY(0)}
+.hide{display:none !important}
+.spin{display:inline-block;width:15px;height:15px;border:2px solid rgba(255,255,255,.4);
+  border-top-color:#fff;border-radius:50%;animation:sp .7s linear infinite;vertical-align:-2px}
+@keyframes sp{to{transform:rotate(360deg)}}
+@media (max-width:640px){
+  .grid2,.grid3{grid-template-columns:1fr}
+  .typepick{grid-template-columns:1fr 1fr}
+  header.top h1{font-size:1rem}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none !important;transition:none !important}}
+</style>
+</head>
+<body>
+
+<div id="toast"></div>
+
+<!-- ===================== LOGIN ===================== -->
+<section id="loginView" class="hide">
+  <div class="login">
+    <h2>บันทึกผลงานนักเรียน</h2>
+    <p class="sub">สำหรับตัวแทนกลุ่มสาระ · โรงเรียนพูลเจริญวิทยาคม</p>
+    <div id="loginMsg"></div>
+    <label class="f" for="u">ชื่อผู้ใช้</label>
+    <input id="u" type="text" autocomplete="username">
+    <label class="f" for="p">รหัสผ่าน</label>
+    <input id="p" type="password" autocomplete="current-password">
+    <div style="margin-top:18px"><button id="btnLogin" class="btn block">เข้าสู่ระบบ</button></div>
+  </div>
+</section>
+
+<!-- ===================== APP ===================== -->
+<section id="appView" class="hide">
+  <header class="top">
+    <div class="wrap">
+      <h1>บันทึกผลงานนักเรียน</h1>
+      <div class="who"><span id="whoName"></span><br><span id="whoGroup"></span></div>
+      <button id="btnLogout" class="linkbtn">ออก</button>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <div class="toolbar">
+      <div class="fld">
+        <label class="f" for="selYear">ปีการศึกษา</label>
+        <select id="selYear"></select>
+      </div>
+      <div class="fld" style="flex:1;max-width:280px">
+        <label class="f" for="selGroup">กลุ่มสาระ</label>
+        <select id="selGroup"></select>
+      </div>
+      <div class="spacer"></div>
+      <button id="btnNew" class="btn">＋ เพิ่มงานใหม่</button>
+    </div>
+
+    <div id="listMsg"></div>
+    <div id="list"></div>
+  </div>
+</section>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+/* ============================================================
+   ตั้งค่า
+   ============================================================ */
+const SUPABASE_URL  = 'https://ikkhjslmtjwrxzxvtokb.supabase.co';
+const SUPABASE_ANON  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlra2hqc2xtdGp3cnh6eHZ0b2tiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM3NDMzNjksImV4cCI6MjA5OTMxOTM2OX0.3OR_9mEv82Ns1LLjx5nnRwJYzrtKFtWCWd1bPuQfNKU';
+const EMAIL_DOMAIN  = 'guidance-pcw.local';
+
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+/* ป้ายชื่อภาษาไทยของค่า enum */
+const TYPES = [
+  {v:'prize',    t:'รางวัล',        d:'แข่งขันแล้วได้รางวัล'},
+  {v:'activity', t:'กิจกรรม',       d:'ค่าย จิตอาสา กีฬา เข้าร่วม'},
+  {v:'project',  t:'โครงงาน',       d:'โครงงาน วิจัย สิ่งประดิษฐ์'},
+  {v:'course',   t:'หลักสูตร/อบรม', d:'อบรมที่มีใบรับรอง'}
+];
+const CATEGORIES = [
+  {v:'competition', t:'แข่งขัน'},
+  {v:'training',    t:'อบรม'},
+  {v:'volunteer',   t:'จิตอาสา'},
+  {v:'sports',      t:'กีฬา'}
+];
+const LEVELS = [
+  {v:'international', t:'นานาชาติ'},
+  {v:'national',      t:'ระดับชาติ'},
+  {v:'region',        t:'ระดับภาค'},
+  {v:'province',      t:'ระดับจังหวัด'},
+  {v:'area',          t:'ระดับเขตพื้นที่'},
+  {v:'school',        t:'ระดับโรงเรียน'}
+];
+const STATUS = {
+  draft:     'ร่าง',
+  submitted: 'รอตรวจ',
+  verified:  'ยืนยันแล้ว',
+  returned:  'ตีกลับให้แก้'
+};
+/* ช่องรายบุคคลของแต่ละประเภท */
+const PFIELD = {
+  activity: {col:'exp_name',   label:'ผลการเข้าร่วม / บทบาท', ph:'เช่น ผ่านการอบรม, ตัวแทนทีม'},
+  prize:    {col:'prize_name', label:'รางวัลที่ได้รับ',        ph:'เช่น เหรียญทอง, รางวัลชนะเลิศ'},
+  course:   {col:'score',      label:'ผลการอบรม',              ph:'เช่น ผ่าน, 85 คะแนน'},
+  project:  null
+};
+
+/* ============================================================
+   helpers
+   ============================================================ */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c =>
+  ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+let toastTimer;
+function toast(text){
+  const el = $('#toast');
+  el.textContent = text; el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>el.classList.remove('show'), 2600);
+}
+function msg(sel, text, kind){
+  const el = $(sel);
+  if(!text){ el.innerHTML = ''; return; }
+  el.innerHTML = `<div class="msg ${kind||'info'}">${esc(text)}</div>`;
+}
+/* ปีการศึกษาไทย: เริ่ม 16 พ.ค. */
+function thaiAcademicYear(d){
+  d = d || new Date();
+  const y = d.getFullYear();
+  const cut = new Date(y, 4, 16);
+  return y + 543 - (d < cut ? 1 : 0);
+}
+function fmtThaiDate(iso){
+  if(!iso) return '—';
+  const [y,m,dd] = iso.split('-');
+  return `${dd}/${m}/${(+y)+543}`;
+}
+function labelOf(list, v){ const f = list.find(x=>x.v===v); return f ? f.t : (v||'—'); }
+
+/* ============================================================
+   state
+   ============================================================ */
+const S = {
+  profile:null,
+  groups:[],
+  groupId:null,
+  year:thaiAcademicYear(),
+  events:[],
+  counts:{},
+  openId:null,
+  participants:{}
+};
+
+/* ============================================================
+   auth
+   ============================================================ */
+async function boot(){
+  const {data:{session}} = await sb.auth.getSession();
+  if(!session){ showLogin(); return; }
+
+  const {data:prof, error} = await sb.from('profiles')
+    .select('id,display_name,role,is_guidance').eq('id', session.user.id).single();
+  if(error || !prof){
+    await sb.auth.signOut();
+    showLogin('เข้าสู่ระบบไม่สำเร็จ ไม่พบข้อมูลผู้ใช้ ลองใหม่อีกครั้ง');
+    return;
+  }
+  S.profile = prof;
+
+  const {data:groups, error:gerr} = await sb.rpc('awards_my_groups');
+  if(gerr){ showLogin('โหลดข้อมูลกลุ่มสาระไม่สำเร็จ: ' + gerr.message); return; }
+
+  if(!groups || !groups.length){
+    $('#loginView').classList.remove('hide');
+    $('#appView').classList.add('hide');
+    msg('#loginMsg','บัญชีนี้ยังไม่ได้ผูกกับกลุ่มสาระใด ติดต่องานแนะแนวเพื่อเพิ่มสิทธิ์ก่อนใช้งาน','err');
+    return;
+  }
+  S.groups = groups;
+  S.groupId = groups[0].id;
+
+  $('#loginView').classList.add('hide');
+  $('#appView').classList.remove('hide');
+  $('#whoName').textContent  = prof.display_name;
+  renderToolbar();
+  await loadEvents();
+}
+
+function showLogin(errText){
+  $('#appView').classList.add('hide');
+  $('#loginView').classList.remove('hide');
+  if(errText) msg('#loginMsg', errText, 'err');
+}
+
+async function login(){
+  const u = $('#u').value.trim(), p = $('#p').value;
+  if(!u || !p){ msg('#loginMsg','กรอกชื่อผู้ใช้และรหัสผ่านให้ครบก่อน','err'); return; }
+  const btn = $('#btnLogin');
+  btn.disabled = true; btn.innerHTML = '<span class="spin"></span> กำลังเข้าสู่ระบบ';
+  msg('#loginMsg','');
+  const {error} = await sb.auth.signInWithPassword({
+    email: u + '@' + EMAIL_DOMAIN, password: p
+  });
+  btn.disabled = false; btn.textContent = 'เข้าสู่ระบบ';
+  if(error){ msg('#loginMsg','ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง','err'); return; }
+  $('#p').value = '';
+  await boot();
+}
+
+/* ============================================================
+   toolbar
+   ============================================================ */
+function renderToolbar(){
+  const now = thaiAcademicYear();
+  const years = [now+1, now, now-1, now-2];
+  $('#selYear').innerHTML = years
+    .map(y=>`<option value="${y}" ${y===S.year?'selected':''}>${y}</option>`).join('');
+
+  $('#selGroup').innerHTML = S.groups
+    .map(g=>`<option value="${g.id}" ${g.id===S.groupId?'selected':''}>${esc(g.name_th)}</option>`).join('');
+
+  const g = S.groups.find(x=>x.id===S.groupId);
+  $('#whoGroup').textContent = g ? g.name_th : '';
+}
+
+/* ============================================================
+   โหลดรายการงาน
+   ============================================================ */
+async function loadEvents(){
+  msg('#listMsg','');
+  $('#list').innerHTML = '<div class="empty">กำลังโหลด…</div>';
+
+  const {data, error} = await sb.from('award_events')
+    .select('*')
+    .eq('academic_year', S.year)
+    .eq('subject_group_id', S.groupId)
+    .order('start_date', {ascending:false});
+
+  if(error){
+    $('#list').innerHTML = '';
+    msg('#listMsg','โหลดรายการไม่สำเร็จ: ' + error.message, 'err');
+    return;
+  }
+  S.events = data || [];
+
+  S.counts = {};
+  if(S.events.length){
+    const ids = S.events.map(e=>e.id);
+    const {data:pts} = await sb.from('award_participants').select('id,event_id').in('event_id', ids);
+    (pts||[]).forEach(p => S.counts[p.event_id] = (S.counts[p.event_id]||0) + 1);
+  }
+  renderList();
+}
+
+function renderList(){
+  const el = $('#list');
+  if(!S.events.length){
+    el.innerHTML = `<div class="empty"><b>ยังไม่มีงานในปีการศึกษานี้</b>
+      กดปุ่ม “เพิ่มงานใหม่” เพื่อบันทึกการแข่งขัน กิจกรรม โครงงาน หรือการอบรมที่กลุ่มสาระรับผิดชอบ</div>`;
+    return;
+  }
+  el.innerHTML = S.events.map(e=>{
+    const n = S.counts[e.id] || 0;
+    const open = S.openId === e.id;
+    return `<div class="ev" data-id="${e.id}">
+      <div class="ev-head" data-act="toggle" data-id="${e.id}">
+        <div class="ev-title">
+          <h3>${esc(e.title)}</h3>
+          <div class="ev-meta">
+            ${fmtThaiDate(e.start_date)}${e.end_date && e.end_date!==e.start_date ? ' – ' + fmtThaiDate(e.end_date) : ''}
+            · ${esc(labelOf(LEVELS, e.level))} · นักเรียน ${n} คน
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:5px;align-items:flex-end">
+          <span class="pill type">${esc(labelOf(TYPES, e.tcas_type))}</span>
+          <span class="pill ${e.status}">${esc(STATUS[e.status])}</span>
+        </div>
+      </div>
+      ${open ? renderBody(e, n) : ''}
+    </div>`;
+  }).join('');
+}
+
+function renderBody(e, n){
+  const editable = (e.status === 'draft' || e.status === 'returned');
+  const pf = PFIELD[e.tcas_type];
+  const rows = S.participants[e.id];
+
+  let ptHtml;
+  if(!rows){
+    ptHtml = '<div class="hint">กำลังโหลดรายชื่อ…</div>';
+  } else if(!rows.length){
+    ptHtml = '<div class="hint">ยังไม่มีนักเรียนในงานนี้ — กด “เพิ่มนักเรียน” เพื่อเลือกจากทะเบียน</div>';
+  } else {
+    ptHtml = `<table class="pt"><thead><tr>
+        <th style="width:38%">ชื่อ–สกุล</th>
+        ${pf ? `<th>${esc(pf.label)}</th>` : ''}
+        <th style="width:70px"></th></tr></thead><tbody>` +
+      rows.map(r=>`<tr>
+        <td>${esc(r.prefix_snapshot + r.first_name_snapshot + ' ' + r.last_name_snapshot)}</td>
+        ${pf ? `<td>${ editable && !r.batch_id
+            ? `<input type="text" value="${esc(r[pf.col]||'')}" placeholder="${esc(pf.ph)}"
+                 data-act="pval" data-pid="${r.id}" data-col="${pf.col}">`
+            : esc(r[pf.col]||'—') }</td>` : ''}
+        <td style="text-align:right">${
+          r.batch_id ? '<span class="locked">ส่งแล้ว</span>'
+          : (editable ? `<button class="btn ghost sm" data-act="delp" data-pid="${r.id}" data-eid="${e.id}">ลบ</button>` : '')
+        }</td></tr>`).join('') + '</tbody></table>';
+  }
+
+  const returned = e.status === 'returned' && e.return_reason
+    ? `<div class="msg err">งานแนะแนวตีกลับ: ${esc(e.return_reason)}</div>` : '';
+
+  const extra = [];
+  if(e.tcas_type === 'project' && e.project_type) extra.push('ประเภทโครงงาน: ' + e.project_type);
+  if(e.tcas_type === 'course'){
+    if(e.course_category) extra.push('หมวด: ' + e.course_category);
+    if(e.course_level)    extra.push('ระดับหลักสูตร: ' + e.course_level);
+    extra.push('วันหมดอายุ: ' + (e.expired_date ? fmtThaiDate(e.expired_date) : 'ไม่มี'));
+  }
+  if(e.hours != null) extra.push('จำนวนชั่วโมง: ' + e.hours);
+  if(e.fee   != null) extra.push('ค่าใช้จ่าย: ' + e.fee + ' บาท');
+
+  return `<div class="ev-body">
+    ${returned}
+    ${e.description ? `<div class="hint" style="margin-bottom:8px">${esc(e.description)}</div>` : ''}
+    ${extra.length ? `<div class="hint" style="margin-bottom:12px">${esc(extra.join(' · '))}</div>` : ''}
+    ${ptHtml}
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px">
+      ${editable ? `<button class="btn sm" data-act="addp" data-eid="${e.id}">＋ เพิ่มนักเรียน</button>
+        <button class="btn ghost sm" data-act="edit" data-eid="${e.id}">แก้ไขงาน</button>` : ''}
+      ${editable && n > 0 ? `<button class="btn sm" data-act="submit" data-eid="${e.id}"
+          style="background:var(--gold)">ส่งให้งานแนะแนวตรวจ</button>` : ''}
+      ${e.status==='draft' && n===0 ? `<button class="btn ghost sm warn" data-act="delev" data-eid="${e.id}"
+          style="color:var(--rust);border-color:#e8bfb2">ลบงานนี้</button>` : ''}
+    </div>
+  </div>`;
+}
+
+async function toggleEvent(id){
+  S.openId = (S.openId === id) ? null : id;
+  renderList();
+  if(S.openId && !S.participants[S.openId]){
+    await loadParticipants(S.openId);
+  }
+}
+
+async function loadParticipants(eventId){
+  const {data, error} = await sb.from('award_participants')
+    .select('id,prefix_snapshot,first_name_snapshot,last_name_snapshot,exp_name,prize_name,score,batch_id')
+    .eq('event_id', eventId)
+    .order('created_at');
+  if(error){ toast('โหลดรายชื่อไม่สำเร็จ'); return; }
+  S.participants[eventId] = data || [];
+  S.counts[eventId] = (data||[]).length;
+  renderList();
+}
+
+/* ============================================================
+   ฟอร์มงาน (สร้าง / แก้ไข)
+   ============================================================ */
+function openEventForm(ev){
+  const isNew = !ev;
+  const e = ev || {tcas_type:'prize', category:'competition', level:'school', status:'draft'};
+  const locked = !isNew;   // เปลี่ยนประเภทหลังมีนักเรียนแล้วไม่ได้
+
+  const mask = document.createElement('div');
+  mask.className = 'mask';
+  mask.innerHTML = `<div class="modal">
+    <h2>${isNew ? 'เพิ่มงานใหม่' : 'แก้ไขงาน'}</h2>
+    <p class="sub">ปีการศึกษา ${S.year} · ${esc(S.groups.find(g=>g.id===S.groupId).name_th)}</p>
+    <div id="fMsg"></div>
+
+    <label class="f">ประเภทข้อมูล <span class="req">*</span></label>
+    <div class="typepick" id="typePick">
+      ${TYPES.map(t=>`<button type="button" data-v="${t.v}" ${t.v===e.tcas_type?'class="on"':''}
+        ${locked?'disabled':''}>${t.t}<br><span style="font-size:.72rem;opacity:.75">${t.d}</span></button>`).join('')}
+    </div>
+    ${locked ? '<div class="hint">เปลี่ยนประเภทหลังบันทึกแล้วไม่ได้ ถ้าเลือกผิดให้ลบงานแล้วสร้างใหม่</div>' : ''}
+
+    <label class="f" for="fTitle"><span id="lblTitle">ชื่องาน</span> <span class="req">*</span></label>
+    <input id="fTitle" type="text" value="${esc(e.title||'')}" maxlength="300">
+
+    <div id="boxProject" class="hide">
+      <label class="f" for="fProjType">ประเภทโครงงาน <span class="req">*</span></label>
+      <input id="fProjType" type="text" value="${esc(e.project_type||'')}" placeholder="เช่น วิทยาศาสตร์, คอมพิวเตอร์, สังคมศาสตร์">
+    </div>
+
+    <div id="boxCourse" class="hide">
+      <div class="grid2">
+        <div>
+          <label class="f" for="fCourseCat">หมวดหลักสูตร <span class="req">*</span></label>
+          <input id="fCourseCat" type="text" value="${esc(e.course_category||'')}" placeholder="เช่น คอร์สออนไลน์ (MOOC)">
+        </div>
+        <div>
+          <label class="f" for="fCourseLv">ระดับหลักสูตร</label>
+          <input id="fCourseLv" type="text" value="${esc(e.course_level||'')}" placeholder="เว้นว่างได้">
+        </div>
+      </div>
+      <label class="f" for="fExpired">วันหมดอายุใบรับรอง</label>
+      <input id="fExpired" type="date" value="${e.expired_date||''}">
+      <div class="hint">เว้นว่างถ้าไม่มีวันหมดอายุ</div>
+    </div>
+
+    <div class="grid2">
+      <div>
+        <label class="f" for="fCat">ประเภทกิจกรรม <span class="req">*</span></label>
+        <select id="fCat">${CATEGORIES.map(c=>`<option value="${c.v}" ${c.v===e.category?'selected':''}>${c.t}</option>`).join('')}</select>
+        <div class="hint">ใช้ทำรายงานภายใน ไม่ส่งออกไป TCAS</div>
+      </div>
+      <div>
+        <label class="f" for="fLevel">ระดับ</label>
+        <select id="fLevel">
+          <option value="">— ไม่ระบุ —</option>
+          ${LEVELS.map(l=>`<option value="${l.v}" ${l.v===e.level?'selected':''}>${l.t}</option>`).join('')}
+        </select>
+      </div>
+    </div>
+
+    <div class="grid2">
+      <div>
+        <label class="f" for="fStart"><span id="lblStart">วันที่เริ่ม</span> <span class="req">*</span></label>
+        <input id="fStart" type="date" value="${e.start_date||''}">
+      </div>
+      <div id="boxEnd">
+        <label class="f" for="fEnd">วันที่สิ้นสุด</label>
+        <input id="fEnd" type="date" value="${e.end_date||''}">
+        <div class="hint">เว้นว่างถ้าจัดวันเดียว</div>
+      </div>
+    </div>
+
+    <div class="grid2">
+      <div>
+        <label class="f" for="fHours">จำนวนชั่วโมง</label>
+        <input id="fHours" type="number" min="0" value="${e.hours ?? ''}">
+      </div>
+      <div>
+        <label class="f" for="fFee">ค่าใช้จ่าย (บาท)</label>
+        <input id="fFee" type="number" min="0" step="0.01" value="${e.fee ?? ''}">
+      </div>
+    </div>
+
+    <label class="f" for="fDesc">รายละเอียด</label>
+    <textarea id="fDesc" maxlength="1000">${esc(e.description||'')}</textarea>
+
+    <label class="f" for="fOrg">หน่วยงานผู้จัด</label>
+    <input id="fOrg" type="text" value="${esc(e.organizer||'')}" placeholder="ใช้ภายใน ไม่ส่งออกไป TCAS">
+
+    <div class="modal-foot">
+      <button class="btn ghost" data-close>ยกเลิก</button>
+      <button class="btn" id="fSave">${isNew ? 'สร้างงาน' : 'บันทึกการแก้ไข'}</button>
+    </div>
+  </div>`;
+  document.body.appendChild(mask);
+
+  let type = e.tcas_type;
+  function applyType(){
+    mask.querySelectorAll('#typePick button').forEach(b=>
+      b.classList.toggle('on', b.dataset.v === type));
+    mask.querySelector('#boxProject').classList.toggle('hide', type !== 'project');
+    mask.querySelector('#boxCourse').classList.toggle('hide', type !== 'course');
+    mask.querySelector('#boxEnd').classList.toggle('hide', type === 'course');
+    mask.querySelector('#lblTitle').textContent =
+      type === 'project' ? 'ชื่อโครงงาน' : type === 'course' ? 'ชื่อหลักสูตร' : 'ชื่องาน / การแข่งขัน';
+    mask.querySelector('#lblStart').textContent =
+      type === 'course' ? 'วันที่ออกใบรับรอง' : 'วันที่เริ่ม';
+  }
+  applyType();
+
+  mask.querySelector('#typePick').addEventListener('click', ev2=>{
+    const b = ev2.target.closest('button');
+    if(!b || b.disabled) return;
+    type = b.dataset.v; applyType();
+  });
+  mask.addEventListener('click', ev2=>{
+    if(ev2.target === mask || ev2.target.hasAttribute('data-close')) mask.remove();
+  });
+
+  mask.querySelector('#fSave').addEventListener('click', async ()=>{
+    const v = id => mask.querySelector(id).value.trim();
+    const title = v('#fTitle'), start = v('#fStart');
+    if(title.length < 3){ msg2('ชื่องานต้องยาวอย่างน้อย 3 ตัวอักษร'); return; }
+    if(!start){ msg2('เลือกวันที่ก่อน'); return; }
+    if(type === 'project' && !v('#fProjType')){ msg2('โครงงานต้องระบุประเภทโครงงาน'); return; }
+    if(type === 'course'  && !v('#fCourseCat')){ msg2('หลักสูตร/อบรมต้องระบุหมวดหลักสูตร'); return; }
+
+    const end = type === 'course' ? null : (v('#fEnd') || null);
+    if(end && end < start){ msg2('วันที่สิ้นสุดต้องไม่ก่อนวันที่เริ่ม'); return; }
+
+    const payload = {
+      academic_year: S.year,
+      subject_group_id: S.groupId,
+      tcas_type: type,
+      category: v('#fCat'),
+      title,
+      description: v('#fDesc') || null,
+      level: v('#fLevel') || null,
+      start_date: start,
+      end_date: end,
+      hours: v('#fHours') === '' ? null : Number(v('#fHours')),
+      fee:   v('#fFee')   === '' ? null : Number(v('#fFee')),
+      project_type:    type === 'project' ? v('#fProjType') : null,
+      course_level:    type === 'course' ? (v('#fCourseLv') || null) : null,
+      course_category: type === 'course' ? v('#fCourseCat') : null,
+      expired_date:    type === 'course' ? (v('#fExpired') || null) : null,
+      organizer: v('#fOrg') || null
+    };
+
+    const btn = mask.querySelector('#fSave');
+    btn.disabled = true; btn.innerHTML = '<span class="spin"></span> กำลังบันทึก';
+
+    let err;
+    if(isNew){
+      const {data:{session}} = await sb.auth.getSession();
+      payload.created_by = session.user.id;
+      payload.status = 'draft';
+      ({error:err} = await sb.from('award_events').insert(payload));
+    } else {
+      if(e.status === 'returned') payload.status = 'draft';
+      ({error:err} = await sb.from('award_events').update(payload).eq('id', e.id));
+    }
+
+    btn.disabled = false; btn.textContent = isNew ? 'สร้างงาน' : 'บันทึกการแก้ไข';
+    if(err){ msg2(explain(err)); return; }
+    mask.remove();
+    toast(isNew ? 'สร้างงานแล้ว' : 'บันทึกการแก้ไขแล้ว');
+    await loadEvents();
+  });
+
+  function msg2(t){ mask.querySelector('#fMsg').innerHTML = `<div class="msg err">${esc(t)}</div>`; }
+}
+
+/* แปล error ของฐานข้อมูลเป็นภาษาที่ครูอ่านรู้เรื่อง */
+function explain(err){
+  const m = err.message || '';
+  if(m.includes('award_events_dates'))          return 'วันที่สิ้นสุดต้องไม่ก่อนวันที่เริ่ม';
+  if(m.includes('award_events_project_fields')) return 'โครงงานต้องระบุประเภทโครงงาน';
+  if(m.includes('award_events_course_fields'))  return 'หลักสูตร/อบรมต้องระบุหมวดหลักสูตร';
+  if(m.includes('award_participants_unique'))   return 'นักเรียนคนนี้อยู่ในงานนี้แล้ว';
+  if(m.includes('row-level security'))          return 'ไม่มีสิทธิ์แก้ไขรายการนี้ (อาจถูกยืนยันหรือส่งไปแล้ว)';
+  return 'บันทึกไม่สำเร็จ: ' + m;
+}
+
+/* ============================================================
+   เลือกนักเรียน
+   ============================================================ */
+function openStudentPicker(event){
+  const pf = PFIELD[event.tcas_type];
+  const chosen = new Map();
+
+  const mask = document.createElement('div');
+  mask.className = 'mask';
+  mask.innerHTML = `<div class="modal">
+    <h2>เพิ่มนักเรียน</h2>
+    <p class="sub">${esc(event.title)}</p>
+    <div id="sMsg"></div>
+    <label class="f" for="sq">ค้นหาด้วยรหัสนักเรียน ชื่อ หรือห้อง</label>
+    <input id="sq" type="text" placeholder="เช่น 12345 หรือ ม.6/2">
+    <div class="stulist" id="sList"><div class="hint" style="padding:14px">พิมพ์เพื่อค้นหา</div></div>
+    <div class="chosen" id="sChosen"></div>
+    ${pf ? `<label class="f" for="sVal">${esc(pf.label)} (ใส่ให้ทุกคนที่เลือก)</label>
+      <input id="sVal" type="text" placeholder="${esc(pf.ph)}">
+      <div class="hint">แก้รายคนทีหลังได้ในตาราง</div>` : ''}
+    <div class="modal-foot">
+      <button class="btn ghost" data-close>ยกเลิก</button>
+      <button class="btn" id="sAdd" disabled>เพิ่ม 0 คน</button>
+    </div>
+  </div>`;
+  document.body.appendChild(mask);
+
+  const listEl = mask.querySelector('#sList');
+  const addBtn = mask.querySelector('#sAdd');
+
+  function renderChosen(){
+    mask.querySelector('#sChosen').innerHTML =
+      [...chosen.values()].map(s=>`<span class="chip">${esc(s.display_name)}</span>`).join('');
+    addBtn.disabled = chosen.size === 0;
+    addBtn.textContent = `เพิ่ม ${chosen.size} คน`;
+  }
+
+  let timer;
+  mask.querySelector('#sq').addEventListener('input', e2=>{
+    clearTimeout(timer);
+    const q = e2.target.value.trim();
+    if(q.length < 1){ listEl.innerHTML = '<div class="hint" style="padding:14px">พิมพ์เพื่อค้นหา</div>'; return; }
+    timer = setTimeout(async ()=>{
+      listEl.innerHTML = '<div class="hint" style="padding:14px">กำลังค้นหา…</div>';
+      const {data, error} = await sb.rpc('awards_lookup_students', {p_q:q});
+      if(error){ listEl.innerHTML = `<div class="hint" style="padding:14px">ค้นหาไม่สำเร็จ: ${esc(error.message)}</div>`; return; }
+      if(!data.length){ listEl.innerHTML = '<div class="hint" style="padding:14px">ไม่พบนักเรียนที่ตรงกับคำค้น</div>'; return; }
+      listEl.innerHTML = data.map(s=>`
+        <label class="stu ${s.has_identity ? '' : 'no'}">
+          <input type="checkbox" data-pid="${s.profile_id}" ${s.has_identity?'':'disabled'}
+                 ${chosen.has(s.profile_id)?'checked':''}>
+          <span class="nm"><b>${esc(s.display_name)}</b>
+            <span class="rm">· ${esc(s.student_id||'ไม่มีรหัส')} ${s.class_room?'· '+esc(s.class_room):''}</span>
+            ${s.has_identity ? '' : '<div class="rm">ยังไม่มีข้อมูลในทะเบียน — เพิ่มไม่ได้</div>'}
+          </span>
+        </label>`).join('');
+      listEl.querySelectorAll('input[type=checkbox]').forEach(cb=>{
+        cb.addEventListener('change', ()=>{
+          const s = data.find(x=>x.profile_id === cb.dataset.pid);
+          if(cb.checked) chosen.set(s.profile_id, s); else chosen.delete(s.profile_id);
+          renderChosen();
+        });
+      });
+    }, 280);
+  });
+
+  mask.addEventListener('click', e2=>{
+    if(e2.target === mask || e2.target.hasAttribute('data-close')) mask.remove();
+  });
+
+  addBtn.addEventListener('click', async ()=>{
+    addBtn.disabled = true; addBtn.innerHTML = '<span class="spin"></span> กำลังเพิ่ม';
+    const {data, error} = await sb.rpc('awards_add_participants', {
+      p_event_id: event.id,
+      p_profile_ids: [...chosen.keys()],
+      p_value: pf ? (mask.querySelector('#sVal').value.trim() || null) : null
+    });
+    if(error){
+      addBtn.disabled = false; addBtn.textContent = `เพิ่ม ${chosen.size} คน`;
+      mask.querySelector('#sMsg').innerHTML = `<div class="msg err">${esc(error.message)}</div>`;
+      return;
+    }
+    mask.remove();
+    toast(`เพิ่มนักเรียน ${data} คนแล้ว`);
+    await loadParticipants(event.id);
+  });
+}
+
+/* ============================================================
+   การกระทำอื่น ๆ
+   ============================================================ */
+async function submitEvent(e){
+  if(!confirm('ส่งงานนี้ให้งานแนะแนวตรวจ? หลังส่งแล้วจะแก้ไขไม่ได้จนกว่าจะถูกตีกลับ')) return;
+  const {error} = await sb.from('award_events')
+    .update({status:'submitted'}).eq('id', e.id);
+  if(error){ toast(explain(error)); return; }
+  toast('ส่งให้งานแนะแนวตรวจแล้ว');
+  await loadEvents();
+}
+
+async function deleteEvent(e){
+  if(!confirm(`ลบงาน “${e.title}” ?`)) return;
+  const {error} = await sb.from('award_events').delete().eq('id', e.id);
+  if(error){ toast(explain(error)); return; }
+  delete S.participants[e.id];
+  toast('ลบงานแล้ว');
+  await loadEvents();
+}
+
+async function deleteParticipant(pid, eid){
+  const {error} = await sb.from('award_participants').delete().eq('id', pid);
+  if(error){ toast(explain(error)); return; }
+  toast('ลบรายชื่อแล้ว');
+  await loadParticipants(eid);
+}
+
+async function saveParticipantValue(pid, col, val){
+  const patch = {}; patch[col] = val.trim() || null;
+  const {error} = await sb.from('award_participants').update(patch).eq('id', pid);
+  if(error){ toast(explain(error)); return; }
+  toast('บันทึกแล้ว');
+}
+
+/* ============================================================
+   events
+   ============================================================ */
+$('#btnLogin').addEventListener('click', login);
+$('#p').addEventListener('keydown', e=>{ if(e.key==='Enter') login(); });
+$('#u').addEventListener('keydown', e=>{ if(e.key==='Enter') $('#p').focus(); });
+
+$('#btnLogout').addEventListener('click', async ()=>{
+  await sb.auth.signOut();
+  S.profile = null; S.events = []; S.participants = {}; S.openId = null;
+  showLogin();
+});
+
+$('#selYear').addEventListener('change', async e=>{
+  S.year = Number(e.target.value); S.openId = null; S.participants = {};
+  await loadEvents();
+});
+$('#selGroup').addEventListener('change', async e=>{
+  S.groupId = Number(e.target.value); S.openId = null; S.participants = {};
+  renderToolbar(); await loadEvents();
+});
+$('#btnNew').addEventListener('click', ()=>openEventForm(null));
+
+$('#list').addEventListener('click', async e=>{
+  const t = e.target.closest('[data-act]');
+  if(!t) return;
+  const act = t.dataset.act;
+  const ev  = S.events.find(x=>x.id === (t.dataset.eid || t.dataset.id));
+  if(act === 'toggle')  return toggleEvent(t.dataset.id);
+  if(act === 'addp')    return openStudentPicker(ev);
+  if(act === 'edit')    return openEventForm(ev);
+  if(act === 'submit')  return submitEvent(ev);
+  if(act === 'delev')   return deleteEvent(ev);
+  if(act === 'delp')    return deleteParticipant(t.dataset.pid, t.dataset.eid);
+});
+
+/* บันทึกช่องรายบุคคลเมื่อออกจากช่อง */
+$('#list').addEventListener('focusout', e=>{
+  const t = e.target.closest('[data-act="pval"]');
+  if(!t) return;
+  saveParticipantValue(t.dataset.pid, t.dataset.col, t.value);
+});
+
+boot();
+</script>
+</body>
+</html>
