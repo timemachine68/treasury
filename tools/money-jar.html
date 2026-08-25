@@ -351,19 +351,21 @@ const CATEGORIES = {
 
 let state = { type:'expense', category:null, filter:'all', transactions:[] };
 
-async function loadData(){
+const STORAGE_KEY = 'moneyjar_transactions_v1';
+
+function loadData(){
   try{
-    const res = await window.storage.get('transactions', false);
-    state.transactions = res && res.value ? JSON.parse(res.value) : [];
+    const raw = localStorage.getItem(STORAGE_KEY);
+    state.transactions = raw ? JSON.parse(raw) : [];
   }catch(e){ state.transactions = []; }
   renderCats();
   renderList();
   renderSummary();
 }
 
-async function saveData(){
-  try{ await window.storage.set('transactions', JSON.stringify(state.transactions), false); }
-  catch(e){ console.error('save failed', e); }
+function saveData(){
+  try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state.transactions)); }
+  catch(e){ console.error('save failed', e); showToast('บันทึกไม่สำเร็จ ลองอีกครั้งนะคะ'); }
 }
 
 function setType(t){
