@@ -51,7 +51,15 @@
   }
   @keyframes bob{0%,100%{transform:translateY(0) rotate(-3deg);}50%{transform:translateY(-5px) rotate(3deg);}}
   header h1{font-family:'Baloo 2',sans-serif; font-size:22px; margin:0; font-weight:700; letter-spacing:.2px;}
-  header p{margin:2px 0 0; font-size:12.5px; color:var(--text-soft);}
+  header p.tagline{margin:2px 0 0; font-size:12.5px; color:var(--text-soft);}
+  .owner-row{margin:5px 0 0; font-size:12.5px; color:var(--lav-deep); font-weight:700; display:flex; align-items:center; gap:7px;}
+  .owner-row .oi{font-size:13px;}
+  .edit-owner-btn{
+    border:1px solid var(--lav-deep); background:#fff; color:var(--lav-deep);
+    font-size:10.5px; font-weight:600; cursor:pointer; padding:2px 8px; border-radius:20px;
+    font-family:'Sarabun',sans-serif;
+  }
+  .edit-owner-btn:active{transform:scale(.95);}
 
   /* balance hero */
   .hero{
@@ -148,6 +156,7 @@
   }
   .report-brand .rb-text h3{font-family:'Baloo 2',sans-serif; font-size:16px; margin:0; font-weight:700;}
   .report-brand .rb-text p{font-size:11px; margin:1px 0 0; color:var(--text-soft);}
+  .report-brand .rb-text .rb-owner{font-size:11.5px; margin-top:3px; color:var(--lav-deep); font-weight:700;}
   .report-meta{font-size:11px; color:var(--text-soft); margin-bottom:14px; padding-bottom:14px; border-bottom:1px dashed #E3D4EE;}
   .report-stats{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
   .rs-card{
@@ -226,7 +235,8 @@
     <div class="piggy">🐷</div>
     <div>
       <h1>กระปุกใจดี</h1>
-      <p>บันทึกรายรับ-รายจ่าย น่ารักทุกวัน</p>
+      <p class="tagline">บันทึกรายรับ-รายจ่าย น่ารักทุกวัน</p>
+      <p class="owner-row"><span class="oi">👤</span><span id="ownerNameDisplay">ยังไม่ระบุชื่อ</span><button type="button" class="edit-owner-btn" onclick="editOwnerName()">แก้ไขชื่อ</button></p>
     </div>
   </header>
 
@@ -289,6 +299,7 @@
           <div class="rb-text">
             <h3>กระปุกใจดี</h3>
             <p>รายงานสรุปรายรับ-รายจ่าย</p>
+            <p class="rb-owner" id="rOwner" style="display:none;"></p>
           </div>
         </div>
         <div class="report-meta" id="reportMeta"></div>
@@ -352,6 +363,28 @@ const CATEGORIES = {
 let state = { type:'expense', category:null, filter:'all', transactions:[] };
 
 const STORAGE_KEY = 'moneyjar_transactions_v1';
+const OWNER_KEY = 'moneyjar_owner_name';
+
+function loadOwnerName(){
+  const name = (localStorage.getItem(OWNER_KEY) || '').trim();
+  document.getElementById('ownerNameDisplay').textContent = name || 'ยังไม่ระบุชื่อ';
+  const rOwner = document.getElementById('rOwner');
+  if(name){
+    rOwner.textContent = '👤 ผู้บันทึก: ' + name;
+    rOwner.style.display = 'block';
+  }else{
+    rOwner.style.display = 'none';
+  }
+}
+
+function editOwnerName(){
+  const current = localStorage.getItem(OWNER_KEY) || '';
+  const name = prompt('ใส่ชื่อเจ้าของบัญชีนี้ค่ะ 🌸', current);
+  if(name === null) return;
+  localStorage.setItem(OWNER_KEY, name.trim());
+  loadOwnerName();
+  showToast(name.trim() ? 'บันทึกชื่อเจ้าของแล้วค่ะ 💗' : 'ลบชื่อเจ้าของแล้วค่ะ');
+}
 
 function loadData(){
   try{
@@ -558,6 +591,7 @@ async function exportPDF(){
 }
 
 document.getElementById('dateInput').value = new Date().toISOString().slice(0,10);
+loadOwnerName();
 loadData();
 </script>
 </body>
