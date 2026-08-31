@@ -146,6 +146,7 @@ table.t tr:last-child td{border-bottom:none}
         <button id="btnBlank" class="btn ghost">ดาวน์โหลดแบบฟอร์มเปล่า</button>
       </div>
       <div class="hint">คอลัมน์ที่ต้องมี: รหัสนักเรียน · เลขบัตรประชาชน · คำนำหน้า · ชื่อ · นามสกุล</div>
+      <div class="hint" style="color:var(--rust)">⚠️ ก่อนกรอกใน Excel ให้ตั้งคอลัมน์ "รหัสนักเรียน" และ "เลขบัตรประชาชน" เป็นรูปแบบ Text ก่อน ป้องกัน Excel ใส่คอมมาคั่นหลักพันหรือทอนเลขศูนย์หน้าให้เอง</div>
     </div>
 
     <div class="card">
@@ -397,9 +398,15 @@ function buildPayload(){
     msg('#fileMsg','ยังไม่ได้เลือกคอลัมน์: ' + missing.map(f=>f.t).join(', '), 'err');
     return null;
   }
+  const numericKeys = new Set(['citizen_id','student_id']);
   return S.rows.map(r=>{
     const o = {};
-    FIELDS.forEach(f=>{ o[f.k] = String(r[S.map[f.k]] ?? '').trim(); });
+    FIELDS.forEach(f=>{
+      let v = String(r[S.map[f.k]] ?? '').trim();
+      // กันกรณี Excel จัดคอลัมน์เป็นตัวเลขแล้วแทรกคอมมาคั่นหลักพันมาโดยไม่ตั้งใจ (เช่น "1,234,567,890,123")
+      if(numericKeys.has(f.k)) v = v.replace(/,/g,'');
+      o[f.k] = v;
+    });
     return o;
   });
 }

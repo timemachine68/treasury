@@ -404,7 +404,7 @@ function body(e){
     ${detail.length ? `<div class="hint" style="margin-bottom:12px">${esc(detail.join(' · '))}</div>` : ''}
     ${tbl}
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px">
-      ${e.status !== 'verified'
+      ${e.status === 'submitted'
         ? `<button class="btn sm" data-act="ok" data-id="${e.id}">ยืนยันงานนี้</button>` : ''}
       ${e.status !== 'draft'
         ? `<button class="btn ghost sm" data-act="back" data-id="${e.id}"
