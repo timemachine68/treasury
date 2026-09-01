@@ -619,7 +619,9 @@ function openEventForm(ev){
     type = b.dataset.v; applyType();
   });
   mask.addEventListener('click', ev2=>{
-    if(ev2.target === mask || ev2.target.hasAttribute('data-close')) mask.remove();
+    // ปิดเฉพาะตอนกดปุ่ม "ยกเลิก"/ไอคอนปิดเท่านั้น ไม่ปิดตอนคลิกโดนพื้นหลังรอบนอก
+    // กันข้อมูลที่กรอกฟอร์มไว้หายเวลามือไปโดนพื้นที่ว่างโดยไม่ตั้งใจ
+    if(ev2.target.hasAttribute('data-close')) mask.remove();
   });
 
   mask.querySelector('#fSave').addEventListener('click', async ()=>{
@@ -754,7 +756,9 @@ function openStudentPicker(event){
   });
 
   mask.addEventListener('click', e2=>{
-    if(e2.target === mask || e2.target.hasAttribute('data-close')) mask.remove();
+    // ปิดเฉพาะตอนกดปุ่ม "ยกเลิก"/ไอคอนปิดเท่านั้น ไม่ปิดตอนคลิกโดนพื้นหลังรอบนอก
+    // กันข้อมูลที่ค้นหา/เลือกไว้หายเวลามือไปโดนพื้นที่ว่างโดยไม่ตั้งใจ
+    if(e2.target.hasAttribute('data-close')) mask.remove();
   });
 
   addBtn.addEventListener('click', async ()=>{
