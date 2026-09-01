@@ -265,11 +265,21 @@ async function init(){
 }
 
 async function loadStudents(){
-  const { data, error } = await sb.from('profiles')
-    .select('id, display_name, class_room')
-    .eq('role', 'student')
-    .order('class_room', { ascending: true })
-    .order('display_name', { ascending: true });
+  // ต้องแบ่งหน้าดึง เพราะ Supabase/PostgREST จำกัดผลลัพธ์ไว้ที่ 1000 แถวต่อการ query ครั้งเดียว
+  // เป็นค่าเริ่มต้น — นักเรียนทั้งโรงเรียนมีมากกว่า 1000 คน ถ้าดึงครั้งเดียวจะขาดหายไปครึ่งหนึ่ง
+  let data = [], from = 0, pageSize = 1000, error = null;
+  while(true){
+    const res = await sb.from('profiles')
+      .select('id, display_name, class_room')
+      .eq('role', 'student')
+      .order('class_room', { ascending: true })
+      .order('display_name', { ascending: true })
+      .range(from, from + pageSize - 1);
+    if (res.error){ error = res.error; break; }
+    data = data.concat(res.data || []);
+    if (!res.data || res.data.length < pageSize) break;
+    from += pageSize;
+  }
   const sel = document.getElementById('f-student');
   if (error){
     const opt = document.createElement('option');

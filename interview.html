@@ -300,6 +300,21 @@ function msg(id,t,cls){ const el=$(id); el.textContent=t; el.className="msg "+cl
 function closeModal(id){ $(id).classList.remove("show"); }
 function fmtDate(d){ return new Date(d).toLocaleDateString("th-TH",{day:"numeric",month:"short",year:"2-digit"})+" "+new Date(d).toLocaleTimeString("th-TH",{hour:"2-digit",minute:"2-digit"}); }
 function fmtSec(s){ const m=Math.floor(Math.abs(s)/60), ss=Math.abs(s)%60; return (s<0?"-":"")+m+":"+String(ss).padStart(2,"0"); }
+// ดึง profiles ที่ role='student' ให้ครบทุกแถว — Supabase/PostgREST จำกัดผลลัพธ์ไว้ที่ 1000 แถวต่อการ
+// query ครั้งเดียวเป็นค่าเริ่มต้น ถ้านักเรียนทั้งโรงเรียนเกิน 1000 คน query แบบเดิมจะตัดข้อมูลที่เหลือ
+// ทิ้งไปเงียบๆ โดยไม่มี error ทำให้บางห้อง/นักเรียนหายไปจากรายชื่อ
+async function fetchAllStudents(cols){
+  let all = [], from = 0, pageSize = 1000;
+  while(true){
+    const {data, error} = await sb.from("profiles").select(cols)
+      .eq("role","student").order("class_room").range(from, from+pageSize-1);
+    if(error){ console.error("fetchAllStudents error:", error.message); break; }
+    all = all.concat(data||[]);
+    if(!data || data.length < pageSize) break;
+    from += pageSize;
+  }
+  return all;
+}
 const isStaff = () => profile && (profile.role==="teacher"||profile.role==="admin");
 
 /* ═══════════ เข้าสู่ระบบ ═══════════ */
@@ -387,9 +402,9 @@ async function renderHome(){
           <li>ซ้อมเสร็จอย่าลืมประเมินตนเองตามเกณฑ์ แล้วส่งให้ครูช่วยดู</li>
         </ul></div>`;
   }else{
-    const [{data:ss},{data:students}] = await Promise.all([
+    const [{data:ss}, students] = await Promise.all([
       sb.from("iv_sessions").select("id,student_id,status,submitted_at,created_at"),
-      sb.from("profiles").select("id,display_name,class_room").eq("role","student")
+      fetchAllStudents("id,display_name,class_room")
     ]);
     const all = ss||[], stuMap = Object.fromEntries((students||[]).map(s=>[s.id,s]));
     const pending = all.filter(s=>s.status==="submitted").length;
@@ -856,7 +871,8 @@ function renderChartInto(elId, data){
 let progRoom = "all", progStudent = "";
 async function renderProgress(){
   $("body").innerHTML = `<div class="loading">กำลังโหลด…</div>`;
-  const {data:students} = await sb.from("profiles").select("id,display_name,class_room").eq("role","student").order("class_room").order("display_name");
+  const students = await fetchAllStudents("id,display_name,class_room");
+  students.sort((a,b)=> (a.class_room||"").localeCompare(b.class_room||"","th") || (a.display_name||"").localeCompare(b.display_name||"","th"));
   const rooms = [...new Set((students||[]).map(s=>s.class_room||"ไม่ระบุห้อง"))].sort((a,b)=>a.localeCompare(b,"th"));
   const list = (students||[]).filter(s=> progRoom==="all" || (s.class_room||"ไม่ระบุห้อง")===progRoom);
   $("body").innerHTML = `
