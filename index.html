@@ -1234,9 +1234,19 @@ async function loadHealth(){
 $("btnHealthRefresh").onclick = loadHealth;
 
 async function loadUsers(){
-  const {data, error} = await sb.from("profiles").select("*").order("role").order("class_room").order("username");
-  if(error) return toast("โหลดรายชื่อไม่สำเร็จ");
-  users = data||[]; renderUsers();
+  // ต้องแบ่งหน้าดึงเหมือน fetchAllStudents() ข้างบน — ไม่งั้นพอนักเรียนรวมกันเกิน 1,000 แถว
+  // (เรียงตาม role ตามตัวอักษร admin < student < teacher) แถวของ "teacher" ที่อยู่ท้ายสุด
+  // จะไม่ถูกดึงมาเลยสักแถวเดียว ทำให้ค้นหาบัญชีครูในหน้านี้ไม่เจอ
+  let all = [], from = 0, pageSize = 1000;
+  while(true){
+    const {data, error} = await sb.from("profiles").select("*")
+      .order("role").order("class_room").order("username").range(from, from+pageSize-1);
+    if(error){ toast("โหลดรายชื่อไม่สำเร็จ: "+error.message); break; }
+    all = all.concat(data||[]);
+    if(!data || data.length < pageSize) break;
+    from += pageSize;
+  }
+  users = all; renderUsers();
 }
 function renderUsers(){
   const list = users.filter(u=>{
