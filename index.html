@@ -741,8 +741,10 @@ textarea.csvbox{font-family:monospace;font-size:.82rem;min-height:120px}
       <label><input type="checkbox" value="work" checked>📝 งานมอบหมาย</label>
       <label><input type="checkbox" value="survey" checked>🎓 สำรวจเรียนต่อ</label>
       <label><input type="checkbox" value="strength" checked>🌟 จุดแข็ง</label>
+      <label><input type="checkbox" value="overview" checked>🧑‍🎓 ภาพรวมนักเรียน</label>
+      <label><input type="checkbox" value="manage" checked>👥 จัดการบัญชี</label>
     </div>
-    <p class="field hint" style="margin-top:10px">หมายเหตุ: "จัดการบัญชี" กำหนดให้แอดมินเท่านั้นเสมอ ไม่มีในรายการนี้ค่ะ</p>
+    <p class="field hint" style="margin-top:10px">หมายเหตุ: การ์ดใน "ระบบของเรา" สำหรับบัญชีที่ถูกจำกัดสิทธิ์แบบพิเศษ (เช่น บัญชีกลุ่มสาระ) ต้องตั้งค่าเพิ่มเติมทางฐานข้อมูล ติดต่อผู้ดูแลระบบ</p>
     <div class="foot">
       <button class="btn ghost" id="btnPermCancel">ยกเลิก</button>
       <button class="btn primary" id="btnPermSave">บันทึกสิทธิ์</button>
@@ -878,11 +880,11 @@ async function enterApp(){
   $("uName").textContent = profile.display_name;
   $("uRole").textContent = ROLE_LABEL[profile.role] + (profile.class_room? " · "+profile.class_room : "");
   const staff = ["teacher","admin"].includes(profile.role);
-  $("tabManage").classList.toggle("hidden", !staff);
-  $("tabOverview").classList.toggle("hidden", !staff);
+  const perms = computeMyPerms();
+  $("tabManage").classList.toggle("hidden", !staff || !perms.manage);
+  $("tabOverview").classList.toggle("hidden", !staff || !perms.overview);
   document.querySelectorAll("#nuRole .adminOnly").forEach(o=>o.classList.toggle("hidden", profile.role!=="admin"));
   renderGradeTabs(); renderTypeChips(); renderRoleChips();
-  const perms = computeMyPerms();
   $("tabLibrary").classList.toggle("hidden", !perms.library);
   $("tabWork").classList.toggle("hidden", !perms.work);
   $("tabSurvey").classList.toggle("hidden", !perms.survey);
@@ -891,15 +893,17 @@ async function enterApp(){
   switchView(initial);
 }
 function computeMyPerms(){
-  if(!profile) return {library:true, work:true, survey:true, strength:true};
-  if(profile.role === "student") return {library:false, work:true, survey:true, strength:true};
-  if(profile.role !== "teacher") return {library:true, work:true, survey:true, strength:true}; // admin
+  if(!profile) return {library:true, work:true, survey:true, strength:true, manage:true, overview:true};
+  if(profile.role === "student") return {library:false, work:true, survey:true, strength:true, manage:false, overview:false};
+  if(profile.role !== "teacher") return {library:true, work:true, survey:true, strength:true, manage:true, overview:true}; // admin
   const mp = profile.menu_permissions;
   return {
     library: !mp || mp.library !== false,
     work: !mp || mp.work !== false,
     survey: !mp || mp.survey !== false,
-    strength: !mp || mp.strength !== false
+    strength: !mp || mp.strength !== false,
+    manage: !mp || mp.manage !== false,
+    overview: !mp || mp.overview !== false
   };
 }
 
@@ -1930,7 +1934,11 @@ async function loadApps(){
   extApps = data||[];
   // กรองตาม visible_to จริง: admin เห็นทุกลิงก์ (เพื่อจัดการ) ส่วนครู/นักเรียนเห็นเฉพาะที่ตั้งค่าให้มองเห็น
   const myGroup = profile.role==="student" ? "student" : "teacher";
-  const visibleApps = profile.role==="admin" ? extApps : extApps.filter(a=> (a.visible_to||[]).includes(myGroup));
+  let visibleApps = profile.role==="admin" ? extApps : extApps.filter(a=> (a.visible_to||[]).includes(myGroup));
+  // บัญชีที่ถูกจำกัดสิทธิ์เมนู (เช่น บัญชีกลุ่มสาระของระบบผลงานนักเรียน) จะเห็นเฉพาะระบบที่อนุญาตไว้ใน appsOnly เท่านั้น
+  const appsOnly = profile.menu_permissions && Array.isArray(profile.menu_permissions.appsOnly)
+    ? profile.menu_permissions.appsOnly : null;
+  if(appsOnly && profile.role!=="admin") visibleApps = visibleApps.filter(a=> appsOnly.includes(a.id));
   $("appEmpty").classList.toggle("hidden", visibleApps.length>0);
   $("appGrid").innerHTML = visibleApps.map(a=>`<article class="rescard" style="--gc:var(--g5)">
     <div class="top">${(a.visible_to||[]).map(v=>`<span class="badge type">${v==="teacher"?"ครู":"นักเรียน"}</span>`).join("")}</div>
