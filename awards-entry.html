@@ -93,6 +93,11 @@ textarea{min-height:80px;resize:vertical}
 .pill.submitted{background:#e4eef6;border-color:#bcd4e6;color:#2c5a7a}
 .pill.verified{background:#e2f0e6;border-color:#b3d7bf;color:#1d5c34}
 .pill.returned{background:#f8e5df;border-color:#e8bfb2;color:#94402a}
+.summary{display:flex;flex-wrap:wrap;gap:10px;margin:2px 0 16px}
+.summary .card{background:#fff;border:1px solid var(--line,#e6e1d4);border-radius:12px;
+  padding:10px 16px;min-width:104px;text-align:center}
+.summary .card .num{font-size:1.35rem;font-weight:700;color:var(--pine-dk,#12241c);line-height:1.15}
+.summary .card .lab{font-size:.74rem;color:var(--muted,#7c7566);margin-top:2px}
 .pill.type{background:var(--pine);color:#fff;border-color:var(--pine)}
 
 /* ---------- participants ---------- */
@@ -199,6 +204,7 @@ table.pt input[type=text]{padding:5px 8px;font-size:.9rem}
       <button id="btnNew" class="btn">＋ เพิ่มงานใหม่</button>
     </div>
 
+    <div id="summaryBar" class="summary"></div>
     <div id="listMsg"></div>
     <div id="list"></div>
   </div>
@@ -390,12 +396,33 @@ async function loadEvents(){
   S.events = data || [];
 
   S.counts = {};
+  const studentSet = new Set();
   if(S.events.length){
     const ids = S.events.map(e=>e.id);
-    const {data:pts} = await sb.from('award_participants').select('id,event_id').in('event_id', ids);
-    (pts||[]).forEach(p => S.counts[p.event_id] = (S.counts[p.event_id]||0) + 1);
+    const {data:pts} = await sb.from('award_participants').select('id,event_id,profile_id').in('event_id', ids);
+    (pts||[]).forEach(p => {
+      S.counts[p.event_id] = (S.counts[p.event_id]||0) + 1;
+      if(p.profile_id) studentSet.add(p.profile_id);
+    });
   }
+  renderSummary(studentSet.size, Object.values(S.counts).reduce((a,b)=>a+b, 0));
   renderList();
+}
+
+function renderSummary(studentCount, totalAwardCount){
+  const el = $('#summaryBar');
+  if(!el) return;
+  const by = {draft:0, submitted:0, verified:0, returned:0};
+  S.events.forEach(e => { if(by[e.status] !== undefined) by[e.status]++; });
+  el.innerHTML = `
+    <div class="card"><div class="num">${S.events.length}</div><div class="lab">งานทั้งหมด</div></div>
+    <div class="card"><div class="num">${totalAwardCount}</div><div class="lab">รวมทุกรางวัล/ครั้ง (นับซ้ำ)</div></div>
+    <div class="card"><div class="num">${studentCount}</div><div class="lab">นักเรียนไม่ซ้ำ (คน)</div></div>
+    <div class="card"><div class="num">${by.draft}</div><div class="lab">ร่าง</div></div>
+    <div class="card"><div class="num">${by.submitted}</div><div class="lab">รอตรวจ</div></div>
+    <div class="card"><div class="num">${by.verified}</div><div class="lab">ยืนยันแล้ว</div></div>
+    <div class="card"><div class="num">${by.returned}</div><div class="lab">ตีกลับให้แก้</div></div>
+  `;
 }
 
 function renderList(){
