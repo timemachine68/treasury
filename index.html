@@ -381,11 +381,12 @@ textarea.csvbox{font-family:monospace;font-size:.82rem;min-height:120px}
     <!-- ── มุมมองระบบของเรา ── -->
     <div id="viewApps" class="hidden">
       <div class="toolbar">
+        <div class="chips" id="appChips"></div>
         <div class="spacer"></div>
         <button class="btn primary hidden" id="btnAddApp">➕ เพิ่มลิงก์ระบบ</button>
       </div>
       <div id="appGrid" class="grid"></div>
-      <div id="appEmpty" class="empty hidden"><div class="big">🧭</div>ยังไม่มีลิงก์ระบบ</div>
+      <div id="appEmpty" class="empty hidden"><div class="big">🧭</div><span id="appEmptyText">ยังไม่มีลิงก์ระบบ</span></div>
     </div>
 
     <!-- ── มุมมองจุดแข็ง ── -->
@@ -1936,7 +1937,7 @@ $("btnSvCsv").onclick = ()=>{
 };
 
 /* ═══════════ เฟส 3: ระบบของเรา ═══════════ */
-let extApps=[], editingAppId=null;
+let extApps=[], editingAppId=null, visibleApps=[], appFilter="all";
 async function loadApps(){
   $("btnAddApp").classList.toggle("hidden", profile.role!=="admin");
   const {data, error} = await sb.from("external_systems").select("*").order("sort_order").order("created_at");
@@ -1944,13 +1945,24 @@ async function loadApps(){
   extApps = data||[];
   // กรองตาม visible_to จริง: admin เห็นทุกลิงก์ (เพื่อจัดการ) ส่วนครู/นักเรียนเห็นเฉพาะที่ตั้งค่าให้มองเห็น
   const myGroup = profile.role==="student" ? "student" : "teacher";
-  let visibleApps = profile.role==="admin" ? extApps : extApps.filter(a=> (a.visible_to||[]).includes(myGroup));
+  visibleApps = profile.role==="admin" ? extApps : extApps.filter(a=> (a.visible_to||[]).includes(myGroup));
   // บัญชีที่ถูกจำกัดสิทธิ์เมนู (เช่น บัญชีกลุ่มสาระของระบบผลงานนักเรียน) จะเห็นเฉพาะระบบที่อนุญาตไว้ใน appsOnly เท่านั้น
   const appsOnly = profile.menu_permissions && Array.isArray(profile.menu_permissions.appsOnly)
     ? profile.menu_permissions.appsOnly : null;
   if(appsOnly && profile.role!=="admin") visibleApps = visibleApps.filter(a=> appsOnly.includes(a.id));
-  $("appEmpty").classList.toggle("hidden", visibleApps.length>0);
-  $("appGrid").innerHTML = visibleApps.map(a=>`<article class="rescard" style="--gc:var(--g5)">
+  renderAppChips();
+  renderApps();
+}
+function renderAppChips(){
+  const opts = [{key:"all",label:"ทั้งหมด"},{key:"teacher",label:"ครู"},{key:"student",label:"นักเรียน"}];
+  $("appChips").innerHTML = opts.map(o=>`<button class="chip ${appFilter===o.key?"active":""}" data-af="${o.key}">${o.label}</button>`).join("");
+  $("appChips").querySelectorAll(".chip").forEach(b=> b.onclick=()=>{ appFilter=b.dataset.af; renderAppChips(); renderApps(); });
+}
+function renderApps(){
+  const list = appFilter==="all" ? visibleApps : visibleApps.filter(a=> (a.visible_to||[]).includes(appFilter));
+  $("appEmpty").classList.toggle("hidden", list.length>0);
+  $("appEmptyText") && ($("appEmptyText").textContent = appFilter==="all" ? "ยังไม่มีลิงก์ระบบ" : `ยังไม่มีลิงก์ระบบสำหรับ${appFilter==="teacher"?"ครู":"นักเรียน"}`);
+  $("appGrid").innerHTML = list.map(a=>`<article class="rescard" style="--gc:var(--g5)">
     <div class="top">${(a.visible_to||[]).map(v=>`<span class="badge type">${v==="teacher"?"ครู":"นักเรียน"}</span>`).join("")}</div>
     <h3>${esc(a.icon||"🔗")} ${esc(a.title)}</h3>
     ${a.description?`<p class="desc">${esc(a.description)}</p>`:""}
