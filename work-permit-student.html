@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ขอหนังสือฝึกงาน/อนุญาตทำงาน | แนะให้แนว</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Mitr:wght@400;500;600&family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{
+  --ink:#22313A; --ink-soft:#5B6B72; --board:#EFF3F1; --card:#FFFFFF;
+  --pine:#0F6B5C; --pine-deep:#0A4F44; --pine-tint:#E2F0EC;
+  --note:#FFD34D; --note-deep:#8A6D00; --line:#DCE4E1; --danger:#C0392B;
+  --radius:14px; --shadow:0 2px 10px rgba(34,49,58,.08);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Sarabun',sans-serif;background:var(--board);color:var(--ink);font-size:16px;line-height:1.55;min-height:100vh}
+h1,h2,h3,.brand{font-family:'Mitr',sans-serif;font-weight:600}
+button{font-family:inherit;cursor:pointer}
+input,select,textarea{font-family:inherit;font-size:16px}
+:focus-visible{outline:3px solid var(--note);outline-offset:2px;border-radius:6px}
+
+.wrap{max-width:680px;margin:0 auto;padding:0 16px 64px}
+header.app{background:var(--pine);color:#fff;padding:14px 0}
+header.app .wrap{display:flex;align-items:center;gap:12px;padding-bottom:0;flex-wrap:wrap}
+.brand{font-size:1.15rem;display:flex;align-items:center;gap:10px}
+.brand .logo{width:34px;height:34px;border-radius:9px;background:var(--note);color:var(--pine-deep);display:grid;place-items:center;font-size:1.05rem;flex:none}
+.brand small{display:block;font-family:'Sarabun';font-weight:400;font-size:.72rem;opacity:.85}
+.spacer{flex:1}
+.iconbtn{background:rgba(255,255,255,.14);border:none;color:#fff;border-radius:999px;padding:7px 14px;font-size:.85rem}
+
+.folder-tabs{display:flex;gap:4px;overflow-x:auto;padding:22px 2px 0;scrollbar-width:none}
+.ftab{flex:none;background:#fff;color:var(--ink-soft);font-family:'Mitr';font-size:.92rem;font-weight:500;
+  padding:9px 18px 12px;border-radius:12px 12px 0 0;border:1px solid var(--line);border-bottom:none;position:relative;top:4px;opacity:.82}
+.ftab.active{top:0;opacity:1;color:var(--ink);border-top:4px solid var(--pine);box-shadow:0 -3px 8px rgba(34,49,58,.06);z-index:2}
+.folder-body{background:#fff;border:1px solid var(--line);border-radius:0 var(--radius) var(--radius) var(--radius);padding:16px;box-shadow:var(--shadow)}
+
+.panel{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:18px;margin-bottom:16px}
+.panel h2{font-size:1.02rem;color:var(--pine-deep);margin-bottom:12px}
+.field{margin-bottom:13px}
+.field label{display:block;font-size:.83rem;font-weight:700;margin-bottom:5px}
+.field input,.field select,.field textarea{width:100%;padding:10px 12px;border:1.5px solid var(--line);border-radius:10px}
+.field textarea{min-height:70px;resize:vertical}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:480px){.row2{grid-template-columns:1fr}}
+.seg{display:flex;border:1.5px solid var(--line);border-radius:10px;overflow:hidden;margin-bottom:16px}
+.seg button{flex:1;border:none;background:#fff;padding:10px;font-size:.9rem;color:var(--ink-soft)}
+.seg button.active{background:var(--pine);color:#fff;font-weight:600}
+
+.btn{border:none;border-radius:9px;padding:10px 16px;font-size:.9rem;font-weight:600;display:inline-flex;align-items:center;gap:6px;justify-content:center}
+.btn.primary{background:var(--pine);color:#fff;width:100%}
+.btn.primary:hover{background:var(--pine-deep)}
+.btn.ghost{background:#fff;border:1.5px solid var(--line);color:var(--ink-soft)}
+.btn.danger{background:#fff;border:1.5px solid #EAC7C2;color:var(--danger)}
+.btn.sm{padding:6px 11px;font-size:.78rem}
+.btn:disabled{opacity:.55;cursor:wait}
+
+.reqcard{border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:10px}
+.reqcard .top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.reqcard h3{font-size:.98rem;font-weight:500}
+.reqcard .meta{font-size:.82rem;color:var(--ink-soft);margin-top:4px}
+.badge{font-size:.7rem;font-weight:700;border-radius:6px;padding:2px 8px}
+.badge.type-work_permit{background:var(--pine-tint);color:var(--pine-deep)}
+.badge.type-internship{background:#EDE7F6;color:#4527A0}
+.pill{border-radius:999px;padding:3px 12px;font-size:.75rem;font-weight:700;white-space:nowrap}
+.pill.submitted{background:#FBEAE7;color:var(--danger)}
+.pill.processing{background:#FFF3CE;color:var(--note-deep)}
+.pill.ready{background:var(--pine-tint);color:var(--pine-deep)}
+.pill.received{background:#E8EEF7;color:#3D5A80}
+.pill.cancelled{background:var(--board);color:var(--ink-soft)}
+.steps{display:flex;gap:6px;margin-top:10px}
+.step{flex:1;text-align:center;padding:6px 4px;border-radius:8px;background:var(--board);font-size:.7rem;color:var(--ink-soft)}
+.step.on{background:var(--pine-tint);color:var(--pine-deep);font-weight:700}
+
+.expcard{border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center}
+.expcard b{font-size:.9rem;display:block}
+.expcard small{color:var(--ink-soft);font-size:.78rem}
+
+.login-stage{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;
+  background:linear-gradient(160deg,var(--pine) 0%,var(--pine-deep) 60%),var(--pine)}
+.login-card{background:#fff;border-radius:20px;padding:30px 26px;max-width:400px;width:100%;box-shadow:0 18px 50px rgba(0,0,0,.28)}
+.login-card .logo-big{width:58px;height:58px;border-radius:16px;background:var(--note);color:var(--pine-deep);display:grid;place-items:center;font-size:1.5rem;font-weight:600;margin:0 auto 12px}
+.login-card h1{text-align:center;font-size:1.25rem;color:var(--pine-deep)}
+.login-card .sub{text-align:center;font-size:.83rem;color:var(--ink-soft);margin-bottom:20px}
+.login-card .btn{padding:12px;font-size:1rem}
+.msg{border-radius:10px;padding:10px 13px;font-size:.85rem;margin-bottom:12px;display:none}
+.msg.err{display:block;background:#FBEAE7;color:var(--danger)}
+.msg.ok{display:block;background:var(--pine-tint);color:var(--pine-deep)}
+#toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;
+  padding:11px 20px;border-radius:999px;font-size:.88rem;box-shadow:0 6px 20px rgba(0,0,0,.3);opacity:0;pointer-events:none;transition:opacity .25s;z-index:99}
+#toast.show{opacity:1}
+.loading{text-align:center;padding:40px;color:var(--ink-soft)}
+.empty{padding:30px 16px;text-align:center;color:var(--ink-soft)}
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+
+<div id="loginStage" class="login-stage hidden">
+  <div class="login-card">
+    <div class="logo-big">📋</div>
+    <h1>ขอหนังสือฝึกงาน/อนุญาตทำงาน</h1>
+    <div class="sub">ใช้บัญชีเดียวกับคลังแนะแนว</div>
+    <div id="liMsg" class="msg"></div>
+    <div class="field"><label>รหัสนักเรียน</label><input id="liUser" autocomplete="username"></div>
+    <div class="field"><label>รหัสผ่าน</label><input id="liPass" type="password" autocomplete="current-password"></div>
+    <button id="btnLogin" class="btn primary">เข้าสู่ระบบ</button>
+  </div>
+</div>
+
+<div id="appStage" class="hidden">
+  <header class="app"><div class="wrap">
+    <div class="brand"><span class="logo">📋</span><span>ขอหนังสือฝึกงาน/อนุญาตทำงาน<small>แนะให้แนว</small></span></div>
+    <div class="spacer"></div>
+    <button class="iconbtn" id="btnLogout">ออกจากระบบ</button>
+  </div></header>
+
+  <div class="wrap">
+    <nav class="folder-tabs" id="tabs">
+      <button class="ftab active" data-t="home">📥 คำขอของฉัน</button>
+      <button class="ftab" data-t="exp">💼 ประสบการณ์ทำงาน</button>
+    </nav>
+    <div class="folder-body" id="body"><div class="loading">กำลังโหลด…</div></div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const SUPABASE_URL = "https://ikkhjslmtjwrxzxvtokb.supabase.co";
+const ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlra2hqc2xtdGp3cnh6eHZ0b2tiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM3NDMzNjksImV4cCI6MjA5OTMxOTM2OX0.3OR_9mEv82Ns1LLjx5nnRwJYzrtKFtWCWd1bPuQfNKU";
+const EMAIL_DOMAIN = "guidance-pcw.local";
+const sb = supabase.createClient(SUPABASE_URL, ANON_KEY);
+
+const TYPE_LABEL = {work_permit:"อนุญาตทำงาน", internship:"ฝึกงาน"};
+const STATUS_LABEL = {submitted:"ยื่นแล้ว", processing:"กำลังดำเนินการ", ready:"พร้อมรับ", received:"รับเอกสารแล้ว", cancelled:"ยกเลิก"};
+const STEP_ORDER = ["submitted","processing","ready","received"];
+
+let profile = null, reqType = "work_permit";
+
+const $ = id => document.getElementById(id);
+const esc = s => (s??"").toString().replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+function toast(t){ $("toast").textContent=t; $("toast").classList.add("show"); setTimeout(()=>$("toast").classList.remove("show"),2600); }
+function msg(id,t,cls){ const el=$(id); el.textContent=t; el.className="msg "+cls; }
+function fmtDate(d){ if(!d) return "—"; return new Date(d).toLocaleDateString("th-TH",{day:"numeric",month:"short",year:"2-digit"}); }
+
+async function boot(){
+  const {data:{session}} = await sb.auth.getSession();
+  if(!session){ $("loginStage").classList.remove("hidden"); return; }
+  const {data:p} = await sb.from("profiles").select("*").eq("id", session.user.id).maybeSingle();
+  if(!p){ await sb.auth.signOut(); $("loginStage").classList.remove("hidden"); return toast("ไม่พบข้อมูลผู้ใช้"); }
+  profile = p;
+  $("loginStage").classList.add("hidden");
+  $("appStage").classList.remove("hidden");
+  $("tabs").querySelectorAll(".ftab").forEach(b=> b.onclick = ()=> go(b.dataset.t));
+  go("home");
+}
+$("btnLogin").onclick = async ()=>{
+  const u=$("liUser").value.trim(), p=$("liPass").value;
+  if(!u||!p) return msg("liMsg","กรอกรหัสนักเรียนและรหัสผ่านก่อนนะคะ","err");
+  $("btnLogin").disabled = true;
+  const {error} = await sb.auth.signInWithPassword({email:u+"@"+EMAIL_DOMAIN, password:p});
+  $("btnLogin").disabled = false;
+  if(error) return msg("liMsg","เข้าสู่ระบบไม่สำเร็จ: รหัสนักเรียนหรือรหัสผ่านไม่ถูกต้อง","err");
+  location.reload();
+};
+$("liPass").addEventListener("keydown", e=>{ if(e.key==="Enter") $("btnLogin").click(); });
+$("btnLogout").onclick = async ()=>{ await sb.auth.signOut(); location.reload(); };
+
+function go(tab){
+  $("tabs").querySelectorAll(".ftab").forEach(b=> b.classList.toggle("active", b.dataset.t===tab));
+  tab==="home" ? renderHome() : renderExp();
+}
+
+/* ═══════════ หน้าคำขอของฉัน ═══════════ */
+async function renderHome(){
+  $("body").innerHTML = `<div class="loading">กำลังโหลด…</div>`;
+  const {data, error} = await sb.from("work_permit_requests").select("*")
+    .eq("student_id", profile.id).order("created_at",{ascending:false});
+  if(error){ toast("โหลดข้อมูลไม่สำเร็จ: "+error.message); return; }
+  const rows = data||[];
+
+  const listHtml = rows.length ? rows.map(r=>{
+    const stepIdx = STEP_ORDER.indexOf(r.status);
+    const stepsHtml = r.status==="cancelled" ? "" : `<div class="steps">${STEP_ORDER.map((s,i)=>
+      `<div class="step ${i<=stepIdx?'on':''}">${STATUS_LABEL[s]}</div>`).join("")}</div>`;
+    const cancelBtn = r.status==="submitted" ? `<button class="btn ghost sm" data-cancel="${r.id}" style="margin-top:10px">ยกเลิกคำขอ</button>` : "";
+    return `<div class="reqcard">
+      <div class="top">
+        <div><h3>${esc(r.employer_name)}</h3><div class="meta">${esc(r.job_description)}</div>
+          <div class="meta">${fmtDate(r.work_start_date)} – ${fmtDate(r.work_end_date)}</div></div>
+        <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">
+          <span class="badge type-${r.request_type}">${TYPE_LABEL[r.request_type]}</span>
+          <span class="pill ${r.status}">${STATUS_LABEL[r.status]}</span>
+        </div>
+      </div>
+      ${stepsHtml}${cancelBtn}
+    </div>`;
+  }).join("") : `<div class="empty">ยังไม่มีคำขอ</div>`;
+
+  $("body").innerHTML = `
+    <div class="panel"><h2>สถานะคำขอ</h2>${listHtml}</div>
+    <div class="panel"><h2>ยื่นคำขอใหม่</h2>
+      <div class="seg" id="typeSeg">
+        <button data-v="work_permit" class="active">อนุญาตทำงาน</button>
+        <button data-v="internship">ฝึกงาน</button>
+      </div>
+      <div id="formMsg" class="msg"></div>
+      <div class="field"><label>ชื่อสถานประกอบการ *</label><input id="fEmployer"></div>
+      <div class="field"><label>ลักษณะงานที่ทำ *</label><input id="fJob"></div>
+      <div class="row2">
+        <div class="field"><label>วันที่เริ่ม *</label><input id="fStart" type="date"></div>
+        <div class="field"><label>วันที่สิ้นสุด *</label><input id="fEnd" type="date"></div>
+      </div>
+      <div class="field"><label>เหตุผล/หมายเหตุ</label><textarea id="fReason"></textarea></div>
+      <button class="btn primary" id="btnSubmit">ส่งคำขอ</button>
+    </div>`;
+
+  $("typeSeg").querySelectorAll("button").forEach(b=> b.onclick = ()=>{
+    reqType = b.dataset.v;
+    $("typeSeg").querySelectorAll("button").forEach(x=>x.classList.toggle("active", x===b));
+  });
+  $("body").querySelectorAll("[data-cancel]").forEach(b=> b.onclick = ()=> cancelRequest(b.dataset.cancel));
+  $("btnSubmit").onclick = submitRequest;
+}
+
+async function submitRequest(){
+  const employer = $("fEmployer").value.trim(), job = $("fJob").value.trim();
+  const start = $("fStart").value, end = $("fEnd").value, reason = $("fReason").value.trim();
+  if(!employer || !job || !start || !end) return msg("formMsg","กรอกข้อมูลที่มี * ให้ครบก่อนนะคะ","err");
+  if(end < start) return msg("formMsg","วันที่สิ้นสุดต้องไม่ก่อนวันที่เริ่ม","err");
+  $("btnSubmit").disabled = true;
+  const {error} = await sb.from("work_permit_requests").insert({
+    student_id: profile.id, request_type: reqType, employer_name: employer,
+    job_description: job, work_start_date: start, work_end_date: end, reason: reason||null
+  });
+  $("btnSubmit").disabled = false;
+  if(error) return msg("formMsg","ส่งคำขอไม่สำเร็จ: "+error.message,"err");
+  toast("ส่งคำขอแล้ว");
+  renderHome();
+}
+
+async function cancelRequest(id){
+  if(!confirm("ยกเลิกคำขอนี้ใช่ไหม?")) return;
+  const {error} = await sb.from("work_permit_requests").update({status:"cancelled"}).eq("id", id);
+  if(error) return toast("ยกเลิกไม่สำเร็จ: "+error.message);
+  toast("ยกเลิกคำขอแล้ว");
+  renderHome();
+}
+
+/* ═══════════ ประสบการณ์ทำงาน ═══════════ */
+async function renderExp(){
+  $("body").innerHTML = `<div class="loading">กำลังโหลด…</div>`;
+  const {data, error} = await sb.from("student_work_experiences").select("*")
+    .eq("student_id", profile.id).order("start_date",{ascending:false});
+  if(error){ toast("โหลดข้อมูลไม่สำเร็จ: "+error.message); return; }
+  const rows = data||[];
+  const listHtml = rows.length ? rows.map(x=>`
+    <div class="expcard">
+      <div><b>${esc(x.job_title)}</b><small>${fmtDate(x.start_date)} – ${fmtDate(x.end_date)}</small></div>
+      <button class="btn ghost sm" data-del="${x.id}">ลบ</button>
+    </div>`).join("") : `<div class="empty">ยังไม่มีประสบการณ์ทำงานบันทึกไว้</div>`;
+
+  $("body").innerHTML = `
+    <div class="panel"><h2>ประสบการณ์การทำงานที่เคยทำ</h2>${listHtml}</div>
+    <div class="panel"><h2>เพิ่มประสบการณ์</h2>
+      <div id="expMsg" class="msg"></div>
+      <div class="field"><label>ชื่องาน *</label><input id="eTitle" placeholder="เช่น พนักงานเสิร์ฟ ร้านอาหารครัวคุณยาย"></div>
+      <div class="row2">
+        <div class="field"><label>เริ่ม</label><input id="eStart" type="date"></div>
+        <div class="field"><label>สิ้นสุด</label><input id="eEnd" type="date"></div>
+      </div>
+      <button class="btn primary" id="btnAddExp">เพิ่มประสบการณ์</button>
+    </div>`;
+  $("body").querySelectorAll("[data-del]").forEach(b=> b.onclick = ()=> deleteExp(b.dataset.del));
+  $("btnAddExp").onclick = addExp;
+}
+
+async function addExp(){
+  const title = $("eTitle").value.trim();
+  if(!title) return msg("expMsg","กรอกชื่องานก่อนนะคะ","err");
+  const start = $("eStart").value || null, end = $("eEnd").value || null;
+  $("btnAddExp").disabled = true;
+  const {error} = await sb.from("student_work_experiences").insert({
+    student_id: profile.id, job_title: title, start_date: start, end_date: end
+  });
+  $("btnAddExp").disabled = false;
+  if(error) return msg("expMsg","เพิ่มไม่สำเร็จ: "+error.message,"err");
+  toast("เพิ่มประสบการณ์แล้ว");
+  renderExp();
+}
+
+async function deleteExp(id){
+  if(!confirm("ลบประสบการณ์นี้ใช่ไหม?")) return;
+  const {error} = await sb.from("student_work_experiences").delete().eq("id", id);
+  if(error) return toast("ลบไม่สำเร็จ: "+error.message);
+  toast("ลบแล้ว");
+  renderExp();
+}
+
+boot();
+</script>
+</body>
+</html>
