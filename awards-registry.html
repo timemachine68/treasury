@@ -190,6 +190,7 @@ table.t tr:last-child td{border-bottom:none}
       <h2>นักเรียนที่ยังไม่มีข้อมูลในทะเบียน</h2>
       <p class="sub">คนเหล่านี้จะถูกเพิ่มเข้างานผลงานไม่ได้จนกว่าจะมีข้อมูล</p>
       <input type="text" id="qMissing" placeholder="ค้นด้วยรหัส ชื่อ หรือห้อง">
+      <p class="sub" id="missingCaption" style="margin-top:6px"></p>
       <div class="scroll" style="margin-top:10px"><table class="t">
         <thead><tr><th style="width:120px">รหัสนักเรียน</th><th>ชื่อในระบบ</th><th style="width:90px">ห้อง</th></tr></thead>
         <tbody id="missingRows"></tbody>
@@ -229,7 +230,7 @@ const FIELDS = [
   {k:'last_name',  t:'นามสกุล',          req:true,  alias:['นามสกุล','สกุล','last_name','lastname','surname']}
 ];
 
-const S = {profile:null, headers:[], rows:[], map:{}, results:[]};
+const S = {profile:null, headers:[], rows:[], map:{}, results:[], missingTotal:0};
 
 /* ============ CSV ============ */
 function parseCSV(text){
@@ -281,7 +282,8 @@ async function boot(){
   S.profile = prof;
   $('#whoName').textContent = prof.display_name;
   show('#appView');
-  await Promise.all([loadStats(), loadMissing('')]);
+  await loadStats();
+  await loadMissing('');
 }
 function show(sel){
   $('#loginView').classList.toggle('hide', sel !== '#loginView');
@@ -303,17 +305,37 @@ async function loadStats(){
   const {data, error} = await sb.rpc('awards_identity_overview');
   if(error){ $('#stats').innerHTML = `<div class="msg err">โหลดสถิติไม่สำเร็จ: ${esc(error.message)}</div>`; return; }
   const s = Array.isArray(data) ? data[0] : data;
+  S.missingTotal = s.missing;
   $('#stats').innerHTML = `
     <div class="stat"><div class="n">${s.total}</div><div class="l">นักเรียนทั้งหมด</div></div>
     <div class="stat ok"><div class="n">${s.filled}</div><div class="l">มีข้อมูลในทะเบียนแล้ว</div></div>
     <div class="stat ${s.missing>0?'warn':''}"><div class="n">${s.missing}</div><div class="l">ยังขาดข้อมูล</div></div>`;
 }
 
+// สาเหตุจริงของปัญหา "โหลดมาไม่ครบ": ฟังก์ชัน awards_identity_missing() ในฐานข้อมูลถูกต้อง 100%
+// (ยืนยันแล้วว่าคำนวณได้ครบทุกแถวจริง) แต่ Supabase PostgREST เอง จำกัดจำนวนแถวที่ส่งกลับผ่าน
+// API ไว้ที่ประมาณ 1,000 แถวเป็นค่าเริ่มต้นเสมอ — ไม่ว่าจะส่ง p_limit เท่าไหร่ก็ตาม (แม้แต่ p_limit:5000
+// ก็โดนตัดเหลือแค่ ~1000 แถวแรก) ต้องแบ่งหน้าดึงด้วย .range() บนตัว RPC call เองถึงจะได้ครบจริง
+async function fetchAllMissing(q){
+  let all = [], from = 0, pageSize = 1000;
+  while(true){
+    const {data, error} = await sb.rpc('awards_identity_missing', {p_q:q||null, p_limit:5000})
+      .range(from, from+pageSize-1);
+    if(error){ console.error('fetchAllMissing error:', error.message); return {data: all, error}; }
+    all = all.concat(data||[]);
+    if(!data || data.length < pageSize) break;
+    from += pageSize;
+  }
+  return {data: all, error: null};
+}
+
 async function loadMissing(q){
-  const {data, error} = await sb.rpc('awards_identity_missing', {p_q:q||null, p_limit:500});
+  const {data, error} = await fetchAllMissing(q);
   const tb = $('#missingRows');
-  if(error){ tb.innerHTML = `<tr><td colspan="3">โหลดไม่สำเร็จ: ${esc(error.message)}</td></tr>`; return; }
-  if(!data.length){ tb.innerHTML = '<tr><td colspan="3" style="color:var(--muted)">ไม่มีรายชื่อค้าง</td></tr>'; return; }
+  const cap = $('#missingCaption');
+  if(error){ tb.innerHTML = `<tr><td colspan="3">โหลดไม่สำเร็จ: ${esc(error.message)}</td></tr>`; if(cap) cap.textContent=''; return; }
+  if(!data.length){ tb.innerHTML = '<tr><td colspan="3" style="color:var(--muted)">ไม่มีรายชื่อค้าง</td></tr>'; if(cap) cap.textContent=''; return; }
+  if(cap) cap.textContent = `แสดงครบ ${data.length} รายชื่อ`;
   tb.innerHTML = data.map(r=>`<tr>
     <td class="mono">${esc(r.student_id||'—')}</td>
     <td>${esc(r.display_name)}</td>
@@ -325,7 +347,7 @@ const TPL_HEADER = ['รหัสนักเรียน','ชื่อใน�
 async function downloadTemplate(withNames){
   let rows = [];
   if(withNames){
-    const {data, error} = await sb.rpc('awards_identity_missing', {p_q:null, p_limit:5000});
+    const {data, error} = await fetchAllMissing(null);
     if(error){ toast('ดึงรายชื่อไม่สำเร็จ'); return; }
     if(!data.length){ toast('ไม่มีรายชื่อค้าง — ทะเบียนครบแล้ว'); return; }
     rows = data.map(r=>[r.student_id||'', r.display_name, '', '', '', '']);
