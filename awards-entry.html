@@ -125,6 +125,11 @@ table.pt input[type=text]{padding:5px 8px;font-size:.9rem}
 .typepick button.on{background:var(--pine);color:#fff;border-color:var(--pine);font-weight:600}
 .typepick button:disabled{opacity:.45;cursor:not-allowed}
 
+.feepick{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px}
+.feepick button{border:1px solid var(--line);background:var(--paper);border-radius:10px;
+  padding:9px 4px;font-size:.86rem;line-height:1.3;color:var(--bark)}
+.feepick button.on{background:var(--pine);color:#fff;border-color:var(--pine);font-weight:600}
+
 /* ---------- student picker ---------- */
 .stu{display:flex;align-items:center;gap:10px;padding:7px 9px;border-bottom:1px solid #eee7d8}
 .stu:last-child{border-bottom:none}
@@ -249,7 +254,7 @@ const STATUS = {
 /* ช่องรายบุคคลของแต่ละประเภท */
 const PFIELD = {
   activity: {col:'exp_name',   label:'ผลการเข้าร่วม / บทบาท', ph:'เช่น ผ่านการอบรม, ตัวแทนทีม'},
-  prize:    {col:'prize_name', label:'รางวัลที่ได้รับ',        ph:'เช่น เหรียญทอง, รางวัลชนะเลิศ'},
+  prize:    {col:'prize_name', label:'ผลรางวัล / อันดับ',        ph:'เช่น ชนะเลิศ, รองชนะเลิศอันดับ 1, เข้ารอบ'},
   course:   {col:'score',      label:'ผลการอบรม',              ph:'เช่น ผ่าน, 85 คะแนน'},
   project:  null
 };
@@ -490,7 +495,7 @@ function renderBody(e, n){
     extra.push('วันหมดอายุ: ' + (e.expired_date ? fmtThaiDate(e.expired_date) : 'ไม่มี'));
   }
   if(e.hours != null) extra.push('จำนวนชั่วโมง: ' + e.hours);
-  if(e.fee   != null) extra.push('ค่าใช้จ่าย: ' + e.fee + ' บาท');
+  if(e.fee   != null) extra.push(e.fee > 0 ? 'ค่าใช้จ่าย: ' + e.fee + ' บาท' : 'ไม่มีค่าใช้จ่าย');
 
   return `<div class="ev-body">
     ${returned}
@@ -548,9 +553,10 @@ function openEventForm(ev){
         ${locked?'disabled':''}>${t.t}<br><span style="font-size:.72rem;opacity:.75">${t.d}</span></button>`).join('')}
     </div>
     ${locked ? '<div class="hint">เปลี่ยนประเภทหลังบันทึกแล้วไม่ได้ ถ้าเลือกผิดให้ลบงานแล้วสร้างใหม่</div>' : ''}
+    <div class="hint" id="typeHint"></div>
 
     <label class="f" for="fTitle"><span id="lblTitle">ชื่องาน</span> <span class="req">*</span></label>
-    <input id="fTitle" type="text" value="${esc(e.title||'')}" maxlength="300">
+    <input id="fTitle" type="text" value="${esc(e.title||'')}" maxlength="300" placeholder="ใส่หัวข้อผลงาน...">
 
     <div id="boxProject" class="hide">
       <label class="f" for="fProjType">ประเภทโครงงาน <span class="req">*</span></label>
@@ -606,9 +612,17 @@ function openEventForm(ev){
         <input id="fHours" type="number" min="0" value="${e.hours ?? ''}">
       </div>
       <div>
-        <label class="f" for="fFee">ค่าใช้จ่าย (บาท)</label>
-        <input id="fFee" type="number" min="0" step="0.01" value="${e.fee ?? ''}">
+        <label class="f">มีค่าใช้จ่ายในการเข้าร่วมไหม <span class="req">*</span></label>
+        <div class="feepick" id="feePick">
+          <button type="button" data-v="yes">มีค่าใช้จ่าย</button>
+          <button type="button" data-v="no">ไม่มีค่าใช้จ่าย</button>
+        </div>
       </div>
+    </div>
+
+    <div id="boxFeeAmt" class="hide">
+      <label class="f" for="fFee">จำนวนเงิน (บาท) <span class="req">*</span></label>
+      <input id="fFee" type="number" min="0" step="0.01" value="${e.fee || ''}">
     </div>
 
     <label class="f" for="fDesc">รายละเอียด</label>
@@ -635,6 +649,8 @@ function openEventForm(ev){
       type === 'project' ? 'ชื่อโครงงาน' : type === 'course' ? 'ชื่อหลักสูตร' : 'ชื่องาน / การแข่งขัน';
     mask.querySelector('#lblStart').textContent =
       type === 'course' ? 'วันที่ออกใบรับรอง' : 'วันที่เริ่ม';
+    mask.querySelector('#typeHint').textContent =
+      type === 'prize' ? 'ผลงานที่ได้รับรางวัล/เกียรติบัตร เช่น แข่งขันวิชาการ กีฬา ประกวด ค่าย สอวน./สสวท. รางวัลเรียนดี/ความประพฤติ' : '';
   }
   applyType();
 
@@ -642,6 +658,20 @@ function openEventForm(ev){
     const b = ev2.target.closest('button');
     if(!b || b.disabled) return;
     type = b.dataset.v; applyType();
+  });
+
+  let feeChoice = e.fee == null ? null : (e.fee > 0 ? 'yes' : 'no');
+  function applyFee(){
+    mask.querySelectorAll('#feePick button').forEach(b=>
+      b.classList.toggle('on', b.dataset.v === feeChoice));
+    mask.querySelector('#boxFeeAmt').classList.toggle('hide', feeChoice !== 'yes');
+  }
+  applyFee();
+
+  mask.querySelector('#feePick').addEventListener('click', ev2=>{
+    const b = ev2.target.closest('button');
+    if(!b) return;
+    feeChoice = b.dataset.v; applyFee();
   });
   mask.addEventListener('click', ev2=>{
     // ปิดเฉพาะตอนกดปุ่ม "ยกเลิก"/ไอคอนปิดเท่านั้น ไม่ปิดตอนคลิกโดนพื้นหลังรอบนอก
@@ -655,6 +685,9 @@ function openEventForm(ev){
     if(title.length < 3){ msg2('ชื่องานต้องยาวอย่างน้อย 3 ตัวอักษร'); return; }
     if(!start){ msg2('เลือกวันที่ก่อน'); return; }
     if(!level){ msg2('เลือกระดับก่อน'); return; }
+    if(!feeChoice){ msg2('เลือกว่ามีค่าใช้จ่ายในการเข้าร่วมหรือไม่'); return; }
+    if(feeChoice === 'yes' && v('#fFee') === ''){ msg2('ระบุจำนวนเงินค่าใช้จ่าย'); return; }
+    const fee = feeChoice === 'yes' ? Number(v('#fFee')) : 0;
     if(type === 'project' && !v('#fProjType')){ msg2('โครงงานต้องระบุประเภทโครงงาน'); return; }
     if(type === 'course'  && !v('#fCourseCat')){ msg2('หลักสูตร/อบรมต้องระบุหมวดหลักสูตร'); return; }
 
@@ -672,7 +705,7 @@ function openEventForm(ev){
       start_date: start,
       end_date: end,
       hours: v('#fHours') === '' ? null : Number(v('#fHours')),
-      fee:   v('#fFee')   === '' ? null : Number(v('#fFee')),
+      fee,
       project_type:    type === 'project' ? v('#fProjType') : null,
       course_level:    type === 'course' ? (v('#fCourseLv') || null) : null,
       course_category: type === 'course' ? v('#fCourseCat') : null,

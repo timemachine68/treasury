@@ -391,7 +391,7 @@ function body(e){
     detail.push('ถึงวันที่ ' + fmtThaiDate(e.end_date));
   }
   if(e.hours != null)  detail.push('ชั่วโมง: ' + e.hours);
-  if(e.fee != null)    detail.push('ค่าใช้จ่าย: ' + e.fee + ' บาท');
+  if(e.fee != null)    detail.push(e.fee > 0 ? 'ค่าใช้จ่าย: ' + e.fee + ' บาท' : 'ไม่มีค่าใช้จ่าย');
   if(e.organizer)      detail.push('ผู้จัด: ' + e.organizer);
 
   const warn = e.status === 'verified' && (S.parts[e.id]||[]).some(r=>r.batch_id)
