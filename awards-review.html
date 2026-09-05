@@ -215,8 +215,9 @@ function msg(sel,text,kind){const e=$(sel);e.innerHTML = text?`<div class="msg $
 
 const TYPE_T   = {activity:'กิจกรรม', prize:'รางวัล', project:'โครงงาน', course:'หลักสูตร/อบรม'};
 const STATUS_T = {draft:'ร่าง', submitted:'รอตรวจ', verified:'ยืนยันแล้ว', returned:'ตีกลับให้แก้'};
-const LEVEL_T  = {international:'นานาชาติ', national:'ระดับชาติ', region:'ระดับภาค',
-                  province:'ระดับจังหวัด', area:'ระดับเขตพื้นที่', school:'ระดับโรงเรียน'};
+const LEVEL_T  = {school:'ระดับโรงเรียน/สถาบัน', province:'ระดับจังหวัด/เขต/ภาค',
+                  national:'ระดับชาติ', international:'ระดับนานาชาติ',
+                  region:'ระดับจังหวัด/เขต/ภาค', area:'ระดับจังหวัด/เขต/ภาค'};
 const PCOL     = {activity:['exp_name','ผลการเข้าร่วม'], prize:['prize_name','รางวัลที่ได้รับ'],
                   course:['score','ผลการอบรม'], project:[null,null]};
 const REASONS  = ['ชื่อกิจกรรมไม่ตรงกับเกียรติบัตร','ระดับรางวัลไม่ถูกต้อง','วันที่ไม่ถูกต้อง',

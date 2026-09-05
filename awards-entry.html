@@ -235,12 +235,10 @@ const CATEGORIES = [
   {v:'sports',      t:'กีฬา'}
 ];
 const LEVELS = [
-  {v:'international', t:'นานาชาติ'},
+  {v:'school',        t:'ระดับโรงเรียน/สถาบัน'},
+  {v:'province',      t:'ระดับจังหวัด/เขต/ภาค'},
   {v:'national',      t:'ระดับชาติ'},
-  {v:'region',        t:'ระดับภาค'},
-  {v:'province',      t:'ระดับจังหวัด'},
-  {v:'area',          t:'ระดับเขตพื้นที่'},
-  {v:'school',        t:'ระดับโรงเรียน'}
+  {v:'international', t:'ระดับนานาชาติ'}
 ];
 const STATUS = {
   draft:     'ร่าง',
@@ -534,7 +532,7 @@ async function loadParticipants(eventId){
    ============================================================ */
 function openEventForm(ev){
   const isNew = !ev;
-  const e = ev || {tcas_type:'prize', category:'competition', level:'school', status:'draft'};
+  const e = ev || {tcas_type:'prize', category:'competition', level:'', status:'draft'};
   const locked = !isNew;   // เปลี่ยนประเภทหลังมีนักเรียนแล้วไม่ได้
 
   const mask = document.createElement('div');
@@ -582,9 +580,9 @@ function openEventForm(ev){
         <div class="hint">ใช้ทำรายงานภายใน ไม่ส่งออกไป TCAS</div>
       </div>
       <div>
-        <label class="f" for="fLevel">ระดับ</label>
+        <label class="f" for="fLevel">ระดับ <span class="req">*</span></label>
         <select id="fLevel">
-          <option value="">— ไม่ระบุ —</option>
+          <option value="" ${!e.level?'selected':''}>เลือก...</option>
           ${LEVELS.map(l=>`<option value="${l.v}" ${l.v===e.level?'selected':''}>${l.t}</option>`).join('')}
         </select>
       </div>
@@ -653,9 +651,10 @@ function openEventForm(ev){
 
   mask.querySelector('#fSave').addEventListener('click', async ()=>{
     const v = id => mask.querySelector(id).value.trim();
-    const title = v('#fTitle'), start = v('#fStart');
+    const title = v('#fTitle'), start = v('#fStart'), level = v('#fLevel');
     if(title.length < 3){ msg2('ชื่องานต้องยาวอย่างน้อย 3 ตัวอักษร'); return; }
     if(!start){ msg2('เลือกวันที่ก่อน'); return; }
+    if(!level){ msg2('เลือกระดับก่อน'); return; }
     if(type === 'project' && !v('#fProjType')){ msg2('โครงงานต้องระบุประเภทโครงงาน'); return; }
     if(type === 'course'  && !v('#fCourseCat')){ msg2('หลักสูตร/อบรมต้องระบุหมวดหลักสูตร'); return; }
 
@@ -669,7 +668,7 @@ function openEventForm(ev){
       category: v('#fCat'),
       title,
       description: v('#fDesc') || null,
-      level: v('#fLevel') || null,
+      level,
       start_date: start,
       end_date: end,
       hours: v('#fHours') === '' ? null : Number(v('#fHours')),
