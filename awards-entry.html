@@ -674,6 +674,8 @@ function openEventForm(ev){
     if(!level){ msg2('เลือกระดับก่อน'); return; }
     if(!feeChoice){ msg2('เลือกว่ามีค่าใช้จ่ายในการเข้าร่วมหรือไม่'); return; }
     if(feeChoice === 'yes' && v('#fFee') === ''){ msg2('ระบุจำนวนเงินค่าใช้จ่าย'); return; }
+    if(feeChoice === 'yes' && Number(v('#fFee')) < 0){ msg2('จำนวนเงินต้องไม่ติดลบ'); return; }
+    if(v('#fHours') !== '' && Number(v('#fHours')) < 0){ msg2('จำนวนชั่วโมงต้องไม่ติดลบ'); return; }
     const fee = feeChoice === 'yes' ? Number(v('#fFee')) : 0;
     if(type === 'project' && !v('#fProjType')){ msg2('โครงงานต้องระบุประเภทโครงงาน'); return; }
     if(type === 'course'  && !v('#fCourseCat')){ msg2('หลักสูตร/อบรมต้องระบุหมวดหลักสูตร'); return; }
@@ -729,6 +731,8 @@ function explain(err){
   if(m.includes('award_events_dates'))          return 'วันที่สิ้นสุดต้องไม่ก่อนวันที่เริ่ม';
   if(m.includes('award_events_project_fields')) return 'โครงงานต้องระบุประเภทโครงงาน';
   if(m.includes('award_events_course_fields'))  return 'หลักสูตร/อบรมต้องระบุหมวดหลักสูตร';
+  if(m.includes('award_events_fee_check'))       return 'จำนวนเงินค่าใช้จ่ายต้องไม่ติดลบ';
+  if(m.includes('award_events_hours_check'))     return 'จำนวนชั่วโมงต้องไม่ติดลบ';
   if(m.includes('award_participants_unique'))   return 'นักเรียนคนนี้อยู่ในงานนี้แล้ว';
   if(m.includes('row-level security'))          return 'ไม่มีสิทธิ์แก้ไขรายการนี้ (อาจถูกยืนยันหรือส่งไปแล้ว)';
   return 'บันทึกไม่สำเร็จ: ' + m;
