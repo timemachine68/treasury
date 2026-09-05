@@ -233,12 +233,6 @@ const TYPES = [
   {v:'project',  t:'โครงงาน',       d:'โครงงาน วิจัย สิ่งประดิษฐ์'},
   {v:'course',   t:'หลักสูตร/อบรม', d:'อบรมที่มีใบรับรอง'}
 ];
-const CATEGORIES = [
-  {v:'competition', t:'แข่งขัน'},
-  {v:'training',    t:'อบรม'},
-  {v:'volunteer',   t:'จิตอาสา'},
-  {v:'sports',      t:'กีฬา'}
-];
 const LEVELS = [
   {v:'school',        t:'ระดับโรงเรียน/สถาบัน'},
   {v:'province',      t:'ระดับจังหวัด/เขต/ภาค'},
@@ -537,7 +531,7 @@ async function loadParticipants(eventId){
    ============================================================ */
 function openEventForm(ev){
   const isNew = !ev;
-  const e = ev || {tcas_type:'prize', category:'competition', level:'', status:'draft'};
+  const e = ev || {tcas_type:'prize', level:'', status:'draft'};
   const locked = !isNew;   // เปลี่ยนประเภทหลังมีนักเรียนแล้วไม่ได้
 
   const mask = document.createElement('div');
@@ -579,19 +573,12 @@ function openEventForm(ev){
       <div class="hint">เว้นว่างถ้าไม่มีวันหมดอายุ</div>
     </div>
 
-    <div class="grid2">
-      <div>
-        <label class="f" for="fCat">ประเภทกิจกรรม <span class="req">*</span></label>
-        <select id="fCat">${CATEGORIES.map(c=>`<option value="${c.v}" ${c.v===e.category?'selected':''}>${c.t}</option>`).join('')}</select>
-        <div class="hint">ใช้ทำรายงานภายใน ไม่ส่งออกไป TCAS</div>
-      </div>
-      <div>
-        <label class="f" for="fLevel">ระดับ <span class="req">*</span></label>
-        <select id="fLevel">
-          <option value="" ${!e.level?'selected':''}>เลือก...</option>
-          ${LEVELS.map(l=>`<option value="${l.v}" ${l.v===e.level?'selected':''}>${l.t}</option>`).join('')}
-        </select>
-      </div>
+    <div>
+      <label class="f" for="fLevel">ระดับ <span class="req">*</span></label>
+      <select id="fLevel">
+        <option value="" ${!e.level?'selected':''}>เลือก...</option>
+        ${LEVELS.map(l=>`<option value="${l.v}" ${l.v===e.level?'selected':''}>${l.t}</option>`).join('')}
+      </select>
     </div>
 
     <div class="grid2">
@@ -698,7 +685,6 @@ function openEventForm(ev){
       academic_year: S.year,
       subject_group_id: S.groupId,
       tcas_type: type,
-      category: v('#fCat'),
       title,
       description: v('#fDesc') || null,
       level,
