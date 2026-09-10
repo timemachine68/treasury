@@ -664,6 +664,10 @@ textarea.csvbox{font-family:monospace;font-size:.82rem;min-height:120px}
     </div>
     <div class="field"><label for="apDesc">คำอธิบาย</label><input id="apDesc" placeholder="เช่น SDQ, EQ, เยี่ยมบ้าน"></div>
     <div class="field"><label for="apUrl">ลิงก์ *</label><input id="apUrl" placeholder="https://…"></div>
+    <div class="field"><label for="apCategory">หมวดหมู่ (ไม่บังคับ — ใช้กรองด้านบน)</label>
+      <input id="apCategory" list="apCategoryList" placeholder="เช่น โควตา">
+      <datalist id="apCategoryList"><option value="โควตา"></datalist>
+    </div>
     <div class="field"><label>ใครมองเห็น *</label>
       <div class="roomchecks" id="apVis">
         <label><input type="checkbox" value="teacher" checked>ครู</label>
@@ -1955,15 +1959,19 @@ async function loadApps(){
 }
 function renderAppChips(){
   const opts = [{key:"all",label:"ทั้งหมด"},{key:"teacher",label:"ครู"},{key:"student",label:"นักเรียน"}];
+  const cats = [...new Set(visibleApps.map(a=>a.category).filter(Boolean))];
+  cats.forEach(c=> opts.push({key:"cat:"+c, label:c}));
   $("appChips").innerHTML = opts.map(o=>`<button class="chip ${appFilter===o.key?"active":""}" data-af="${o.key}">${o.label}</button>`).join("");
   $("appChips").querySelectorAll(".chip").forEach(b=> b.onclick=()=>{ appFilter=b.dataset.af; renderAppChips(); renderApps(); });
 }
 function renderApps(){
-  const list = appFilter==="all" ? visibleApps : visibleApps.filter(a=> (a.visible_to||[]).includes(appFilter));
+  const list = appFilter==="all" ? visibleApps
+    : appFilter.startsWith("cat:") ? visibleApps.filter(a=> a.category===appFilter.slice(4))
+    : visibleApps.filter(a=> (a.visible_to||[]).includes(appFilter));
   $("appEmpty").classList.toggle("hidden", list.length>0);
-  $("appEmptyText") && ($("appEmptyText").textContent = appFilter==="all" ? "ยังไม่มีลิงก์ระบบ" : `ยังไม่มีลิงก์ระบบสำหรับ${appFilter==="teacher"?"ครู":"นักเรียน"}`);
+  $("appEmptyText") && ($("appEmptyText").textContent = appFilter==="all" ? "ยังไม่มีลิงก์ระบบ" : appFilter.startsWith("cat:") ? `ยังไม่มีลิงก์ระบบหมวด${appFilter.slice(4)}` : `ยังไม่มีลิงก์ระบบสำหรับ${appFilter==="teacher"?"ครู":"นักเรียน"}`);
   $("appGrid").innerHTML = list.map(a=>`<article class="rescard" style="--gc:var(--g5)">
-    <div class="top">${(a.visible_to||[]).map(v=>`<span class="badge type">${v==="teacher"?"ครู":"นักเรียน"}</span>`).join("")}</div>
+    <div class="top">${a.category?`<span class="badge link">${esc(a.category)}</span>`:""}${(a.visible_to||[]).map(v=>`<span class="badge type">${v==="teacher"?"ครู":"นักเรียน"}</span>`).join("")}</div>
     <h3>${esc(a.icon||"🔗")} ${esc(a.title)}</h3>
     ${a.description?`<p class="desc">${esc(a.description)}</p>`:""}
     <div class="actions">
@@ -1983,6 +1991,7 @@ function openAppModal(id){
   $("appModalTitle").textContent = a? "แก้ไขลิงก์ระบบ":"เพิ่มลิงก์ระบบ";
   $("apIcon").value = a?.icon||""; $("apTitle").value = a?.title||"";
   $("apDesc").value = a?.description||""; $("apUrl").value = a?.url||"";
+  $("apCategory").value = a?.category||"";
   $("apVis").querySelectorAll("input").forEach(i=> i.checked = a? (a.visible_to||[]).includes(i.value) : i.value==="teacher");
   $("appModal").classList.add("show");
 }
@@ -1992,7 +2001,7 @@ $("btnAppSave").onclick = async ()=>{
   if(!title) return msg("appMsg","ใส่ชื่อระบบก่อนนะคะ","err");
   if(!/^https?:\/\//.test(url)) return msg("appMsg","ลิงก์ต้องขึ้นต้นด้วย http:// หรือ https://","err");
   if(vis.length===0) return msg("appMsg","เลือกอย่างน้อย 1 กลุ่มที่มองเห็นนะคะ","err");
-  const row = { title, url, description:$("apDesc").value.trim()||null, icon:$("apIcon").value.trim()||"🔗", visible_to:vis };
+  const row = { title, url, description:$("apDesc").value.trim()||null, icon:$("apIcon").value.trim()||"🔗", visible_to:vis, category:$("apCategory").value.trim()||null };
   $("btnAppSave").disabled = true;
   const {error} = editingAppId
     ? await sb.from("external_systems").update(row).eq("id", editingAppId)

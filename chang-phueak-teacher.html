@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>จัดการโครงการช้างเผือก (ครู) | แนะให้แนว</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Mitr:wght@400;500;600&family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{
+  --ink:#22313A; --ink-soft:#5B6B72; --board:#EFF3F1; --card:#FFFFFF;
+  --pine:#0F6B5C; --pine-deep:#0A4F44; --pine-tint:#E2F0EC;
+  --note:#FFD34D; --note-deep:#8A6D00; --line:#DCE4E1; --danger:#C0392B;
+  --radius:14px; --shadow:0 2px 10px rgba(34,49,58,.08);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Sarabun',sans-serif;background:var(--board);color:var(--ink);font-size:16px;line-height:1.55;min-height:100vh}
+h1,h2,h3,.brand{font-family:'Mitr',sans-serif;font-weight:600}
+button{font-family:inherit;cursor:pointer}
+input,select,textarea{font-family:inherit;font-size:16px}
+a{color:var(--pine)}
+:focus-visible{outline:3px solid var(--note);outline-offset:2px;border-radius:6px}
+
+.wrap{max-width:1120px;margin:0 auto;padding:0 16px 64px}
+header.app{background:var(--pine);color:#fff;padding:14px 0}
+header.app .wrap{display:flex;align-items:center;gap:12px;padding-bottom:0;flex-wrap:wrap}
+.brand{font-size:1.25rem;letter-spacing:.2px;display:flex;align-items:center;gap:10px}
+.brand .logo{width:34px;height:34px;border-radius:9px;background:var(--note);color:var(--pine-deep);display:grid;place-items:center;font-size:1.05rem;font-family:'Mitr';flex:none}
+.brand small{display:block;font-family:'Sarabun';font-weight:400;font-size:.72rem;opacity:.85;letter-spacing:.4px}
+.spacer{flex:1}
+.userchip{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.14);padding:6px 12px;border-radius:999px;font-size:.85rem}
+.userchip .role{background:var(--note);color:var(--pine-deep);border-radius:999px;padding:1px 9px;font-weight:700;font-size:.72rem}
+.iconbtn{background:rgba(255,255,255,.14);border:none;color:#fff;border-radius:999px;padding:7px 14px;font-size:.85rem}
+.iconbtn:hover{background:rgba(255,255,255,.26)}
+
+.login-stage{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;
+  background:linear-gradient(160deg,var(--pine) 0%,var(--pine-deep) 60%),var(--pine)}
+.login-card{background:#fff;border-radius:20px;padding:30px 26px;max-width:400px;width:100%;box-shadow:0 18px 50px rgba(0,0,0,.28)}
+.login-card .logo-big{width:58px;height:58px;border-radius:16px;background:var(--note);color:var(--pine-deep);display:grid;place-items:center;font-family:'Mitr';font-size:1.5rem;font-weight:600;margin:0 auto 12px}
+.login-card h1{text-align:center;font-size:1.35rem;color:var(--pine-deep)}
+.login-card .sub{text-align:center;font-size:.83rem;color:var(--ink-soft);margin-bottom:20px}
+.login-card .btn{width:100%;padding:12px;font-size:1rem}
+
+.section-title{font-family:'Mitr';font-size:1.05rem;color:var(--pine-deep);margin:22px 0 12px;display:flex;align-items:center;gap:8px}
+.panel{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:18px;margin-bottom:16px;box-shadow:var(--shadow)}
+.panel h2{font-size:1.05rem;color:var(--pine-deep);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px;margin-bottom:16px}
+.stat{background:var(--pine-tint);border-radius:12px;padding:14px;text-align:center}
+.stat .num{font-family:'Mitr';font-size:1.6rem;color:var(--pine-deep);line-height:1.1}
+.stat .lab{font-size:.76rem;color:var(--ink-soft)}
+
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:end;margin-bottom:14px}
+.field{margin-bottom:0}
+.field label{display:block;font-size:.82rem;font-weight:700;margin-bottom:6px;color:var(--ink)}
+.field input,.field select{padding:10px 12px;border:1.5px solid var(--line);border-radius:10px;background:#fff}
+.chk{display:flex;align-items:center;gap:6px;font-size:.86rem;font-weight:600}
+
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:.83rem}
+th,td{padding:9px 10px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap}
+th{color:var(--ink-soft);font-weight:700;font-size:.76rem}
+tr:hover td{background:var(--board)}
+.pill{border-radius:999px;padding:3px 12px;font-size:.74rem;font-weight:700;white-space:nowrap;display:inline-flex;align-items:center;gap:5px}
+.pill.submitted{background:#FFF3CE;color:var(--note-deep)}
+.pill.reviewed{background:var(--pine);color:#fff}
+.btn{border:none;border-radius:9px;padding:8px 14px;font-size:.85rem;font-weight:600;display:inline-flex;align-items:center;gap:6px}
+.btn.primary{background:var(--pine);color:#fff}.btn.primary:hover{background:var(--pine-deep)}
+.btn.ghost{background:#fff;border:1.5px solid var(--line);color:var(--ink-soft)}.btn.ghost:hover{border-color:var(--pine);color:var(--pine)}
+.btn.sm{padding:5px 11px;font-size:.78rem}
+.btn:disabled{opacity:.55;cursor:not-allowed}
+.empty{padding:40px 16px;text-align:center;color:var(--ink-soft)}
+.msg{border-radius:10px;padding:10px 13px;font-size:.85rem;margin-bottom:12px;display:none}
+.msg.err{display:block;background:#FDECEA;color:var(--danger)}
+.msg.ok{display:block;background:var(--pine-tint);color:var(--pine-deep)}
+#toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;
+  padding:11px 20px;border-radius:999px;font-size:.88rem;box-shadow:0 6px 20px rgba(0,0,0,.3);opacity:0;pointer-events:none;transition:opacity .25s;z-index:99;max-width:92vw;text-align:center}
+#toast.show{opacity:1}
+.loading{text-align:center;padding:40px;color:var(--ink-soft)}
+.hidden{display:none!important}
+.backlink{font-size:.8rem}
+textarea.note{width:140px;min-height:34px;font-size:.78rem;padding:5px 7px;border:1.5px solid var(--line);border-radius:7px}
+</style>
+</head>
+<body>
+
+<div id="loginStage" class="login-stage hidden">
+  <div class="login-card">
+    <div class="logo-big">🐘</div>
+    <h1>จัดการโครงการช้างเผือก</h1>
+    <div class="sub">สำหรับครูแนะแนว</div>
+    <div id="liMsg" class="msg"></div>
+    <div class="field" style="margin-bottom:14px"><label>รหัสผู้ใช้</label>
+      <input id="liUser" style="width:100%" autocomplete="username" placeholder="รหัสผู้ใช้"></div>
+    <div class="field" style="margin-bottom:14px"><label>รหัสผ่าน</label>
+      <input id="liPass" style="width:100%" type="password" autocomplete="current-password" placeholder="รหัสผ่าน"></div>
+    <button id="btnLogin" class="btn primary" style="width:100%;justify-content:center">เข้าสู่ระบบ</button>
+  </div>
+</div>
+
+<div id="deniedStage" class="hidden">
+  <div class="wrap"><div class="empty" style="margin-top:60px"><div style="font-size:2rem">🚫</div>หน้านี้สำหรับครูแนะแนวเท่านั้น</div></div>
+</div>
+
+<div id="appStage" class="hidden">
+  <header class="app"><div class="wrap">
+    <div class="brand"><span class="logo">🐘</span><span>ช้างเผือก — จัดการ<small>แนะให้แนว · คณะวิทยาศาสตร์ ม.บูรพา</small></span></div>
+    <div class="spacer"></div>
+    <div class="userchip"><span id="uName"></span><span class="role" id="uRole"></span></div>
+    <button class="iconbtn" id="btnLogout">ออกจากระบบ</button>
+  </div></header>
+
+  <div class="wrap">
+    <div class="section-title">⚙️ ตั้งค่าโควตาโรงเรียน</div>
+    <div id="progMsg" class="msg"></div>
+    <div class="panel">
+      <div class="toolbar">
+        <div class="field"><label>ปีการศึกษา</label><input id="cfgYear" type="number" style="width:110px"></div>
+        <div class="field"><label>จำนวนโควตาที่โรงเรียนได้รับ</label><input id="cfgQuota" type="number" min="1" style="width:110px"></div>
+        <div class="field"><label class="chk"><input type="checkbox" id="cfgOpen"> เปิดรับสมัคร</label></div>
+        <button class="btn primary" id="btnSaveProgram">บันทึก</button>
+      </div>
+      <div id="progList"></div>
+    </div>
+
+    <div id="appsSection" class="hidden">
+      <div class="section-title">📋 รายชื่อผู้สมัคร</div>
+      <div class="stats">
+        <div class="stat"><div class="num" id="statTotal">–</div><div class="lab">สมัครแล้ว</div></div>
+        <div class="stat"><div class="num" id="statSeats">–</div><div class="lab">โควตาทั้งหมด</div></div>
+        <div class="stat"><div class="num" id="statLeft">–</div><div class="lab">เหลือ</div></div>
+        <div class="stat"><div class="num" id="statReviewed">–</div><div class="lab">ตรวจแล้ว</div></div>
+      </div>
+      <div class="panel">
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr>
+              <th>รหัส นร.</th><th>ชื่อ</th><th>ห้อง</th><th>ประเภท</th><th>สาขาที่เลือก</th>
+              <th>GPAX</th><th>ไม่ตาบอดสี</th><th>ปพ.1</th><th>สถานะ</th><th>บันทึก</th><th>ส่งเมื่อ</th>
+            </tr></thead>
+            <tbody id="appsBody"><tr><td colspan="11"><div class="loading">กำลังโหลด…</div></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:20px"><a class="backlink" href="index.html">← กลับหน้าหลักคลังแนะแนว</a></div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const SUPABASE_URL = "https://ikkhjslmtjwrxzxvtokb.supabase.co";
+const ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlra2hqc2xtdGp3cnh6eHZ0b2tiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM3NDMzNjksImV4cCI6MjA5OTMxOTM2OX0.3OR_9mEv82Ns1LLjx5nnRwJYzrtKFtWCWd1bPuQfNKU";
+const EMAIL_DOMAIN = "guidance-pcw.local";
+const sb = supabase.createClient(SUPABASE_URL, ANON_KEY);
+const ROLE_LABEL = {admin:"ผู้ดูแล", teacher:"ครู", student:"นักเรียน"};
+const STATUS_LABEL = {submitted:"ส่งแล้ว", reviewed:"ตรวจแล้ว"};
+const BUCKET = "chang-phueak-docs";
+
+let profile=null, programs=[], curProgram=null, majorsById={}, apps=[];
+
+const $ = id => document.getElementById(id);
+const esc = s => (s??"").toString().replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+function toast(t){ $("toast").textContent=t; $("toast").classList.add("show"); setTimeout(()=>$("toast").classList.remove("show"),2600); }
+function msg(id,t,cls){ const el=$(id); el.textContent=t; el.className="msg "+cls; }
+function fmtDate(d){ return d? new Date(d).toLocaleDateString("th-TH",{day:"numeric",month:"short",year:"2-digit"}) : "—"; }
+function thaiYearNow(){ const d=new Date(); const be = d.getFullYear()+543; return (d.getMonth()+1) < 5 ? be-1 : be; }
+
+async function boot(){
+  const {data:{session}} = await sb.auth.getSession();
+  if(!session){ $("loginStage").classList.remove("hidden"); return; }
+  const {data:p} = await sb.from("profiles").select("*").eq("id", session.user.id).maybeSingle();
+  if(!p){ await sb.auth.signOut(); $("loginStage").classList.remove("hidden"); return toast("ไม่พบข้อมูลผู้ใช้"); }
+  profile = p;
+  const {data: isOfficer} = await sb.rpc("is_scholarship_officer");
+  if(!isOfficer){ $("deniedStage").classList.remove("hidden"); return; }
+  $("appStage").classList.remove("hidden");
+  $("uName").textContent = p.display_name;
+  $("uRole").textContent = ROLE_LABEL[p.role];
+  $("cfgYear").value = thaiYearNow();
+
+  const {data: majorRows} = await sb.from("chang_phueak_majors").select("*").order("sort_order");
+  (majorRows||[]).forEach(m=>majorsById[m.id]=m);
+
+  await loadPrograms();
+};
+$("btnLogin").onclick = async ()=>{
+  const u=$("liUser").value.trim(), p=$("liPass").value;
+  if(!u||!p) return msg("liMsg","กรอกให้ครบก่อนนะคะ","err");
+  $("btnLogin").disabled = true;
+  const {error} = await sb.auth.signInWithPassword({email:u+"@"+EMAIL_DOMAIN, password:p});
+  $("btnLogin").disabled = false;
+  if(error) return msg("liMsg","เข้าสู่ระบบไม่สำเร็จ","err");
+  location.reload();
+};
+$("btnLogout").onclick = async ()=>{ await sb.auth.signOut(); location.reload(); };
+
+async function loadPrograms(){
+  const {data, error} = await sb.from("chang_phueak_programs").select("*").order("academic_year",{ascending:false});
+  programs = data||[];
+  if(!programs.length){ $("progList").innerHTML = `<div class="empty">ยังไม่มีการตั้งค่าปีการศึกษาใดๆ กรอกด้านบนแล้วกดบันทึกเพื่อเริ่มค่ะ</div>`; return; }
+  curProgram = programs[0];
+  $("progList").innerHTML = programs.map(pr=>`<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px dashed var(--line)">
+    <b>ปี ${esc(pr.academic_year)}</b>
+    <span style="font-size:.82rem;color:var(--ink-soft)">โควตา ${esc(pr.quota_allocated)} คน</span>
+    <span class="pill ${pr.is_open? 'reviewed':'submitted'}">${pr.is_open? 'เปิดรับ':'ปิดรับ'}</span>
+    <div class="spacer"></div>
+    <button class="btn ghost sm" onclick="selectProgram('${pr.id}')">ดูรายชื่อ</button>
+    <button class="btn ghost sm" onclick="editProgram('${pr.id}')">แก้ไข</button>
+  </div>`).join("");
+  await selectProgram(curProgram.id);
+}
+window.editProgram = (id)=>{
+  const pr = programs.find(x=>x.id===id);
+  $("cfgYear").value = pr.academic_year; $("cfgQuota").value = pr.quota_allocated; $("cfgOpen").checked = pr.is_open;
+  window.scrollTo({top:0,behavior:"smooth"});
+};
+$("btnSaveProgram").onclick = async ()=>{
+  const year = Number($("cfgYear").value), quota = Number($("cfgQuota").value), isOpen = $("cfgOpen").checked;
+  if(!year || !quota) return msg("progMsg","กรอกปีการศึกษาและจำนวนโควตาให้ครบ","err");
+  $("btnSaveProgram").disabled = true;
+  const {error} = await sb.from("chang_phueak_programs")
+    .upsert({academic_year:year, quota_allocated:quota, is_open:isOpen, created_by:profile.id}, {onConflict:"academic_year"});
+  $("btnSaveProgram").disabled = false;
+  if(error) return msg("progMsg","บันทึกไม่สำเร็จ: "+error.message,"err");
+  toast("บันทึกแล้ว"); msg("progMsg","",""); $("progMsg").className="msg";
+  await loadPrograms();
+};
+
+window.selectProgram = async (id)=>{
+  curProgram = programs.find(x=>x.id===id);
+  $("appsSection").classList.remove("hidden");
+  $("appsBody").innerHTML = `<tr><td colspan="11"><div class="loading">กำลังโหลด…</div></td></tr>`;
+  const {data, error} = await sb.from("chang_phueak_applications")
+    .select("*, profiles!chang_phueak_applications_profile_id_fkey(display_name, student_id, class_room)")
+    .eq("program_id", id).order("submitted_at",{ascending:true});
+  if(error){ $("appsBody").innerHTML = `<tr><td colspan="11">โหลดไม่สำเร็จ: ${esc(error.message)}</td></tr>`; return; }
+  apps = data||[];
+  renderStats();
+  renderTable();
+};
+
+function renderStats(){
+  $("statTotal").textContent = apps.length;
+  $("statSeats").textContent = curProgram.quota_allocated;
+  $("statLeft").textContent = Math.max(curProgram.quota_allocated - apps.length, 0);
+  $("statReviewed").textContent = apps.filter(a=>a.status==="reviewed").length;
+}
+
+function majorName(id){ const m=majorsById[id]; return m? m.name : "—"; }
+
+function renderTable(){
+  if(!apps.length){ $("appsBody").innerHTML = `<tr><td colspan="11"><div class="empty">ยังไม่มีนักเรียนสมัครโครงการนี้</div></td></tr>`; return; }
+  $("appsBody").innerHTML = apps.map(a=>{
+    const p = a.profiles||{};
+    return `<tr>
+      <td>${esc(p.student_id||"—")}</td>
+      <td>${esc(p.display_name||"—")}</td>
+      <td>${esc(p.class_room||"—")}</td>
+      <td>${a.track==="พิเศษ"?"พิเศษ":"ปกติ"}</td>
+      <td>${esc(majorName(a.major_choice_1))}${a.major_choice_2? " / "+esc(majorName(a.major_choice_2)):""}</td>
+      <td>${esc(a.gpax??"—")}</td>
+      <td>${a.confirm_no_colorblind==null? "—" : (a.confirm_no_colorblind? "✅":"❌")}</td>
+      <td>${a.pp1_file_path? `<button class="btn ghost sm" onclick="downloadFile('${a.pp1_file_path}')">ดาวน์โหลด</button>` : "—"}</td>
+      <td><select onchange="setStatus('${a.id}', this.value)">
+        <option value="submitted" ${a.status==="submitted"?"selected":""}>ส่งแล้ว</option>
+        <option value="reviewed" ${a.status==="reviewed"?"selected":""}>ตรวจแล้ว</option>
+      </select></td>
+      <td><textarea class="note" data-id="${a.id}" onchange="saveNote('${a.id}', this.value)">${esc(a.teacher_note||"")}</textarea></td>
+      <td>${fmtDate(a.submitted_at)}</td>
+    </tr>`;
+  }).join("");
+}
+
+window.downloadFile = async (path)=>{
+  const {data, error} = await sb.storage.from(BUCKET).createSignedUrl(path, 3600);
+  if(error||!data) return toast("สร้างลิงก์ดาวน์โหลดไม่สำเร็จ");
+  window.open(data.signedUrl, "_blank");
+};
+window.setStatus = async (id, status)=>{
+  const {error} = await sb.from("chang_phueak_applications").update({status}).eq("id", id);
+  if(error) return toast("เปลี่ยนสถานะไม่สำเร็จ: "+error.message);
+  toast("เปลี่ยนสถานะแล้ว");
+  const a = apps.find(x=>x.id===id); if(a) a.status = status;
+  renderStats();
+};
+window.saveNote = async (id, note)=>{
+  const {error} = await sb.from("chang_phueak_applications").update({teacher_note:note}).eq("id", id);
+  if(error) return toast("บันทึกไม่สำเร็จ: "+error.message);
+  toast("บันทึกแล้ว");
+};
+
+boot();
+</script>
+</body>
+</html>
