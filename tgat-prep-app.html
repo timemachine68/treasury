@@ -63,26 +63,6 @@
   .check{position:absolute;top:16px;right:16px;width:24px;height:24px;border-radius:50%;border:2px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:14px}
   .part-card.sel .check{background:var(--accent);border-color:var(--accent);color:#fff}
 
-  .loader-card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px}
-  .loader-desc{color:var(--muted);font-size:14px;margin-bottom:14px}
-  .loader-desc b{color:var(--text)}
-  .loader-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-  .file-btn{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;padding:11px 18px;border-radius:12px;font-weight:700;font-size:15px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
-  .file-btn:hover{opacity:.92}
-  .loader-status{margin-top:14px;font-size:14px;padding:10px 14px;border-radius:10px;display:none}
-  .loader-status.show{display:block}
-  .loader-status.ok{background:rgba(34,197,94,.14);color:#86efac;border:1px solid rgba(34,197,94,.3)}
-  .loader-status.err{background:rgba(239,68,68,.14);color:#fca5a5;border:1px solid rgba(239,68,68,.3);white-space:pre-wrap}
-  #resetWrap{margin-top:14px}
-  .loader-help{margin-top:16px;border-top:1px dashed var(--line);padding-top:14px}
-  .loader-help summary{cursor:pointer;font-weight:700;font-size:14px;color:var(--text)}
-  .loader-help .hbody{font-size:13px;color:var(--muted);margin-top:10px;line-height:1.7}
-  .loader-help code{background:var(--bg);border:1px solid var(--line);padding:1px 6px;border-radius:5px;color:#cbd5e1;font-size:12px}
-  .loader-help table{width:100%;border-collapse:collapse;margin:10px 0;font-size:12.5px}
-  .loader-help th,.loader-help td{border:1px solid var(--line);padding:6px 8px;text-align:left}
-  .loader-help th{background:var(--card2);color:var(--text)}
-  .loader-help pre{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:12px;overflow-x:auto;font-size:12px;color:#cbd5e1;margin:8px 0}
-
   .quiz-top{display:flex;align-items:center;justify-content:space-between;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 18px;margin-bottom:16px;position:sticky;top:12px;z-index:10}
   .timer{font-size:24px;font-weight:800;font-variant-numeric:tabular-nums;display:flex;align-items:center;gap:8px}
   .timer.warn{color:var(--amber)}
@@ -277,64 +257,6 @@
 
     <div class="section-title">เลือกพาร์ทที่ต้องการฝึก (เลือกได้มากกว่า 1)</div>
     <div class="part-grid" id="partGrid"></div>
-
-    <div class="section-title">นำเข้าข้อสอบเอง (ไม่ต้องแก้โค้ด)</div>
-    <div class="loader-card">
-      <p class="loader-desc">อัปโหลดไฟล์ <b>.csv</b> หรือ <b>.json</b> เพื่อใช้ข้อสอบของคุณเองแทนชุดตัวอย่าง — แนะนำให้กด <b>ดาวน์โหลดเทมเพลต</b> ไปแก้ใน Excel / Google Sheets ก่อน แล้วค่อยอัปโหลดกลับ</p>
-      <div class="loader-actions">
-        <label class="file-btn">📂 เลือกไฟล์ CSV / JSON
-          <input type="file" id="fileInput" accept=".csv,.json,application/json,text/csv" onchange="handleFile(event)" hidden>
-        </label>
-        <button class="ghost-btn" onclick="downloadTemplate('csv')">⬇️ เทมเพลต CSV</button>
-        <button class="ghost-btn" onclick="downloadTemplate('json')">⬇️ เทมเพลต JSON</button>
-      </div>
-      <div id="loaderStatus" class="loader-status"></div>
-      <div id="resetWrap" class="hidden">
-        <button class="ghost-btn" onclick="resetBank()">↩️ กลับไปใช้ชุดข้อสอบเริ่มต้น</button>
-      </div>
-
-      <details class="loader-help">
-        <summary>📖 วิธีเตรียมไฟล์ข้อสอบ</summary>
-        <div class="hbody">
-          <b>แบบที่ 1 : ไฟล์ CSV (แก้ใน Excel / Google Sheets — แนะนำ)</b>
-          <p>แต่ละแถว = ข้อสอบ 1 ข้อ ใช้หัวคอลัมน์ดังนี้ (รองรับทั้งข้อสอบ 4 และ 5 ตัวเลือก — เว้นคอลัมน์ "จ" ว่างได้ถ้ามีแค่ 4 ตัวเลือก)</p>
-          <table>
-            <tr><th>คอลัมน์</th><th>ความหมาย</th></tr>
-            <tr><td><code>ส่วน</code></td><td>ชื่อส่วน เช่น "ส่วนที่ 1: ทักษะการพูด (Speaking)"</td></tr>
-            <tr><td><code>ประเภท</code></td><td>ประเภทข้อสอบ เช่น "การถาม–ตอบ"</td></tr>
-            <tr><td><code>รหัสบทความ</code></td><td>เว้นว่าง = ข้อเดี่ยว / ใส่รหัสเดียวกัน เช่น <code>A1</code> = ข้อที่ใช้บทความ/บทสนทนาเดียวกัน</td></tr>
-            <tr><td><code>บทความ</code></td><td>เนื้อบทความ/บทสนทนา (ใส่เฉพาะแถวแรกของชุดที่รหัสเดียวกันก็พอ)</td></tr>
-            <tr><td><code>คำถาม</code></td><td>โจทย์</td></tr>
-            <tr><td><code>ก ข ค ง จ</code></td><td>ตัวเลือก 4-5 คอลัมน์ ("จ" เว้นว่างได้ถ้ามี 4 ตัวเลือก)</td></tr>
-            <tr><td><code>คำตอบ</code></td><td>ข้อที่ถูก ใส่ได้ทั้ง <code>ก/ข/ค/ง/จ</code>, <code>A/B/C/D/E</code> หรือ <code>1-5</code></td></tr>
-            <tr><td><code>เฉลย</code></td><td>คำอธิบายเฉลย (จะเว้นว่างก็ได้)</td></tr>
-          </table>
-          <p>คะแนนจะถ่วงน้ำหนักให้แต่ละ "ส่วน" เท่ากันอัตโนมัติให้รวมเป็น 100</p>
-          <b>แบบที่ 2 : ไฟล์ JSON (กำหนดคะแนน/เวลาเองได้)</b>
-          <pre>{
-  "name": "ชื่อชุดข้อสอบ",
-  "minutes": 60,
-  "sections": [
-    { "name": "ชื่อส่วน", "score": 100,
-      "groups": [
-        { "name": "ชื่อประเภท",
-          "questions": [
-            { "q": "คำถาม...", "choices": ["ก","ข","ค","ง","จ"],
-              "answer": 0, "explain": "คำอธิบาย" }
-          ] },
-        { "name": "ใช้บทความร่วมกัน",
-          "sets": [
-            { "passage": "บทความ...",
-              "items": [ { "q":"...", "choices":["..",".."],
-                          "answer":0, "explain":"" } ] }
-          ] }
-      ] }
-  ]
-}</pre>
-          <p><code>answer</code> นับเริ่มจาก 0 (0=ก, 1=ข, 2=ค, 3=ง, 4=จ) — ใส่ choices กี่ตัวเลือกก็ได้</p>
-        </div>
-      </details>
-    </div>
 
     <div class="start-bar" style="background:linear-gradient(to top,rgba(15,23,42,.95) 60%,transparent);backdrop-filter:blur(4px);margin-top:16px;border-radius:0 0 18px 18px;">
       <button class="btn-primary" id="startBtn" disabled onclick="startExam()">เริ่มทำข้อสอบ</button>
@@ -1830,6 +1752,7 @@ const clone = o => JSON.parse(JSON.stringify(o));
 let BANK = clone(DEFAULT_BANK);
 let selectedParts=[];
 let examQuestions=[];
+let examSubmitted=false;
 let answers=[];
 let currentIdx=0;
 let timeLeft=0, timerId=null;
@@ -1860,7 +1783,42 @@ async function boot(){
   $('loginStage').classList.add('hidden');
   $('appStage').classList.remove('hidden');
   $('whoName').textContent = p.display_name;
+  await loadAdminSubjects();
   renderHome();
+}
+
+/* ============================================================
+   ➕ วิชาที่ admin เพิ่มเอง (tgat_prep_subjects/groups/questions บน Supabase)
+   รวมเข้ากับ BANK (5 วิชา built-in) ตอนโหลดหน้า — ไม่แก้ไข logic การสุ่ม/ให้คะแนนเดิมเลย
+   ============================================================ */
+async function loadAdminSubjects(){
+  try{
+    const {data, error} = await sb.from('tgat_prep_subjects')
+      .select('code,name,minutes,color,sort_order,tgat_prep_groups(id,name,quota,sort_order,tgat_prep_questions(id,format,question,choices,answer_index,ms_answers,explain,is_active,sort_order))')
+      .eq('is_active', true)
+      .order('sort_order');
+    if(error){ console.warn('โหลดวิชาที่ admin เพิ่มไม่สำเร็จ:', error.message); return; }
+    (data||[]).forEach(subj=>{
+      const groups = (subj.tgat_prep_groups||[])
+        .slice().sort((a,b)=>a.sort_order-b.sort_order)
+        .map(g=>{
+          const questions = (g.tgat_prep_questions||[])
+            .filter(q=>q.is_active)
+            .slice().sort((a,b)=>a.sort_order-b.sort_order)
+            .map(q=> q.format==='multi_select'
+              ? {q:q.question, choices:q.choices, answer:null, multiSelect:true, answers:q.ms_answers, explain:q.explain||''}
+              : {q:q.question, choices:q.choices, answer:q.answer_index, explain:q.explain||''});
+          if(g.quota) QUOTA[g.name] = g.quota;   // ใช้กลไก quota เดิมของ startExam() ได้เลย ไม่ต้องแก้ engine
+          return {name:g.name, questions};
+        })
+        .filter(g=>g.questions.length>0);   // ตัดกลุ่มที่ไม่มีคำถามที่ active ออก กันพาร์ทว่าง
+      if(!groups.length) return;   // วิชาที่ไม่มีคำถามเลย ไม่ต้องเสนอให้เลือก
+      BANK[subj.code] = {
+        name: subj.name, short: subj.code, color: subj.color||'var(--tgat1)',
+        minutes: subj.minutes, sections:[{name: subj.name, score:100, groups}]
+      };
+    });
+  }catch(e){ console.warn('โหลดวิชาที่ admin เพิ่มไม่สำเร็จ:', e.message||e); }
 }
 function msg(id, text, cls){
   const el=$(id); el.textContent=text||''; el.className='login-msg'+(cls?' '+cls:'');
@@ -1884,8 +1842,10 @@ $('btnLogout').onclick = async ()=>{ await sb.auth.signOut(); location.reload();
    ============================================================ */
 async function saveAttemptToServer(parts, r){
   if(!profile) return;
+  // ไม่ต้อง normalize รหัสวิชาฝั่ง client แล้ว — DB มี trigger ตรวจว่า subjects
+  // ต้องเป็น 1 ใน 5 วิชา built-in หรือรหัสวิชาที่ admin สร้างและเปิดใช้งานอยู่เท่านั้น
   try{
-    await sb.from('tgat_prep_attempts').insert({
+    const {error} = await sb.from('tgat_prep_attempts').insert({
       student_id: profile.id,
       subjects: parts,
       raw_score: r.scoreOut,
@@ -1895,7 +1855,10 @@ async function saveAttemptToServer(parts, r){
       skip_count: r.skip,
       question_count: r.total
     });
-  }catch(e){ /* เงียบไว้ — ไม่ให้กระทบประสบการณ์ทำข้อสอบของนักเรียน */ }
+    // insert() ของ supabase-js ไม่ throw เวลา error — ต้องเช็ก error เอง
+    // เงียบไว้ฝั่ง UI (ไม่ให้กระทบประสบการณ์ทำข้อสอบ) แต่ log ไว้ให้เห็นใน console เผื่อ debug
+    if(error) console.warn('บันทึกคะแนนขึ้นเซิร์ฟเวอร์ไม่สำเร็จ:', error.message);
+  }catch(e){ console.warn('บันทึกคะแนนขึ้นเซิร์ฟเวอร์ไม่สำเร็จ:', e.message||e); }
 }
 
 function shuffle(arr){
@@ -1975,301 +1938,10 @@ function togglePart(key,div){
   $('startBtn').textContent=selectedParts.length?`เริ่มทำข้อสอบ · ${totalQ} ข้อ · ${totalMin} นาที`:'เริ่มทำข้อสอบ';
 }
 
-/* ============================================================
-   📂 ระบบนำเข้าข้อสอบจากไฟล์ CSV / JSON (รองรับ 4-5 ตัวเลือก)
-   ============================================================ */
-function setStatus(type,msg){
-  const el=$('loaderStatus');
-  el.className='loader-status show '+type;
-  el.textContent=msg;
-}
-function ansIndex(v){
-  const s=String(v).trim().toLowerCase();
-  const map={'ก':0,'ข':1,'ค':2,'ง':3,'จ':4,'a':0,'b':1,'c':2,'d':3,'e':4,'1':0,'2':1,'3':2,'4':3,'5':4};
-  return (s in map)?map[s]:-1;
-}
-
 function escHtml(s){
   if(s===null||s===undefined) return '';
   return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
-function parseCSV(text){
-  text=text.replace(/^\uFEFF/,'');
-  const rows=[]; let row=[],field='',inQ=false,i=0;
-  while(i<text.length){
-    const c=text[i];
-    if(inQ){
-      if(c==='"'){ if(text[i+1]==='"'){field+='"';i+=2;continue;} inQ=false;i++;continue; }
-      field+=c;i++;continue;
-    }
-    if(c==='"'){inQ=true;i++;continue;}
-    if(c===','){row.push(field);field='';i++;continue;}
-    if(c==='\r'){i++;continue;}
-    if(c==='\n'){row.push(field);rows.push(row);row=[];field='';i++;continue;}
-    field+=c;i++;
-  }
-  row.push(field);rows.push(row);
-  return rows.filter(r=>r.some(c=>String(c).trim()!==''));
-}
-const HEAD={
-  section:['section','ส่วน','หมวด'],
-  group:['group','ประเภท','กลุ่ม','ประเภทข้อสอบ'],
-  passage_id:['passage_id','รหัสบทความ','รหัสชุด','ชุด','set'],
-  passage:['passage','บทความ','บทสนทนา','เนื้อหา'],
-  question:['question','คำถาม','โจทย์'],
-  choice1:['choice1','ก','ตัวเลือกก','a','choicea'],
-  choice2:['choice2','ข','ตัวเลือกข','b','choiceb'],
-  choice3:['choice3','ค','ตัวเลือกค','c','choicec'],
-  choice4:['choice4','ง','ตัวเลือกง','d','choiced'],
-  choice5:['choice5','จ','ตัวเลือกจ','e','choicee'],
-  answer:['answer','คำตอบ','เฉลยข้อ','ข้อที่ถูก'],
-  explain:['explain','เฉลย','คำอธิบาย','อธิบาย'],
-  points:['points','คะแนนลดหลั่น','point_pattern'],
-  multiselect:['multiselect','เลือกหลาย','multi_select'],
-  ms_answers:['ms_answers','คำตอบหลาย','answers_pattern'],
-  paired:['paired','คู่คำถาม','pair_linked'],
-  pair_idx:['pair_idx','ลำดับคู่','pair_position']
-};
-function mapHeader(h){
-  const low=String(h).trim().toLowerCase();
-  for(const key in HEAD){ if(HEAD[key].some(a=>a.toLowerCase()===low)) return key; }
-  return null;
-}
-function parseCSVBank(text){
-  const rows=parseCSV(text);
-  if(rows.length<2) throw new Error('ไฟล์ CSV ไม่มีข้อมูล');
-  const headers=rows[0].map(mapHeader);
-  if(!headers.includes('question')) throw new Error('ไม่พบคอลัมน์ "คำถาม" (question) ในไฟล์');
-  const objs=[];
-  for(let r=1;r<rows.length;r++){
-    const o={__row:r+1};
-    headers.forEach((k,ci)=>{ if(k) o[k]=(rows[r][ci]??'').trim(); });
-    if(o.question) objs.push(o);
-  }
-  if(!objs.length) throw new Error('ไม่พบข้อสอบในไฟล์ (ทุกแถวคำถามว่าง)');
-  return buildBankFromRows(objs);
-}
-function buildBankFromRows(objs){
-  const sections=[]; const secIdx={};
-  objs.forEach(o=>{
-    const secName=o.section||'ส่วนที่ 1';
-    const grpName=o.group||'ข้อสอบ';
-    const choices=[o.choice1,o.choice2,o.choice3,o.choice4,o.choice5].filter(c=>c&&String(c).trim()!=='');
-    if(choices.length<2) throw new Error(`แถวที่ ${o.__row}: ต้องมีอย่างน้อย 2 ตัวเลือก`);
-    let q;
-    // Multi-select question
-    if(o.multiselect && String(o.multiselect).trim().toLowerCase()==='true'){
-      const msArr=(o.ms_answers||'').split(',').map(s=>s.trim().toLowerCase()==='true');
-      while(msArr.length<choices.length) msArr.push(false);
-      q={q:o.question,choices,answer:null,multiSelect:true,answers:msArr.slice(0,choices.length),explain:o.explain||''};
-    } else if(o.points && String(o.points).trim()){
-      // Points-based (single select with graded scoring)
-      const pts=String(o.points).split(',').map(Number);
-      const ai=ansIndex(o.answer);
-      const safeAi=ai>=0?ai:0;
-      q={q:o.question,choices,answer:safeAi,points:pts.slice(0,choices.length),explain:o.explain||''};
-    } else {
-      const ai=ansIndex(o.answer);
-      if(ai<0) throw new Error(`แถวที่ ${o.__row}: คำตอบไม่ถูกต้อง (ใส่ ก/ข/ค/ง/จ หรือ 1-5)`);
-      if(ai>=choices.length) throw new Error(`แถวที่ ${o.__row}: เลขคำตอบเกินจำนวนตัวเลือกที่มี`);
-      q={q:o.question,choices,answer:ai,explain:o.explain||''};
-    }
-    // Paired questions
-    if(o.paired && String(o.paired).trim().toLowerCase()==='true'){
-      q.paired=true;
-      if(o.pair_idx!==undefined && o.pair_idx!=='') q.pairIdx=Number(o.pair_idx);
-    }
-    if(!(secName in secIdx)){secIdx[secName]=sections.length;sections.push({name:secName,score:0,groups:[],_gi:{}});}
-    const sec=sections[secIdx[secName]];
-    if(!(grpName in sec._gi)){sec._gi[grpName]=sec.groups.length;sec.groups.push({name:grpName,questions:[],sets:[],_si:{}});}
-    const grp=sec.groups[sec._gi[grpName]];
-    const pid=(o.passage_id||'').trim();
-    if(pid){
-      if(!(pid in grp._si)){grp._si[pid]=grp.sets.length;grp.sets.push({passage:o.passage||'',items:[]});}
-      const set=grp.sets[grp._si[pid]];
-      if(!set.passage && o.passage) set.passage=o.passage;
-      set.items.push(q);
-    }else{
-      grp.questions.push(q);
-    }
-  });
-  const n=sections.length||1;
-  let used=0;
-  sections.forEach((s,idx)=>{
-    delete s._gi;
-    s.score=Math.round(100/n); used+=s.score;
-    s.groups.forEach(g=>{ delete g._si; if(!g.questions.length)delete g.questions; if(!g.sets.length)delete g.sets; });
-  });
-  if(sections.length) sections[sections.length-1].score+=(100-used);
-  return { custom:{name:'ชุดข้อสอบที่โหลดจากไฟล์',short:'CUSTOM',color:'var(--tgat1)',minutes:60,sections} };
-}
-
-function normQ(q){
-  const choices=Array.isArray(q.choices)?q.choices:[];
-  const points=Array.isArray(q.points)?q.points.map(Number):null;
-  // Multi-select
-  if(q.multiSelect||q.multi_select){
-    const answers=Array.isArray(q.answers)?q.answers.map(Boolean):choices.map(()=>false);
-    return {q:q.q||q.question||'',choices,answer:null,multiSelect:true,answers,explain:q.explain||'',svg:q.svg||null};
-  }
-  let a=q.answer;
-  if(typeof a==='string'){ const ai=ansIndex(a); a=ai>=0?ai:(Number(a)||0); }
-  a=Number(a)||0;
-  const base={q:q.q||q.question||'',choices,answer:a,explain:q.explain||'',svg:q.svg||null,points};
-  if(q.paired){ base.paired=true; if(q.pairIdx!==undefined) base.pairIdx=Number(q.pairIdx); }
-  return base;
-}
-function normalizePart(p){
-  const secs=Array.isArray(p.sections)?p.sections:[];
-  return {
-    name:p.name||'ชุดข้อสอบที่โหลด',
-    short:p.short||'CUSTOM',
-    color:p.color||'var(--tgat1)',
-    minutes:Number(p.minutes)||60,
-    sections:secs.map(s=>({
-      name:s.name||'ส่วน',
-      score:Number(s.score)||Math.round(100/(secs.length||1)),
-      groups:(s.groups||[]).map(g=>{
-        const ng={name:g.name||'ข้อสอบ'};
-        if(g.questions) ng.questions=g.questions.map(normQ);
-        if(g.sets) ng.sets=g.sets.map(set=>({passage:set.passage||'',items:(set.items||[]).map(normQ)}));
-        if(!ng.questions&&!ng.sets) ng.questions=[];
-        return ng;
-      })
-    }))
-  };
-}
-function parseJSONBank(text){
-  let data;
-  try{ data=JSON.parse(text); }catch(e){ throw new Error('รูปแบบ JSON ไม่ถูกต้อง: '+e.message); }
-  if(data && data.sections) return {custom:normalizePart(data)};
-  const bank={};
-  Object.entries(data).forEach(([k,v])=>{ bank[k]=normalizePart(v); });
-  return bank;
-}
-
-function validateBank(bank){
-  if(!bank||typeof bank!=='object'||!Object.keys(bank).length) throw new Error('ไฟล์ว่างหรือรูปแบบไม่ถูกต้อง');
-  let total=0;
-  Object.values(bank).forEach(p=>{
-    if(!p.sections||!p.sections.length) throw new Error('ไม่พบ "sections" ในข้อมูล');
-    total+=countPart(p);
-  });
-  if(total===0) throw new Error('ไม่พบข้อสอบในไฟล์');
-}
-
-function handleFile(e){
-  const file=e.target.files[0]; if(!file) return;
-  const reader=new FileReader();
-  reader.onload=()=>{
-    try{
-      const text=String(reader.result);
-      const name=file.name.toLowerCase();
-      let bank;
-      if(name.endsWith('.json')) bank=parseJSONBank(text);
-      else if(name.endsWith('.csv')) bank=parseCSVBank(text);
-      else { const t=text.trim(); bank=(t.startsWith('{')||t.startsWith('['))?parseJSONBank(text):parseCSVBank(text); }
-      validateBank(bank);
-      BANK={...BANK,...bank};
-      selectedParts=[];
-      renderHome();
-      $('resetWrap').classList.remove('hidden');
-      $('startBtn').disabled=true; $('startBtn').textContent='เริ่มทำข้อสอบ';
-      const newQ=Object.values(bank).reduce((s,p)=>s+countPart(p),0);
-      const total=Object.values(BANK).reduce((s,p)=>s+countPart(p),0);
-      setStatus('ok',`✅ โหลดสำเร็จ! เพิ่มข้อสอบ ${newQ} ข้อ (รวมทั้งหมด ${total} ข้อ) — เลือกพาร์ทด้านบนแล้วเริ่มได้เลย`);
-    }catch(err){
-      setStatus('err','❌ โหลดไม่สำเร็จ\n'+(err.message||err));
-    }
-    e.target.value='';
-  };
-  reader.onerror=()=>setStatus('err','❌ อ่านไฟล์ไม่สำเร็จ');
-  reader.readAsText(file,'utf-8');
-}
-function resetBank(){
-  BANK=clone(DEFAULT_BANK);
-  selectedParts=[];
-  renderHome();
-  $('resetWrap').classList.add('hidden');
-  $('startBtn').disabled=true; $('startBtn').textContent='เริ่มทำข้อสอบ';
-  setStatus('ok','↩️ กลับมาใช้ชุดข้อสอบเริ่มต้นแล้ว');
-}
-
-function csvCell(v){
-  v=String(v==null?'':v);
-  return /[",\r\n]/.test(v) ? '"'+v.replace(/"/g,'""')+'"' : v;
-}
-function pad5(arr){const a=[...arr];while(a.length<5)a.push('');return a.slice(0,5);}
-function csvAnswer(q){
-  const L=['ก','ข','ค','ง','จ'];
-  if(q.multiSelect) return ''; // multiselect uses ms_answers column
-  if(q.answer===null||q.answer===undefined) return '';
-  return L[q.answer]||String(q.answer+1);
-}
-function bankToCSV(bank){
-  const rows=[['ส่วน','ประเภท','รหัสบทความ','บทความ','คำถาม','ก','ข','ค','ง','จ','คำตอบ','เฉลย','คะแนนลดหลั่น','เลือกหลาย','คำตอบหลาย','คู่คำถาม','ลำดับคู่']];
-  let setCounter=0;
-  Object.values(bank).forEach(part=>{
-    part.sections.forEach(sec=>{
-      sec.groups.forEach(g=>{
-        if(g.questions) g.questions.forEach(q=>{
-          rows.push([sec.name,g.name,'','',q.q,...pad5(q.choices),csvAnswer(q),q.explain||'',
-            q.points?q.points.join(','):'', q.multiSelect?'true':'',
-            q.answers?q.answers.map(b=>b?'true':'false').join(','):'',
-            q.paired?'true':'', q.pairIdx!==undefined?q.pairIdx:'']);
-        });
-        if(g.sets) g.sets.forEach(set=>{
-          setCounter++; const pid='S'+setCounter;
-          set.items.forEach((q,ii)=>{
-            rows.push([sec.name,g.name,pid, ii===0?set.passage:'', q.q, ...pad5(q.choices),
-              csvAnswer(q), q.explain||'',
-              q.points?q.points.join(','):'', q.multiSelect?'true':'',
-              q.answers?q.answers.map(b=>b?'true':'false').join(','):'',
-              q.paired?'true':'', q.pairIdx!==undefined?q.pairIdx:'']);
-          });
-        });
-      });
-    });
-  });
-  return rows.map(r=>r.map(csvCell).join(',')).join('\r\n');
-}
-function cleanQ(q){
-  const base={q:q.q,choices:q.choices,answer:q.answer,explain:q.explain};
-  if(q.svg) base.svg=q.svg;
-  if(q.points) base.points=q.points;
-  if(q.multiSelect){ base.multiSelect=true; base.answers=q.answers; delete base.answer; }
-  if(q.paired){ base.paired=true; if(q.pairIdx!==undefined) base.pairIdx=q.pairIdx; }
-  return base;
-}
-function cleanPart(p){
-  return {name:p.name,minutes:p.minutes,sections:p.sections.map(s=>({
-    name:s.name,score:s.score,groups:s.groups.map(g=>{
-      const o={name:g.name};
-      if(g.questions) o.questions=g.questions.map(cleanQ);
-      if(g.sets) o.sets=g.sets.map(set=>({passage:set.passage,items:set.items.map(cleanQ)}));
-      return o;
-    })
-  }))};
-}
-function download(name,text,mime){
-  const blob=new Blob([text],{type:mime});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();
-  setTimeout(()=>URL.revokeObjectURL(url),1000);
-}
-function downloadTemplate(kind){
-  try{
-    if(kind==='csv'){
-      download('tgat_questions.csv','\uFEFF'+bankToCSV(BANK),'text/csv;charset=utf-8');
-    }else{
-      const keys=Object.keys(BANK);
-      const out=keys.length===1?cleanPart(BANK[keys[0]]):Object.fromEntries(keys.map(k=>[k,cleanPart(BANK[k])]));
-      download('tgat_questions.json',JSON.stringify(out,null,2),'application/json');
-    }
-    setStatus('ok','⬇️ ดาวน์โหลดเทมเพลตแล้ว นำไปแก้แล้วอัปโหลดกลับได้เลย');
-  }catch(err){ setStatus('err','❌ สร้างไฟล์ไม่สำเร็จ: '+(err.message||err)); }
-}
-
 /* ---------- QUOTA: จำนวนข้อที่สุ่มออกต่อ group ---------- */
 const QUOTA={
   'ความสามารถทางภาษา (Verbal) — 20 ข้อ':20,
@@ -2302,6 +1974,7 @@ const QUOTA={
 
 /* ---------- START EXAM ---------- */
 function startExam(){
+  examSubmitted=false;
   const order=Object.keys(BANK);
   const chosen=order.filter(k=>selectedParts.includes(k));
   examQuestions=[];
@@ -2328,7 +2001,7 @@ function startExam(){
       });
     });
   });
-  if(!examQuestions.length){ setStatus('err','❌ พาร์ทที่เลือกไม่มีข้อสอบ'); return; }
+  if(!examQuestions.length){ alert('พาร์ทที่เลือกไม่มีข้อสอบ'); return; }
   answers=new Array(examQuestions.length).fill(null);
   currentIdx=0;
   timeLeft=chosen.reduce((s,k)=>s+BANK[k].minutes,0)*60;
@@ -2452,6 +2125,8 @@ function closeModal(){$('modal').classList.add('hidden');}
 function confirmSubmit(){closeModal();submitExam(false);}
 
 function submitExam(timeUp){
+  if(examSubmitted) return;   // กันส่งซ้ำ (เช่น เวลาหมดพอดีตอนกำลังกดยืนยันส่ง)
+  examSubmitted=true;
   clearInterval(timerId);$('modal').classList.add('hidden');
   let correct=0,wrong=0,skip=0,earned=0,totalScore=0;
   const secStats={},grpStats={};

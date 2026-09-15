@@ -797,6 +797,22 @@ async function fetchAllStudents(cols){
   return {data: all};
 }
 
+// tgat_prep_attempts สะสมแถวใหม่ทุกครั้งที่นักเรียนทำข้อสอบจบ 1 รอบ (append-only)
+// จำนวนแถวจะเกิน 1,000 ได้เร็วกว่าจำนวนนักเรียนมาก — ต้อง paginate เหมือน fetchAllStudents
+async function fetchAllTgatAttempts(){
+  let all = [], from = 0, pageSize = 1000;
+  while(true){
+    const {data, error} = await sb.from("tgat_prep_attempts")
+      .select("student_id,subjects,raw_score,max_score,percentage,correct_count,question_count,completed_at")
+      .order("completed_at", {ascending:false}).range(from, from+pageSize-1);
+    if(error){ console.error("fetchAllTgatAttempts error:", error.message); break; }
+    all = all.concat(data||[]);
+    if(!data || data.length < pageSize) break;
+    from += pageSize;
+  }
+  return {data: all};
+}
+
 /* ═══════════ ค่าคงที่ ═══════════ */
 const GRADES = [
   {key:"all", label:"ทั้งหมด", color:"var(--gall)"},
@@ -2330,12 +2346,12 @@ async function delTag(id){
 }
 
 /* ═══════════ ภาพรวมนักเรียน 360° ═══════════ */
-let ovStudents=[], ovAssignments=[], ovSubmissions=[], ovRounds=[], ovResponses=[], ovAssess=[], ovTags=[], ovF={room:"all",q:""}, ovSid=null;
+let ovStudents=[], ovAssignments=[], ovSubmissions=[], ovRounds=[], ovResponses=[], ovAssess=[], ovTags=[], ovTgat=[], ovF={room:"all",q:""}, ovSid=null;
 // ovTags รวมทั้ง RIASEC tags และ award records (type="award")
 
 async function loadOverview(){
   $("ovLoading").classList.remove("hidden");
-  const [{data:stu},{data:asg},{data:sub},{data:rnd},{data:resp},{data:asm},{data:tg}] = await Promise.all([
+  const [{data:stu},{data:asg},{data:sub},{data:rnd},{data:resp},{data:asm},{data:tg},{data:tgat}] = await Promise.all([
     fetchAllStudents("id,username,student_id,display_name,class_room"),
     sb.from("assignments").select("id,title,class_rooms,due_at"),
     // ดึง content ด้วยเพื่อให้ AI วิเคราะห์ได้ (text_answer, file_name, external_url)
@@ -2344,8 +2360,9 @@ async function loadOverview(){
     sb.from("survey_responses").select("*"),
     sb.from("strength_assessments").select("*"),
     sb.from("strength_tags").select("*"),
+    fetchAllTgatAttempts(),
   ]);
-  ovStudents=stu||[]; ovAssignments=asg||[]; ovSubmissions=sub||[]; ovRounds=rnd||[]; ovResponses=resp||[]; ovAssess=asm||[]; ovTags=tg||[];
+  ovStudents=stu||[]; ovAssignments=asg||[]; ovSubmissions=sub||[]; ovRounds=rnd||[]; ovResponses=resp||[]; ovAssess=asm||[]; ovTags=tg||[]; ovTgat=tgat||[];
   renderOverview();
   $("ovLoading").classList.add("hidden");
 }
@@ -2438,6 +2455,20 @@ function openOvModal(sid){
     return `<span class="awardchip">🏆 ${esc(p.title)}${lvLabel? " · "+esc(lvLabel):""}${p.year? " ("+esc(p.year)+")":""}${p.extra? " · "+esc(p.extra):""}</span>`;
   }).join("") : `<span class="duechip" style="font-size:.8rem">ยังไม่มีรางวัล</span>`;
 
+  // ─── ฝึกข้อสอบ TGAT/TPAT: ประวัติรอบล่าสุด ───
+  const tgatRows = ovTgat.filter(t=>t.student_id===sid).sort((a,b)=> b.completed_at.localeCompare(a.completed_at));
+  const tgatList = tgatRows.length ? `
+    <div class="tbl-wrap"><table><thead><tr><th>วันที่</th><th>พาร์ท</th><th>คะแนน</th><th>% ถูก</th></tr></thead><tbody>
+      ${tgatRows.slice(0,10).map(t=>`<tr>
+        <td>${esc(thDateTime(t.completed_at))}</td>
+        <td>${esc((t.subjects||[]).join(" · "))}</td>
+        <td>${t.raw_score}/${t.max_score}</td>
+        <td>${t.percentage}%</td>
+      </tr>`).join("")}
+    </tbody></table></div>
+    <p style="font-size:.78rem;color:var(--ink-soft);margin-top:6px">ทำไปแล้วทั้งหมด ${tgatRows.length} รอบ${tgatRows.length>10? " · แสดง 10 รอบล่าสุด":""}</p>
+  ` : `<p style="color:var(--ink-soft);font-size:.85rem;padding:8px 0">ยังไม่เคยทำข้อสอบ</p>`;
+
   $("ovModalBody").innerHTML = `
     <h2>🧑‍🎓 ${esc(s.display_name)} <small style="font-weight:400;color:var(--ink-soft)">${esc(s.username)} · ${esc(s.class_room||"-")}</small></h2>
 
@@ -2464,6 +2495,11 @@ function openOvModal(sid){
     <div class="panel" style="margin-top:12px">
       <h2 style="font-size:1rem">🏆 เกียรติบัตร / รางวัล</h2>
       <div>${awardList}</div>
+    </div>
+
+    <div class="panel" style="margin-top:12px">
+      <h2 style="font-size:1rem">🎯 ฝึกข้อสอบ TGAT/TPAT</h2>
+      <div>${tgatList}</div>
     </div>
 
     ${profileHTML(s, assess, tags, {})}
