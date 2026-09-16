@@ -2366,7 +2366,7 @@ async function loadOverview(){
   $("ovLoading").classList.remove("hidden");
   const [{data:stu},{data:asg},{data:sub},{data:rnd},{data:resp},{data:asm},{data:tg},{data:tgat},
     {data:qa},{data:ql},{data:sa},{data:sl},{data:wp},{data:cp},{data:iv},{data:ivc},{data:vp}] = await Promise.all([
-    fetchAllStudents("id,username,student_id,display_name,class_room"),
+    fetchAllStudents("id,username,student_id,display_name,class_room,avatar_path"),
     sb.from("assignments").select("id,title,class_rooms,due_at"),
     // ดึง content ด้วยเพื่อให้ AI วิเคราะห์ได้ (text_answer, file_name, external_url)
     sb.from("submissions").select("id,assignment_id,student_id,submitted_at,text_answer,file_name,external_url,note"),
@@ -2443,10 +2443,18 @@ function renderOverview(){
 }
 
 $("btnOvClose").onclick = ()=> $("ovModal").classList.remove("show");
-function openOvModal(sid){
+async function openOvModal(sid){
   ovSid = sid;
   const s = ovStudents.find(x=>x.id===sid); if(!s) return;
   $("ovModal").classList.add("show");
+
+  // รูปโปรไฟล์เก็บใน bucket ส่วนตัว (profile-photos) — ต้องขอ signed URL ก่อนถึงจะแสดงได้
+  let ovAvatarUrl = null;
+  if(s.avatar_path){
+    const {data:sig} = await sb.storage.from("profile-photos").createSignedUrl(s.avatar_path, 3600);
+    ovAvatarUrl = sig?.signedUrl || null;
+  }
+
   const asgs = ovAssignmentsFor_(s.class_room);
   const grade = studentGrade_(s.class_room);
   const rounds = grade? ovRounds.filter(r=>r.grade===grade).sort((a,b)=> b.created_at.localeCompare(a.created_at)) : [];
@@ -2529,7 +2537,12 @@ function openOvModal(sid){
     : `<span class="duechip" style="font-size:.8rem">ไม่มีในทะเบียนกลุ่มเปราะบาง</span>`;
 
   $("ovModalBody").innerHTML = `
-    <h2>🧑‍🎓 ${esc(s.display_name)} <small style="font-weight:400;color:var(--ink-soft)">${esc(s.username)} · ${esc(s.class_room||"-")}</small></h2>
+    <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+      <div style="width:60px;height:60px;border-radius:50%;overflow:hidden;flex:none;background:var(--pine-tint);display:grid;place-items:center;font-family:'Mitr';font-size:1.5rem;color:var(--pine-deep)">
+        ${ovAvatarUrl ? `<img src="${ovAvatarUrl}" style="width:100%;height:100%;object-fit:cover" alt="">` : esc((s.display_name||"?").trim().charAt(0).toUpperCase())}
+      </div>
+      <h2 style="margin:0">🧑‍🎓 ${esc(s.display_name)} <small style="font-weight:400;color:var(--ink-soft)">${esc(s.username)} · ${esc(s.class_room||"-")}</small></h2>
+    </div>
 
     <div class="panel" style="margin-top:12px">
       <h2 style="font-size:1rem">📝 งานมอบหมาย <span style="font-weight:400;font-size:.8rem;color:var(--ink-soft)">(ติ๊กงานที่ต้องการรวมในสรุปภาพรวมด้านล่าง)</span></h2>
