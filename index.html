@@ -2446,6 +2446,7 @@ $("btnOvClose").onclick = ()=> $("ovModal").classList.remove("show");
 function openOvModal(sid){
   ovSid = sid;
   const s = ovStudents.find(x=>x.id===sid); if(!s) return;
+  $("ovModal").classList.add("show");
   const asgs = ovAssignmentsFor_(s.class_room);
   const grade = studentGrade_(s.class_room);
   const rounds = grade? ovRounds.filter(r=>r.grade===grade).sort((a,b)=> b.created_at.localeCompare(a.created_at)) : [];
