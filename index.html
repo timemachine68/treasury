@@ -1111,12 +1111,13 @@ $("btnResSave").onclick = async ()=>{
       if(error) throw error;
       toast("เพิ่มลิงก์เรียบร้อย ✅");
     }else{
-      const file = $("rFile").files[0];
-      if(!file) throw new Error("เลือกไฟล์ก่อนนะคะ");
-      if(file.size > 50*1024*1024) throw new Error("ไฟล์ใหญ่เกิน 50MB ค่ะ");
+      const picked = $("rFile").files[0];
+      if(!picked) throw new Error("เลือกไฟล์ก่อนนะคะ");
+      if(picked.size > 50*1024*1024) throw new Error("ไฟล์ใหญ่เกิน 50MB ค่ะ");
+      msg("resMsg","กำลังเตรียมและอัพโหลดไฟล์…","ok");
+      const file = await compressImage(picked, 2000, 0.8); // ไฟล์ที่ไม่ใช่รูป (pdf/doc) จะคืนมาเหมือนเดิม
       const ext = file.name.includes(".") ? file.name.split(".").pop() : "bin";
       const path = profile.id + "/" + crypto.randomUUID() + "." + ext;
-      msg("resMsg","กำลังอัพโหลดไฟล์…","ok");
       const {error:upErr} = await sb.storage.from("resources").upload(path, file);
       if(upErr) throw upErr;
       const {error} = await sb.from("resources").insert({...base, file_path:path, file_name:file.name, uploaded_by:profile.id, uploader_name:profile.display_name});
@@ -1531,12 +1532,13 @@ $("btnWorkSave").onclick = async ()=>{
         if(!/^https?:\/\//.test(u)) throw new Error("ลิงก์ต้องขึ้นต้นด้วย http:// หรือ https://");
         row.external_url = u;
       }else if(wAttach==="file"){
-        const file = $("wFile").files[0];
-        if(!file) throw new Error("เลือกไฟล์ใบงานก่อนนะคะ");
-        if(file.size > 50*1024*1024) throw new Error("ไฟล์ใหญ่เกิน 50MB ค่ะ");
+        const picked = $("wFile").files[0];
+        if(!picked) throw new Error("เลือกไฟล์ใบงานก่อนนะคะ");
+        if(picked.size > 50*1024*1024) throw new Error("ไฟล์ใหญ่เกิน 50MB ค่ะ");
+        msg("workMsg","กำลังเตรียมและอัพโหลดใบงาน…","ok");
+        const file = await compressImage(picked, 2000, 0.8); // ไฟล์ที่ไม่ใช่รูป (pdf/doc) จะคืนมาเหมือนเดิม
         const ext = file.name.includes(".")? file.name.split(".").pop() : "bin";
         const path = profile.id + "/assign_" + crypto.randomUUID() + "." + ext;
-        msg("workMsg","กำลังอัพโหลดใบงาน…","ok");
         const {error:upErr} = await sb.storage.from("resources").upload(path, file);
         if(upErr) throw upErr;
         row.file_path = path; row.file_name = file.name;
@@ -1666,12 +1668,13 @@ $("btnSubSave").onclick = async ()=>{
       if(!/^https?:\/\//.test(u)) throw new Error("ลิงก์ต้องขึ้นต้นด้วย http:// หรือ https://");
       row.external_url = u;
     }else{
-      const file = $("sFile").files[0];
-      if(!file) throw new Error("เลือกไฟล์ก่อนนะคะ");
-      if(file.size > 50*1024*1024) throw new Error("ไฟล์ใหญ่เกิน 50MB ค่ะ");
+      const picked = $("sFile").files[0];
+      if(!picked) throw new Error("เลือกไฟล์ก่อนนะคะ");
+      if(picked.size > 50*1024*1024) throw new Error("ไฟล์ใหญ่เกิน 50MB ค่ะ");
+      msg("subMsg","กำลังเตรียมและอัพโหลด…","ok");
+      const file = await compressImage(picked, 2000, 0.8); // ไฟล์ที่ไม่ใช่รูป (pdf/doc) จะคืนมาเหมือนเดิม
       const ext = file.name.includes(".")? file.name.split(".").pop() : "bin";
       const path = profile.id + "/" + subAid + "_" + crypto.randomUUID() + "." + ext;
-      msg("subMsg","กำลังอัพโหลด…","ok");
       const {error:upErr} = await sb.storage.from("submissions").upload(path, file);
       if(upErr) throw upErr;
       row.file_path = path; row.file_name = file.name;
@@ -1834,7 +1837,8 @@ function compressImage(file, maxDim=1280, quality=0.82){
       const ctx = canvas.getContext("2d");
       ctx.drawImage(img, 0, 0, w, h);
       canvas.toBlob(blob=>{
-        if(!blob){ resolve(file); return; } // fallback: browser บีบอัดไม่ได้ ใช้ไฟล์เดิม
+        // บีบไม่ได้ หรือบีบแล้วไม่เล็กลง (เช่น PNG สีเรียบ) → ใช้ไฟล์เดิมดีกว่า
+        if(!blob || blob.size >= file.size){ resolve(file); return; }
         const compressedFile = new File([blob], (file.name.replace(/\.[^.]+$/,"")||"photo")+".jpg", {type:"image/jpeg"});
         resolve(compressedFile);
       }, "image/jpeg", quality);
