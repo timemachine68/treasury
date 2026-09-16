@@ -2350,9 +2350,22 @@ async function delTag(id){
 let ovStudents=[], ovAssignments=[], ovSubmissions=[], ovRounds=[], ovResponses=[], ovAssess=[], ovTags=[], ovTgat=[], ovF={room:"all",q:""}, ovSid=null;
 // ovTags รวมทั้ง RIASEC tags และ award records (type="award")
 
+// เชื่อมข้อมูลจากระบบย่อยอื่นๆ ("ระบบของเรา") เข้ามารวมในภาพรวม 360°
+// หมายเหตุ: quota/scholarship/chang_phueak/vulnerable ถูก RLS จำกัดไว้ให้ admin หรือครูที่ is_guidance=true เท่านั้น
+// (ดูฟังก์ชัน is_scholarship_officer() ในฐานข้อมูล) — ครูทั่วไปที่มีสิทธิ์ดูแท็บนี้จะเห็นช่องพวกนี้ว่างเปล่า ไม่ error
+let ovQuota=[], ovQuotaLookup=[], ovScholarship=[], ovScholarshipLookup=[], ovWorkPermit=[], ovChangPhueak=[], ovIv=[], ovIvCat=[], ovVulnerable=[];
+
+const OV_QUOTA_STATUS = {submitted:"ส่งแล้ว",under_review:"กำลังพิจารณา",shortlisted:"ผ่านเข้ารอบ",waitlisted:"บัญชีสำรอง",approved:"ได้รับโควตา",promoted:"ได้รับ(เลื่อน)",rejected:"ไม่ผ่าน",withdrawn:"ยกเลิก"};
+const OV_SCHOLARSHIP_STATUS = {submitted:"ส่งใบสมัครแล้ว",under_review:"กำลังพิจารณา",shortlisted:"ผ่านเบื้องต้น",approved:"ได้รับทุน",rejected:"ไม่ผ่าน",withdrawn:"ยกเลิก"};
+const OV_WORKPERMIT_TYPE = {work_permit:"อนุญาตทำงาน", internship:"ฝึกงาน"};
+const OV_WORKPERMIT_STATUS = {submitted:"ยื่นแล้ว", processing:"กำลังดำเนินการ", ready:"พร้อมรับ", received:"รับเอกสารแล้ว", cancelled:"ยกเลิก"};
+const OV_CHANGPHUEAK_STATUS = {submitted:"ส่งแล้ว", reviewed:"ตรวจแล้ว"};
+const OV_IV_STATUS = {draft:"ฉบับซ้อม", submitted:"รอครูตรวจ", reviewed:"ตรวจแล้ว"};
+
 async function loadOverview(){
   $("ovLoading").classList.remove("hidden");
-  const [{data:stu},{data:asg},{data:sub},{data:rnd},{data:resp},{data:asm},{data:tg},{data:tgat}] = await Promise.all([
+  const [{data:stu},{data:asg},{data:sub},{data:rnd},{data:resp},{data:asm},{data:tg},{data:tgat},
+    {data:qa},{data:ql},{data:sa},{data:sl},{data:wp},{data:cp},{data:iv},{data:ivc},{data:vp}] = await Promise.all([
     fetchAllStudents("id,username,student_id,display_name,class_room"),
     sb.from("assignments").select("id,title,class_rooms,due_at"),
     // ดึง content ด้วยเพื่อให้ AI วิเคราะห์ได้ (text_answer, file_name, external_url)
@@ -2362,8 +2375,18 @@ async function loadOverview(){
     sb.from("strength_assessments").select("*"),
     sb.from("strength_tags").select("*"),
     fetchAllTgatAttempts(),
+    sb.from("quota_applications").select("id,profile_id,quota_id,status,applied_faculty,applied_major,submitted_at"),
+    sb.from("quotas").select("id,name,university,faculty"),
+    sb.from("applications").select("id,profile_id,scholarship_id,status,submitted_at"),
+    sb.from("scholarships").select("id,name"),
+    sb.from("work_permit_requests").select("id,student_id,request_type,employer_name,status,work_start_date,created_at"),
+    sb.from("chang_phueak_applications").select("id,profile_id,track,status,submitted_at"),
+    sb.from("iv_sessions").select("id,student_id,kind,status,category_id,submitted_at,reviewed_at"),
+    sb.from("iv_categories").select("id,name,emoji"),
+    sb.from("vulnerable_profiles").select("id,profile_id,urgency_level,academic_year,verified_at"),
   ]);
   ovStudents=stu||[]; ovAssignments=asg||[]; ovSubmissions=sub||[]; ovRounds=rnd||[]; ovResponses=resp||[]; ovAssess=asm||[]; ovTags=tg||[]; ovTgat=tgat||[];
+  ovQuota=qa||[]; ovQuotaLookup=ql||[]; ovScholarship=sa||[]; ovScholarshipLookup=sl||[]; ovWorkPermit=wp||[]; ovChangPhueak=cp||[]; ovIv=iv||[]; ovIvCat=ivc||[]; ovVulnerable=vp||[];
   renderOverview();
   $("ovLoading").classList.add("hidden");
 }
@@ -2470,6 +2493,40 @@ function openOvModal(sid){
     <p style="font-size:.78rem;color:var(--ink-soft);margin-top:6px">ทำไปแล้วทั้งหมด ${tgatRows.length} รอบ${tgatRows.length>10? " · แสดง 10 รอบล่าสุด":""}</p>
   ` : `<p style="color:var(--ink-soft);font-size:.85rem;padding:8px 0">ยังไม่เคยทำข้อสอบ</p>`;
 
+  // ─── เชื่อมข้อมูลจากระบบย่อยอื่นๆ ("ระบบของเรา") — ดูหมายเหตุ RLS ที่ loadOverview() ───
+  const quotaRows = ovQuota.filter(x=>x.profile_id===sid).sort((a,b)=> (b.submitted_at||"").localeCompare(a.submitted_at||""));
+  const quotaList = quotaRows.length ? quotaRows.map(x=>{
+    const q = ovQuotaLookup.find(y=>y.id===x.quota_id);
+    return `<div class="sub-check-row"><span style="flex:1">${esc(q? q.name+(q.university?" · "+q.university:"") : (x.applied_faculty||"โควตา"))}${x.applied_major? " · "+esc(x.applied_major):""}</span><span class="status sent">${esc(OV_QUOTA_STATUS[x.status]||x.status)}</span></div>`;
+  }).join("") : `<p style="color:var(--ink-soft);font-size:.85rem;padding:8px 0">ยังไม่ได้สมัครโควตา</p>`;
+
+  const schRows = ovScholarship.filter(x=>x.profile_id===sid).sort((a,b)=> (b.submitted_at||"").localeCompare(a.submitted_at||""));
+  const schList = schRows.length ? schRows.map(x=>{
+    const sc = ovScholarshipLookup.find(y=>y.id===x.scholarship_id);
+    return `<div class="sub-check-row"><span style="flex:1">${esc(sc?.name||"ทุนการศึกษา")}</span><span class="status sent">${esc(OV_SCHOLARSHIP_STATUS[x.status]||x.status)}</span></div>`;
+  }).join("") : `<p style="color:var(--ink-soft);font-size:.85rem;padding:8px 0">ยังไม่ได้สมัครทุนการศึกษา</p>`;
+
+  const wpRows = ovWorkPermit.filter(x=>x.student_id===sid).sort((a,b)=> (b.created_at||"").localeCompare(a.created_at||""));
+  const wpList = wpRows.length ? wpRows.map(x=>
+    `<div class="sub-check-row"><span style="flex:1">${esc(OV_WORKPERMIT_TYPE[x.request_type]||x.request_type)} · ${esc(x.employer_name||"-")}</span><span class="status sent">${esc(OV_WORKPERMIT_STATUS[x.status]||x.status)}</span></div>`
+  ).join("") : `<p style="color:var(--ink-soft);font-size:.85rem;padding:8px 0">ยังไม่มีคำขอฝึกงาน/ใบอนุญาตทำงาน</p>`;
+
+  const cpRows = ovChangPhueak.filter(x=>x.profile_id===sid).sort((a,b)=> (b.submitted_at||"").localeCompare(a.submitted_at||""));
+  const cpList = cpRows.length ? cpRows.map(x=>
+    `<div class="sub-check-row"><span style="flex:1">โครงการช้างเผือก · ${esc(x.track||"-")}</span><span class="status sent">${esc(OV_CHANGPHUEAK_STATUS[x.status]||x.status)}</span></div>`
+  ).join("") : `<p style="color:var(--ink-soft);font-size:.85rem;padding:8px 0">ยังไม่ได้สมัครช้างเผือก</p>`;
+
+  const ivRows = ovIv.filter(x=>x.student_id===sid).sort((a,b)=> (b.submitted_at||"").localeCompare(a.submitted_at||""));
+  const ivList = ivRows.length ? ivRows.map(x=>{
+    const cat = ovIvCat.find(y=>y.id===x.category_id);
+    return `<div class="sub-check-row"><span style="flex:1">${cat?esc(cat.emoji)+" ":"🎤 "}${esc(cat?.name||"ฝึกสัมภาษณ์")}${x.kind==="mock"?" (นัดซ้อมกับครู)":""}</span><span class="status sent">${esc(OV_IV_STATUS[x.status]||x.status)}</span></div>`;
+  }).join("") : `<p style="color:var(--ink-soft);font-size:.85rem;padding:8px 0">ยังไม่เคยฝึกซ้อมสัมภาษณ์</p>`;
+
+  const vulnRow = ovVulnerable.find(x=>x.profile_id===sid);
+  const vulnBadge = vulnRow
+    ? `<span class="awardchip">📋 อยู่ในทะเบียนกลุ่มเปราะบาง${vulnRow.urgency_level? " · ระดับความเร่งด่วน "+esc(vulnRow.urgency_level)+"/5" : ""}${vulnRow.verified_at? " · ยืนยันแล้ว":" · รอยืนยัน"}</span>`
+    : `<span class="duechip" style="font-size:.8rem">ไม่มีในทะเบียนกลุ่มเปราะบาง</span>`;
+
   $("ovModalBody").innerHTML = `
     <h2>🧑‍🎓 ${esc(s.display_name)} <small style="font-weight:400;color:var(--ink-soft)">${esc(s.username)} · ${esc(s.class_room||"-")}</small></h2>
 
@@ -2501,6 +2558,36 @@ function openOvModal(sid){
     <div class="panel" style="margin-top:12px">
       <h2 style="font-size:1rem">🎯 ฝึกข้อสอบ TGAT/TPAT</h2>
       <div>${tgatList}</div>
+    </div>
+
+    <div class="panel" style="margin-top:12px">
+      <h2 style="font-size:1rem">🎓 สมัครโควตา</h2>
+      <div>${quotaList}</div>
+    </div>
+
+    <div class="panel" style="margin-top:12px">
+      <h2 style="font-size:1rem">💰 สมัครทุนการศึกษา</h2>
+      <div>${schList}</div>
+    </div>
+
+    <div class="panel" style="margin-top:12px">
+      <h2 style="font-size:1rem">📋 ฝึกงาน / ใบอนุญาตทำงาน</h2>
+      <div>${wpList}</div>
+    </div>
+
+    <div class="panel" style="margin-top:12px">
+      <h2 style="font-size:1rem">🐘 โครงการช้างเผือก</h2>
+      <div>${cpList}</div>
+    </div>
+
+    <div class="panel" style="margin-top:12px">
+      <h2 style="font-size:1rem">🎤 ฝึกซ้อมสัมภาษณ์</h2>
+      <div>${ivList}</div>
+    </div>
+
+    <div class="panel" style="margin-top:12px">
+      <h2 style="font-size:1rem">🛟 ทะเบียนกลุ่มเปราะบาง</h2>
+      <div>${vulnBadge}</div>
     </div>
 
     ${profileHTML(s, assess, tags, {})}
