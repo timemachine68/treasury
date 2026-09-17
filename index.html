@@ -75,6 +75,7 @@ header.app .wrap{display:flex;align-items:center;gap:12px;padding-bottom:0;flex-
 .badge.grade{background:color-mix(in srgb,var(--gc) 16%,#fff);color:var(--gc)}
 .badge.type{background:var(--pine-tint);color:var(--pine-deep)}
 .badge.link{background:#FFF3CE;color:var(--note-deep)}
+.navdot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--danger);margin-left:5px;vertical-align:middle}
 .rescard h3{font-size:1.02rem;line-height:1.35;font-weight:500}
 .rescard .desc{font-size:.83rem;color:var(--ink-soft);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .rescard .meta{font-size:.75rem;color:var(--ink-soft);display:flex;justify-content:space-between;gap:8px;border-top:1px dashed var(--line);padding-top:8px;margin-top:auto}
@@ -253,6 +254,7 @@ textarea.csvbox{font-family:monospace;font-size:.82rem;min-height:120px}
     <div class="viewtabs">
       <button class="btn note" id="tabLibrary">📚 คลังสื่อ</button>
       <button class="btn ghost" id="tabWork">📝 งานมอบหมาย</button>
+      <button class="btn ghost" id="tabAnnounce">📢 ประชาสัมพันธ์<span id="annDot" class="navdot hidden"></span></button>
       <button class="btn ghost" id="tabSurvey">🎓 สำรวจเรียนต่อ</button>
       <button class="btn ghost" id="tabStrength">🌟 จุดแข็ง</button>
       <button class="btn ghost hidden" id="tabOverview">🧑‍🎓 ภาพรวมนักเรียน</button>
@@ -366,6 +368,17 @@ textarea.csvbox{font-family:monospace;font-size:.82rem;min-height:120px}
       <div id="workGrid" class="grid"></div>
       <div id="workEmpty" class="empty hidden"><div class="big">📭</div><span id="workEmptyText">ยังไม่มีงานมอบหมาย</span></div>
       <div id="workLoading" class="loading hidden">กำลังโหลด…</div>
+    </div>
+
+    <!-- ── มุมมองประชาสัมพันธ์ ── -->
+    <div id="viewAnnounce" class="hidden">
+      <div class="toolbar">
+        <div class="spacer"></div>
+        <button class="btn primary hidden" id="btnAddAnn">➕ ประกาศข่าวใหม่</button>
+      </div>
+      <div id="annGrid" class="grid"></div>
+      <div id="annEmpty" class="empty hidden"><div class="big">📢</div><span>ยังไม่มีข่าวประชาสัมพันธ์</span></div>
+      <div id="annLoading" class="loading hidden">กำลังโหลด…</div>
     </div>
 
     <!-- ── มุมมองสำรวจเรียนต่อ ── -->
@@ -527,6 +540,32 @@ textarea.csvbox{font-family:monospace;font-size:.82rem;min-height:120px}
     <div class="foot">
       <button class="btn ghost" id="btnWorkCancel">ยกเลิก</button>
       <button class="btn primary" id="btnWorkSave">บันทึก</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ โมดัล: ประกาศข่าว ═══════════ -->
+<div class="modal-back" id="annModal">
+  <div class="modal">
+    <h2 id="annModalTitle">ประกาศข่าวใหม่</h2>
+    <div id="annMsg" class="msg"></div>
+    <div class="field"><label for="annTitle">หัวข้อข่าว *</label><input id="annTitle" placeholder="เช่น กำหนดการยื่นพอร์ต TCAS รอบ 1"></div>
+    <div class="field"><label for="annContent">เนื้อหา</label><textarea id="annContent"></textarea></div>
+    <div class="field"><label>สิ่งที่แนบ (ไม่บังคับ)</label>
+      <div class="seg">
+        <button type="button" id="annSegNone" class="active">ไม่แนบ</button>
+        <button type="button" id="annSegFile">📎 ไฟล์</button>
+        <button type="button" id="annSegLink">🔗 ลิงก์</button>
+      </div>
+    </div>
+    <div class="field hidden" id="annFileWrap"><input type="file" id="annFile"></div>
+    <div class="field hidden" id="annLinkWrap"><input id="annUrl" placeholder="https://…"></div>
+    <label style="display:flex;align-items:center;gap:8px;font-size:.85rem;color:var(--ink-soft);margin-top:2px">
+      <input type="checkbox" id="annActive" checked> เผยแพร่ทันที (ถ้าไม่ติ๊ก จะซ่อนจากนักเรียนไว้ก่อน)
+    </label>
+    <div class="foot">
+      <button class="btn ghost" id="btnAnnCancel">ยกเลิก</button>
+      <button class="btn primary" id="btnAnnSave">บันทึก</button>
     </div>
   </div>
 </div>
@@ -749,6 +788,7 @@ textarea.csvbox{font-family:monospace;font-size:.82rem;min-height:120px}
       <label><input type="checkbox" value="strength" checked>🌟 จุดแข็ง</label>
       <label><input type="checkbox" value="overview" checked>🧑‍🎓 ภาพรวมนักเรียน</label>
       <label><input type="checkbox" value="manage" checked>👥 จัดการบัญชี</label>
+      <label><input type="checkbox" value="announcements" data-default="off">📢 ประกาศข่าวประชาสัมพันธ์ได้</label>
     </div>
     <p class="field hint" style="margin-top:10px">หมายเหตุ: การ์ดใน "ระบบของเรา" สำหรับบัญชีที่ถูกจำกัดสิทธิ์แบบพิเศษ (เช่น บัญชีกลุ่มสาระ) ต้องตั้งค่าเพิ่มเติมทางฐานข้อมูล ติดต่อผู้ดูแลระบบ</p>
     <div class="foot">
@@ -913,6 +953,7 @@ async function enterApp(){
   $("tabStrength").classList.toggle("hidden", !perms.strength);
   const initial = perms.library? "library" : perms.work? "work" : perms.survey? "survey" : perms.strength? "strength" : "apps";
   switchView(initial);
+  preloadAnnBadge();
 }
 function computeMyPerms(){
   if(!profile) return {library:true, work:true, survey:true, strength:true, manage:true, overview:true};
@@ -961,6 +1002,7 @@ $("btnLogout").onclick = async ()=>{ await sb.auth.signOut(); location.reload();
 /* ═══════════ สลับมุมมอง ═══════════ */
 $("tabLibrary").onclick = ()=> switchView("library");
 $("tabWork").onclick = ()=> switchView("work");
+$("tabAnnounce").onclick = ()=> switchView("announce");
 $("tabSurvey").onclick = ()=> switchView("survey");
 $("tabStrength").onclick = ()=> switchView("strength");
 $("tabOverview").onclick = ()=> switchView("overview");
@@ -968,8 +1010,8 @@ $("tabApps").onclick = ()=> switchView("apps");
 $("tabManage").onclick = ()=> switchView("manage");
 let _currentView = null;
 function switchView(v){
-  ["Library","Work","Survey","Strength","Overview","Apps","Manage"].forEach(n=> $("view"+n).classList.toggle("hidden", v!==n.toLowerCase()));
-  [["tabLibrary","library"],["tabWork","work"],["tabSurvey","survey"],["tabStrength","strength"],["tabOverview","overview"],["tabApps","apps"],["tabManage","manage"]].forEach(([id,key])=>{
+  ["Library","Work","Announce","Survey","Strength","Overview","Apps","Manage"].forEach(n=> $("view"+n).classList.toggle("hidden", v!==n.toLowerCase()));
+  [["tabLibrary","library"],["tabWork","work"],["tabAnnounce","announce"],["tabSurvey","survey"],["tabStrength","strength"],["tabOverview","overview"],["tabApps","apps"],["tabManage","manage"]].forEach(([id,key])=>{
     const hid = $(id).classList.contains("hidden");
     $(id).className = "btn " + (v===key?"note":"ghost") + (hid?" hidden":"");
   });
@@ -980,6 +1022,7 @@ function switchView(v){
   if(v==="library") loadResources();
   if(v==="manage"){ loadUsers(); loadHealth(); }
   if(v==="work") loadWork();
+  if(v==="announce") loadAnnounce();
   if(v==="survey") loadSurvey();
   if(v==="strength") loadStrength();
   if(v==="overview") loadOverview();
@@ -1690,6 +1733,177 @@ $("btnSubSave").onclick = async ()=>{
   }catch(e){ msg("subMsg", e.message, "err"); }
   $("btnSubSave").disabled = false;
 };
+
+/* ═══════════ ประชาสัมพันธ์ ═══════════ */
+let announcements=[], annReadIds=new Set(), editingAnnId=null, annAttach="none";
+
+function canManageAnnounce(){
+  if(!profile) return false;
+  if(profile.role === "admin") return true;
+  if(profile.role !== "teacher") return false;
+  return !!(profile.menu_permissions && profile.menu_permissions.announcements === true);
+}
+
+async function preloadAnnBadge(){
+  const {data} = await sb.from("announcements").select("id").eq("is_active", true);
+  const ids = (data||[]).map(x=>x.id);
+  if(!ids.length){ $("annDot").classList.add("hidden"); return; }
+  const {data:reads} = await sb.from("announcement_reads").select("announcement_id").eq("profile_id", profile.id).in("announcement_id", ids);
+  const readSet = new Set((reads||[]).map(r=>r.announcement_id));
+  $("annDot").classList.toggle("hidden", ids.every(id=>readSet.has(id)));
+}
+
+async function loadAnnounce(){
+  $("annLoading").classList.remove("hidden");
+  const {data, error} = await sb.from("announcements").select("*").order("created_at",{ascending:false});
+  if(error){ $("annLoading").classList.add("hidden"); return toast("โหลดข่าวไม่สำเร็จ: "+error.message); }
+  announcements = data||[];
+  const {data:reads} = await sb.from("announcement_reads").select("announcement_id").eq("profile_id", profile.id);
+  annReadIds = new Set((reads||[]).map(r=>r.announcement_id));
+  $("annLoading").classList.add("hidden");
+  renderAnnounce();
+}
+
+function renderAnnounce(){
+  const manage = canManageAnnounce();
+  $("btnAddAnn").classList.toggle("hidden", !manage);
+  $("annEmpty").classList.toggle("hidden", announcements.length>0);
+  $("annGrid").innerHTML = announcements.map(a=> annCard(a, manage)).join("");
+  bindAnnCards(manage);
+  $("annDot").classList.toggle("hidden", announcements.every(a=> !a.is_active || annReadIds.has(a.id)));
+}
+
+function annAttachBtn(a){
+  if(a.file_path) return `<button class="btn ghost sm" data-annatt="${a.id}">📎 ${esc(a.file_name||"ไฟล์แนบ")}</button>`;
+  if(a.external_url) return `<a class="btn ghost sm" href="${esc(a.external_url)}" target="_blank" rel="noopener">🔗 เปิดลิงก์</a>`;
+  return "";
+}
+function annCard(a, manage){
+  const unread = a.is_active && !annReadIds.has(a.id);
+  const mine = a.created_by===profile.id || profile.role==="admin";
+  return `<article class="rescard" style="--gc:var(--g2)" data-annid="${a.id}">
+    <div class="top">
+      ${unread?'<span class="badge" style="background:#FDEBEA;color:var(--danger)">🔴 ใหม่</span>':""}
+      ${!a.is_active?'<span class="badge type">ซ่อนอยู่ (ยังไม่เผยแพร่)</span>':""}
+    </div>
+    <h3>${esc(a.title)}</h3>
+    ${a.content?`<p class="desc">${esc(a.content)}</p>`:""}
+    <div class="actions">${annAttachBtn(a)}</div>
+    ${manage?`<div class="actions">${mine?`<button class="btn ghost sm" data-annedit="${a.id}">แก้ไข</button><button class="btn danger sm" data-anndel="${a.id}">ลบ</button>`:""}</div>`:""}
+    <div class="meta"><span>👩‍🏫 ${esc(a.creator_name||"-")}</span><span>${thDate(a.created_at)}</span></div>
+  </article>`;
+}
+function bindAnnCards(manage){
+  $("annGrid").querySelectorAll("[data-annid]").forEach(card=>{
+    card.style.cursor = "pointer";
+    card.onclick = (e)=>{ if(e.target.closest("button,a")) return; markAnnRead(card.dataset.annid); };
+  });
+  $("annGrid").querySelectorAll("[data-annatt]").forEach(b=> b.onclick=(e)=>{ e.stopPropagation(); openAnnAttach(b.dataset.annatt,b); });
+  if(manage){
+    $("annGrid").querySelectorAll("[data-annedit]").forEach(b=> b.onclick=(e)=>{ e.stopPropagation(); openAnnModal(b.dataset.annedit); });
+    $("annGrid").querySelectorAll("[data-anndel]").forEach(b=> b.onclick=(e)=>{ e.stopPropagation(); delAnn(b.dataset.anndel); });
+  }
+}
+async function markAnnRead(id){
+  if(annReadIds.has(id)) return;
+  annReadIds.add(id);
+  renderAnnounce();
+  const {error} = await sb.from("announcement_reads").insert({profile_id:profile.id, announcement_id:id});
+  if(error && error.code !== "23505"){ annReadIds.delete(id); renderAnnounce(); }
+}
+async function openAnnAttach(aid, btn){
+  const a = announcements.find(x=>x.id===aid); if(!a||!a.file_path) return;
+  btn.disabled = true;
+  const {data, error} = await sb.storage.from("announcements").createSignedUrl(a.file_path, 3600, {download:a.file_name||true});
+  btn.disabled = false;
+  if(error) return toast("เปิดไฟล์แนบไม่สำเร็จ: "+error.message);
+  window.open(data.signedUrl, "_blank");
+}
+
+/* ── จัดการข่าว (admin/ครูที่มีสิทธิ์) ── */
+$("btnAddAnn").onclick = ()=> openAnnModal(null);
+$("btnAnnCancel").onclick = ()=> $("annModal").classList.remove("show");
+$("annSegNone").onclick = ()=> setAnnAttach("none");
+$("annSegFile").onclick = ()=> setAnnAttach("file");
+$("annSegLink").onclick = ()=> setAnnAttach("link");
+function setAnnAttach(m){
+  annAttach = m;
+  $("annSegNone").classList.toggle("active", m==="none");
+  $("annSegFile").classList.toggle("active", m==="file");
+  $("annSegLink").classList.toggle("active", m==="link");
+  $("annFileWrap").classList.toggle("hidden", m!=="file");
+  $("annLinkWrap").classList.toggle("hidden", m!=="link");
+}
+function openAnnModal(id){
+  editingAnnId = id; msg("annMsg","");
+  const a = id? announcements.find(x=>x.id===id) : null;
+  $("annModalTitle").textContent = a? "แก้ไขข่าว" : "ประกาศข่าวใหม่";
+  $("annTitle").value = a?.title||""; $("annContent").value = a?.content||"";
+  $("annFile").value = ""; $("annUrl").value = a?.external_url||"";
+  $("annActive").checked = a? a.is_active : true;
+  setAnnAttach(a? (a.file_path? "file" : (a.external_url? "link":"none")) : "none");
+  if(a && a.file_path){ $("annFileWrap").classList.add("hidden"); } // แก้ไข: เปลี่ยนไฟล์แนบเดิมไม่ได้ (ลบแล้วสร้างใหม่ถ้าจำเป็น)
+  $("annModal").classList.add("show");
+}
+$("btnAnnSave").onclick = async ()=>{
+  const {data:{session:freshSession}, error:sessErr} = await sb.auth.refreshSession();
+  if(sessErr || !freshSession){
+    return msg("annMsg","เซสชันหมดอายุแล้วค่ะ กรุณาโหลดหน้านี้ใหม่แล้วลองอีกครั้งนะคะ","err");
+  }
+  session = freshSession;
+  const title = $("annTitle").value.trim();
+  if(!title) return msg("annMsg","ใส่หัวข้อข่าวก่อนนะคะ","err");
+  const base = { title, content:$("annContent").value.trim()||null, is_active:$("annActive").checked };
+  $("btnAnnSave").disabled = true;
+  try{
+    if(editingAnnId){
+      const a = announcements.find(x=>x.id===editingAnnId);
+      const upd = {...base, updated_at:new Date().toISOString()};
+      if(!a.file_path){
+        if(annAttach==="link"){
+          const u=$("annUrl").value.trim();
+          if(!/^https?:\/\//.test(u)) throw new Error("ลิงก์ต้องขึ้นต้นด้วย http:// หรือ https://");
+          upd.external_url = u;
+        }else if(annAttach==="none"){ upd.external_url = null; }
+      }
+      const {error} = await sb.from("announcements").update(upd).eq("id", editingAnnId);
+      if(error) throw error;
+      toast("แก้ไขข่าวเรียบร้อย ✅");
+    }else{
+      const row = {...base, created_by:profile.id, creator_name:profile.display_name};
+      if(annAttach==="link"){
+        const u=$("annUrl").value.trim();
+        if(!/^https?:\/\//.test(u)) throw new Error("ลิงก์ต้องขึ้นต้นด้วย http:// หรือ https://");
+        row.external_url = u;
+      }else if(annAttach==="file"){
+        const picked = $("annFile").files[0];
+        if(!picked) throw new Error("เลือกไฟล์ก่อนนะคะ");
+        if(picked.size > 50*1024*1024) throw new Error("ไฟล์ใหญ่เกิน 50MB ค่ะ");
+        msg("annMsg","กำลังเตรียมและอัพโหลดไฟล์แนบ…","ok");
+        const file = await compressImage(picked, 2000, 0.8);
+        const ext = file.name.includes(".")? file.name.split(".").pop() : "bin";
+        const path = profile.id + "/ann_" + crypto.randomUUID() + "." + ext;
+        const {error:upErr} = await sb.storage.from("announcements").upload(path, file);
+        if(upErr) throw upErr;
+        row.file_path = path; row.file_name = file.name;
+      }
+      const {error} = await sb.from("announcements").insert(row);
+      if(error) throw error;
+      toast("ประกาศข่าวเรียบร้อย ✅");
+    }
+    $("annModal").classList.remove("show");
+    await loadAnnounce();
+  }catch(e){ msg("annMsg", e.message, "err"); }
+  $("btnAnnSave").disabled = false;
+};
+async function delAnn(id){
+  const a = announcements.find(x=>x.id===id); if(!a) return;
+  if(!confirm(`ลบข่าว "${a.title}" ใช่ไหมคะ?`)) return;
+  if(a.file_path) await sb.storage.from("announcements").remove([a.file_path]);
+  const {error} = await sb.from("announcements").delete().eq("id", id);
+  if(error) return toast("ลบไม่สำเร็จ: "+error.message);
+  toast("ลบข่าวเรียบร้อย"); await loadAnnounce();
+}
 
 /* ═══════════ เฟส 3: สำรวจเรียนต่อ ═══════════ */
 const SV_STATUS = {
@@ -2668,7 +2882,10 @@ function openPermModal(uid){
   const u = users.find(x=>x.id===uid); if(!u) return;
   $("permTitle").textContent = "🔐 สิทธิ์เมนู: " + u.display_name;
   const mp = u.menu_permissions;
-  $("permChecks").querySelectorAll("input").forEach(i=>{ i.checked = !mp || mp[i.value] !== false; });
+  $("permChecks").querySelectorAll("input").forEach(i=>{
+    if(i.dataset.default === "off"){ i.checked = !!(mp && mp[i.value] === true); } // opt-in: ปิดไว้ก่อนจนกว่าจะติ๊กให้ชัดเจน
+    else { i.checked = !mp || mp[i.value] !== false; } // opt-out: เปิดไว้ก่อนตามของเดิม
+  });
   $("permModal").classList.add("show");
 }
 $("btnPermCancel").onclick = ()=> $("permModal").classList.remove("show");
