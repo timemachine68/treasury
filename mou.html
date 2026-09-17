@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ความร่วมมือ MOU · แนะให้แนว (สำหรับครู)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Mitr:wght@400;500;600&family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root{
+    --ink:#1c2b26; --ink-soft:#4a5c55; --paper:#f6f4ec; --card:#ffffff;
+    --line:#dfe2d8; --leaf:#2f6b4f; --leaf-deep:#1f4d38; --leaf-tint:#e7f0e9;
+    --gold:#b8862f; --gold-tint:#f7efdc; --danger:#a23b30; --danger-tint:#f6e6e2;
+    --amber:#8a6d1f; --amber-tint:#f5edd6; --sky:#2d5b7a; --sky-tint:#e4eef4;
+    --shadow:0 1px 2px rgba(31,77,56,.06), 0 8px 24px rgba(31,77,56,.07);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    font-family:"Sarabun","TH Sarabun New",-apple-system,system-ui,sans-serif;
+    background:radial-gradient(120% 80% at 90% -10%, #eef3e9 0%, transparent 55%), var(--paper);
+    color:var(--ink);line-height:1.6;min-height:100vh;-webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:900px;margin:0 auto;padding:20px 18px 90px}
+  header.top{display:flex;align-items:center;gap:12px;padding:14px 0 22px}
+  .mark{width:42px;height:42px;border-radius:13px;flex:none;
+    background:linear-gradient(150deg,var(--leaf),var(--leaf-deep));
+    display:grid;place-items:center;color:#fff;box-shadow:var(--shadow);font-size:1.3rem}
+  .brand h1{font-size:1.18rem;margin:0;font-weight:700;letter-spacing:-.01em}
+  .brand p{margin:0;font-size:.82rem;color:var(--ink-soft)}
+  .whoami{margin-left:auto;text-align:right;font-size:.82rem;color:var(--ink-soft)}
+  .whoami b{display:block;color:var(--ink);font-size:.92rem}
+  .linkbtn{background:none;border:none;color:var(--leaf);cursor:pointer;font:inherit;font-size:.8rem;padding:0;text-decoration:underline}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:18px;
+    padding:22px;box-shadow:var(--shadow);margin-bottom:16px}
+  .card.pad-lg{padding:26px}
+  .login-card{max-width:420px;margin:6vh auto 0}
+
+  label.fld{display:block;margin-bottom:14px}
+  label.fld .lbl{display:block;font-size:.86rem;font-weight:600;margin-bottom:6px}
+  label.fld .hint{font-weight:400;color:var(--ink-soft)}
+  input,textarea,select{width:100%;font:inherit;color:var(--ink);background:var(--paper);
+    border:1.5px solid var(--line);border-radius:11px;padding:11px 13px;transition:.15s}
+  input:focus,textarea:focus,select:focus{outline:none;border-color:var(--leaf);background:#fff;box-shadow:0 0 0 3px var(--leaf-tint)}
+  textarea{resize:vertical;min-height:80px}
+  select{cursor:pointer}
+
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font:inherit;
+    font-weight:700;cursor:pointer;border:none;border-radius:12px;padding:12px 20px;
+    background:linear-gradient(150deg,var(--leaf),var(--leaf-deep));color:#fff;transition:.15s;box-shadow:var(--shadow)}
+  .btn:hover{transform:translateY(-1px)}
+  .btn:disabled{opacity:.55;cursor:not-allowed;transform:none}
+  .btn.ghost{background:#fff;color:var(--leaf);border:1.5px solid var(--line);box-shadow:none}
+  .btn.sm{padding:8px 15px;font-size:.88rem}
+  .btn.wide{width:100%}
+  .btn.danger{background:#fff;color:var(--danger);border:1.5px solid #e6c4bd;box-shadow:none}
+
+  .eyebrow{display:inline-flex;align-items:center;gap:7px;font-size:.72rem;font-weight:700;
+    letter-spacing:.12em;text-transform:uppercase;color:var(--leaf);
+    background:var(--leaf-tint);padding:4px 11px;border-radius:20px;margin-bottom:14px}
+  h2.sec{font-size:1.28rem;margin:.1em 0 .5em;letter-spacing:-.01em}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+  @media(max-width:560px){.grid2,.grid3{grid-template-columns:1fr}}
+
+  .row-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;gap:12px;flex-wrap:wrap}
+
+  .tabs{display:flex;gap:8px;margin-bottom:16px}
+  .tabbtn{background:#fff;border:1.5px solid var(--line);border-radius:11px;padding:9px 16px;
+    font:inherit;font-weight:600;font-size:.88rem;color:var(--ink-soft);cursor:pointer}
+  .tabbtn.active{background:var(--leaf-tint);border-color:var(--leaf);color:var(--leaf-deep)}
+
+  /* list rows */
+  .srow{display:flex;align-items:center;gap:14px;padding:15px;border:1px solid var(--line);
+    border-radius:14px;margin-bottom:10px;background:#fff;transition:.15s;cursor:pointer}
+  .srow:hover{border-color:var(--leaf)}
+  .srow .grow{flex:1;min-width:0}
+  .srow h3{margin:0 0 2px;font-size:1.03rem}
+  .srow .meta{font-size:.82rem;color:var(--ink-soft)}
+  .status-tag{font-size:.74rem;font-weight:700;padding:3px 10px;border-radius:20px;white-space:nowrap;flex:none}
+  .st-draft{background:var(--paper);color:var(--ink-soft);border:1px solid var(--line)}
+  .st-pending_signature{background:var(--amber-tint);color:var(--amber)}
+  .st-active{background:var(--leaf-tint);color:var(--leaf-deep)}
+  .st-expired{background:var(--danger-tint);color:var(--danger)}
+  .st-cancelled{background:var(--paper);color:var(--ink-soft);border:1px solid var(--line)}
+  .type-tag{font-size:.74rem;font-weight:700;padding:3px 10px;border-radius:20px;white-space:nowrap;flex:none;
+    background:var(--sky-tint);color:var(--sky)}
+
+  /* documents */
+  .doclist{margin-top:4px}
+  .docrow{display:flex;align-items:center;gap:10px;padding:11px 13px;border:1px solid var(--line);
+    border-radius:12px;margin-bottom:8px;background:var(--paper)}
+  .docrow .grow{flex:1;min-width:0}
+  .docrow .fname{font-weight:600;font-size:.92rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .docrow .dtype{font-size:.78rem;color:var(--ink-soft)}
+  .docrow a{color:var(--leaf);font-weight:600;font-size:.85rem;white-space:nowrap}
+  .adddoc{display:grid;grid-template-columns:1fr 1fr auto auto;gap:8px;margin-top:10px}
+  @media(max-width:560px){.adddoc{grid-template-columns:1fr}}
+
+  .msg{padding:12px 15px;border-radius:12px;font-size:.9rem;margin-bottom:14px;display:none}
+  .msg.err{background:var(--danger-tint);color:var(--danger);border:1px solid #e6c4bd;display:block}
+  .msg.ok{background:var(--leaf-tint);color:var(--leaf-deep);border:1px solid #bcd8c6;display:block}
+  .empty{text-align:center;padding:40px 20px;color:var(--ink-soft)}
+  .empty svg{width:46px;height:46px;opacity:.35;margin-bottom:10px}
+  .spin{width:34px;height:34px;border:3px solid var(--line);border-top-color:var(--leaf);
+    border-radius:50%;animation:sp .7s linear infinite;margin:30px auto}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  .hidden{display:none!important}
+  .muted{color:var(--ink-soft);font-size:.85rem}
+  .back{background:none;border:none;color:var(--leaf);cursor:pointer;font:inherit;font-weight:600;
+    padding:0;margin-bottom:16px;display:inline-flex;align-items:center;gap:5px}
+  .toolbar{position:sticky;bottom:0;background:linear-gradient(transparent, var(--paper) 30%);
+    padding:16px 0 0;margin-top:8px}
+  .toolbar-inner{display:flex;gap:10px}
+
+  h1,h2,h3,h2.sec,.eyebrow,.brand h1{font-family:"Mitr",sans-serif !important;font-weight:500}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <a href="index.html" class="linkbtn" title="กลับหน้าหลัก">🏠</a>
+    <div class="mark" aria-hidden="true">🤝</div>
+    <div class="brand"><h1>ความร่วมมือ MOU</h1><p>สำหรับครูแนะแนว · แนะให้แนว</p></div>
+    <div id="whoami" class="whoami hidden">
+      <span>เข้าใช้งานในชื่อ</span><b id="whoName">—</b>
+      <button class="linkbtn" id="logoutBtn">ออกจากระบบ</button>
+    </div>
+  </header>
+
+  <!-- LOGIN -->
+  <section id="loginView" class="card pad-lg login-card">
+    <span class="eyebrow">เข้าสู่ระบบ</span>
+    <h2 class="sec">เข้าใช้งานสำหรับครู</h2>
+    <p class="muted" style="margin-top:-4px;margin-bottom:18px">ใช้บัญชีครูของแพลตฟอร์มแนะให้แนว</p>
+    <div id="loginMsg" class="msg"></div>
+    <label class="fld"><span class="lbl">ชื่อผู้ใช้</span>
+      <input id="username" type="text" autocomplete="username" placeholder="ชื่อผู้ใช้ครู"></label>
+    <label class="fld"><span class="lbl">รหัสผ่าน</span>
+      <input id="password" type="password" autocomplete="current-password" placeholder="รหัสผ่าน"></label>
+    <button class="btn wide" id="loginBtn">เข้าสู่ระบบ</button>
+  </section>
+
+  <!-- LIST -->
+  <section id="listView" class="hidden">
+    <div class="tabs">
+      <button class="tabbtn active" id="tabAgreements">📝 ข้อตกลง MOU</button>
+      <button class="tabbtn" id="tabInstitutions">🏫 สถาบัน/หน่วยงาน</button>
+    </div>
+
+    <div id="agreementsPane" class="card">
+      <div class="row-head">
+        <div><span class="eyebrow">MOU ทั้งหมด</span><h2 class="sec" style="margin-bottom:0">ข้อตกลงความร่วมมือ</h2></div>
+        <button class="btn sm" id="newAgreementBtn">+ เพิ่ม MOU</button>
+      </div>
+      <div id="agreementList"><div class="spin"></div></div>
+    </div>
+
+    <div id="institutionsPane" class="card hidden">
+      <div class="row-head">
+        <div><span class="eyebrow">สถาบันทั้งหมด</span><h2 class="sec" style="margin-bottom:0">สถาบัน/หน่วยงานคู่ความร่วมมือ</h2></div>
+        <button class="btn sm" id="newInstitutionBtn">+ เพิ่มสถาบัน</button>
+      </div>
+      <div id="institutionList"><div class="spin"></div></div>
+    </div>
+  </section>
+
+  <!-- EDIT: สถาบัน -->
+  <section id="editInstView" class="hidden">
+    <button class="back" id="backInstBtn">‹ กลับไปรายชื่อสถาบัน</button>
+    <div id="editInstMsg" class="msg"></div>
+    <div class="card pad-lg">
+      <span class="eyebrow" id="edInstMode">เพิ่มสถาบันใหม่</span>
+      <h2 class="sec">ข้อมูลสถาบัน/หน่วยงาน</h2>
+      <label class="fld"><span class="lbl">ชื่อสถาบัน/หน่วยงาน <span class="hint">*</span></span>
+        <input id="iName" placeholder="เช่น มหาวิทยาลัยบูรพา"></label>
+      <label class="fld"><span class="lbl">ประเภท</span>
+        <select id="iType"></select></label>
+      <div class="grid2">
+        <label class="fld"><span class="lbl">ชื่อผู้ประสานงาน</span>
+          <input id="iContactName" placeholder="ชื่อ-นามสกุล"></label>
+        <label class="fld"><span class="lbl">เบอร์โทร</span>
+          <input id="iContactPhone" placeholder="0xx-xxx-xxxx"></label>
+      </div>
+      <label class="fld"><span class="lbl">อีเมล</span>
+        <input id="iContactEmail" type="email" placeholder="contact@example.ac.th"></label>
+      <label class="fld"><span class="lbl">ที่อยู่</span>
+        <textarea id="iAddress" placeholder="ที่อยู่สถาบัน"></textarea></label>
+      <label class="fld"><span class="lbl">หมายเหตุ</span>
+        <textarea id="iNotes" placeholder="บันทึกเพิ่มเติม"></textarea></label>
+    </div>
+    <div class="toolbar"><div class="toolbar-inner">
+      <button class="btn danger hidden" id="deleteInstBtn">ลบสถาบัน</button>
+      <button class="btn wide" id="saveInstBtn">บันทึก</button>
+    </div></div>
+  </section>
+
+  <!-- EDIT: MOU -->
+  <section id="editAgreementView" class="hidden">
+    <button class="back" id="backAgreementBtn">‹ กลับไปรายการ MOU</button>
+    <div id="editAgreementMsg" class="msg"></div>
+
+    <div class="card pad-lg">
+      <span class="eyebrow" id="edAgreementMode">เพิ่ม MOU ใหม่</span>
+      <h2 class="sec">รายละเอียดข้อตกลง</h2>
+      <label class="fld"><span class="lbl">สถาบัน/หน่วยงานคู่สัญญา <span class="hint">*</span></span>
+        <select id="aInstitution"></select></label>
+      <label class="fld"><span class="lbl">ชื่อข้อตกลง / โครงการ <span class="hint">*</span></span>
+        <input id="aTitle" placeholder="เช่น ความร่วมมือด้านการแนะแนวการศึกษาต่อ"></label>
+      <div class="grid2">
+        <label class="fld"><span class="lbl">เลขที่เอกสาร</span>
+          <input id="aDocNo" placeholder="เช่น ศธ 04xxx/2569"></label>
+        <label class="fld"><span class="lbl">หมวดกิจกรรม</span>
+          <input id="aCategory" placeholder="เช่น แนะแนวการศึกษาต่อ"></label>
+      </div>
+      <label class="fld"><span class="lbl">สถานะ</span>
+        <select id="aStatus"></select></label>
+      <div class="grid3">
+        <label class="fld"><span class="lbl">วันที่ลงนาม</span>
+          <input id="aSigned" type="date"></label>
+        <label class="fld"><span class="lbl">เริ่มมีผล</span>
+          <input id="aStart" type="date"></label>
+        <label class="fld"><span class="lbl">สิ้นสุด</span>
+          <input id="aEnd" type="date"></label>
+      </div>
+      <label class="fld"><span class="lbl">ผู้รับผิดชอบ</span>
+        <input id="aStaff" placeholder="ชื่อครูผู้รับผิดชอบ"></label>
+      <label class="fld"><span class="lbl">รายละเอียดเพิ่มเติม</span>
+        <textarea id="aDesc" placeholder="ขอบเขตความร่วมมือ เงื่อนไข ฯลฯ"></textarea></label>
+    </div>
+
+    <div id="docsCard" class="card pad-lg hidden">
+      <span class="eyebrow">เอกสารแนบ</span>
+      <h2 class="sec">ลิงก์เอกสาร Google Drive</h2>
+      <p class="muted" style="margin-top:-6px;margin-bottom:14px">แชร์ลิงก์ไฟล์ใน Google Drive แล้ววางลิงก์ไว้ที่นี่ (ตั้งค่าการแชร์ในไฟล์เองว่าใครเปิดดูได้)</p>
+      <div id="docList" class="doclist"></div>
+      <div class="adddoc">
+        <input id="dName" placeholder="ชื่อไฟล์ เช่น MOU ฉบับลงนาม.pdf">
+        <select id="dType"></select>
+        <input id="dLink" placeholder="วางลิงก์ Google Drive ที่นี่" style="grid-column:1/-1">
+        <button class="btn sm" id="addDocBtn" style="grid-column:1/-1">+ เพิ่มลิงก์เอกสาร</button>
+      </div>
+    </div>
+
+    <div class="toolbar"><div class="toolbar-inner">
+      <button class="btn danger hidden" id="deleteAgreementBtn">ลบ MOU</button>
+      <button class="btn wide" id="saveAgreementBtn">บันทึก</button>
+    </div></div>
+  </section>
+</div>
+
+<script>
+const SUPABASE_URL = "https://ikkhjslmtjwrxzxvtokb.supabase.co";
+const ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlra2hqc2xtdGp3cnh6eHZ0b2tiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM3NDMzNjksImV4cCI6MjA5OTMxOTM2OX0.3OR_9mEv82Ns1LLjx5nnRwJYzrtKFtWCWd1bPuQfNKU";
+const EMAIL_DOMAIN = "guidance-pcw.local";
+const sb = supabase.createClient(SUPABASE_URL, ANON_KEY);
+const $ = s => document.querySelector(s);
+
+const views = {
+  login: $("#loginView"), list: $("#listView"),
+  editInst: $("#editInstView"), editAgreement: $("#editAgreementView"),
+};
+function show(v){ Object.values(views).forEach(x=>x.classList.add("hidden")); views[v].classList.remove("hidden"); window.scrollTo(0,0); }
+function msg(el,t,ty){ el.textContent=t; el.className="msg "+(ty||""); }
+function esc(s){ return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+function fmtDate(d){ return d? new Date(d).toLocaleDateString("th-TH",{day:"numeric",month:"short",year:"2-digit"}) : "—"; }
+
+const INST_TYPE_LABEL = {university:"มหาวิทยาลัย", vocational:"อาชีวศึกษา", government:"หน่วยงานราชการ", private:"เอกชน", other:"อื่นๆ"};
+const MOU_STATUS_LABEL = {draft:"ฉบับร่าง", pending_signature:"รอลงนาม", active:"ใช้งานอยู่", expired:"หมดอายุ", cancelled:"ยกเลิก"};
+const DOC_TYPE_LABEL = {draft:"ฉบับร่าง", signed:"ฉบับลงนามแล้ว", appendix:"ภาคผนวก", other:"อื่นๆ"};
+
+let ME=null, INSTITUTIONS=[], EDITING_INST=null, EDITING_AGREEMENT=null, CUR_DOCS=[];
+
+/* ── auth ── */
+async function login(){
+  const u=$("#username").value.trim(), p=$("#password").value;
+  if(!u||!p){ msg($("#loginMsg"),"กรุณากรอกให้ครบ","err"); return; }
+  $("#loginBtn").disabled=true; $("#loginBtn").textContent="กำลังเข้าสู่ระบบ…";
+  try{
+    const email = u.includes("@") ? u : `${u}@${EMAIL_DOMAIN}`;
+    const {error} = await sb.auth.signInWithPassword({email, password:p});
+    if(error) throw error;
+    await afterLogin();
+  }catch(e){ msg($("#loginMsg"),"เข้าสู่ระบบไม่สำเร็จ ตรวจสอบข้อมูลอีกครั้ง","err"); }
+  finally{ $("#loginBtn").disabled=false; $("#loginBtn").textContent="เข้าสู่ระบบ"; }
+}
+async function afterLogin(){
+  const {data:{user}} = await sb.auth.getUser();
+  if(!user){ show("login"); return; }
+  const {data:prof} = await sb.from("profiles").select("id,display_name,role,is_guidance").eq("id",user.id).single();
+  ME = prof || {id:user.id, display_name:"ครู"};
+  if(ME.role!=="admin" && !ME.is_guidance){
+    msg($("#loginMsg"),"บัญชีนี้ไม่มีสิทธิ์จัดการ MOU (เฉพาะผู้ดูแลระบบและครูแนะแนว)","err");
+    await sb.auth.signOut(); return;
+  }
+  $("#whoName").textContent = ME.display_name||"ครู";
+  $("#whoami").classList.remove("hidden");
+  show("list"); await loadInstitutions(); await loadAgreements();
+}
+async function logout(){ await sb.auth.signOut(); ME=null; $("#whoami").classList.add("hidden"); show("login"); }
+
+/* ── แท็บ ── */
+$("#tabAgreements").onclick = ()=>{
+  $("#tabAgreements").classList.add("active"); $("#tabInstitutions").classList.remove("active");
+  $("#agreementsPane").classList.remove("hidden"); $("#institutionsPane").classList.add("hidden");
+};
+$("#tabInstitutions").onclick = ()=>{
+  $("#tabInstitutions").classList.add("active"); $("#tabAgreements").classList.remove("active");
+  $("#institutionsPane").classList.remove("hidden"); $("#agreementsPane").classList.add("hidden");
+};
+
+/* ── สถาบัน: list ── */
+async function loadInstitutions(){
+  const box=$("#institutionList"); box.innerHTML='<div class="spin"></div>';
+  const {data,error} = await sb.from("mou_institutions").select("*").order("name");
+  if(error){ box.innerHTML='<div class="empty">โหลดข้อมูลไม่สำเร็จ</div>'; return; }
+  INSTITUTIONS = data||[];
+  fillInstitutionSelect();
+  if(!INSTITUTIONS.length){
+    box.innerHTML=`<div class="empty"><p>ยังไม่มีสถาบัน · เริ่มจากปุ่ม "เพิ่มสถาบัน"</p></div>`;
+    return;
+  }
+  box.innerHTML="";
+  INSTITUTIONS.forEach(i=>{
+    const el=document.createElement("div"); el.className="srow";
+    el.innerHTML=`<div class="grow">
+        <h3>${esc(i.name)}</h3>
+        <div class="meta">${esc(i.contact_name||"ยังไม่ระบุผู้ประสานงาน")}${i.contact_phone? " · "+esc(i.contact_phone):""}</div>
+      </div>
+      <span class="type-tag">${esc(INST_TYPE_LABEL[i.type]||i.type||"อื่นๆ")}</span>`;
+    el.onclick=()=>openEditInstitution(i.id);
+    box.appendChild(el);
+  });
+}
+function fillInstitutionSelect(){
+  const sel=$("#aInstitution");
+  sel.innerHTML = INSTITUTIONS.length
+    ? INSTITUTIONS.map(i=>`<option value="${i.id}">${esc(i.name)}</option>`).join("")
+    : `<option value="">— ยังไม่มีสถาบัน เพิ่มก่อนนะคะ —</option>`;
+}
+
+/* ── สถาบัน: editor ── */
+function fillSelectOptions(sel, map){
+  sel.innerHTML = Object.entries(map).map(([k,v])=>`<option value="${k}">${esc(v)}</option>`).join("");
+}
+function openNewInstitution(){
+  EDITING_INST=null;
+  $("#edInstMode").textContent="เพิ่มสถาบันใหม่";
+  fillSelectOptions($("#iType"), INST_TYPE_LABEL);
+  $("#iName").value=""; $("#iType").value="university";
+  $("#iContactName").value=""; $("#iContactPhone").value=""; $("#iContactEmail").value="";
+  $("#iAddress").value=""; $("#iNotes").value="";
+  $("#deleteInstBtn").classList.add("hidden");
+  msg($("#editInstMsg"),"","");
+  show("editInst");
+}
+async function openEditInstitution(id){
+  msg($("#editInstMsg"),"","");
+  const i = INSTITUTIONS.find(x=>x.id===id);
+  if(!i) return;
+  EDITING_INST=i;
+  $("#edInstMode").textContent="แก้ไขสถาบัน";
+  fillSelectOptions($("#iType"), INST_TYPE_LABEL);
+  $("#iName").value=i.name||""; $("#iType").value=i.type||"university";
+  $("#iContactName").value=i.contact_name||""; $("#iContactPhone").value=i.contact_phone||"";
+  $("#iContactEmail").value=i.contact_email||""; $("#iAddress").value=i.address||""; $("#iNotes").value=i.notes||"";
+  $("#deleteInstBtn").classList.remove("hidden");
+  show("editInst");
+}
+async function saveInstitution(){
+  const name=$("#iName").value.trim();
+  if(!name){ msg($("#editInstMsg"),"กรุณากรอกชื่อสถาบัน","err"); return; }
+  const payload={
+    name, type:$("#iType").value,
+    contact_name:$("#iContactName").value.trim()||null,
+    contact_phone:$("#iContactPhone").value.trim()||null,
+    contact_email:$("#iContactEmail").value.trim()||null,
+    address:$("#iAddress").value.trim()||null,
+    notes:$("#iNotes").value.trim()||null,
+  };
+  const btn=$("#saveInstBtn"); btn.disabled=true; const old=btn.textContent; btn.textContent="กำลังบันทึก…";
+  try{
+    if(EDITING_INST){
+      const {error}=await sb.from("mou_institutions").update(payload).eq("id",EDITING_INST.id);
+      if(error) throw error;
+    }else{
+      payload.created_by=ME.id;
+      const {error}=await sb.from("mou_institutions").insert(payload);
+      if(error) throw error;
+    }
+    show("list"); await loadInstitutions();
+  }catch(e){ msg($("#editInstMsg"),"บันทึกไม่สำเร็จ: "+(e.message||"เกิดข้อผิดพลาด"),"err"); }
+  finally{ btn.disabled=false; btn.textContent=old; }
+}
+async function deleteInstitution(){
+  if(!EDITING_INST) return;
+  if(!confirm("ยืนยันลบสถาบันนี้? ถ้ามี MOU ผูกอยู่จะลบไม่ได้จนกว่าจะลบ MOU นั้นก่อน")) return;
+  const {error}=await sb.from("mou_institutions").delete().eq("id",EDITING_INST.id);
+  if(error){ msg($("#editInstMsg"),"ลบไม่สำเร็จ: "+error.message,"err"); return; }
+  show("list"); await loadInstitutions();
+}
+
+/* ── MOU: list ── */
+async function loadAgreements(){
+  const box=$("#agreementList"); box.innerHTML='<div class="spin"></div>';
+  const {data,error} = await sb.from("mou_agreements")
+    .select("*, mou_institutions(name)").order("created_at",{ascending:false});
+  if(error){ box.innerHTML='<div class="empty">โหลดข้อมูลไม่สำเร็จ</div>'; return; }
+  if(!data.length){
+    box.innerHTML=`<div class="empty"><p>ยังไม่มี MOU · เริ่มจากปุ่ม "เพิ่ม MOU"</p></div>`;
+    return;
+  }
+  box.innerHTML="";
+  data.forEach(a=>{
+    const instName = a.mou_institutions?.name || "(ไม่ระบุสถาบัน)";
+    const period = (a.start_date||a.end_date) ? `${fmtDate(a.start_date)} – ${fmtDate(a.end_date)}` : "ยังไม่ระบุช่วงเวลา";
+    const el=document.createElement("div"); el.className="srow";
+    el.innerHTML=`<div class="grow">
+        <h3>${esc(a.title)}</h3>
+        <div class="meta">${esc(instName)} · ${period}</div>
+      </div>
+      <span class="status-tag st-${a.status}">${esc(MOU_STATUS_LABEL[a.status]||a.status)}</span>`;
+    el.onclick=()=>openEditAgreement(a.id);
+    box.appendChild(el);
+  });
+}
+
+/* ── MOU: editor ── */
+function openNewAgreement(){
+  if(!INSTITUTIONS.length){
+    alert('ยังไม่มีสถาบันในระบบเลยค่ะ เพิ่มสถาบันก่อนอย่างน้อย 1 แห่งนะคะ');
+    return;
+  }
+  EDITING_AGREEMENT=null; CUR_DOCS=[];
+  $("#edAgreementMode").textContent="เพิ่ม MOU ใหม่";
+  fillInstitutionSelect();
+  fillSelectOptions($("#aStatus"), MOU_STATUS_LABEL);
+  $("#aTitle").value=""; $("#aDocNo").value=""; $("#aCategory").value="";
+  $("#aStatus").value="draft"; $("#aSigned").value=""; $("#aStart").value=""; $("#aEnd").value="";
+  $("#aStaff").value=""; $("#aDesc").value="";
+  $("#deleteAgreementBtn").classList.add("hidden");
+  $("#docsCard").classList.add("hidden"); // ต้องบันทึก MOU ก่อนถึงจะแนบเอกสารได้
+  msg($("#editAgreementMsg"),"","");
+  show("editAgreement");
+}
+async function openEditAgreement(id){
+  msg($("#editAgreementMsg"),"","");
+  const {data:a, error} = await sb.from("mou_agreements").select("*").eq("id",id).single();
+  if(error || !a){ return; }
+  EDITING_AGREEMENT=a;
+  $("#edAgreementMode").textContent="แก้ไข MOU";
+  fillInstitutionSelect();
+  fillSelectOptions($("#aStatus"), MOU_STATUS_LABEL);
+  $("#aInstitution").value=a.institution_id||"";
+  $("#aTitle").value=a.title||""; $("#aDocNo").value=a.document_no||""; $("#aCategory").value=a.activity_category||"";
+  $("#aStatus").value=a.status||"draft";
+  $("#aSigned").value=a.signed_date||""; $("#aStart").value=a.start_date||""; $("#aEnd").value=a.end_date||"";
+  $("#aStaff").value=a.responsible_staff||""; $("#aDesc").value=a.description||"";
+  $("#deleteAgreementBtn").classList.remove("hidden");
+  $("#docsCard").classList.remove("hidden");
+  fillSelectOptions($("#dType"), DOC_TYPE_LABEL);
+  $("#dName").value=""; $("#dLink").value="";
+  await loadDocs(id);
+  show("editAgreement");
+}
+async function saveAgreement(){
+  const institution_id=$("#aInstitution").value;
+  const title=$("#aTitle").value.trim();
+  if(!institution_id){ msg($("#editAgreementMsg"),"กรุณาเลือกสถาบันคู่สัญญา","err"); return; }
+  if(!title){ msg($("#editAgreementMsg"),"กรุณากรอกชื่อข้อตกลง","err"); return; }
+  const payload={
+    institution_id, title,
+    document_no:$("#aDocNo").value.trim()||null,
+    activity_category:$("#aCategory").value.trim()||null,
+    status:$("#aStatus").value,
+    signed_date:$("#aSigned").value||null,
+    start_date:$("#aStart").value||null,
+    end_date:$("#aEnd").value||null,
+    responsible_staff:$("#aStaff").value.trim()||null,
+    description:$("#aDesc").value.trim()||null,
+  };
+  const btn=$("#saveAgreementBtn"); btn.disabled=true; const old=btn.textContent; btn.textContent="กำลังบันทึก…";
+  try{
+    if(EDITING_AGREEMENT){
+      const {error}=await sb.from("mou_agreements").update(payload).eq("id",EDITING_AGREEMENT.id);
+      if(error) throw error;
+      show("list"); await loadAgreements();
+    }else{
+      payload.created_by=ME.id;
+      const {data,error}=await sb.from("mou_agreements").insert(payload).select("id").single();
+      if(error) throw error;
+      // เปิดกลับมาที่หน้าแก้ไขทันทีเพื่อให้แนบเอกสารต่อได้เลย ไม่ต้องเข้าไปหาใหม่
+      await openEditAgreement(data.id);
+      msg($("#editAgreementMsg"),"บันทึกแล้ว ✓ แนบลิงก์เอกสารต่อได้เลยด้านล่างนะคะ","ok");
+    }
+  }catch(e){ msg($("#editAgreementMsg"),"บันทึกไม่สำเร็จ: "+(e.message||"เกิดข้อผิดพลาด"),"err"); }
+  finally{ btn.disabled=false; btn.textContent=old; }
+}
+async function deleteAgreement(){
+  if(!EDITING_AGREEMENT) return;
+  if(!confirm("ยืนยันลบ MOU นี้? เอกสารแนบที่ผูกไว้จะถูกลบไปด้วย")) return;
+  const {error}=await sb.from("mou_agreements").delete().eq("id",EDITING_AGREEMENT.id);
+  if(error){ msg($("#editAgreementMsg"),"ลบไม่สำเร็จ: "+error.message,"err"); return; }
+  show("list"); await loadAgreements();
+}
+
+/* ── เอกสารแนบ (ลิงก์ Drive) ── */
+async function loadDocs(agreementId){
+  const {data,error} = await sb.from("mou_documents").select("*").eq("mou_id",agreementId).order("uploaded_at",{ascending:false});
+  CUR_DOCS = error? [] : (data||[]);
+  renderDocs();
+}
+function renderDocs(){
+  const box=$("#docList");
+  if(!CUR_DOCS.length){ box.innerHTML=`<p class="muted">ยังไม่มีเอกสารแนบ</p>`; return; }
+  box.innerHTML = CUR_DOCS.map(d=>`
+    <div class="docrow">
+      <div class="grow">
+        <div class="fname">${esc(d.file_name||"(ไม่ระบุชื่อไฟล์)")}</div>
+        <div class="dtype">${esc(DOC_TYPE_LABEL[d.doc_type]||d.doc_type||"อื่นๆ")}</div>
+      </div>
+      <a href="${esc(d.drive_link)}" target="_blank" rel="noopener">เปิดไฟล์ ↗</a>
+      <button class="mini" data-deldoc="${d.id}" title="ลบลิงก์นี้" style="background:none;border:1.5px solid var(--line);border-radius:9px;width:32px;height:32px;cursor:pointer;color:var(--danger);font-size:1.1rem;line-height:1">×</button>
+    </div>`).join("");
+  box.querySelectorAll("[data-deldoc]").forEach(b=> b.onclick = ()=> removeDoc(b.dataset.deldoc));
+}
+async function addDoc(){
+  if(!EDITING_AGREEMENT) return;
+  const link=$("#dLink").value.trim();
+  if(!/^https?:\/\//.test(link)){ msg($("#editAgreementMsg"),"ลิงก์เอกสารต้องขึ้นต้นด้วย http:// หรือ https://","err"); return; }
+  const name=$("#dName").value.trim() || link;
+  const btn=$("#addDocBtn"); btn.disabled=true;
+  const {error}=await sb.from("mou_documents").insert({
+    mou_id:EDITING_AGREEMENT.id, doc_type:$("#dType").value, file_name:name, drive_link:link, uploaded_by:ME.id,
+  });
+  btn.disabled=false;
+  if(error){ msg($("#editAgreementMsg"),"เพิ่มลิงก์ไม่สำเร็จ: "+error.message,"err"); return; }
+  $("#dName").value=""; $("#dLink").value="";
+  await loadDocs(EDITING_AGREEMENT.id);
+}
+async function removeDoc(id){
+  if(!confirm("ลบลิงก์เอกสารนี้ออกจากรายการ?")) return; // ไฟล์จริงใน Drive ไม่ถูกลบ แค่เอาลิงก์ออกจากระบบ
+  const {error}=await sb.from("mou_documents").delete().eq("id",id);
+  if(error){ msg($("#editAgreementMsg"),"ลบไม่สำเร็จ: "+error.message,"err"); return; }
+  await loadDocs(EDITING_AGREEMENT.id);
+}
+
+/* ── wire up ── */
+$("#loginBtn").onclick = login;
+$("#password").addEventListener("keydown", e=>{ if(e.key==="Enter") login(); });
+$("#logoutBtn").onclick = logout;
+
+$("#newInstitutionBtn").onclick = openNewInstitution;
+$("#backInstBtn").onclick = ()=>{ show("list"); loadInstitutions(); };
+$("#saveInstBtn").onclick = saveInstitution;
+$("#deleteInstBtn").onclick = deleteInstitution;
+
+$("#newAgreementBtn").onclick = openNewAgreement;
+$("#backAgreementBtn").onclick = ()=>{ show("list"); loadAgreements(); };
+$("#saveAgreementBtn").onclick = saveAgreement;
+$("#deleteAgreementBtn").onclick = deleteAgreement;
+$("#addDocBtn").onclick = addDoc;
+
+(async ()=>{ const {data:{session}} = await sb.auth.getSession(); if(session) afterLogin(); })();
+</script>
+</body>
+</html>
