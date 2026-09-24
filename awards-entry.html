@@ -142,6 +142,32 @@ table.pt input[type=text]{padding:5px 8px;font-size:.9rem}
 .chosen{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
 .chip{background:var(--pine);color:#fff;border-radius:99px;padding:3px 10px;font-size:.83rem}
 
+
+/* ---------- import ---------- */
+.drop{border:2px dashed var(--line);border-radius:12px;padding:22px 14px;text-align:center;
+  background:#fdfbf4;color:var(--muted);margin-top:8px;cursor:pointer}
+.drop.over{border-color:var(--pine-lt);background:#eef4ee;color:var(--pine)}
+.drop b{color:var(--bark)}
+.steps{margin:6px 0 0;padding-left:20px;font-size:.88rem;color:var(--bark)}
+.steps li{margin:2px 0}
+.imp-sum{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 4px}
+.imp-sum span{background:#fff;border:1px solid var(--line);border-radius:10px;padding:5px 11px;font-size:.85rem}
+.imp-sum span b{font-size:1rem;color:var(--pine-dk)}
+.imp-sum span.bad{border-color:#e8bfb2;background:#fbe7e0;color:#8d3b26}
+.imp-sum span.bad b{color:#8d3b26}
+.imp-ev{border:1px solid var(--line);border-radius:10px;background:#fff;max-height:210px;overflow:auto;margin-top:8px}
+.imp-ev div{padding:7px 10px;border-bottom:1px solid #eee7d8;font-size:.88rem}
+.imp-ev div:last-child{border-bottom:none}
+.imp-ev .pill{margin-right:6px}
+.imp-ev .pill.new{background:#e2f0e6;border-color:#b3d7bf;color:#1d5c34}
+.imp-ev .pill.merge{background:#e4eef6;border-color:#bcd4e6;color:#2c5a7a}
+.imp-rows{max-height:260px;overflow:auto;border:1px solid var(--line);border-radius:10px;margin-top:8px;background:#fff}
+.imp-rows table{width:100%;border-collapse:collapse;font-size:.85rem}
+.imp-rows th{position:sticky;top:0;background:#f5f1e6;text-align:left;padding:5px 8px;font-size:.78rem;color:var(--muted)}
+.imp-rows td{padding:5px 8px;border-top:1px solid #eee7d8;vertical-align:top}
+.imp-rows tr.error td:first-child{color:var(--rust);font-weight:700}
+.imp-rows tr.skip td:first-child,.imp-rows tr.ok td:first-child{color:var(--muted)}
+
 /* ---------- misc ---------- */
 .empty{text-align:center;padding:44px 20px;color:var(--muted);
   background:var(--paper);border:1px dashed var(--line);border-radius:var(--r)}
@@ -207,6 +233,7 @@ table.pt input[type=text]{padding:5px 8px;font-size:.9rem}
         <select id="selGroup"></select>
       </div>
       <div class="spacer"></div>
+      <button id="btnImport" class="btn ghost">นำเข้าจาก Excel</button>
       <button id="btnNew" class="btn">＋ เพิ่มงานใหม่</button>
     </div>
 
@@ -217,6 +244,7 @@ table.pt input[type=text]{padding:5px 8px;font-size:.9rem}
 </section>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script>
 /* ============================================================
    ตั้งค่า
@@ -830,6 +858,327 @@ function openStudentPicker(event){
 }
 
 /* ============================================================
+   นำเข้าจาก Excel (แถวละ 1 คน ระบบจัดกลุ่มเป็นงานให้)
+   ============================================================ */
+/* คอลัมน์ของแม่แบบ: key = ชื่อฟิลด์ที่ส่งให้ RPC, only = ใช้เฉพาะบางประเภท */
+function importCols(type){
+  const pf = PFIELD[type];
+  const titleLbl = type === 'project' ? 'ชื่อโครงงาน' : type === 'course' ? 'ชื่อหลักสูตร' : 'ชื่องาน / การแข่งขัน';
+  return [
+    {key:'student_id',      label:'รหัสนักเรียน',                  w:12},
+    {key:'first_name',      label:'ชื่อ',                           w:14},
+    {key:'last_name',       label:'นามสกุล',                        w:16},
+    {key:'class_room',      label:'ห้อง',                           w:8},
+    {key:'title',           label:titleLbl + ' *',                  w:34, ev:true},
+    {key:'project_type',    label:'ประเภทโครงงาน *',                w:18, ev:true, only:['project']},
+    {key:'course_category', label:'หมวดหลักสูตร *',                 w:20, ev:true, only:['course']},
+    {key:'course_level',    label:'ระดับหลักสูตร',                  w:14, ev:true, only:['course']},
+    {key:'level',           label:'ระดับ *',                        w:16, ev:true},
+    {key:'start_date',      label:(type==='course'?'วันที่ออกใบรับรอง':'วันที่เริ่ม') + ' *', w:14, ev:true, date:true},
+    {key:'end_date',        label:'วันที่สิ้นสุด',                   w:14, ev:true, date:true, not:['course']},
+    {key:'expired_date',    label:'วันหมดอายุใบรับรอง',              w:16, ev:true, date:true, only:['course']},
+    {key:'hours',           label:'จำนวนชั่วโมง',                   w:11, ev:true},
+    {key:'fee',             label:'ค่าใช้จ่าย (บาท) *',              w:14, ev:true},
+    {key:'description',     label:'รายละเอียด',                     w:30, ev:true},
+    {key:'organizer',       label:'หน่วยงานผู้จัด',                 w:20, ev:true},
+    ...(pf ? [{key:'value', label:pf.label, w:22}] : [])
+  ].filter(c => (!c.only || c.only.includes(type)) && (!c.not || !c.not.includes(type)));
+}
+const normHead = h => String(h ?? '').replace(/[\s*]/g,'').replace(/[()（）]/g,'').toLowerCase();
+/* ชื่อหัวคอลัมน์อื่นที่ครูอาจใช้ */
+const HEAD_ALIAS = {
+  student_id:['รหัส','เลขประจำตัว','เลขประจำตัวนักเรียน','รหัสประจำตัว','studentid'],
+  first_name:['ชื่อจริง'],
+  last_name:['สกุล'],
+  class_room:['ชั้น','ชั้น/ห้อง','ห้องเรียน'],
+  level:['ระดับรางวัล','ระดับกิจกรรม'],
+  fee:['ค่าใช้จ่าย','ค่าสมัคร'],
+  hours:['ชั่วโมง']
+};
+const FULLNAME_HEADS = ['ชื่อ-สกุล','ชื่อ-นามสกุล','ชื่อสกุล','ชื่อนามสกุล'].map(normHead);
+
+function sheetNameOf(type){ return 'นำเข้า-' + labelOf(TYPES, type).replace('/','-'); }
+
+function downloadTemplate(type){
+  const cols = importCols(type);
+  const ws = XLSX.utils.aoa_to_sheet([cols.map(c=>c.label)]);
+  ws['!cols'] = cols.map(c=>({wch:c.w}));
+  ws['!freeze'] = {xSplit:0, ySplit:1};
+
+  const ex = {
+    prize:   ['แข่งขันคิดเลขเร็ว','ระดับจังหวัด','ชนะเลิศ','รองชนะเลิศอันดับ 1'],
+    activity:['ค่ายพัฒนาผู้นำนักเรียน','ระดับโรงเรียน','ผู้เข้าร่วม','ประธานค่าย'],
+    project: ['เครื่องรดน้ำต้นไม้อัตโนมัติ','ระดับชาติ','',''],
+    course:  ['Python เบื้องต้น','ระดับชาติ','ผ่าน','85 คะแนน']
+  }[type];
+  const help = [
+    ['วิธีกรอก'],
+    ['1) กรอกในชีตแรกเท่านั้น แถวละนักเรียน 1 คน ห้ามแก้ชื่อหัวคอลัมน์'],
+    ['2) ระบุนักเรียนด้วย "รหัสนักเรียน" (แนะนำ) หรือ "ชื่อ + นามสกุล" ถ้าชื่อซ้ำให้ใส่ "ห้อง" เช่น 6/2'],
+    ['3) แถวที่ ชื่องาน + วันที่เริ่ม + ระดับ ตรงกัน ระบบรวมเป็นงานเดียวกันให้'],
+    ['4) ข้อมูลงานกรอกแถวแรกของงานพอ แถวต่อไปของงานเดียวกันเว้นช่องชื่องานว่างได้ (ระบบใช้ของแถวบน)'],
+    ['5) ระดับ: โรงเรียน / จังหวัด (รวมเขต ภาค) / ชาติ / นานาชาติ'],
+    ['6) วันที่: ใช้รูปแบบวันที่ของ Excel หรือพิมพ์ 10/01/2569'],
+    ['7) ค่าใช้จ่าย: ไม่มีให้ใส่ 0 ห้ามเว้นว่าง'],
+    ['8) ถ้าแถวไหนผิด ระบบจะไม่นำเข้าทั้งไฟล์ และบอกว่าแถวไหนต้องแก้'],
+    [],
+    ['ตัวอย่าง (อย่าคัดลอกไปวางในชีตแรก)'],
+    ['รหัสนักเรียน','ชื่อ','นามสกุล','ห้อง','ชื่องาน','ระดับ','วันที่เริ่ม','ค่าใช้จ่าย', PFIELD[type] ? PFIELD[type].label : ''],
+    ['23960','','','',ex[0],ex[1],'10/01/2569','0',ex[2]],
+    ['','สมหญิง','ใจดี','6/2','','','','',ex[3]]
+  ];
+  const wh = XLSX.utils.aoa_to_sheet(help);
+  wh['!cols'] = [{wch:14},{wch:12},{wch:12},{wch:8},{wch:28},{wch:14},{wch:12},{wch:10},{wch:20}];
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, sheetNameOf(type));
+  XLSX.utils.book_append_sheet(wb, wh, 'วิธีกรอก');
+  XLSX.writeFile(wb, `แม่แบบนำเข้า-${labelOf(TYPES,type).replace('/','-')}.xlsx`);
+}
+
+/* แปลงค่าวันที่จาก Excel: serial number -> YYYY-MM-DD, ข้อความส่งไปให้เซิร์ฟเวอร์แปลง */
+function cellDate(v){
+  if(v === '' || v == null) return '';
+  if(typeof v === 'number'){
+    const d = XLSX.SSF.parse_date_code(v);
+    if(!d) return String(v);
+    return `${d.y}-${String(d.m).padStart(2,'0')}-${String(d.d).padStart(2,'0')}`;
+  }
+  if(v instanceof Date){
+    return `${v.getFullYear()}-${String(v.getMonth()+1).padStart(2,'0')}-${String(v.getDate()).padStart(2,'0')}`;
+  }
+  return String(v).trim();
+}
+
+/* อ่านไฟล์ -> rows สำหรับ RPC; คืน {rows, error, raw, header} */
+function parseImportFile(wb, type){
+  const expected = sheetNameOf(type);
+  const other = wb.SheetNames.find(n => n.startsWith('นำเข้า-') && n !== expected);
+  if(other && !wb.SheetNames.includes(expected)){
+    return {error:`ไฟล์นี้เป็นแม่แบบ “${other.replace('นำเข้า-','')}” แต่เลือกประเภท “${labelOf(TYPES,type)}” ไว้ เปลี่ยนประเภทให้ตรงกับไฟล์ก่อน`};
+  }
+  const ws = wb.Sheets[wb.SheetNames.includes(expected) ? expected : wb.SheetNames[0]];
+  const aoa = XLSX.utils.sheet_to_json(ws, {header:1, raw:true, defval:''});
+  const cols = importCols(type);
+
+  // หาแถวหัวตาราง (ภายใน 5 แถวแรก) จากคอลัมน์ชื่องาน
+  const titleKey = normHead(cols.find(c=>c.key==='title').label);
+  let hi = aoa.slice(0,5).findIndex(r => r.some(h => normHead(h) === titleKey));
+  if(hi < 0) return {error:'ไม่พบหัวคอลัมน์ของแม่แบบ ดาวน์โหลดแม่แบบใหม่แล้วกรอกตามนั้น (ห้ามแก้ชื่อหัวคอลัมน์)'};
+  const head = aoa[hi].map(normHead);
+
+  const idx = {};
+  cols.forEach(c=>{
+    const cands = [normHead(c.label), ...(HEAD_ALIAS[c.key]||[]).map(normHead)];
+    const i = head.findIndex(h => cands.includes(h));
+    if(i >= 0) idx[c.key] = i;
+  });
+  const fullIdx = head.findIndex(h => FULLNAME_HEADS.includes(h));
+
+  const need = ['level','start_date','fee'].filter(k => idx[k] === undefined)
+    .map(k => cols.find(c=>c.key===k).label.replace(' *',''));
+  if(idx.student_id === undefined && idx.first_name === undefined && fullIdx < 0)
+    need.push('รหัสนักเรียน หรือ ชื่อ-นามสกุล');
+  if(need.length) return {error:'ไฟล์ขาดคอลัมน์: ' + need.join(', ')};
+
+  const rows = [], raw = [];
+  let prev = null;
+  for(let r = hi + 1; r < aoa.length; r++){
+    const line = aoa[r];
+    if(!line || line.every(v => String(v).trim() === '')) continue;
+    const o = {row_no: r + 1};
+    cols.forEach(c=>{
+      if(idx[c.key] === undefined) return;
+      const v = line[idx[c.key]];
+      o[c.key] = c.date ? cellDate(v) : String(v ?? '').trim();
+    });
+    if(fullIdx >= 0 && !o.first_name && !o.last_name){
+      const parts = String(line[fullIdx] ?? '').trim().split(/\s+/);
+      o.first_name = parts.shift() || ''; o.last_name = parts.join(' ');
+    }
+    // แถวต่อเนื่องของงานเดิม (ช่องชื่องานว่าง) -> ใช้ชื่องาน วันที่ ระดับ ของแถวบน
+    if(!o.title && prev){
+      o.title = prev.title;
+      if(!o.start_date) o.start_date = prev.start_date;
+      if(!o.level)      o.level      = prev.level;
+    }
+    if(o.title) prev = o;
+    rows.push(o); raw.push({row_no:o.row_no, line});
+  }
+  if(!rows.length) return {error:'ไม่พบข้อมูลในไฟล์ (มีแค่หัวคอลัมน์)'};
+  return {rows, raw, header:aoa[hi]};
+}
+
+function openImport(){
+  const g = S.groups.find(x=>x.id===S.groupId);
+  let type = 'prize', parsed = null, lastRes = null, fileName = '';
+
+  const mask = document.createElement('div');
+  mask.className = 'mask';
+  mask.innerHTML = `<div class="modal" style="max-width:720px">
+    <h2>นำเข้าจาก Excel</h2>
+    <p class="sub">ปีการศึกษา ${S.year} · ${esc(g ? g.name_th : '')} · งานที่นำเข้าจะอยู่สถานะ “ร่าง” ให้ตรวจก่อนส่ง</p>
+
+    <label class="f">ประเภทข้อมูลในไฟล์ <span class="req">*</span></label>
+    <div class="typepick" id="iType">
+      ${TYPES.map(t=>`<button type="button" data-v="${t.v}" ${t.v===type?'class="on"':''}>${t.t}<br><span style="font-size:.72rem;opacity:.75">${t.d}</span></button>`).join('')}
+    </div>
+    <ol class="steps">
+      <li>ดาวน์โหลดแม่แบบของประเภทนี้ แล้วกรอกแถวละนักเรียน 1 คน</li>
+      <li>อัปโหลดไฟล์ แล้วกด “ตรวจข้อมูล”</li>
+      <li>ถ้าผ่านทุกแถว จึงกดนำเข้าได้ ถ้ามีแถวผิดจะไม่นำเข้าเลยทั้งไฟล์</li>
+    </ol>
+    <div style="margin-top:10px"><button class="btn ghost sm" id="iTpl">ดาวน์โหลดแม่แบบ</button></div>
+
+    <div class="drop" id="iDrop" tabindex="0" role="button">
+      <b>ลากไฟล์มาวางที่นี่</b> หรือคลิกเพื่อเลือกไฟล์ (.xlsx .xls .csv)
+      <div id="iFile" class="hint" style="margin-top:6px"></div>
+    </div>
+    <input type="file" id="iInput" accept=".xlsx,.xls,.csv" class="hide">
+
+    <div id="iMsg"></div>
+    <div id="iResult"></div>
+
+    <div class="modal-foot">
+      <button class="btn ghost" data-close>ปิด</button>
+      <button class="btn ghost" id="iCheck" disabled>ตรวจข้อมูล</button>
+      <button class="btn" id="iGo" disabled>นำเข้า</button>
+    </div>
+  </div>`;
+  document.body.appendChild(mask);
+
+  const $m = q => mask.querySelector(q);
+  const say = (t, kind) => { $m('#iMsg').innerHTML = t ? `<div class="msg ${kind||'err'}">${esc(t)}</div>` : ''; };
+
+  function reset(keepFile){
+    lastRes = null;
+    $m('#iResult').innerHTML = '';
+    $m('#iGo').disabled = true; $m('#iGo').textContent = 'นำเข้า';
+    if(!keepFile){ parsed = null; fileName = ''; $m('#iFile').textContent = ''; $m('#iCheck').disabled = true; }
+    say('');
+  }
+
+  $m('#iType').addEventListener('click', e=>{
+    const b = e.target.closest('button'); if(!b) return;
+    type = b.dataset.v;
+    mask.querySelectorAll('#iType button').forEach(x=>x.classList.toggle('on', x.dataset.v===type));
+    reset(false);
+  });
+  $m('#iTpl').addEventListener('click', ()=>downloadTemplate(type));
+
+  const drop = $m('#iDrop'), input = $m('#iInput');
+  drop.addEventListener('click', ()=>input.click());
+  drop.addEventListener('keydown', e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); input.click(); } });
+  drop.addEventListener('dragover', e=>{ e.preventDefault(); drop.classList.add('over'); });
+  drop.addEventListener('dragleave', ()=>drop.classList.remove('over'));
+  drop.addEventListener('drop', e=>{ e.preventDefault(); drop.classList.remove('over'); if(e.dataTransfer.files[0]) readFile(e.dataTransfer.files[0]); });
+  input.addEventListener('change', ()=>{ if(input.files[0]) readFile(input.files[0]); input.value=''; });
+
+  async function readFile(file){
+    reset(false);
+    fileName = file.name;
+    try{
+      const buf = await file.arrayBuffer();
+      const wb = XLSX.read(buf, {type:'array'});
+      const p = parseImportFile(wb, type);
+      if(p.error){ say(p.error); $m('#iFile').textContent = file.name; return; }
+      parsed = p;
+      $m('#iFile').textContent = `${file.name} · ${p.rows.length} แถว`;
+      $m('#iCheck').disabled = false;
+      say('อ่านไฟล์แล้ว กด “ตรวจข้อมูล” เพื่อเช็คทุกแถวก่อนนำเข้า', 'info');
+    }catch(err){
+      say('เปิดไฟล์ไม่ได้ ตรวจว่าเป็นไฟล์ Excel หรือ CSV ที่ไม่เสีย');
+    }
+  }
+
+  async function run(dry){
+    const btn = dry ? $m('#iCheck') : $m('#iGo');
+    const label = btn.textContent;
+    btn.disabled = true; btn.innerHTML = `<span class="spin"></span> ${dry ? 'กำลังตรวจ' : 'กำลังนำเข้า'}`;
+    const {data, error} = await sb.rpc('awards_import_events', {
+      p_group_id: S.groupId, p_year: S.year, p_type: type, p_rows: parsed.rows, p_dry_run: dry
+    });
+    btn.disabled = false; btn.textContent = label;
+    if(error){ say(explain(error)); return; }
+    lastRes = data;
+    if(!dry && data.saved){
+      mask.remove();
+      toast(`นำเข้าแล้ว ${data.summary.add} รายชื่อ (${data.summary.new_events} งานใหม่)`);
+      await loadEvents();
+      return;
+    }
+    renderResult(data, dry);
+  }
+  $m('#iCheck').addEventListener('click', ()=>run(true));
+  $m('#iGo').addEventListener('click', ()=>{
+    if(!lastRes || !lastRes.ok) return;
+    const s = lastRes.summary;
+    if(!confirm(`นำเข้า ${s.add} รายชื่อ เป็นงานใหม่ ${s.new_events} งาน และเติมงานเดิม ${s.merge_events} งาน?`)) return;
+    run(false);
+  });
+
+  function renderResult(d, dry){
+    const s = d.summary;
+    const lv = v => labelOf(LEVELS, v);
+    const evHtml = d.events.map(e=>`<div>
+        <span class="pill ${e.action}">${e.action==='new'?'งานใหม่':'เติมงานเดิม'}</span>
+        <b>${esc(e.title)}</b>
+        <span class="hint" style="display:inline">· ${fmtThaiDate(e.start_date)} · ${esc(lv(e.level))}
+          · เพิ่ม ${e.add} คน${e.skip?` · ข้าม ${e.skip}`:''}</span>
+        ${e.error ? `<div style="border:none;padding:2px 0 0;color:var(--rust)">${esc(e.error)}</div>` : ''}
+      </div>`).join('');
+    const show = d.rows.filter(r => r.status !== 'ok' || r.detail);
+    const rowsHtml = show.slice(0,300).map(r=>`<tr class="${r.status}">
+        <td>${r.row_no}</td><td>${esc(r.student||'—')}</td>
+        <td>${r.status==='error'?'ผิด':r.status==='skip'?'ข้าม':'ผ่าน'}</td><td>${esc(r.detail)}</td></tr>`).join('');
+
+    $m('#iResult').innerHTML = `
+      <div class="imp-sum">
+        <span>ทั้งหมด <b>${s.rows}</b> แถว</span>
+        <span>งานใหม่ <b>${s.new_events}</b></span>
+        <span>เติมงานเดิม <b>${s.merge_events}</b></span>
+        <span>เพิ่มนักเรียน <b>${s.add}</b></span>
+        ${s.skip ? `<span>ข้าม (มีอยู่แล้ว) <b>${s.skip}</b></span>` : ''}
+        ${s.errors ? `<span class="bad">แถวที่ต้องแก้ <b>${s.errors}</b></span>` : ''}
+      </div>
+      ${d.events.length ? `<div class="imp-ev">${evHtml}</div>` : ''}
+      ${show.length ? `<label class="f">แถวที่ต้องดู ${show.length > 300 ? '(แสดง 300 แถวแรก)' : ''}</label>
+        <div class="imp-rows"><table><thead><tr><th>แถว</th><th>นักเรียน</th><th>ผล</th><th>รายละเอียด</th></tr></thead>
+        <tbody>${rowsHtml}</tbody></table></div>` : ''}
+      ${s.errors ? `<div style="margin-top:10px"><button class="btn ghost sm" id="iErr">ดาวน์โหลดไฟล์พร้อมผลตรวจ</button></div>` : ''}`;
+
+    if(s.errors){
+      say(`มี ${s.errors} แถวที่ต้องแก้ ระบบยังไม่นำเข้าอะไรเลย แก้ในไฟล์แล้วอัปโหลดใหม่`);
+      $m('#iErr').addEventListener('click', downloadChecked);
+      $m('#iGo').disabled = true;
+    } else if(s.add === 0){
+      say('ไม่มีรายชื่อใหม่ให้นำเข้า (ทุกคนมีอยู่ในงานแล้ว)', 'info');
+      $m('#iGo').disabled = true;
+    } else {
+      say('ตรวจผ่านทุกแถว กด “นำเข้า” เพื่อบันทึก', 'ok');
+      $m('#iGo').disabled = false;
+      $m('#iGo').textContent = `นำเข้า ${s.add} รายชื่อ`;
+    }
+  }
+
+  /* ไฟล์เดิม + คอลัมน์ผลตรวจ ให้ครูแก้ต่อได้ทันที */
+  function downloadChecked(){
+    const byRow = new Map(lastRes.rows.map(r=>[r.row_no, r]));
+    const aoa = [[...parsed.header, 'ผลตรวจ']];
+    parsed.raw.forEach(x=>{
+      const r = byRow.get(x.row_no);
+      aoa.push([...x.line, r ? (r.status==='error' ? 'ผิด: ' : r.detail ? 'หมายเหตุ: ' : 'ผ่าน') + (r.detail||'') : '']);
+    });
+    const ws = XLSX.utils.aoa_to_sheet(aoa);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, sheetNameOf(type));
+    XLSX.writeFile(wb, (fileName.replace(/\.[^.]+$/,'') || 'นำเข้า') + '-ผลตรวจ.xlsx');
+  }
+
+  mask.addEventListener('click', e=>{ if(e.target.hasAttribute('data-close')) mask.remove(); });
+}
+
+/* ============================================================
    การกระทำอื่น ๆ
    ============================================================ */
 async function submitEvent(e){
@@ -886,6 +1235,7 @@ $('#selGroup').addEventListener('change', async e=>{
   renderToolbar(); await loadEvents();
 });
 $('#btnNew').addEventListener('click', ()=>openEventForm(null));
+$('#btnImport').addEventListener('click', ()=>openImport());
 
 $('#list').addEventListener('click', async e=>{
   const t = e.target.closest('[data-act]');
