@@ -866,9 +866,8 @@ function importCols(type){
   const titleLbl = type === 'project' ? 'ชื่อโครงงาน' : type === 'course' ? 'ชื่อหลักสูตร' : 'ชื่องาน / การแข่งขัน';
   return [
     {key:'student_id',      label:'รหัสนักเรียน',                  w:12},
-    {key:'first_name',      label:'ชื่อ',                           w:14},
-    {key:'last_name',       label:'นามสกุล',                        w:16},
-    {key:'class_room',      label:'ห้อง',                           w:8},
+    {key:'full_name',       label:'ชื่อ-นามสกุล',                   w:28},
+    {key:'class_room',      label:'ห้อง',                           w:9},
     {key:'title',           label:titleLbl + ' *',                  w:34, ev:true},
     {key:'project_type',    label:'ประเภทโครงงาน *',                w:18, ev:true, only:['project']},
     {key:'course_category', label:'หมวดหลักสูตร *',                 w:20, ev:true, only:['course']},
@@ -888,14 +887,16 @@ const normHead = h => String(h ?? '').replace(/[\s*]/g,'').replace(/[()（）]/g
 /* ชื่อหัวคอลัมน์อื่นที่ครูอาจใช้ */
 const HEAD_ALIAS = {
   student_id:['รหัส','เลขประจำตัว','เลขประจำตัวนักเรียน','รหัสประจำตัว','studentid'],
-  first_name:['ชื่อจริง'],
-  last_name:['สกุล'],
+  full_name:['ชื่อ-สกุล','ชื่อสกุล','ชื่อนามสกุล','ชื่อ-นามสกุลนักเรียน','ชื่อนักเรียน','ชื่อ–นามสกุล'],
+  title:['ชื่องาน','ชื่อการแข่งขัน','ชื่อกิจกรรม','ชื่อรายการ','ชื่อผลงาน'],
   class_room:['ชั้น','ชั้น/ห้อง','ห้องเรียน'],
   level:['ระดับรางวัล','ระดับกิจกรรม'],
   fee:['ค่าใช้จ่าย','ค่าสมัคร'],
   hours:['ชั่วโมง']
 };
-const FULLNAME_HEADS = ['ชื่อ-สกุล','ชื่อ-นามสกุล','ชื่อสกุล','ชื่อนามสกุล'].map(normHead);
+/* ไฟล์แบบเก่า/ที่ครูทำเอง: ชื่อกับนามสกุลแยกคอลัมน์ ก็ยังรับได้ */
+const LEGACY_NAME = {first_name:['ชื่อ','ชื่อจริง'], last_name:['นามสกุล','สกุล']};
+const MAX_IMPORT_ROWS = 3000;
 
 function sheetNameOf(type){ return 'นำเข้า-' + labelOf(TYPES, type).replace('/','-'); }
 
@@ -914,7 +915,8 @@ function downloadTemplate(type){
   const help = [
     ['วิธีกรอก'],
     ['1) กรอกในชีตแรกเท่านั้น แถวละนักเรียน 1 คน ห้ามแก้ชื่อหัวคอลัมน์'],
-    ['2) ระบุนักเรียนด้วย "รหัสนักเรียน" (แนะนำ) หรือ "ชื่อ + นามสกุล" ถ้าชื่อซ้ำให้ใส่ "ห้อง" เช่น 6/2'],
+    ['2) ระบุนักเรียนด้วย "รหัสนักเรียน" (แนะนำ) หรือ "ชื่อ-นามสกุล" ในช่องเดียว มีคำนำหน้าหรือไม่ เว้นวรรคกี่ช่องก็ได้'],
+    ['   ถ้าชื่อซ้ำกันให้ใส่ "ห้อง" แบบ ม.6/2 (ใส่ ม. นำหน้า กัน Excel แปลงเป็นวันที่)'],
     ['3) แถวที่ ชื่องาน + วันที่เริ่ม + ระดับ ตรงกัน ระบบรวมเป็นงานเดียวกันให้'],
     ['4) ข้อมูลงานกรอกแถวแรกของงานพอ แถวต่อไปของงานเดียวกันเว้นช่องชื่องานว่างได้ (ระบบใช้ของแถวบน)'],
     ['5) ระดับ: โรงเรียน / จังหวัด (รวมเขต ภาค) / ชาติ / นานาชาติ'],
@@ -923,12 +925,12 @@ function downloadTemplate(type){
     ['8) ถ้าแถวไหนผิด ระบบจะไม่นำเข้าทั้งไฟล์ และบอกว่าแถวไหนต้องแก้'],
     [],
     ['ตัวอย่าง (อย่าคัดลอกไปวางในชีตแรก)'],
-    ['รหัสนักเรียน','ชื่อ','นามสกุล','ห้อง','ชื่องาน','ระดับ','วันที่เริ่ม','ค่าใช้จ่าย', PFIELD[type] ? PFIELD[type].label : ''],
-    ['23960','','','',ex[0],ex[1],'10/01/2569','0',ex[2]],
-    ['','สมหญิง','ใจดี','6/2','','','','',ex[3]]
+    ['รหัสนักเรียน','ชื่อ-นามสกุล','ห้อง','ชื่องาน','ระดับ','วันที่เริ่ม','ค่าใช้จ่าย', PFIELD[type] ? PFIELD[type].label : ''],
+    ['23960','','',ex[0],ex[1],'10/01/2569','0',ex[2]],
+    ['','นางสาวสมหญิง ใจดี','ม.6/2','','','','',ex[3]]
   ];
   const wh = XLSX.utils.aoa_to_sheet(help);
-  wh['!cols'] = [{wch:14},{wch:12},{wch:12},{wch:8},{wch:28},{wch:14},{wch:12},{wch:10},{wch:20}];
+  wh['!cols'] = [{wch:14},{wch:24},{wch:9},{wch:28},{wch:14},{wch:12},{wch:10},{wch:20}];
 
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, sheetNameOf(type));
@@ -950,6 +952,15 @@ function cellDate(v){
   return String(v).trim();
 }
 
+/* ช่องห้อง: Excel มักแปลง 6/2 เป็นวันที่ (6 ก.พ.) -> แปลงกลับเป็น 6/2 */
+function cellRoom(v){
+  if(typeof v === 'number' && v > 1000){
+    const d = XLSX.SSF.parse_date_code(v);
+    if(d) return `${d.d}/${d.m}`;
+  }
+  return String(v ?? '').trim();
+}
+
 /* อ่านไฟล์ -> rows สำหรับ RPC; คืน {rows, error, raw, header} */
 function parseImportFile(wb, type){
   const expected = sheetNameOf(type);
@@ -962,8 +973,8 @@ function parseImportFile(wb, type){
   const cols = importCols(type);
 
   // หาแถวหัวตาราง (ภายใน 5 แถวแรก) จากคอลัมน์ชื่องาน
-  const titleKey = normHead(cols.find(c=>c.key==='title').label);
-  let hi = aoa.slice(0,5).findIndex(r => r.some(h => normHead(h) === titleKey));
+  const titleKeys = [normHead(cols.find(c=>c.key==='title').label), ...HEAD_ALIAS.title.map(normHead)];
+  let hi = aoa.slice(0,5).findIndex(r => r.some(h => titleKeys.includes(normHead(h))));
   if(hi < 0) return {error:'ไม่พบหัวคอลัมน์ของแม่แบบ ดาวน์โหลดแม่แบบใหม่แล้วกรอกตามนั้น (ห้ามแก้ชื่อหัวคอลัมน์)'};
   const head = aoa[hi].map(normHead);
 
@@ -973,11 +984,15 @@ function parseImportFile(wb, type){
     const i = head.findIndex(h => cands.includes(h));
     if(i >= 0) idx[c.key] = i;
   });
-  const fullIdx = head.findIndex(h => FULLNAME_HEADS.includes(h));
+  const legacy = {};
+  Object.entries(LEGACY_NAME).forEach(([k, names])=>{
+    const i = head.findIndex(h => names.map(normHead).includes(h));
+    if(i >= 0) legacy[k] = i;
+  });
 
   const need = ['level','start_date','fee'].filter(k => idx[k] === undefined)
     .map(k => cols.find(c=>c.key===k).label.replace(' *',''));
-  if(idx.student_id === undefined && idx.first_name === undefined && fullIdx < 0)
+  if(idx.student_id === undefined && idx.full_name === undefined && legacy.first_name === undefined)
     need.push('รหัสนักเรียน หรือ ชื่อ-นามสกุล');
   if(need.length) return {error:'ไฟล์ขาดคอลัมน์: ' + need.join(', ')};
 
@@ -990,11 +1005,11 @@ function parseImportFile(wb, type){
     cols.forEach(c=>{
       if(idx[c.key] === undefined) return;
       const v = line[idx[c.key]];
-      o[c.key] = c.date ? cellDate(v) : String(v ?? '').trim();
+      o[c.key] = c.date ? cellDate(v) : c.key === 'class_room' ? cellRoom(v) : String(v ?? '').trim();
     });
-    if(fullIdx >= 0 && !o.first_name && !o.last_name){
-      const parts = String(line[fullIdx] ?? '').trim().split(/\s+/);
-      o.first_name = parts.shift() || ''; o.last_name = parts.join(' ');
+    if(!o.full_name && legacy.first_name !== undefined){
+      o.full_name = [line[legacy.first_name], legacy.last_name !== undefined ? line[legacy.last_name] : '']
+        .map(x => String(x ?? '').trim()).filter(Boolean).join(' ');
     }
     // แถวต่อเนื่องของงานเดิม (ช่องชื่องานว่าง) -> ใช้ชื่องาน วันที่ ระดับ ของแถวบน
     if(!o.title && prev){
@@ -1006,6 +1021,8 @@ function parseImportFile(wb, type){
     rows.push(o); raw.push({row_no:o.row_no, line});
   }
   if(!rows.length) return {error:'ไม่พบข้อมูลในไฟล์ (มีแค่หัวคอลัมน์)'};
+  if(rows.length > MAX_IMPORT_ROWS)
+    return {error:`ไฟล์มี ${rows.length} แถว เกินที่รับได้ต่อครั้ง (${MAX_IMPORT_ROWS} แถว) แบ่งเป็นหลายไฟล์`};
   return {rows, raw, header:aoa[hi]};
 }
 
@@ -1079,7 +1096,14 @@ function openImport(){
     fileName = file.name;
     try{
       const buf = await file.arrayBuffer();
-      const wb = XLSX.read(buf, {type:'array'});
+      let wb;
+      if(/\.csv$/i.test(file.name)){
+        let text = new TextDecoder('utf-8').decode(buf);
+        if(text.includes('\uFFFD')) text = new TextDecoder('windows-874').decode(buf);
+        wb = XLSX.read(text.replace(/^\uFEFF/,''), {type:'string', raw:true});
+      } else {
+        wb = XLSX.read(buf, {type:'array'});
+      }
       const p = parseImportFile(wb, type);
       if(p.error){ say(p.error); $m('#iFile').textContent = file.name; return; }
       parsed = p;
@@ -1142,7 +1166,7 @@ function openImport(){
         ${s.errors ? `<span class="bad">แถวที่ต้องแก้ <b>${s.errors}</b></span>` : ''}
       </div>
       ${d.events.length ? `<div class="imp-ev">${evHtml}</div>` : ''}
-      ${show.length ? `<label class="f">แถวที่ต้องดู ${show.length > 300 ? '(แสดง 300 แถวแรก)' : ''}</label>
+      ${show.length ? `<label class="f">แถวที่ต้องดู (ผิด / ข้าม / มีหมายเหตุ) ${show.length > 300 ? '· แสดง 300 แถวแรก' : ''}</label>
         <div class="imp-rows"><table><thead><tr><th>แถว</th><th>นักเรียน</th><th>ผล</th><th>รายละเอียด</th></tr></thead>
         <tbody>${rowsHtml}</tbody></table></div>` : ''}
       ${s.errors ? `<div style="margin-top:10px"><button class="btn ghost sm" id="iErr">ดาวน์โหลดไฟล์พร้อมผลตรวจ</button></div>` : ''}`;
