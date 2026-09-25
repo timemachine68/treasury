@@ -19,6 +19,8 @@
     --text:#2b2b28;
     --muted:#6b7268;
     --amber:#c98a3a;
+    --danger:#a23b30;
+    --danger-tint:#f6e6e2;
   }
   *{box-sizing:border-box}
   body{
@@ -31,7 +33,7 @@
   header h1{font-size:26px;margin:0 0 4px;color:var(--green-deep)}
   header p{margin:0;color:var(--muted);font-size:14px}
   .controls{display:flex;gap:10px;align-items:center}
-  select,button{
+  select,button,input{
     font-family:'Sarabun',sans-serif;font-size:15px;
     border:1px solid var(--border);border-radius:10px;
     padding:10px 14px;background:#fff;color:var(--text);
@@ -55,6 +57,15 @@
   .badge{display:inline-block;background:var(--green-soft);color:var(--green-deep);border-radius:999px;padding:3px 10px;font-size:12px}
   .empty{color:var(--muted);text-align:center;padding:40px 0;font-size:14px}
   .footer-note{color:var(--muted);font-size:12px;margin-top:18px;text-align:center}
+  .hidden{display:none!important}
+  .login-card{max-width:380px;margin:8vh auto 0;text-align:left}
+  .login-card label{display:block;margin-bottom:14px;font-size:14px;font-weight:600}
+  .login-card input{width:100%;margin-top:6px;font-weight:400}
+  .login-card button{width:100%;margin-top:4px}
+  .msg{padding:10px 14px;border-radius:10px;font-size:13px;margin-bottom:12px;display:none}
+  .msg.err{background:var(--danger-tint);color:var(--danger);border:1px solid #e6c4bd;display:block}
+  .deny{max-width:440px;margin:10vh auto 0;text-align:center;padding:28px}
+  .deny svg{width:40px;height:40px;color:var(--danger);margin-bottom:10px}
   @media print{
     .no-print{display:none !important}
     body{background:#fff;padding:0}
@@ -67,75 +78,152 @@
   <header>
     <div>
       <h1>🎓 สรุปทุนการศึกษาประจำปี</h1>
-      <p>โรงเรียนพูลเจริญวิทยาคม · ข้อมูลอัปเดตอัตโนมัติจากผู้ที่สถานะ "ให้ทุน"</p>
+      <p>โรงเรียนพูลเจริญวิทยาคม · เฉพาะครูแนะแนวและผู้ดูแลระบบ</p>
     </div>
-    <div class="controls no-print">
-      <button class="ghost" onclick="location.href='index.html'">🏠 หน้าหลัก</button>
+    <div class="controls no-print" id="whoami" hidden>
+      <span id="whoName" style="font-size:14px;color:var(--muted)"></span>
+      <button class="ghost" id="logoutBtn">ออกจากระบบ</button>
+    </div>
+  </header>
+
+  <!-- LOGIN -->
+  <section id="loginView" class="card login-card">
+    <h3 style="margin-top:0">เข้าสู่ระบบ</h3>
+    <p style="margin:-6px 0 16px;color:var(--muted);font-size:13px">ใช้บัญชีครูแนะแนว/ผู้ดูแลระบบเดียวกับแพลตฟอร์มแนะให้แนว</p>
+    <div id="loginMsg" class="msg"></div>
+    <label>ชื่อผู้ใช้
+      <input id="username" type="text" autocomplete="username" placeholder="เช่น รหัสครู">
+    </label>
+    <label>รหัสผ่าน
+      <input id="password" type="password" autocomplete="current-password">
+    </label>
+    <button class="primary" id="loginBtn">เข้าสู่ระบบ</button>
+    <p style="margin:14px 0 0"><button class="ghost" style="width:100%" onclick="location.href='index.html'">🏠 กลับหน้าหลัก</button></p>
+  </section>
+
+  <!-- ACCESS DENIED -->
+  <section id="denyView" class="card deny hidden">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+    <h3>ไม่มีสิทธิ์เข้าถึงหน้านี้</h3>
+    <p style="color:var(--muted)">หน้าสรุปทุนรายปีเปิดให้เฉพาะครูแนะแนวและผู้ดูแลระบบเท่านั้น</p>
+    <button class="ghost" onclick="location.href='index.html'">🏠 กลับหน้าหลัก</button>
+  </section>
+
+  <!-- MAIN -->
+  <div id="mainView" class="hidden">
+    <div class="controls no-print" style="margin-bottom:16px">
+      <button class="ghost" onclick="location.href='scholarship-hub.html'">‹ กลับหน้าจัดการทุน</button>
       <select id="yearSelect"><option value="">กำลังโหลดปี...</option></select>
       <button class="ghost" id="printBtn">🖨️ พิมพ์ / บันทึกเป็น PDF</button>
       <button class="ghost" id="csvBtn">⬇️ ดาวน์โหลด CSV</button>
     </div>
-  </header>
 
-  <div class="kpis" id="kpis">
-    <div class="kpi"><div class="label">นักเรียนที่ได้รับทุน</div><div class="value" id="kpiCount">–</div></div>
-    <div class="kpi"><div class="label">ยอดเงินทุนรวม</div><div class="value" id="kpiAmount">–</div></div>
-    <div class="kpi"><div class="label">จำนวนทุนที่มอบ</div><div class="value" id="kpiFunds">–</div></div>
-    <div class="kpi"><div class="label">คะแนนเฉลี่ยผู้ได้ทุน</div><div class="value" id="kpiScore">–</div></div>
-  </div>
-
-  <div class="grid2">
-    <div class="card">
-      <h3>จำนวนผู้ได้รับทุน แยกตามทุน (ปีที่เลือก)</h3>
-      <canvas id="byFundChart" height="220"></canvas>
+    <div class="kpis" id="kpis">
+      <div class="kpi"><div class="label">นักเรียนที่ได้รับทุน</div><div class="value" id="kpiCount">–</div></div>
+      <div class="kpi"><div class="label">ยอดเงินทุนรวม</div><div class="value" id="kpiAmount">–</div></div>
+      <div class="kpi"><div class="label">จำนวนทุนที่มอบ</div><div class="value" id="kpiFunds">–</div></div>
+      <div class="kpi"><div class="label">คะแนนเฉลี่ยผู้ได้ทุน</div><div class="value" id="kpiScore">–</div></div>
     </div>
-    <div class="card">
-      <h3>สัดส่วนตามระดับชั้น</h3>
-      <canvas id="byLevelChart" height="220"></canvas>
+
+    <div class="grid2">
+      <div class="card">
+        <h3>จำนวนผู้ได้รับทุน แยกตามทุน (ปีที่เลือก)</h3>
+        <canvas id="byFundChart" height="220"></canvas>
+      </div>
+      <div class="card">
+        <h3>สัดส่วนตามระดับชั้น</h3>
+        <canvas id="byLevelChart" height="220"></canvas>
+      </div>
     </div>
-  </div>
 
-  <div class="card" style="margin-bottom:16px">
-    <h3>แนวโน้มย้อนหลัง (ทุกปีที่มีข้อมูล)</h3>
-    <canvas id="trendChart" height="90"></canvas>
-  </div>
+    <div class="card" style="margin-bottom:16px">
+      <h3>แนวโน้มย้อนหลัง (ทุกปีที่มีข้อมูล)</h3>
+      <canvas id="trendChart" height="90"></canvas>
+    </div>
 
-  <div class="card">
-    <h3>รายชื่อผู้ได้รับทุน (ปีที่เลือก)</h3>
-    <div id="tableWrap"><div class="empty">กำลังโหลดข้อมูล...</div></div>
-  </div>
+    <div class="card">
+      <h3>รายชื่อผู้ได้รับทุน (ปีที่เลือก)</h3>
+      <div id="tableWrap"><div class="empty">กำลังโหลดข้อมูล...</div></div>
+    </div>
 
-  <p class="footer-note">ระบบนี้ดึงข้อมูลสดจาก Supabase (v_scholarship_awards / v_scholarship_annual_summary) — พอครูกด "ให้ทุน" ในหน้าคัดกรอง ข้อมูลจะขึ้นที่นี่ทันทีโดยไม่ต้องทำอะไรเพิ่ม</p>
+    <p class="footer-note">ระบบนี้ดึงข้อมูลสดผ่านฟังก์ชัน scholarship_annual_summary() (ตรวจสิทธิ์ role ที่ฝั่งฐานข้อมูล) — พอครูกด "ให้ทุน" ในหน้าคัดกรอง ข้อมูลจะขึ้นที่นี่ทันทีโดยไม่ต้องทำอะไรเพิ่ม</p>
+  </div>
 </div>
 
 <script>
-// ── ตั้งค่าการเชื่อมต่อ Supabase ──────────────────────────────
-// ใช้ URL / ANON KEY ชุดเดียวกับหน้าอื่นๆ ในคลังแนะแนว (index.html)
 const SUPABASE_URL = "https://ikkhjslmtjwrxzxvtokb.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlra2hqc2xtdGp3cnh6eHZ0b2tiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM3NDMzNjksImV4cCI6MjA5OTMxOTM2OX0.3OR_9mEv82Ns1LLjx5nnRwJYzrtKFtWCWd1bPuQfNKU";
-const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const SUPABASE_KEY = "sb_publishable_gkUomr4OsxcNV2a6EkVgRA__gCuRM7q";
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const $ = s => document.querySelector(s);
 
+let ME = null;
 let allSummary = [];
 let allAwards = [];
 let byFundChart, byLevelChart, trendChart;
 
 const fmtBaht = n => "฿" + Number(n || 0).toLocaleString("th-TH");
+function msg(el, text, type){ el.textContent=text; el.className = "msg " + (type||""); }
+function esc(s){ return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
 
+/* ---------- AUTH + ROLE GATE ---------- */
+// การเช็คสิทธิ์จริงอยู่ที่ฟังก์ชัน scholarship_annual_summary() (SECURITY DEFINER + REVOKE จาก anon)
+// การเช็ค role ที่นี่เป็นแค่ UX ป้องกันไม่ให้นักเรียนที่ล็อกอินอยู่เห็นแดชบอร์ดเปล่าๆ ค้างจอ
+async function login(){
+  const u = $("#username").value.trim(), p = $("#password").value;
+  if(!u || !p){ msg($("#loginMsg"),"กรุณากรอกให้ครบ","err"); return; }
+  $("#loginBtn").disabled = true; $("#loginBtn").textContent = "กำลังเข้าสู่ระบบ…";
+  try{
+    const email = u.includes("@") ? u : `${u}@guidance-pcw.local`;
+    const { error } = await sb.auth.signInWithPassword({ email, password:p });
+    if(error) throw error;
+    await afterLogin();
+  }catch(e){
+    msg($("#loginMsg"), "เข้าสู่ระบบไม่สำเร็จ ตรวจสอบข้อมูลอีกครั้ง", "err");
+  }finally{
+    $("#loginBtn").disabled = false; $("#loginBtn").textContent = "เข้าสู่ระบบ";
+  }
+}
+
+async function afterLogin(){
+  const { data:{ user } } = await sb.auth.getUser();
+  if(!user){ show("login"); return; }
+  const { data:prof } = await sb.from("profiles").select("id,display_name,role").eq("id", user.id).single();
+  ME = prof || { id:user.id, display_name:"ผู้ใช้งาน", role:null };
+  if(ME.role !== "teacher" && ME.role !== "admin"){
+    await sb.auth.signOut();
+    show("deny");
+    return;
+  }
+  $("#whoName").textContent = "เข้าใช้งานในชื่อ " + (ME.display_name || "ครู");
+  $("#whoami").hidden = false;
+  show("main");
+  loadData();
+}
+
+async function logout(){ await sb.auth.signOut(); ME=null; $("#whoami").hidden = true; show("login"); }
+
+function show(which){
+  $("#loginView").classList.toggle("hidden", which!=="login");
+  $("#denyView").classList.toggle("hidden", which!=="deny");
+  $("#mainView").classList.toggle("hidden", which!=="main");
+  window.scrollTo(0,0);
+}
+
+/* ---------- DATA (ผ่าน RPC เท่านั้น — view เดิมถูก revoke จาก anon/authenticated แล้ว) ---------- */
 async function loadData() {
-  const { data: summary, error: e1 } = await sb.from("v_scholarship_annual_summary").select("*");
-  const { data: awards, error: e2 } = await sb.from("v_scholarship_awards").select("*").order("awarded_at", { ascending: false });
+  const { data, error } = await sb.rpc("scholarship_annual_summary");
 
-  if (e1 || e2) {
-    document.getElementById("tableWrap").innerHTML =
-      `<div class="empty">โหลดข้อมูลไม่สำเร็จ: ${(e1 || e2).message}<br>ตรวจสอบว่าใส่ ANON KEY ถูกต้อง และล็อกอินเป็นครูแนะแนว/เจ้าหน้าที่ทุนแล้ว</div>`;
+  if (error) {
+    $("#tableWrap").innerHTML =
+      `<div class="empty">โหลดข้อมูลไม่สำเร็จ: ${esc(error.message)}</div>`;
     return;
   }
 
-  allSummary = summary || [];
-  allAwards = awards || [];
+  allSummary = data?.summary || [];
+  allAwards = data?.awards || [];
 
   const years = [...new Set(allSummary.map(r => r.academic_year))].sort().reverse();
-  const yearSelect = document.getElementById("yearSelect");
+  const yearSelect = $("#yearSelect");
 
   if (years.length === 0) {
     yearSelect.innerHTML = `<option value="">ยังไม่มีข้อมูล</option>`;
@@ -153,11 +241,11 @@ async function loadData() {
 }
 
 function renderEmpty() {
-  document.getElementById("kpiCount").textContent = "0";
-  document.getElementById("kpiAmount").textContent = fmtBaht(0);
-  document.getElementById("kpiFunds").textContent = "0";
-  document.getElementById("kpiScore").textContent = "–";
-  document.getElementById("tableWrap").innerHTML = `<div class="empty">ยังไม่มีนักเรียนที่ได้รับทุนในระบบ — พอครูกด "ให้ทุน" ในหน้าคัดกรอง ข้อมูลจะขึ้นที่นี่อัตโนมัติ</div>`;
+  $("#kpiCount").textContent = "0";
+  $("#kpiAmount").textContent = fmtBaht(0);
+  $("#kpiFunds").textContent = "0";
+  $("#kpiScore").textContent = "–";
+  $("#tableWrap").innerHTML = `<div class="empty">ยังไม่มีนักเรียนที่ได้รับทุนในระบบ — พอครูกด "ให้ทุน" ในหน้าคัดกรอง ข้อมูลจะขึ้นที่นี่อัตโนมัติ</div>`;
 }
 
 function renderYear(year) {
@@ -171,24 +259,20 @@ function renderYear(year) {
     ? (yearAwards.reduce((s, r) => s + Number(r.total_score || 0), 0) / yearAwards.length).toFixed(2)
     : "–";
 
-  document.getElementById("kpiCount").textContent = totalCount.toLocaleString("th-TH");
-  document.getElementById("kpiAmount").textContent = fmtBaht(totalAmount);
-  document.getElementById("kpiFunds").textContent = fundCount.toLocaleString("th-TH");
-  document.getElementById("kpiScore").textContent = avgScore;
+  $("#kpiCount").textContent = totalCount.toLocaleString("th-TH");
+  $("#kpiAmount").textContent = fmtBaht(totalAmount);
+  $("#kpiFunds").textContent = fundCount.toLocaleString("th-TH");
+  $("#kpiScore").textContent = avgScore;
 
-  // จำนวนผู้ได้ทุนแยกตามทุน (รวมทุกระดับชั้นเข้าด้วยกัน)
   const byFund = {};
   rows.forEach(r => { byFund[r.scholarship_name] = (byFund[r.scholarship_name] || 0) + Number(r.awarded_count); });
-  drawBar("byFundChart", (c1 = byFundChart), Object.keys(byFund), Object.values(byFund), "var(--green)");
-  byFundChart = c1;
+  byFundChart = drawBar("byFundChart", byFundChart, Object.keys(byFund), Object.values(byFund));
 
-  // สัดส่วนตามระดับชั้น
   const byLevel = {};
   rows.forEach(r => { const lv = r.class_level || "ไม่ระบุ"; byLevel[lv] = (byLevel[lv] || 0) + Number(r.awarded_count); });
-  drawDonut("byLevelChart", byLevelChart, Object.keys(byLevel), Object.values(byLevel));
+  byLevelChart = drawDonut("byLevelChart", byLevelChart, Object.keys(byLevel), Object.values(byLevel));
 
-  // ตารางรายชื่อ
-  const tableWrap = document.getElementById("tableWrap");
+  const tableWrap = $("#tableWrap");
   if (yearAwards.length === 0) {
     tableWrap.innerHTML = `<div class="empty">ปีนี้ยังไม่มีผู้ได้รับทุน</div>`;
   } else {
@@ -198,11 +282,11 @@ function renderYear(year) {
         <tbody>
           ${yearAwards.map(r => `
             <tr>
-              <td>${r.display_name ?? "-"}</td>
-              <td>${r.student_id ?? "-"}</td>
-              <td>${r.class_room ?? "-"}</td>
-              <td><span class="badge">${r.scholarship_name}</span></td>
-              <td>${r.total_score ?? "-"}</td>
+              <td>${esc(r.display_name ?? "-")}</td>
+              <td>${esc(r.student_id ?? "-")}</td>
+              <td>${esc(r.class_room ?? "-")}</td>
+              <td><span class="badge">${esc(r.scholarship_name)}</span></td>
+              <td>${esc(r.total_score ?? "-")}</td>
               <td>${fmtBaht(r.amount_per_grant)}</td>
             </tr>`).join("")}
         </tbody>
@@ -214,7 +298,7 @@ function renderTrend() {
   const byYear = {};
   allSummary.forEach(r => { byYear[r.academic_year] = (byYear[r.academic_year] || 0) + Number(r.awarded_count); });
   const years = Object.keys(byYear).sort();
-  const ctx = document.getElementById("trendChart");
+  const ctx = $("#trendChart");
   if (trendChart) trendChart.destroy();
   trendChart = new Chart(ctx, {
     type: "line",
@@ -232,34 +316,30 @@ function renderTrend() {
   });
 }
 
-function drawBar(id, existing, labels, data, color) {
-  const ctx = document.getElementById(id);
+function drawBar(id, existing, labels, data) {
+  const ctx = $("#"+id);
   if (existing) existing.destroy();
-  const chart = new Chart(ctx, {
+  return new Chart(ctx, {
     type: "bar",
     data: { labels, datasets: [{ label: "จำนวน (คน)", data, backgroundColor: "#2d6a4a", borderRadius: 6 }] },
     options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
   });
-  return chart;
 }
 
 function drawDonut(id, existing, labels, data) {
-  const ctx = document.getElementById(id);
+  const ctx = $("#"+id);
   if (existing) existing.destroy();
   const palette = ["#2d6a4a", "#c98a3a", "#7a9e8a", "#e0b06b", "#4a7a63", "#b5cbb9"];
-  const chart = new Chart(ctx, {
+  return new Chart(ctx, {
     type: "doughnut",
     data: { labels, datasets: [{ data, backgroundColor: palette }] },
     options: { plugins: { legend: { position: "bottom" } } }
   });
-  byLevelChart = chart;
-  return chart;
 }
 
-document.getElementById("printBtn").onclick = () => window.print();
-
-document.getElementById("csvBtn").onclick = () => {
-  const year = document.getElementById("yearSelect").value;
+$("#printBtn")?.addEventListener("click", () => window.print());
+$("#csvBtn")?.addEventListener("click", () => {
+  const year = $("#yearSelect").value;
   const rows = allAwards.filter(r => r.academic_year === year);
   if (rows.length === 0) return;
   const header = ["ชื่อ-สกุล", "รหัสนักเรียน", "ชั้น", "ทุน", "หน่วยงาน", "คะแนนรวม", "จำนวนเงิน"];
@@ -267,14 +347,18 @@ document.getElementById("csvBtn").onclick = () => {
     rows.map(r => [r.display_name, r.student_id, r.class_room, r.scholarship_name, r.provider, r.total_score, r.amount_per_grant]
       .map(v => `"${(v ?? "").toString().replace(/"/g, '""')}"`).join(","))
   ).join("\n");
-  const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+  const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8;" });
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
   a.download = `scholarship-summary-${year}.csv`;
   a.click();
-};
+});
 
-loadData();
+$("#loginBtn").onclick = login;
+$("#password").addEventListener("keydown", e=>{ if(e.key==="Enter") login(); });
+$("#logoutBtn").onclick = logout;
+
+(async ()=>{ const { data:{ session } } = await sb.auth.getSession(); if(session) afterLogin(); else show("login"); })();
 </script>
 </body>
 </html>

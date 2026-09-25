@@ -210,12 +210,6 @@
       </div>
 
       <div id="applyMsg" class="msg"></div>
-      <a id="registerLink" href="vulnerable-register.html"
-         style="display:none;align-items:center;gap:8px;background:var(--leaf);color:#fff;
-                padding:10px 18px;border-radius:10px;text-decoration:none;font-weight:600;
-                margin-bottom:14px;width:fit-content">
-        → ไปลงทะเบียนข้อมูลครอบครัว
-      </a>
 
       <div class="grid2">
         <label class="fld">
@@ -232,6 +226,41 @@
         <span class="lbl">เหตุผลที่ขอรับทุน / แนะนำตัว <span class="hint">(ไม่บังคับ)</span></span>
         <textarea id="fStatement" placeholder="เล่าถึงความจำเป็น ความตั้งใจ หรือสิ่งที่อยากให้กรรมการทราบ"></textarea>
       </label>
+
+      <div style="height:1px;background:var(--line);margin:20px 0"></div>
+
+      <span class="eyebrow">ข้อมูลครอบครัวและความจำเป็น</span>
+      <h2 class="sec" style="font-size:1.08rem;margin-bottom:4px">ข้อมูลประกอบการพิจารณา</h2>
+      <p class="muted" style="margin:0 0 14px">ใช้ประกอบการพิจารณาทุกทุนที่คุณสมัครในปีการศึกษานี้ กรอกครั้งเดียวใช้ได้ทั้งปี</p>
+
+      <div id="vpLockNote" class="callout hidden" style="background:var(--gold-tint);border-color:#ecdcb6;color:#6b5215">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        <span>ครูแนะแนวได้ตรวจสอบข้อมูลนี้แล้ว จึงไม่สามารถแก้ไขเองได้ หากมีข้อมูลเปลี่ยนแปลง กรุณาติดต่อครูแนะแนวโดยตรง</span>
+      </div>
+
+      <label class="fld"><span class="lbl">รายได้ครัวเรือนต่อเดือน
+        <span class="hint">รวมรายได้ของทุกคนในบ้านโดยประมาณ</span></span>
+        <input id="fIncome" type="number" min="0" step="100" inputmode="numeric" placeholder="เช่น 9000">
+      </label>
+
+      <div class="grid2">
+        <label class="fld"><span class="lbl">พี่น้องที่กำลังเรียน
+          <span class="hint">ไม่รวมตัวคุณ</span></span>
+          <input id="fSiblings" type="number" min="0" step="1" inputmode="numeric" placeholder="เช่น 2"></label>
+        <label class="fld"><span class="lbl">ระยะทางมาโรงเรียน
+          <span class="hint">เที่ยวเดียว (กม.)</span></span>
+          <input id="fTravel" type="number" min="0" step="0.5" inputmode="decimal" placeholder="เช่น 12"></label>
+      </div>
+
+      <label class="fld"><span class="lbl">ระดับความเดือดร้อน / ความจำเป็น</span>
+        <select id="fUrgency">
+          <option value="">— เลือก —</option>
+          <option value="1">1 · พอช่วยเหลือตัวเองได้</option>
+          <option value="2">2 · มีความจำเป็นเล็กน้อย</option>
+          <option value="3">3 · มีความจำเป็นปานกลาง</option>
+          <option value="4">4 · มีความจำเป็นมาก</option>
+          <option value="5">5 · เดือดร้อนมาก จำเป็นเร่งด่วน</option>
+        </select></label>
 
       <button class="btn" id="submitBtn">ส่งใบสมัคร</button>
       <p class="muted" style="text-align:center;margin:12px 0 0">เมื่อส่งแล้วจะติดตามสถานะได้ที่หน้ารายการทุน · ไม่สามารถแก้ไขหลังครูตรวจสอบ</p>
@@ -261,7 +290,7 @@ const STATUS = {
 
 let ME = null;       // profile row
 let CURRENT = null;  // scholarship being applied to
-let REGISTERED_YEARS = new Set(); // academic years the student has registered a vulnerable profile for
+let VP_LOCKED = false; // true once teacher has verified this year's family-info
 
 /* ---------- AUTH (username/password against profiles via edge auth) ---------- */
 // The guidance platform authenticates with Supabase Auth using a synthesized email.
@@ -291,11 +320,6 @@ async function afterLogin(){
   ME = prof || { id:user.id, display_name:"นักเรียน" };
   $("#whoName").textContent = ME.display_name || "นักเรียน";
   $("#whoami").classList.remove("hidden");
-  // โหลดปีการศึกษาที่นักเรียนลงทะเบียนข้อมูลกลุ่มเปราะบางไว้แล้ว (เทียบกับปีของทุนภายหลัง)
-  try{
-    const { data:vps } = await sb.rpc("get_my_vulnerable_years");
-    REGISTERED_YEARS = new Set((vps||[]).map(v=>v.academic_year));
-  }catch(_){ REGISTERED_YEARS = new Set(); }
   show("list");
   loadScholarships();
 }
@@ -378,22 +402,32 @@ function renderMyApps(apps){
 }
 
 /* ---------- APPLY ---------- */
-function openApply(s){
+async function openApply(s){
   CURRENT = s;
   $("#applyTitle").textContent = s.name;
   $("#applyProv").textContent = s.provider||"";
   $("#fGpa").value=""; $("#fConduct").value=""; $("#fStatement").value="";
+  $("#fIncome").value=""; $("#fSiblings").value=""; $("#fTravel").value=""; $("#fUrgency").value="";
+  VP_LOCKED = false;
+  $("#vpLockNote").classList.add("hidden");
+  ["fIncome","fSiblings","fTravel","fUrgency"].forEach(id=>$("#"+id).disabled=false);
   msg($("#applyMsg"),"","");
-  // เตือนถ้ายังไม่ได้ลงทะเบียนข้อมูลกลุ่มเปราะบาง
-  if(!REGISTERED_YEARS.has(CURRENT.academic_year)){
-    msg($("#applyMsg"),
-      `คุณยังไม่ได้ลงทะเบียนข้อมูลครอบครัว (รายได้ พี่น้อง ระยะทาง) สำหรับปีการศึกษา ${CURRENT.academic_year} — เกณฑ์เหล่านี้จะได้ 0 คะแนนหากไม่ลงทะเบียน กรุณาลงทะเบียนที่หน้า “ลงทะเบียนข้อมูลนักเรียน” ก่อนสมัคร เพื่อให้ได้รับการพิจารณาอย่างเต็มที่`,
-      "err");
-    $("#registerLink").style.display = "inline-flex";
-  } else {
-    $("#registerLink").style.display = "none";
-  }
   show("apply");
+
+  // โหลดข้อมูลครอบครัวที่เคยกรอกไว้สำหรับปีการศึกษาของทุนนี้ (ถ้ามี) มาเติมล่วงหน้า
+  try{
+    const { data:rows } = await sb.rpc("get_my_vulnerable_profile", { p_academic_year: s.academic_year });
+    const vp = Array.isArray(rows) && rows.length ? rows[0] : null;
+    if(vp){
+      $("#fIncome").value = vp.household_income_monthly ?? "";
+      $("#fSiblings").value = vp.siblings_in_school ?? "";
+      $("#fTravel").value = vp.travel_distance_km ?? "";
+      $("#fUrgency").value = vp.urgency_level ?? "";
+      VP_LOCKED = !!vp.verified_at;
+      $("#vpLockNote").classList.toggle("hidden", !VP_LOCKED);
+      ["fIncome","fSiblings","fTravel","fUrgency"].forEach(id=>$("#"+id).disabled=VP_LOCKED);
+    }
+  }catch(_){ /* ยังไม่เคยกรอกไว้ — ปล่อยฟอร์มว่าง */ }
 }
 
 async function submitApp(){
@@ -404,6 +438,19 @@ async function submitApp(){
 
   $("#submitBtn").disabled=true; $("#submitBtn").textContent="กำลังส่ง…";
   try{
+    if(!VP_LOCKED){
+      const income=$("#fIncome").value, sib=$("#fSiblings").value,
+            travel=$("#fTravel").value, urg=$("#fUrgency").value;
+      const { error: vpError } = await sb.rpc("upsert_my_vulnerable_profile", {
+        p_academic_year: CURRENT.academic_year,
+        p_household_income_monthly: income===""?null:Number(income),
+        p_siblings_in_school: sib===""?null:Number(sib),
+        p_travel_distance_km: travel===""?null:Number(travel),
+        p_urgency_level: urg===""?null:Number(urg),
+      });
+      if(vpError) throw vpError;
+    }
+
     const { error } = await sb.from("applications").insert({
       scholarship_id: CURRENT.id,
       profile_id: ME.id,
@@ -416,7 +463,7 @@ async function submitApp(){
     await loadScholarships();
   }catch(e){
     const dup = (e.message||"").includes("duplicate") || e.code==="23505";
-    msg($("#applyMsg"), dup ? "คุณสมัครทุนนี้ไปแล้ว" : "ส่งใบสมัครไม่สำเร็จ กรุณาลองใหม่อีกครั้ง", "err");
+    msg($("#applyMsg"), dup ? "คุณสมัครทุนนี้ไปแล้ว" : ("ส่งใบสมัครไม่สำเร็จ: "+(e.message||"กรุณาลองใหม่อีกครั้ง")), "err");
   }finally{
     $("#submitBtn").disabled=false; $("#submitBtn").textContent="ส่งใบสมัคร";
   }

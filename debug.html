@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ตรวจสอบสิทธิ์การเข้าถึง (Debug) · แนะให้แนว</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root{
+    --ink:#1c2b26; --ink-soft:#4a5c55; --paper:#f6f4ec; --card:#ffffff;
+    --line:#dfe2d8; --leaf:#2f6b4f; --leaf-deep:#1f4d38; --leaf-tint:#e7f0e9;
+    --ok:#2f6b4f; --ok-tint:#e7f0e9; --bad:#a23b30; --bad-tint:#f6e6e2; --wait:#8a6d1f; --wait-tint:#f5edd6;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:"Sarabun","TH Sarabun New",-apple-system,system-ui,sans-serif;line-height:1.6;padding:20px 16px 60px}
+  .wrap{max-width:820px;margin:0 auto}
+  h1{font-size:1.4rem;margin:0 0 4px}
+  p.lead{color:var(--ink-soft);margin:0 0 22px;font-size:.92rem}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px 22px;margin-bottom:16px}
+  .card h2{font-size:1.02rem;margin:0 0 4px}
+  .card p.desc{margin:0 0 14px;color:var(--ink-soft);font-size:.86rem}
+  .row{display:flex;align-items:flex-start;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)}
+  .row:last-child{border-bottom:none}
+  .badge{flex:none;font-size:.72rem;font-weight:700;padding:4px 10px;border-radius:20px;margin-top:1px;min-width:64px;text-align:center}
+  .badge.ok{background:var(--ok-tint);color:var(--ok)}
+  .badge.bad{background:var(--bad-tint);color:var(--bad)}
+  .badge.wait{background:var(--wait-tint);color:var(--wait)}
+  .txt b{display:block;font-size:.92rem}
+  .txt span{font-size:.8rem;color:var(--ink-soft);word-break:break-word}
+  input,button{font:inherit;border:1.5px solid var(--line);border-radius:10px;padding:10px 13px}
+  input{width:100%;background:var(--paper);margin-bottom:10px}
+  button{background:linear-gradient(150deg,var(--leaf),var(--leaf-deep));color:#fff;border:none;cursor:pointer;font-weight:700}
+  button.ghost{background:#fff;color:var(--leaf);border:1.5px solid var(--line);font-weight:600}
+  button:disabled{opacity:.55;cursor:not-allowed}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  @media(max-width:480px){.grid2{grid-template-columns:1fr}}
+  .summary{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+  .pill{font-size:.78rem;font-weight:700;padding:6px 12px;border-radius:20px}
+  .pill.ok{background:var(--ok-tint);color:var(--ok)}
+  .pill.bad{background:var(--bad-tint);color:var(--bad)}
+  .msg{padding:10px 13px;border-radius:10px;font-size:.86rem;margin-bottom:12px}
+  .msg.err{background:var(--bad-tint);color:var(--bad)}
+  .whoami{font-size:.86rem;color:var(--ink-soft);margin-bottom:12px}
+  a.back{color:var(--leaf);font-weight:600;text-decoration:none;font-size:.86rem}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p><a class="back" href="scholarship-hub.html">‹ กลับหน้าจัดการทุน</a></p>
+  <h1>ตรวจสอบสิทธิ์การเข้าถึง — สรุปทุนรายปี</h1>
+  <p class="lead">เช็คว่า <code>scholarship_annual_summary()</code> และ view เดิม (<code>v_scholarship_awards</code>, <code>v_scholarship_annual_summary</code>)
+    ปิดกั้นผู้ใช้ที่ไม่ควรเข้าถึงได้จริง ก่อนเปิดใช้งานหน้าสรุปทุนรายปี</p>
+
+  <div class="card">
+    <h2>1) ทดสอบแบบไม่ล็อกอิน (anon)</h2>
+    <p class="desc">รันอัตโนมัติทันทีที่เปิดหน้านี้ ด้วย anon key ล้วนๆ ไม่มี session</p>
+    <div id="anonRows"></div>
+  </div>
+
+  <div class="card">
+    <h2>2) ทดสอบด้วยบัญชีที่ล็อกอิน</h2>
+    <p class="desc">ล็อกอินด้วยบัญชีใดก็ได้ (นักเรียน / ครู / ผู้ดูแลระบบ) เพื่อดูว่าระบบอนุญาต/ปฏิเสธถูกต้องตาม role หรือไม่</p>
+    <div id="whoami" class="whoami" hidden></div>
+    <div id="loginMsg" class="msg" hidden></div>
+    <div id="loginBox">
+      <div class="grid2">
+        <input id="username" type="text" placeholder="ชื่อผู้ใช้ / รหัสประจำตัว">
+        <input id="password" type="password" placeholder="รหัสผ่าน">
+      </div>
+      <button id="loginBtn">เข้าสู่ระบบและทดสอบ</button>
+    </div>
+    <button id="logoutBtn" class="ghost" hidden>ออกจากระบบ</button>
+    <div id="authRows" style="margin-top:14px"></div>
+  </div>
+
+  <div class="card">
+    <h2>สรุปผลก่อนขึ้นจริง</h2>
+    <p class="desc">ต้องเห็น "ผ่าน" ครบทุกข้อก่อนเปิดใช้งานหน้าสรุปทุนรายปีจริง</p>
+    <div id="summaryPills" class="summary"></div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL = "https://ikkhjslmtjwrxzxvtokb.supabase.co";
+const SUPABASE_KEY = "sb_publishable_gkUomr4OsxcNV2a6EkVgRA__gCuRM7q";
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const $ = s => document.querySelector(s);
+
+// ผลตรวจแต่ละข้อ เก็บไว้เรนเดอร์สรุปท้ายหน้า: key -> {label, pass}
+const RESULTS = {};
+
+function rowHtml(state, title, detail){
+  const badge = state==="wait" ? {c:"wait",t:"กำลังตรวจ"} : state==="ok" ? {c:"ok",t:"ผ่าน"} : {c:"bad",t:"ไม่ผ่าน"};
+  return `<div class="row"><span class="badge ${badge.c}">${badge.t}</span>
+    <span class="txt"><b>${esc(title)}</b><span>${esc(detail)}</span></span></div>`;
+}
+function esc(s){ return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+
+function renderSummary(){
+  const box = $("#summaryPills");
+  const entries = Object.entries(RESULTS);
+  if(!entries.length){ box.innerHTML = `<span class="pill bad">ยังไม่มีผลตรวจสอบ</span>`; return; }
+  box.innerHTML = entries.map(([_,r])=>
+    `<span class="pill ${r.pass?"ok":"bad"}">${r.pass?"✓":"✕"} ${esc(r.label)}</span>`).join("");
+}
+
+/* ---------- 1) ANON ---------- */
+async function runAnonChecks(){
+  const box = $("#anonRows");
+  box.innerHTML =
+    rowHtml("wait","เรียก scholarship_annual_summary() แบบไม่ล็อกอิน","กำลังทดสอบ…") +
+    rowHtml("wait","อ่าน v_scholarship_awards ตรงๆ แบบไม่ล็อกอิน","กำลังทดสอบ…");
+  const rows = [];
+
+  // RPC ต้องถูกปฏิเสธ (ไม่มี session -> ไม่ผ่านเช็ค role ในฟังก์ชัน, และ anon ไม่มี EXECUTE grant แล้ว)
+  {
+    const { data, error } = await sb.rpc("scholarship_annual_summary");
+    const blocked = !!error;
+    RESULTS.anon_rpc = { label:"anon เรียก RPC ไม่ได้", pass: blocked };
+    rows.push(rowHtml(blocked?"ok":"bad", "เรียก scholarship_annual_summary() แบบไม่ล็อกอิน",
+      blocked ? ("ถูกปฏิเสธถูกต้อง: "+ (error.message||"permission denied"))
+              : "อันตราย: เรียกสำเร็จโดยไม่ล็อกอิน ได้ข้อมูล "+(Array.isArray(data?.awards)?data.awards.length:"?")+" แถว"));
+  }
+  // View เดิมต้องถูก revoke จาก anon เช่นกัน
+  {
+    const { data, error } = await sb.from("v_scholarship_awards").select("display_name").limit(1);
+    const blocked = !!error;
+    RESULTS.anon_view = { label:"anon อ่าน view เดิมไม่ได้", pass: blocked };
+    rows.push(rowHtml(blocked?"ok":"bad", "อ่าน v_scholarship_awards ตรงๆ แบบไม่ล็อกอิน",
+      blocked ? ("ถูกปฏิเสธถูกต้อง: "+(error.message||"permission denied"))
+              : "อันตราย: อ่านได้โดยไม่ล็อกอิน ("+(data?.length??0)+" แถว) — ต้อง revoke grant จาก anon"));
+  }
+  box.innerHTML = rows.join("");
+  renderSummary();
+}
+
+/* ---------- 2) LOGGED-IN ---------- */
+async function login(){
+  const u = $("#username").value.trim(), p = $("#password").value;
+  if(!u || !p){ msgBox("กรุณากรอกให้ครบ"); return; }
+  $("#loginBtn").disabled = true; $("#loginBtn").textContent = "กำลังเข้าสู่ระบบ…";
+  const domains = ["guidance-pcw.local","guidance.local"];
+  let ok = false, lastErr = null;
+  for(const d of domains){
+    const email = u.includes("@") ? u : `${u}@${d}`;
+    const { error } = await sb.auth.signInWithPassword({ email, password:p });
+    if(!error){ ok = true; break; } else lastErr = error;
+  }
+  $("#loginBtn").disabled = false; $("#loginBtn").textContent = "เข้าสู่ระบบและทดสอบ";
+  if(!ok){ msgBox("เข้าสู่ระบบไม่สำเร็จ: "+(lastErr?.message||"ตรวจสอบชื่อผู้ใช้/รหัสผ่าน")); return; }
+  $("#loginMsg").hidden = true;
+  await afterLogin();
+}
+function msgBox(t){ const el=$("#loginMsg"); el.hidden=false; el.className="msg err"; el.textContent=t; }
+
+async function afterLogin(){
+  const { data:{ user } } = await sb.auth.getUser();
+  if(!user) return;
+  const { data:prof } = await sb.from("profiles").select("display_name,role").eq("id",user.id).single();
+  const role = prof?.role || "(ไม่ทราบ)";
+  $("#whoami").hidden = false;
+  $("#whoami").innerHTML = `เข้าสู่ระบบในชื่อ <b>${esc(prof?.display_name||user.email)}</b> · role = <b>${esc(role)}</b>`;
+  $("#loginBox").hidden = true;
+  $("#logoutBtn").hidden = false;
+
+  const expectAllowed = role === "teacher" || role === "admin";
+  const box = $("#authRows");
+  box.innerHTML = rowHtml("wait","เรียก scholarship_annual_summary()","กำลังทดสอบ…") +
+                  rowHtml("wait","อ่าน v_scholarship_awards ตรงๆ","กำลังทดสอบ…");
+  const rows = [];
+
+  {
+    const { data, error } = await sb.rpc("scholarship_annual_summary");
+    const allowed = !error;
+    const pass = allowed === expectAllowed;
+    RESULTS["auth_rpc_"+role] = { label:`role=${role} เรียก RPC ${expectAllowed?"ได้":"ไม่ได้"}`, pass };
+    rows.push(rowHtml(pass?"ok":"bad", "เรียก scholarship_annual_summary()",
+      allowed
+        ? (`เรียกสำเร็จ ได้ ${Array.isArray(data?.awards)?data.awards.length:0} แถว — ${expectAllowed?"ถูกต้อง (เป็นครู/แอดมิน)":"อันตราย! role นี้ไม่ควรเรียกได้"}`)
+        : (`ถูกปฏิเสธ: ${error.message||"permission denied"} — ${expectAllowed?"ผิดปกติ! ครู/แอดมินควรเรียกได้":"ถูกต้อง (role นี้ไม่ควรเข้าถึง)"}`)));
+  }
+  {
+    const { data, error } = await sb.from("v_scholarship_awards").select("display_name").limit(1);
+    const blocked = !!error; // view ถูก revoke จาก authenticated ทั้งหมด ไม่ว่า role ไหนก็ต้องถูกบล็อก
+    RESULTS["auth_view_"+role] = { label:`role=${role} อ่าน view เดิมไม่ได้`, pass: blocked };
+    rows.push(rowHtml(blocked?"ok":"bad", "อ่าน v_scholarship_awards ตรงๆ",
+      blocked ? ("ถูกปฏิเสธถูกต้อง: "+(error.message||"permission denied")+" (ต้องผ่าน RPC เท่านั้น)")
+              : "อันตราย: อ่านได้ตรงๆ โดยไม่ผ่านการเช็คสิทธิ์ใน RPC ("+(data?.length??0)+" แถว)"));
+  }
+  box.innerHTML = rows.join("");
+  renderSummary();
+}
+
+async function logout(){
+  await sb.auth.signOut();
+  $("#whoami").hidden = true; $("#loginBox").hidden = false; $("#logoutBtn").hidden = true;
+  $("#authRows").innerHTML = "";
+  ["auth_rpc_teacher","auth_rpc_admin","auth_rpc_student"].forEach(()=>{});
+  Object.keys(RESULTS).filter(k=>k.startsWith("auth_")).forEach(k=>delete RESULTS[k]);
+  renderSummary();
+}
+
+$("#loginBtn").onclick = login;
+$("#password").addEventListener("keydown", e=>{ if(e.key==="Enter") login(); });
+$("#logoutBtn").onclick = logout;
+
+(async ()=>{
+  await runAnonChecks();
+  const { data:{ session } } = await sb.auth.getSession();
+  if(session) await afterLogin();
+})();
+</script>
+</body>
+</html>
