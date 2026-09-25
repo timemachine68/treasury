@@ -2754,17 +2754,36 @@ async function openOvModal(sid){
     ? `<span class="awardchip">📋 อยู่ในทะเบียนกลุ่มเปราะบาง${vulnRow.urgency_level? " · ระดับความเร่งด่วน "+esc(vulnRow.urgency_level)+"/5" : ""}${vulnRow.verified_at? " · ยืนยันแล้ว":" · รอยืนยัน"}</span>`
     : `<span class="duechip" style="font-size:.8rem">ไม่มีในทะเบียนกลุ่มเปราะบาง</span>`;
 
+  // แสดงเฉพาะหัวข้อที่นักเรียนมีข้อมูล/เข้าร่วมจริง — หัวข้อไหนไม่มีข้อมูลเลยไม่ต้องขึ้นหัวข้อนั้น
+  const ovPanel = (title, bodyHtml) => `
+    <div class="panel" style="margin-top:12px">
+      <h2 style="font-size:1rem">${title}</h2>
+      <div>${bodyHtml}</div>
+    </div>`;
+  const ovSections = [
+    asgs.length ? `
+    <div class="panel" style="margin-top:12px">
+      <h2 style="font-size:1rem">📝 งานมอบหมาย <span style="font-weight:400;font-size:.8rem;color:var(--ink-soft)">(ติ๊กงานที่ต้องการรวมในสรุปภาพรวมด้านล่าง)</span></h2>
+      <div id="ovAsgList">${asgRows}</div>
+    </div>` : "",
+    rounds.length ? ovPanel("🎓 สำรวจเรียนต่อ",
+      `<div class="tbl-wrap"><table><thead><tr><th>รอบ</th><th>สถานะ</th><th>รายละเอียด</th></tr></thead><tbody>${svRows}</tbody></table></div>`) : "",
+    awards.length ? ovPanel("🏆 เกียรติบัตร / รางวัล", awardList) : "",
+    tgatRows.length ? ovPanel("🎯 ฝึกข้อสอบ TGAT/TPAT", tgatList) : "",
+    quotaRows.length ? ovPanel("🎓 สมัครโควตา", quotaList) : "",
+    schRows.length ? ovPanel("💰 สมัครทุนการศึกษา", schList) : "",
+    wpRows.length ? ovPanel("📋 ฝึกงาน / ใบอนุญาตทำงาน", wpList) : "",
+    cpRows.length ? ovPanel("🐘 โครงการช้างเผือก", cpList) : "",
+    ivRows.length ? ovPanel("🎤 ฝึกซ้อมสัมภาษณ์", ivList) : "",
+    vulnRow ? ovPanel("🛟 ทะเบียนกลุ่มเปราะบาง", vulnBadge) : "",
+  ].filter(Boolean).join("");
+
   $("ovModalBody").innerHTML = `
     <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
       <div style="width:60px;height:60px;border-radius:50%;overflow:hidden;flex:none;background:var(--pine-tint);display:grid;place-items:center;font-family:'Mitr';font-size:1.5rem;color:var(--pine-deep)">
         ${ovAvatarUrl ? `<img src="${ovAvatarUrl}" style="width:100%;height:100%;object-fit:cover" alt="">` : esc((s.display_name||"?").trim().charAt(0).toUpperCase())}
       </div>
       <h2 style="margin:0">🧑‍🎓 ${esc(s.display_name)} <small style="font-weight:400;color:var(--ink-soft)">${esc(s.username)} · ${esc(s.class_room||"-")}</small></h2>
-    </div>
-
-    <div class="panel" style="margin-top:12px">
-      <h2 style="font-size:1rem">📝 งานมอบหมาย <span style="font-weight:400;font-size:.8rem;color:var(--ink-soft)">(ติ๊กงานที่ต้องการรวมในสรุปภาพรวมด้านล่าง)</span></h2>
-      <div id="ovAsgList">${asgRows}</div>
     </div>
 
     <div class="panel" style="margin-top:12px">
@@ -2777,50 +2796,7 @@ async function openOvModal(sid){
       </div>
     </div>
 
-    <div class="panel" style="margin-top:12px">
-      <h2 style="font-size:1rem">🎓 สำรวจเรียนต่อ</h2>
-      <div class="tbl-wrap"><table><thead><tr><th>รอบ</th><th>สถานะ</th><th>รายละเอียด</th></tr></thead><tbody>${svRows}</tbody></table></div>
-    </div>
-
-    <div class="panel" style="margin-top:12px">
-      <h2 style="font-size:1rem">🏆 เกียรติบัตร / รางวัล</h2>
-      <div>${awardList}</div>
-    </div>
-
-    <div class="panel" style="margin-top:12px">
-      <h2 style="font-size:1rem">🎯 ฝึกข้อสอบ TGAT/TPAT</h2>
-      <div>${tgatList}</div>
-    </div>
-
-    <div class="panel" style="margin-top:12px">
-      <h2 style="font-size:1rem">🎓 สมัครโควตา</h2>
-      <div>${quotaList}</div>
-    </div>
-
-    <div class="panel" style="margin-top:12px">
-      <h2 style="font-size:1rem">💰 สมัครทุนการศึกษา</h2>
-      <div>${schList}</div>
-    </div>
-
-    <div class="panel" style="margin-top:12px">
-      <h2 style="font-size:1rem">📋 ฝึกงาน / ใบอนุญาตทำงาน</h2>
-      <div>${wpList}</div>
-    </div>
-
-    <div class="panel" style="margin-top:12px">
-      <h2 style="font-size:1rem">🐘 โครงการช้างเผือก</h2>
-      <div>${cpList}</div>
-    </div>
-
-    <div class="panel" style="margin-top:12px">
-      <h2 style="font-size:1rem">🎤 ฝึกซ้อมสัมภาษณ์</h2>
-      <div>${ivList}</div>
-    </div>
-
-    <div class="panel" style="margin-top:12px">
-      <h2 style="font-size:1rem">🛟 ทะเบียนกลุ่มเปราะบาง</h2>
-      <div>${vulnBadge}</div>
-    </div>
+    ${ovSections}
 
     ${profileHTML(s, assess, tags, {})}
   `;
