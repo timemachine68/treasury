@@ -2405,7 +2405,8 @@ $("btnQuizSave").onclick = async ()=>{
 }
 
 /* ── สร้าง HTML โปรไฟล์ (ใช้ร่วมกันทุกที่) ── */
-const AW_LEVEL_LABEL_MAP = {school:"ระดับโรงเรียน",district:"ระดับเขต",province:"ระดับจังหวัด",region:"ระดับภาค",national:"ระดับประเทศ",international:"ระดับนานาชาติ",other:"อื่นๆ"};
+const AW_LEVEL_LABEL_MAP = {school:"ระดับโรงเรียน",district:"ระดับเขต",area:"ระดับเขตพื้นที่",province:"ระดับจังหวัด",region:"ระดับภาค",national:"ระดับประเทศ",international:"ระดับนานาชาติ",other:"อื่นๆ"};
+const OV_TCAS_TYPE_LABEL = {activity:"กิจกรรม",prize:"รางวัล/การประกวด",project:"โครงงาน",course:"หลักสูตร/คอร์ส"};
 // awards บันทึกใน strength_tags โดย type="award", note="ชื่อรางวัล|ระดับ|ปี|หมายเหตุ"
 function parseAwardNote(note){
   const p = (note||"").split("|");
@@ -2571,7 +2572,8 @@ let ovStudents=[], ovAssignments=[], ovSubmissions=[], ovRounds=[], ovResponses=
 // เชื่อมข้อมูลจากระบบย่อยอื่นๆ ("ระบบของเรา") เข้ามารวมในภาพรวม 360°
 // หมายเหตุ: quota/scholarship/chang_phueak/vulnerable ถูก RLS จำกัดไว้ให้ admin หรือครูที่ is_guidance=true เท่านั้น
 // (ดูฟังก์ชัน is_scholarship_officer() ในฐานข้อมูล) — ครูทั่วไปที่มีสิทธิ์ดูแท็บนี้จะเห็นช่องพวกนี้ว่างเปล่า ไม่ error
-let ovQuota=[], ovQuotaLookup=[], ovScholarship=[], ovScholarshipLookup=[], ovWorkPermit=[], ovChangPhueak=[], ovIv=[], ovIvCat=[], ovVulnerable=[];
+// ovTcasAwards ถูก RLS จำกัดไว้เหมือนกัน: admin/ครู is_guidance หรือครูในกลุ่มสาระที่รับผิดชอบเท่านั้น (ดู awards_is_officer())
+let ovQuota=[], ovQuotaLookup=[], ovScholarship=[], ovScholarshipLookup=[], ovWorkPermit=[], ovChangPhueak=[], ovIv=[], ovIvCat=[], ovVulnerable=[], ovTcasAwards=[];
 
 const OV_QUOTA_STATUS = {submitted:"ส่งแล้ว",under_review:"กำลังพิจารณา",shortlisted:"ผ่านเข้ารอบ",waitlisted:"บัญชีสำรอง",approved:"ได้รับโควตา",promoted:"ได้รับ(เลื่อน)",rejected:"ไม่ผ่าน",withdrawn:"ยกเลิก"};
 const OV_SCHOLARSHIP_STATUS = {submitted:"ส่งใบสมัครแล้ว",under_review:"กำลังพิจารณา",shortlisted:"ผ่านเบื้องต้น",approved:"ได้รับทุน",rejected:"ไม่ผ่าน",withdrawn:"ยกเลิก"};
@@ -2583,7 +2585,7 @@ const OV_IV_STATUS = {draft:"ฉบับซ้อม", submitted:"รอคร�
 async function loadOverview(){
   $("ovLoading").classList.remove("hidden");
   const [{data:stu},{data:asg},{data:sub},{data:rnd},{data:resp},{data:asm},{data:tg},{data:tgat},
-    {data:qa},{data:ql},{data:sa},{data:sl},{data:wp},{data:cp},{data:iv},{data:ivc},{data:vp}] = await Promise.all([
+    {data:qa},{data:ql},{data:sa},{data:sl},{data:wp},{data:cp},{data:iv},{data:ivc},{data:vp},{data:tca}] = await Promise.all([
     fetchAllStudents("id,username,student_id,display_name,class_room,avatar_path"),
     sb.from("assignments").select("id,title,class_rooms,due_at"),
     // ดึง content ด้วยเพื่อให้ AI วิเคราะห์ได้ (text_answer, file_name, external_url)
@@ -2602,9 +2604,12 @@ async function loadOverview(){
     sb.from("iv_sessions").select("id,student_id,kind,status,category_id,submitted_at,reviewed_at"),
     sb.from("iv_categories").select("id,name,emoji"),
     sb.from("vulnerable_profiles").select("id,profile_id,urgency_level,academic_year,verified_at"),
+    sb.from("award_participants")
+      .select("id,profile_id,prize_name,exp_name,score,award_events!inner(id,title,tcas_type,level,academic_year,status)")
+      .eq("award_events.status","verified"),
   ]);
   ovStudents=stu||[]; ovAssignments=asg||[]; ovSubmissions=sub||[]; ovRounds=rnd||[]; ovResponses=resp||[]; ovAssess=asm||[]; ovTags=tg||[]; ovTgat=tgat||[];
-  ovQuota=qa||[]; ovQuotaLookup=ql||[]; ovScholarship=sa||[]; ovScholarshipLookup=sl||[]; ovWorkPermit=wp||[]; ovChangPhueak=cp||[]; ovIv=iv||[]; ovIvCat=ivc||[]; ovVulnerable=vp||[];
+  ovQuota=qa||[]; ovQuotaLookup=ql||[]; ovScholarship=sa||[]; ovScholarshipLookup=sl||[]; ovWorkPermit=wp||[]; ovChangPhueak=cp||[]; ovIv=iv||[]; ovIvCat=ivc||[]; ovVulnerable=vp||[]; ovTcasAwards=tca||[];
   renderOverview();
   $("ovLoading").classList.add("hidden");
 }
@@ -2679,6 +2684,8 @@ async function openOvModal(sid){
   const assess = ovAssess.find(a=>a.student_id===sid)||null;
   const tags = ovTags.filter(t=>t.student_id===sid && t.type!=="award").sort((a,b)=> b.created_at.localeCompare(a.created_at));
   const awards = ovTags.filter(t=>t.student_id===sid && t.type==="award").sort((a,b)=> b.created_at.localeCompare(a.created_at));
+  const tcasAwards = ovTcasAwards.filter(x=>x.profile_id===sid)
+    .sort((a,b)=> (b.award_events?.academic_year||0)-(a.award_events?.academic_year||0));
 
   // ─── งานมอบหมาย: checkbox สำหรับติ๊กเลือกงานที่ต้องการรวมในภาพรวม/ส่งไปวิเคราะห์ต่อ ───
   const asgRows = asgs.length? asgs.map(a=>{
@@ -2700,11 +2707,21 @@ async function openOvModal(sid){
     return `<tr><td>${esc(r.title)}</td><td>${esc(resp.status||"-")}</td><td>${esc(resp.institution||"-")} ${resp.program? "· "+esc(resp.program):""}</td></tr>`;
   }).join("") : `<tr><td colspan="3" style="text-align:center;color:var(--ink-soft)">ยังไม่มีรอบสำรวจสำหรับชั้นนี้</td></tr>`;
 
+  const tcasAwardList = tcasAwards.length ? tcasAwards.map(x=>{
+    const ev = x.award_events || {};
+    const lvLabel = AW_LEVEL_LABEL_MAP[ev.level] || ev.level || "";
+    const typeLabel = OV_TCAS_TYPE_LABEL[ev.tcas_type] || ev.tcas_type || "";
+    return `<span class="awardchip">🎖️ ${esc(ev.title||"-")}${typeLabel? " · "+esc(typeLabel):""}${lvLabel? " · "+esc(lvLabel):""}${ev.academic_year? " (ปี "+esc(ev.academic_year)+")":""}${x.prize_name? " · "+esc(x.prize_name):""}</span>`;
+  }).join("") : "";
   const awardList = awards.length ? awards.map(aw=>{
     const p = parseAwardNote(aw.note);
     const lvLabel = AW_LEVEL_LABEL_MAP[p.level] || p.level;
     return `<span class="awardchip">🏆 ${esc(p.title)}${lvLabel? " · "+esc(lvLabel):""}${p.year? " ("+esc(p.year)+")":""}${p.extra? " · "+esc(p.extra):""}</span>`;
-  }).join("") : `<span class="duechip" style="font-size:.8rem">ยังไม่มีรางวัล</span>`;
+  }).join("") : "";
+  const awardBody = [
+    tcasAwardList ? `<div style="margin-bottom:8px"><span style="font-size:.72rem;font-weight:600;color:var(--ink-soft);display:block;margin-bottom:4px">🔗 จากระบบ TCASVerified (ยืนยันแล้ว)</span>${tcasAwardList}</div>` : "",
+    awardList ? `<div><span style="font-size:.72rem;font-weight:600;color:var(--ink-soft);display:block;margin-bottom:4px">📌 ครูบันทึกเพิ่มเติม</span>${awardList}</div>` : "",
+  ].filter(Boolean).join("");
 
   // ─── ฝึกข้อสอบ TGAT/TPAT: ประวัติรอบล่าสุด ───
   const tgatRows = ovTgat.filter(t=>t.student_id===sid).sort((a,b)=> b.completed_at.localeCompare(a.completed_at));
@@ -2768,7 +2785,7 @@ async function openOvModal(sid){
     </div>` : "",
     rounds.length ? ovPanel("🎓 สำรวจเรียนต่อ",
       `<div class="tbl-wrap"><table><thead><tr><th>รอบ</th><th>สถานะ</th><th>รายละเอียด</th></tr></thead><tbody>${svRows}</tbody></table></div>`) : "",
-    awards.length ? ovPanel("🏆 เกียรติบัตร / รางวัล", awardList) : "",
+    (awards.length || tcasAwards.length) ? ovPanel("🏆 เกียรติบัตร / รางวัล", awardBody) : "",
     tgatRows.length ? ovPanel("🎯 ฝึกข้อสอบ TGAT/TPAT", tgatList) : "",
     quotaRows.length ? ovPanel("🎓 สมัครโควตา", quotaList) : "",
     schRows.length ? ovPanel("💰 สมัครทุนการศึกษา", schList) : "",
