@@ -296,7 +296,7 @@ function renderList(){
       <td style="white-space:nowrap">
         <button class="btn ghost sm" onclick="editQuota('${q.id}')">แก้ไข</button>
         <button class="btn note sm" onclick="openCrit('${q.id}')">เกณฑ์</button>
-        <button class="btn ${q.status==='draft'?'primary':'ghost'} sm" onclick="toggleStatus('${q.id}')">${q.status==='draft'?'เผยแพร่':'ปิดรับ'}</button>
+        <button class="btn ${(q.status==='draft'||q.status==='closed')?'primary':'ghost'} sm" onclick="toggleStatus('${q.id}')">${(q.status==='draft'||q.status==='closed')?'เผยแพร่':'ปิดรับ'}</button>
       </td>
     </tr>`;
   }).join("");
@@ -348,7 +348,7 @@ $("btnQSave").onclick = async ()=>{
 /* ═══════════ เปลี่ยนสถานะ เผยแพร่/ปิด ═══════════ */
 window.toggleStatus = async (id)=>{
   const q = quotas.find(x=>x.id===id);
-  if(q.status==="draft"){
+  if(q.status==="draft" || q.status==="closed"){ // ปิดรับไปแล้วต้องเปิดกลับมาได้ ไม่งั้นไม่มีทางย้อนจาก UI เลย
     // ตรวจน้ำหนัก 100 ก่อนเผยแพร่
     const {data:crit} = await sb.from("quota_criteria").select("weight").eq("quota_id",id);
     const ws = (crit||[]).reduce((s,c)=>s+Number(c.weight||0),0);

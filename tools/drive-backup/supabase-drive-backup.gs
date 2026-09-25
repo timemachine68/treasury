@@ -174,12 +174,15 @@ function copyToDrive_(cfg, root, bucket, file) {
   let folder = ensureFolder_(root, bucket);
   for (const part of parts) folder = ensureFolder_(folder, part);
 
+  // ดาวน์โหลดให้เสร็จก่อน ค่อยลบไฟล์สำรองเก่า — ถ้าสลับลำดับแล้วดาวน์โหลดพลาดกลางทาง
+  // (เน็ตสะดุด, Supabase error ชั่วคราว) ไฟล์นั้นจะไม่มีสำรองเหลืออยู่เลยจนกว่าจะรันสำเร็จรอบหน้า
+  const blob = downloadFile_(cfg, bucket, file.path);
+
   // เช็คซ้ำจากตัวโฟลเดอร์จริงด้วย ไม่ใช่เชื่อ manifest อย่างเดียว —
   // เผื่อรอบก่อนถูกตัดกลางคันจนเซฟ manifest ไม่ทัน จะได้ไม่เกิดไฟล์ซ้ำ
   const existing = folder.getFilesByName(fileName);
   while (existing.hasNext()) existing.next().setTrashed(true);
 
-  const blob = downloadFile_(cfg, bucket, file.path);
   folder.createFile(blob.setName(fileName));
   return file.size;
 }

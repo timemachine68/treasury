@@ -666,6 +666,9 @@ async function openSessionDetail(id, teacherMode, backTab){
     const {data:u} = await sb.storage.from(BUCKET).createSignedUrl(a.media_path, 3600);
     if(u) urls[a.id] = u.signedUrl; } }
   const teacherScores = {...teachMap};
+  // เซ็ตที่ครูอีกคนตรวจไปแล้ว แก้ไขไม่ได้ (RLS บังคับไว้แล้วด้วย — ตรงนี้แค่ไม่ให้เจอ error ตอนกดบันทึก)
+  const lockedByOther = teacherMode && s.status==="reviewed" && s.reviewer_id && s.reviewer_id!==profile.id && profile.role!=="admin";
+  const canEditScores = teacherMode && !lockedByOther;
   $("body").innerHTML = `
     <button class="btn ghost sm" onclick="go('${backTab || (teacherMode? "review":"myresults")}')">← กลับ</button>
     <div class="panel" style="margin-top:12px">
@@ -673,6 +676,7 @@ async function openSessionDetail(id, teacherMode, backTab){
       <div style="font-size:.85rem;color:var(--ink-soft)">
         ${teacherMode? `นักเรียน: <b>${esc(s.profiles?.display_name||"-")}</b> (${esc(s.profiles?.class_room||"-")}) · `:""}
         ซ้อมเมื่อ ${fmtDate(s.created_at)}${s.submitted_at? ` · ส่งเมื่อ ${fmtDate(s.submitted_at)}`:""}</div>
+      ${lockedByOther? `<div class="hint" style="margin-top:8px">🔒 ตรวจแล้วโดยครูท่านอื่น ดูได้อย่างเดียว แก้ไขไม่ได้</div>`:""}
       ${teacherMode? `<div style="margin-top:10px"><button class="btn ghost sm" id="btnAIPrep">🤖 เตรียมข้อมูลให้ AI ช่วยวิเคราะห์</button>
         <div class="hint" style="margin-top:4px">คัดลอกสรุปคำตอบ+เกณฑ์ไปวางในแอป AI ที่คุณสะดวกใช้เอง (เช่น Gemini, ChatGPT) — ระบบไม่ส่งข้อมูลออกอัตโนมัติ ไม่มีค่าใช้จ่ายเพิ่ม</div></div>`:""}
     </div>
@@ -689,12 +693,12 @@ async function openSessionDetail(id, teacherMode, backTab){
         ${rubric.map(r=>`<tr>
           <td><b>${esc(r.title)}</b><br><small style="color:var(--ink-soft)">${esc(r.description||"")}</small></td>
           <td>${selfMap[r.id]? selfMap[r.id]+" ("+SCORE_LABEL[selfMap[r.id]]+")" : "-"}</td>
-          <td>${teacherMode
+          <td>${canEditScores
             ? `<div class="score-pick" data-crit="${r.id}">${[1,2,3,4].map(n=>`<button data-n="${n}" class="${teachMap[r.id]===n?"sel":""}">${n}</button>`).join("")}</div>`
             : (teachMap[r.id]? `<b style="color:var(--pine-deep)">${teachMap[r.id]} (${SCORE_LABEL[teachMap[r.id]]})</b>` : "-")}</td>
         </tr>`).join("")}
       </table></div>
-      ${teacherMode? `
+      ${canEditScores? `
         <div class="field" style="margin-top:14px"><label>ความคิดเห็น/คำแนะนำถึงนักเรียน</label>
           <textarea id="tComment">${esc(s.teacher_comment||"")}</textarea></div>
         <div style="display:flex;justify-content:flex-end"><button class="btn primary" id="btnSaveReview">✔ บันทึกผลตรวจ</button></div>`
@@ -702,6 +706,8 @@ async function openSessionDetail(id, teacherMode, backTab){
     </div>`;
   if(teacherMode){
     $("btnAIPrep").onclick = ()=> openAIModal(buildAIPrompt(s, ans||[], selfMap));
+  }
+  if(canEditScores){
     document.querySelectorAll(".score-pick[data-crit]").forEach(p=>{
       p.querySelectorAll("button").forEach(b=>{ b.onclick = ()=>{
         p.querySelectorAll("button").forEach(x=>x.classList.remove("sel")); b.classList.add("sel");

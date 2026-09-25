@@ -449,7 +449,10 @@ async function save(publish){
     amount_per_grant:$("#eAmount").value?Number($("#eAmount").value):null,
     quota:Number($("#eQuota").value)||1,
     closes_at:$("#eCloses").value?new Date($("#eCloses").value+"T23:59:59").toISOString():null,
-    status:publish?"open":"draft",
+    // "บันทึกเป็นฉบับร่าง" ตอนแก้ไขทุนที่มีอยู่แล้วต้องไม่ดึงสถานะกลับไปเป็น draft
+    // (เคยทำแบบนั้นมาก่อน ผลคือทุนที่ประกาศผลไปแล้วหายจากหน้านักเรียนทันทีถ้าครูกดผิดปุ่ม)
+    // ปุ่ม "เผยแพร่" ยังบังคับเปิดรับสมัครได้เหมือนเดิม แม้กำลังแก้ทุนที่มีอยู่แล้ว
+    status: publish ? "open" : (EDITING? EDITING.status : "draft"),
   };
 
   const btn=publish?$("#publishBtn"):$("#saveDraftBtn");
