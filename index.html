@@ -2804,7 +2804,7 @@ async function openOvModal(sid){
     </div>
 
     <div class="panel" style="margin-top:12px">
-      <h2 style="font-size:1rem">📋 สรุปภาพรวม (จากงานที่ติ๊กเลือก)</h2>
+      <h2 style="font-size:1rem">📋 สรุปภาพรวม (จากข้อมูลทุกระบบย่อยของนักเรียนคนนี้)</h2>
       <div id="ovSummaryBox" class="ai-result"></div>
       <div style="margin-top:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
         <button class="btn note sm" id="btnOvCopy">📋 คัดลอกสรุปนี้</button>
@@ -2830,26 +2830,125 @@ async function openOvModal(sid){
   };
 }
 
-/* ── สร้างข้อความสรุปภาพรวม (ไม่เรียก API ใดๆ ทั้งสิ้น — ไม่มีค่าใช้จ่าย) ── */
+/* ── สร้างข้อความสรุปภาพรวม จากข้อมูลทุกระบบย่อยที่มีในโมดัลนี้ (ไม่เรียก API ใดๆ ทั้งสิ้น — ไม่มีค่าใช้จ่าย) ── */
 function buildOvSummaryText(s){
-  const checked = [...$("ovModalBody").querySelectorAll(".ov-sub-check:checked")];
-  const lines = [];
-  lines.push(`ข้อมูลนักเรียน: ${s.display_name} (${s.username}) ห้อง ${s.class_room||"-"}`);
-  lines.push("");
+  const sid = s.id;
+  const sec = []; // [หัวข้อ, [บรรทัดย่อย...]]
+  const add = (title, rows) => { if(rows && rows.length) sec.push([title, rows]); };
+
+  // งานมอบหมาย: สถานะรวมทุกชิ้น + เนื้อหาเต็มของชิ้นที่ติ๊กเลือกไว้
+  const asgs = ovAssignmentsFor_(s.class_room);
+  const checked = [...($("ovModalBody")?.querySelectorAll(".ov-sub-check:checked") || [])];
+  if(asgs.length){
+    const rows = asgs.map(a=>{
+      const sub = ovSubmissions.find(x=>x.assignment_id===a.id && x.student_id===sid);
+      return `${a.title}: ${sub ? "ส่งแล้ว" : "ยังไม่ส่ง"}`;
+    });
+    add("📝 งานมอบหมาย", rows);
+  }
   if(checked.length){
-    lines.push(`ชิ้นงานที่เลือก (${checked.length} รายการ):`);
-    checked.forEach(cb=>{
+    const rows = checked.map(cb=>{
       const parts = [];
       if(cb.dataset.text)  parts.push(`คำตอบ: "${cb.dataset.text}"`);
       if(cb.dataset.file)  parts.push(`ไฟล์ที่ส่ง: ${cb.dataset.file}`);
       if(cb.dataset.url)   parts.push(`ลิงก์: ${cb.dataset.url}`);
-      lines.push(`• ${cb.dataset.asgname} (ส่งเมื่อ ${cb.dataset.submitted}) — ${parts.join(" / ")||"(ส่งแล้วแต่ไม่มีเนื้อหา)"}`);
+      return `${cb.dataset.asgname} (ส่งเมื่อ ${cb.dataset.submitted}) — ${parts.join(" / ")||"(ส่งแล้วแต่ไม่มีเนื้อหา)"}`;
+    });
+    add("✅ เนื้อหาชิ้นงานที่ติ๊กเลือกไว้", rows);
+  }
+
+  // สำรวจเรียนต่อ
+  const grade = studentGrade_(s.class_room);
+  const rounds = grade? ovRounds.filter(r=>r.grade===grade) : [];
+  add("🎓 สำรวจเรียนต่อ", rounds.map(r=>{
+    const resp = ovResponses.find(x=>x.round_id===r.id && x.student_id===sid);
+    return resp
+      ? `${r.title}: ${resp.status||"-"}${resp.institution? " · "+resp.institution:""}${resp.program? " · "+resp.program:""}`
+      : `${r.title}: ยังไม่ตอบ`;
+  }));
+
+  // จุดแข็ง RIASEC (จากแบบประเมิน + แท็กครู)
+  const assess = ovAssess.find(a=>a.student_id===sid)||null;
+  const riasecTags = ovTags.filter(t=>t.student_id===sid && TYPE_KEYS.includes(t.type));
+  const c = combineScores(assess, riasecTags);
+  const top3 = [...TYPE_KEYS].sort((a,b)=> c[b]-c[a]).slice(0,3).filter(k=>c[k]>0);
+  const riasecRows = [];
+  if(top3.length) riasecRows.push("อันดับต้นๆ: " + top3.map(k=>`${RIASEC[k].name} (${c[k]})`).join(", "));
+  if(riasecTags.length) riasecRows.push("แท็กจากครู: " + riasecTags.map(t=> (RIASEC[t.type]?.name||t.type) + (t.note? ` (${t.note})`:"")).join(", "));
+  add("🌟 จุดแข็ง (RIASEC)", riasecRows);
+
+  // เกียรติบัตร / รางวัล — ทั้ง TCASVerified และที่ครูบันทึกเอง
+  const tcasAwards = ovTcasAwards.filter(x=>x.profile_id===sid);
+  const awardTagRows = ovTags.filter(t=>t.student_id===sid && t.type==="award");
+  const awardRows = [
+    ...tcasAwards.map(x=>{
+      const ev = x.award_events||{};
+      return `[TCASVerified] ${ev.title||"-"}${ev.academic_year? " (ปี "+ev.academic_year+")":""}${x.prize_name? " · "+x.prize_name:""}`;
+    }),
+    ...awardTagRows.map(aw=>{
+      const p = parseAwardNote(aw.note);
+      const lvLabel = AW_LEVEL_LABEL_MAP[p.level] || p.level;
+      return `[ครูบันทึก] ${p.title}${lvLabel? " · "+lvLabel:""}${p.year? " ("+p.year+")":""}${p.extra? " · "+p.extra:""}`;
+    }),
+  ];
+  add("🏆 เกียรติบัตร / รางวัล", awardRows);
+
+  // ฝึกข้อสอบ TGAT/TPAT
+  const tgatRows = ovTgat.filter(t=>t.student_id===sid).sort((a,b)=> b.completed_at.localeCompare(a.completed_at));
+  if(tgatRows.length){
+    const rows = [`ทำไปแล้วทั้งหมด ${tgatRows.length} รอบ`];
+    tgatRows.slice(0,3).forEach(t=> rows.push(`${thDateTime(t.completed_at)} — ${(t.subjects||[]).join("/")}: ${t.raw_score}/${t.max_score} (${t.percentage}%)`));
+    add("🎯 ฝึกข้อสอบ TGAT/TPAT", rows);
+  }
+
+  // โควตา
+  const quotaRows = ovQuota.filter(x=>x.profile_id===sid);
+  add("🎓 สมัครโควตา", quotaRows.map(x=>{
+    const q = ovQuotaLookup.find(y=>y.id===x.quota_id);
+    return `${q? q.name+(q.university?" · "+q.university:"") : (x.applied_faculty||"โควตา")}${x.applied_major? " · "+x.applied_major:""} — ${OV_QUOTA_STATUS[x.status]||x.status}`;
+  }));
+
+  // ทุนการศึกษา
+  const schRows = ovScholarship.filter(x=>x.profile_id===sid);
+  add("💰 สมัครทุนการศึกษา", schRows.map(x=>{
+    const sc = ovScholarshipLookup.find(y=>y.id===x.scholarship_id);
+    return `${sc?.name||"ทุนการศึกษา"} — ${OV_SCHOLARSHIP_STATUS[x.status]||x.status}`;
+  }));
+
+  // ฝึกงาน / ใบอนุญาตทำงาน
+  const wpRows = ovWorkPermit.filter(x=>x.student_id===sid);
+  add("📋 ฝึกงาน / ใบอนุญาตทำงาน", wpRows.map(x=>
+    `${OV_WORKPERMIT_TYPE[x.request_type]||x.request_type} · ${x.employer_name||"-"} — ${OV_WORKPERMIT_STATUS[x.status]||x.status}`));
+
+  // ช้างเผือก
+  const cpRows = ovChangPhueak.filter(x=>x.profile_id===sid);
+  add("🐘 โครงการช้างเผือก", cpRows.map(x=> `${x.track||"-"} — ${OV_CHANGPHUEAK_STATUS[x.status]||x.status}`));
+
+  // ฝึกซ้อมสัมภาษณ์
+  const ivRows = ovIv.filter(x=>x.student_id===sid);
+  add("🎤 ฝึกซ้อมสัมภาษณ์", ivRows.map(x=>{
+    const cat = ovIvCat.find(y=>y.id===x.category_id);
+    return `${cat?.name||"ฝึกสัมภาษณ์"}${x.kind==="mock"?" (นัดซ้อมกับครู)":""} — ${OV_IV_STATUS[x.status]||x.status}`;
+  }));
+
+  // ทะเบียนกลุ่มเปราะบาง
+  const vulnRow = ovVulnerable.find(x=>x.profile_id===sid);
+  if(vulnRow){
+    add("🛟 ทะเบียนกลุ่มเปราะบาง", [
+      `อยู่ในทะเบียน${vulnRow.urgency_level? " · ระดับความเร่งด่วน "+vulnRow.urgency_level+"/5":""}${vulnRow.verified_at? " · ยืนยันแล้ว":" · รอยืนยัน"}`
+    ]);
+  }
+
+  const lines = [`ข้อมูลนักเรียน: ${s.display_name} (${s.username}) ห้อง ${s.class_room||"-"}`];
+  if(sec.length){
+    sec.forEach(([title, rows])=>{
+      lines.push("", `── ${title} ──`);
+      rows.forEach(r=> lines.push(`• ${r}`));
     });
   } else {
-    lines.push("ยังไม่ได้ติ๊กเลือกชิ้นงานใดค่ะ");
+    lines.push("", "ยังไม่มีข้อมูลในระบบย่อยใดๆ สำหรับนักเรียนคนนี้ค่ะ");
   }
-  lines.push("");
-  lines.push("โปรดช่วยวิเคราะห์จุดแข็ง ความสนใจ และให้คำแนะนำเชิงแนะแนวสำหรับนักเรียนคนนี้ โดยอ้างอิงจากชิ้นงานข้างต้น (ตอบเป็นภาษาไทย ไม่เกิน 200 คำ)");
+  lines.push("", "โปรดช่วยวิเคราะห์ภาพรวมของนักเรียนคนนี้จากข้อมูลทุกด้านข้างต้น (จุดแข็ง ความสนใจ กิจกรรม/รางวัล เส้นทางการศึกษาต่อ) แล้วให้คำแนะนำเชิงแนะแนว (ตอบเป็นภาษาไทย ไม่เกิน 300 คำ)");
   return lines.join("\n");
 }
 function updateOvSummary(s){
