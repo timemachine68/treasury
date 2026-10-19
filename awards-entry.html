@@ -68,6 +68,15 @@ textarea{min-height:80px;resize:vertical}
 .btn.warn{background:var(--rust)}
 .btn.sm{padding:5px 11px;font-size:.85rem;border-radius:8px}
 .btn.block{width:100%}
+.btn.danger{background:transparent;color:var(--rust);border:1px solid #e8bfb2}
+.btn.danger:hover{background:#fbe7e0}
+.btn.danger:disabled{background:transparent;color:var(--rust);opacity:.4;cursor:not-allowed}
+.bulk{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;background:var(--paper);
+  border:1px solid var(--line);border-radius:var(--r);padding:9px 14px;margin:0 0 12px;font-size:.9rem}
+.bulk label{display:flex;align-items:center;gap:7px;cursor:pointer;color:var(--bark)}
+.bulk .bulk-n{flex:1;color:var(--muted);font-size:.85rem}
+input.sel,.bulk input[type=checkbox]{width:18px;height:18px;accent-color:var(--pine);flex:none}
+input.sel{margin-top:3px;cursor:pointer}
 
 /* ---------- toolbar ---------- */
 .toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;
@@ -239,6 +248,7 @@ table.pt input[type=text]{padding:5px 8px;font-size:.9rem}
 
     <div id="summaryBar" class="summary"></div>
     <div id="listMsg"></div>
+    <div id="bulkBar"></div>
     <div id="list"></div>
   </div>
 </section>
@@ -326,7 +336,8 @@ const S = {
   events:[],
   counts:{},
   openId:null,
-  participants:{}
+  participants:{},
+  sel:new Set()
 };
 
 /* ============================================================
@@ -451,8 +462,28 @@ function renderSummary(studentCount, totalAwardCount){
   `;
 }
 
+/* ครูลบงานของกลุ่มตัวเองได้ ยกเว้นงานที่ยืนยันแล้ว (ต้องให้งานแนะแนวตีกลับก่อน) */
+const canDelete = e => e.status !== 'verified';
+
+function updateBulkBar(){
+  const el = $('#bulkBar');
+  if(!el) return;
+  const del = S.events.filter(canDelete);
+  S.sel = new Set([...S.sel].filter(id => del.some(e => e.id === id)));
+  if(!del.length){ el.innerHTML = ''; return; }
+  const n = S.sel.size;
+  const students = [...S.sel].reduce((a, id) => a + (S.counts[id] || 0), 0);
+  el.innerHTML = `<div class="bulk">
+    <label><input type="checkbox" id="selAll" ${n === del.length ? 'checked' : ''}>
+      เลือกทั้งหมดที่ลบได้ (${del.length} งาน)</label>
+    <span class="bulk-n">${n ? `เลือกแล้ว ${n} งาน · ${students} รายชื่อ` : ''}</span>
+    <button class="btn danger sm" id="btnBulkDel" ${n ? '' : 'disabled'}>ลบที่เลือก</button>
+  </div>`;
+}
+
 function renderList(){
   const el = $('#list');
+  updateBulkBar();
   if(!S.events.length){
     el.innerHTML = `<div class="empty"><b>ยังไม่มีงานในปีการศึกษานี้</b>
       กดปุ่ม “เพิ่มงานใหม่” เพื่อบันทึกการแข่งขัน กิจกรรม โครงงาน หรือการอบรมที่กลุ่มสาระรับผิดชอบ</div>`;
@@ -463,6 +494,8 @@ function renderList(){
     const open = S.openId === e.id;
     return `<div class="ev" data-id="${e.id}">
       <div class="ev-head" data-act="toggle" data-id="${e.id}">
+        ${canDelete(e) ? `<input type="checkbox" class="sel" data-act="sel" data-id="${e.id}"
+          ${S.sel.has(e.id) ? 'checked' : ''} aria-label="เลือกงานนี้เพื่อลบ">` : ''}
         <div class="ev-title">
           <h3>${esc(e.title)}</h3>
           <div class="ev-meta">
@@ -530,8 +563,9 @@ function renderBody(e, n){
         <button class="btn ghost sm" data-act="edit" data-eid="${e.id}">แก้ไขงาน</button>` : ''}
       ${editable && n > 0 ? `<button class="btn sm" data-act="submit" data-eid="${e.id}"
           style="background:var(--gold)">ส่งให้งานแนะแนวตรวจ</button>` : ''}
-      ${e.status==='draft' && n===0 ? `<button class="btn ghost sm warn" data-act="delev" data-eid="${e.id}"
-          style="color:var(--rust);border-color:#e8bfb2">ลบงานนี้</button>` : ''}
+      ${canDelete(e)
+        ? `<button class="btn danger sm" data-act="delev" data-eid="${e.id}" style="margin-left:auto">ลบงานนี้</button>`
+        : `<span class="hint" style="margin-left:auto">ยืนยันแล้ว ลบเองไม่ได้ ถ้าต้องแก้ไขให้แจ้งงานแนะแนวตีกลับก่อน</span>`}
     </div>
   </div>`;
 }
@@ -1215,17 +1249,52 @@ async function submitEvent(e){
 }
 
 async function deleteEvent(e){
-  if(!confirm(`ลบงาน “${e.title}” ?`)) return;
-  const {error} = await sb.from('award_events').delete().eq('id', e.id);
+  const n = S.counts[e.id] || 0;
+  const note = e.status === 'submitted'
+    ? '\n\nงานนี้ส่งให้งานแนะแนวตรวจไปแล้ว การลบจะดึงงานออกจากคิวตรวจด้วย' : '';
+  if(!confirm(`ลบงาน “${e.title}” พร้อมรายชื่อนักเรียน ${n} คน?\nลบแล้วกู้คืนไม่ได้${note}`)) return;
+  const {data, error} = await sb.from('award_events').delete().eq('id', e.id).select('id');
   if(error){ toast(explain(error)); return; }
-  delete S.participants[e.id];
+  if(!data || !data.length){
+    toast('ลบไม่ได้ งานนี้อาจถูกยืนยันหรือส่งออกไปแล้ว');
+    await loadEvents(); return;
+  }
+  S.sel.delete(e.id); delete S.participants[e.id];
+  if(S.openId === e.id) S.openId = null;
   toast('ลบงานแล้ว');
   await loadEvents();
 }
 
+async function bulkDelete(){
+  const ids = [...S.sel];
+  if(!ids.length) return;
+  const students = ids.reduce((a, id) => a + (S.counts[id] || 0), 0);
+  const submitted = S.events.filter(e => S.sel.has(e.id) && e.status === 'submitted').length;
+  const note = submitted ? `\n\nมี ${submitted} งานที่ส่งตรวจไปแล้ว จะถูกดึงออกจากคิวตรวจด้วย` : '';
+  if(!confirm(`ลบ ${ids.length} งาน พร้อมรายชื่อนักเรียน ${students} คน?\nลบแล้วกู้คืนไม่ได้${note}`)) return;
+
+  const btn = $('#btnBulkDel');
+  btn.disabled = true; btn.textContent = 'กำลังลบ…';
+  const gone = [];
+  for(let i = 0; i < ids.length; i += 50){
+    const {data, error} = await sb.from('award_events').delete().in('id', ids.slice(i, i + 50)).select('id');
+    if(error){ toast(explain(error)); break; }
+    (data || []).forEach(r => gone.push(r.id));
+  }
+  gone.forEach(id => { S.sel.delete(id); delete S.participants[id]; if(S.openId === id) S.openId = null; });
+  toast(gone.length === ids.length
+    ? `ลบ ${gone.length} งานแล้ว`
+    : `ลบได้ ${gone.length} จาก ${ids.length} งาน ที่เหลือลบไม่ได้ (อาจถูกยืนยันหรือส่งออกไปแล้ว)`);
+  await loadEvents();
+}
+
 async function deleteParticipant(pid, eid){
-  const {error} = await sb.from('award_participants').delete().eq('id', pid);
+  const {data, error} = await sb.from('award_participants').delete().eq('id', pid).select('id');
   if(error){ toast(explain(error)); return; }
+  if(!data || !data.length){
+    toast('ลบไม่ได้ รายชื่อนี้ถูกส่งออกไปแล้วหรืองานถูกล็อกแล้ว');
+    await loadParticipants(eid); return;
+  }
   toast('ลบรายชื่อแล้ว');
   await loadParticipants(eid);
 }
@@ -1251,11 +1320,11 @@ $('#btnLogout').addEventListener('click', async ()=>{
 });
 
 $('#selYear').addEventListener('change', async e=>{
-  S.year = Number(e.target.value); S.openId = null; S.participants = {};
+  S.year = Number(e.target.value); S.openId = null; S.participants = {}; S.sel.clear();
   await loadEvents();
 });
 $('#selGroup').addEventListener('change', async e=>{
-  S.groupId = Number(e.target.value); S.openId = null; S.participants = {};
+  S.groupId = Number(e.target.value); S.openId = null; S.participants = {}; S.sel.clear();
   renderToolbar(); await loadEvents();
 });
 $('#btnNew').addEventListener('click', ()=>openEventForm(null));
@@ -1266,12 +1335,25 @@ $('#list').addEventListener('click', async e=>{
   if(!t) return;
   const act = t.dataset.act;
   const ev  = S.events.find(x=>x.id === (t.dataset.eid || t.dataset.id));
+  if(act === 'sel'){
+    if(t.checked) S.sel.add(t.dataset.id); else S.sel.delete(t.dataset.id);
+    return updateBulkBar();
+  }
   if(act === 'toggle')  return toggleEvent(t.dataset.id);
   if(act === 'addp')    return openStudentPicker(ev);
   if(act === 'edit')    return openEventForm(ev);
   if(act === 'submit')  return submitEvent(ev);
   if(act === 'delev')   return deleteEvent(ev);
   if(act === 'delp')    return deleteParticipant(t.dataset.pid, t.dataset.eid);
+});
+
+$('#bulkBar').addEventListener('change', e=>{
+  if(e.target.id !== 'selAll') return;
+  S.sel = e.target.checked ? new Set(S.events.filter(canDelete).map(x=>x.id)) : new Set();
+  renderList();
+});
+$('#bulkBar').addEventListener('click', e=>{
+  if(e.target.closest('#btnBulkDel')) bulkDelete();
 });
 
 /* บันทึกช่องรายบุคคลเมื่อออกจากช่อง */
