@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>การ์ดสำรวจใจ | แนะให้แนว</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Mali:wght@500;600;700&family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+/* Layout: one phone-width column floating over a fixed night-lake scene; every screen is a single panel. */
+:root{
+  --night:#1D2A4D; --lake:#26355F; --lake2:#34467A;
+  --cream:#F6F1E4; --lav:#B9A7E0; --lav-soft:#E4DAF7; --mint:#BFEBD7; --lilac:#D9CCF2; --glow:#FFF3B0; --peach:#F4A98C;
+  --panel:rgba(20,30,60,.78); --panel-line:rgba(185,167,224,.55);
+  --font-display:'Mali','Sarabun',sans-serif; --font-body:'Sarabun','Mali',sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--night);color:var(--cream);font-family:var(--font-body);font-size:16px;line-height:1.6;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 56px;min-height:100vh}
+.scene{position:fixed;inset:0;z-index:0;pointer-events:none}
+.scene svg{width:100%;height:100%;display:block}
+#app{position:relative;z-index:1;max-width:460px;margin:0 auto}
+.panel{background:var(--panel);border:1.5px solid var(--panel-line);border-radius:28px;padding:22px;animation:rise .4s ease both}
+@keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+h1,h2{font-family:var(--font-display);margin:0;text-wrap:balance;line-height:1.3}
+h1{font-size:38px;font-weight:700}
+h2{font-size:22px;font-weight:600}
+p{margin:8px 0}
+.sub{color:var(--lav-soft);font-size:14.5px}
+.center{text-align:center}
+.pill{display:inline-block;padding:4px 14px;border-radius:999px;border:1.5px solid var(--lav);color:var(--lav-soft);font-size:13px;font-weight:600}
+.btn{display:block;width:100%;min-height:54px;margin-top:18px;border:0;border-radius:999px;background:var(--mint);color:var(--night);font:700 17px var(--font-body);cursor:pointer;box-shadow:0 5px 0 #86BCA4;transition:transform .1s}
+.btn:active{transform:translateY(3px);box-shadow:0 2px 0 #86BCA4}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn.ghost{background:transparent;color:var(--cream);border:1.5px solid var(--lav);box-shadow:none}
+button:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid var(--glow);outline-offset:3px}
+input[type=text],textarea{width:100%;margin-top:8px;padding:12px 14px;border-radius:16px;border:2px solid var(--panel-line);background:rgba(246,241,228,.08);color:var(--cream);font:inherit}
+input::placeholder,textarea::placeholder{color:#B7B3CC}
+textarea{min-height:112px;resize:vertical}
+.lvl{display:flex;align-items:center;gap:14px;width:100%;min-height:72px;margin-top:10px;padding:12px 16px;border:3px solid transparent;border-radius:20px;color:var(--night);text-align:left;font:inherit;cursor:pointer}
+.lvl[aria-pressed=true]{border-color:var(--cream);box-shadow:0 0 0 3px rgba(246,241,228,.25)}
+.lvl .badge{flex-shrink:0;width:48px;height:48px;border-radius:50%;background:var(--cream);display:flex;align-items:center;justify-content:center;font:700 17px var(--font-display)}
+.lvl b{display:block;font-size:16px}.lvl small{display:block;font-size:13px}
+.lvl.l3{background:var(--mint)}.lvl.l6{background:var(--lilac)}
+.note{margin-top:14px;padding:12px 14px;border-radius:16px;background:rgba(255,243,176,.12);border:1px solid rgba(255,243,176,.35);font-size:14px;line-height:1.65}
+.progress{height:10px;border-radius:999px;background:rgba(246,241,228,.15);overflow:hidden;margin:6px 0 16px}
+.progress i{display:block;height:100%;background:var(--lav);border-radius:999px;transition:width .3s}
+.opt{display:flex;gap:12px;align-items:center;width:100%;min-height:72px;margin-top:12px;padding:14px 16px;border:2px solid var(--panel-line);border-radius:20px;background:rgba(246,241,228,.07);color:var(--cream);font:inherit;text-align:left;cursor:pointer}
+.opt:hover{border-color:var(--glow);background:rgba(246,241,228,.12)}
+.back-link{background:none;border:0;color:var(--lav-soft);font:inherit;font-size:14.5px;cursor:pointer;padding:8px 0;min-height:44px}
+.letters{display:flex;gap:10px;justify-content:center;margin:14px 0 4px}
+.letter{width:62px;height:62px;border:0;border-radius:20px;color:var(--night);font:700 30px var(--font-display);cursor:pointer;box-shadow:0 4px 0 rgba(0,0,0,.25)}
+.bar{margin:14px 0}
+.bar .lbl{display:flex;justify-content:space-between;font-size:13px;color:var(--lav-soft);font-weight:600}
+.bar .track{position:relative;height:12px;border-radius:999px;background:rgba(246,241,228,.15);margin-top:6px}
+.bar .fill{position:absolute;left:0;top:0;height:100%;border-radius:999px;background:var(--lav)}
+.bar .dot{position:absolute;top:-4px;width:20px;height:20px;margin-left:-10px;border-radius:50%;background:var(--cream);border:3px solid var(--night)}
+.cardwrap{display:inline-block;padding:5px;border-radius:22px;background:var(--cream)}
+.card{display:block}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:16px}
+.back-card{padding:0;border:0;background:none;border-radius:16px;cursor:pointer;transition:transform .15s}
+.back-card.on{transform:translateY(-8px);filter:drop-shadow(0 0 10px var(--glow))}
+.back-card svg{width:100%;height:auto;display:block}
+.row3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:12px;align-items:start}
+.slot{font-size:12.5px;font-weight:700;text-align:center;min-height:36px;line-height:1.4;margin-bottom:6px}
+.slot-btn{display:block;width:100%;padding:0;border:0;background:none;border-radius:16px;cursor:pointer}
+.slot-btn svg{width:100%;height:auto;display:block}
+.slot-btn.sel{outline:3px solid var(--glow);outline-offset:3px}
+.detail{margin-top:18px;padding:16px;border-radius:20px;background:rgba(246,241,228,.08);border:1.5px dashed var(--lav);animation:rise .35s ease both}
+.lens{margin-top:10px;padding:12px 14px;border-radius:14px;background:rgba(185,167,224,.16);font-size:14.5px;line-height:1.65}
+.q{margin-top:10px;padding:14px;border-radius:14px;background:rgba(191,235,215,.16);font:600 17px/1.6 var(--font-display)}
+.chip{display:block;width:100%;margin-top:10px;padding:12px 14px;border:2px solid var(--panel-line);border-radius:16px;background:rgba(246,241,228,.07);color:var(--cream);font:inherit;text-align:left;cursor:pointer}
+.chip.on{border-color:var(--glow);background:rgba(255,243,176,.14)}
+.chip small{display:block;color:var(--lav-soft);font-size:13.5px}
+label.sw{display:flex;gap:12px;align-items:flex-start;margin-top:16px;font-size:14.5px;line-height:1.6;cursor:pointer}
+label.sw input{flex-shrink:0;width:22px;height:22px;margin-top:3px;accent-color:var(--mint)}
+details{margin-top:16px;font-size:13px;color:var(--lav-soft)}
+pre{white-space:pre-wrap;word-break:break-all;background:rgba(0,0,0,.3);border-radius:12px;padding:10px;font-size:11.5px;color:var(--cream)}
+.mini{display:flex;gap:12px;align-items:center;margin-bottom:6px}
+
+[hidden]{display:none!important}
+#toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--cream);color:var(--night);padding:11px 20px;border-radius:999px;font-size:.9rem;font-weight:600;box-shadow:0 6px 20px rgba(0,0,0,.4);opacity:0;pointer-events:none;transition:opacity .25s;z-index:99;max-width:90vw;text-align:center}
+#toast.show{opacity:1}
+</style>
+</head>
+<body>
+<div class="scene" aria-hidden="true">
+<svg viewBox="0 0 400 800" preserveAspectRatio="xMidYMax slice">
+<rect width="400" height="800" fill="#1D2A4D"/>
+<rect y="0" width="400" height="360" fill="#222F58"/>
+<circle cx="312" cy="120" r="76" fill="#FFF1C9" opacity=".12"/><circle cx="312" cy="120" r="50" fill="#FFF1C9" opacity=".22"/><circle cx="312" cy="120" r="34" fill="#FFF1C9" opacity=".9"/>
+<g fill="#F6F1E4" opacity=".8"><circle cx="40" cy="60" r="1.8"/><circle cx="120" cy="36" r="1.4"/><circle cx="190" cy="100" r="1.6"/><circle cx="70" cy="160" r="1.4"/><circle cx="230" cy="52" r="1.2"/><circle cx="360" cy="230" r="1.6"/><circle cx="160" cy="210" r="1.2"/><circle cx="26" cy="250" r="1.4"/></g>
+<path d="M0 560 C70 520 150 535 210 555 C280 525 340 535 400 560 L400 800 L0 800Z" fill="#161F3C"/>
+<rect y="590" width="400" height="210" fill="#26355F"/>
+<path d="M0 650 C100 640 260 660 400 646 L400 800 L0 800Z" fill="#2E4073"/>
+<path d="M0 720 C120 708 250 730 400 716 L400 800 L0 800Z" fill="#34467A" opacity=".85"/>
+<g fill="#FFF3B0"><circle cx="54" cy="520" r="3"/><circle cx="330" cy="500" r="3"/><circle cx="100" cy="470" r="2.4"/><circle cx="360" cy="560" r="2.4"/></g>
+</svg>
+</div>
+<main id="app"></main>
+<div id="toast" role="status"></div>
+<script>
+
+/* ---------- ข้อมูล ---------- */
+// [มิติ, ข้อความ ม.3, ข้อความ ม.6, [อักษร, ตัวเลือก ม.3, ตัวเลือก ม.6], [อักษร, ตัวเลือก ม.3, ตัวเลือก ม.6]]
+const QS=[
+["EI","หลังวันที่เหนื่อยมาก เธอชาร์จแบตด้วยการ…","หลังวันที่วุ่นวายมาก เธอชาร์จแบตด้วยการ…",["E","ไปเจอเพื่อนๆ คุยให้หายเหนื่อย","ไปเจอเพื่อน คุยให้หายเหนื่อย"],["I","อยู่เงียบๆ คนเดียวสักพัก","อยู่คนเดียวเงียบๆ สักพัก"]],
+["EI","เวลาคิดอะไรไม่ออก เธอมักจะ…","เวลาคิดอะไรไม่ออก เธอมักจะ…",["E","คุยกับเพื่อนแล้วความคิดค่อยชัด","คุยกับใครสักคน แล้วความคิดค่อยชัด"],["I","คิดในหัวให้ชัดก่อนค่อยพูด","คิดในหัวให้ตกผลึกก่อนค่อยพูด"]],
+["EI","วันแรกของชุมนุมใหม่ที่ไม่รู้จักใครเลย เธอมักจะ…","เจอกลุ่มคนใหม่ที่ไม่รู้จักใคร เธอมักจะ…",["E","ทักทายและเริ่มคุยก่อน","ทักทายและเริ่มคุยก่อน"],["I","ดูบรรยากาศก่อนแล้วค่อยเข้าร่วม","สังเกตก่อน แล้วค่อยเข้าร่วม"]],
+["SN","ครูสอนเรื่องใหม่ เธอเข้าใจง่ายสุดเมื่อ…","เวลาเรียนเรื่องใหม่ เธอชอบแบบไหน…",["S","มีตัวอย่างจริงและขั้นตอนชัดเจน","ตัวอย่างจริงและขั้นตอนชัดเจน"],["N","เห็นภาพรวมก่อนว่าเชื่อมกับอะไร","เห็นภาพรวมและความเชื่อมโยง"]],
+["SN","เธอเชื่อใจอะไรมากกว่า…","เธอเชื่อใจอะไรมากกว่า…",["S","สิ่งที่เห็นและลองแล้วได้ผลจริง","สิ่งที่เห็นและพิสูจน์ได้"],["N","สัญชาตญาณและความเป็นไปได้","สัญชาตญาณและความเป็นไปได้"]],
+["SN","พอคิดถึงอนาคตหลังจบ ม.3 เธอมักจะ…","เวลาคิดถึงอนาคตหลังจบ ม.6 เธอมักจะ…",["S","โฟกัสสิ่งที่ทำได้ตอนนี้","โฟกัสสิ่งที่ทำได้ตอนนี้"],["N","นึกภาพฝันไกลๆ ก่อน","นึกภาพฝันไกลๆ ก่อน"]],
+["TF","เพื่อนมาปรึกษาเรื่องหนักใจ เธอมักจะ…","เพื่อนมาปรึกษาเรื่องหนักใจ เธอมักจะ…",["T","ช่วยคิดหาทางแก้","ช่วยวิเคราะห์ หาทางแก้"],["F","รับฟังและอยู่ข้างๆ ก่อน","รับฟังและอยู่ข้างๆ ก่อน"]],
+["TF","ตัดสินใจเรื่องสำคัญ เธอมักจะ…","ตัดสินใจเรื่องสำคัญ เธอมักจะ…",["T","ชั่งเหตุผล ข้อดีข้อเสีย","ชั่งเหตุผล ข้อดีข้อเสีย"],["F","ถามใจว่าตรงกับสิ่งที่เรายึดถือไหม","ถามใจว่าตรงกับคุณค่าของเราไหม"]],
+["TF","งานกลุ่มเห็นไม่ตรงกัน เธอให้ความสำคัญกับ…","เวลาในกลุ่มเห็นไม่ตรงกัน เธอให้ความสำคัญกับ…",["T","ความถูกต้องของงาน","ความถูกต้องและความแม่นยำ"],["F","ให้ทุกคนรู้สึกโอเคร่วมกัน","ให้ทุกคนรู้สึกโอเคร่วมกัน"]],
+["JP","ใกล้สอบหรือใกล้ส่งงาน เธอมักจะ…","ใกล้ส่งงานหรือสอบ เธอมักจะ…",["J","ทำตารางวางแผนไว้ล่วงหน้า","มีตารางวางแผนล่วงหน้า"],["P","ลุยตอนไฟลุก ยืดหยุ่นไปเรื่อยๆ","ลุยตอนไฟลุก ยืดหยุ่นไปเรื่อยๆ"]],
+["JP","ไปเที่ยวกับเพื่อน เธอชอบ…","ไปเที่ยวกับเพื่อน เธอชอบ…",["J","จัดแผนรายวันไว้","จัดแผนรายวันไว้"],["P","ไปเจอเอาระหว่างทาง","ไปเจอเอาระหว่างทาง"]],
+["JP","เรื่องเลือกแผนการเรียนต่อ ม.4 เธอ…","เรื่องเลือกคณะหรือเส้นทางหลังจบ ม.6 เธอ…",["J","อยากรู้คำตอบให้จบเร็วๆ","อยากรู้คำตอบให้จบเร็วๆ"],["P","ขอเปิดตัวเลือกไว้ก่อน","ขอเปิดตัวเลือกไว้ก่อน"]]
+];
+// [ชื่อไทย, ชื่ออังกฤษ, ใจความ, ความหมาย, คำถามชวนคิด]
+const CARDS=[
+["ผู้เริ่มต้น","The Fool","ก้าวแรกกับความไม่รู้","การเริ่มต้นใหม่ที่เต็มไปด้วยความเป็นไปได้","ถ้าไม่กลัวผิด เธออยากลองอะไรสักอย่าง?"],
+["นักสร้างสรรค์","The Magician","เครื่องมือครบแล้ว","เธอมีทักษะและทรัพยากรมากกว่าที่คิด","เธอมีความสามารถอะไรที่ยังไม่ได้ใช้เต็มที่?"],
+["เสียงภายใน","The High Priestess","ฟังใจตัวเอง","คำตอบบางอย่างอยู่ข้างในอยู่แล้ว","ถ้าเงียบสักนาทีแล้วฟังใจ ใจกำลังบอกอะไร?"],
+["ผู้เติบโต","The Empress","ความอบอุ่นและงอกงาม","การดูแลสิ่งที่รักจะทำให้มันเติบโต","อะไรที่ทำให้เธอรู้สึกอบอุ่นและเติบโต?"],
+["ผู้วางโครง","The Emperor","โครงสร้างและความรับผิดชอบ","การมีกรอบที่ดีช่วยให้เดินต่อได้มั่นคง","ถ้าต้องตั้งกฎให้ชีวิตตัวเองสัก 1 ข้อ จะเป็นข้ออะไร?"],
+["ผู้สืบทอด","The Hierophant","เรียนรู้จากคนที่ไปก่อน","ประสบการณ์ของคนอื่นเป็นแผนที่ได้","ใครคือคนที่เธออยากเรียนรู้ด้วย และอยากถามเขาว่าอะไร?"],
+["ทางเลือกของใจ","The Lovers","เลือกตามคุณค่า","การเลือกที่ตรงกับตัวเองคือหัวใจของเรื่องนี้","มีทางเลือกไหนที่เธอเลือกเพราะอยากเลือกเอง ไม่ใช่เพราะคนอื่นคาดหวัง?"],
+["ผู้มุ่งหน้า","The Chariot","ความมุ่งมั่น","พลังที่ต้องบังคับให้ไปทางเดียวกัน","เป้าหมายอะไรที่เธออยากไปให้ถึง และอะไรที่ดึงเธอไว้?"],
+["ความอ่อนโยนที่แข็งแรง","Strength","ใจเย็นแต่ไม่ยอมแพ้","ความกล้าไม่จำเป็นต้องเสียงดัง","เธอเคยผ่านอะไรมาได้ด้วยความใจเย็น?"],
+["ผู้ใคร่ครวญ","The Hermit","เวลาอยู่กับตัวเอง","บางคำตอบต้องหาในที่เงียบๆ","ถ้ามีเวลาอยู่กับตัวเองหนึ่งวัน เธออยากหาคำตอบเรื่องอะไร?"],
+["จังหวะชีวิต","Wheel of Fortune","ทุกอย่างหมุนเปลี่ยน","บางช่วงขึ้น บางช่วงลง และมันผ่านไปเสมอ","อะไรที่เปลี่ยนไปในชีวิตเธอปีนี้ และเธอรู้สึกยังไง?"],
+["ความเป็นธรรม","Justice","ความจริงและความสมดุล","การตัดสินใจที่ซื่อตรงต่อตัวเอง","เรื่องไหนที่เธอไม่อยากประนีประนอมกับสิ่งที่ตัวเองยึดถือ?"],
+["มุมมองใหม่","The Hanged Man","กลับหัวมองดู","บางครั้งการหยุดและเปลี่ยนมุมช่วยได้มาก","เรื่องที่ติดอยู่ ถ้ามองจากอีกมุมจะเห็นอะไรเพิ่ม?"],
+["ปล่อยวาง","Death","จบเพื่อเริ่มใหม่","เปิดที่ว่างให้สิ่งใหม่ (ไม่ได้น่ากลัวเลยนะ)","มีอะไรที่เธอพร้อมวางลง เพื่อให้มีที่ว่างสำหรับสิ่งใหม่?"],
+["ความพอดี","Temperance","ผสมให้ลงตัว","ชีวิตที่ดีคือการแบ่งสัดส่วนให้พอดี","เธอจะแบ่งเวลาระหว่างสิ่งที่ต้องทำกับสิ่งที่อยากทำยังไงให้พอดี?"],
+["สิ่งที่ผูกใจ","The Devil","นิสัยที่ดึงเราไว้","บางสิ่งที่เรายึดไว้ ความจริงเราปลดเองได้","มีนิสัยหรือความเชื่อไหนที่ทำให้เธอเดินไม่สุดทาง?"],
+["จุดเปลี่ยนฉับพลัน","The Tower","แผนที่ต้องเปลี่ยน","เมื่อของเก่าพัง ก็เห็นพื้นที่สร้างใหม่","ถ้าแผนที่วางไว้ต้องเปลี่ยน เธอมีแผนสำรองหรือคนที่พึ่งได้ไหม?"],
+["ความหวัง","The Star","แสงเล็กๆ ที่นำทาง","ความหวังเล็กๆ ก็พอให้เดินต่อ","อะไรคือแสงเล็กๆ ที่ทำให้เธอยังอยากไปต่อ?"],
+["ความไม่ชัดเจน","The Moon","หมอกที่ยังไม่จาง","ความไม่แน่ใจเป็นเรื่องปกติของคนที่กำลังค้นหา","เรื่องไหนที่ยังไม่ชัด และเธอต้องการข้อมูลอะไรเพิ่ม?"],
+["ความสุขที่เป็นตัวเอง","The Sun","สว่างและเบิกบาน","สิ่งที่ทำแล้วรู้สึกเป็นตัวเองที่สุด","กิจกรรมไหนที่ทำแล้วเวลาผ่านไปเร็วและรู้สึกเป็นตัวเอง?"],
+["เสียงเรียก","Judgement","ถึงเวลาตื่นรู้","เสียงเรียกจากอนาคตที่เธอเริ่มได้ยิน","ถ้าอนาคตเรียกชื่อเธอ เธออยากให้มันเรียกไปทำอะไร?"],
+["ความสมบูรณ์","The World","ปิดวงจรแล้วไปต่อ","เธอเดินมาไกลกว่าที่คิด","อะไรที่เธอทำสำเร็จแล้วแต่ยังไม่เคยฉลองให้ตัวเอง?"]
+];
+// [index ไพ่, ฉายา, จุดแข็ง, ข้อควรสังเกต]
+const TYPES={
+INFP:[18,"นักฝันผู้อ่อนโยน","ลึกซึ้ง เข้าใจความรู้สึกคน มีโลกภายในสร้างสรรค์","บางครั้งอาจลังเลหรือเก็บความรู้สึกไว้จนตัดสินใจช้า"],
+INFJ:[2,"ผู้หยั่งรู้เงียบๆ","มองเห็นภาพใหญ่และใส่ใจความหมายของสิ่งต่างๆ","อาจแบกความคาดหวังไว้คนเดียว"],
+ENFP:[0,"นักผจญภัยหัวใจสว่าง","กระตือรือร้น เห็นความเป็นไปได้ใหม่ๆ เสมอ","อาจเริ่มหลายอย่างแต่ไปไม่สุดสักทาง"],
+ENFJ:[19,"ผู้ให้แสงสว่าง","สื่อสารเก่ง ดึงศักยภาพของคนรอบตัว","อาจลืมดูแลตัวเองเพราะห่วงคนอื่น"],
+INTP:[12,"นักคิดมุมกลับ","วิเคราะห์เก่ง ชอบหาหลักการเบื้องหลัง","อาจคิดเพลินจนไม่ได้ลงมือ"],
+INTJ:[17,"ผู้วางแผนระยะไกล","เห็นเป้าหมายไกลและวางกลยุทธ์ได้ดี","อาจกดดันตัวเองหรือคนอื่นเกินไป"],
+ENTP:[1,"นักประดิษฐ์ไอเดีย","คิดนอกกรอบ โต้แย้งและต่อยอดเก่ง","อาจเบื่อง่ายเมื่อถึงขั้นรายละเอียด"],
+ENTJ:[4,"ผู้นำที่มุ่งผลลัพธ์","ตัดสินใจเด็ดขาด จัดระบบและขับเคลื่อนคนได้","อาจเร็วเกินไปจนลืมฟังความรู้สึก"],
+ISFP:[14,"ศิลปินใจเย็น","อ่อนโยน ละเอียดอ่อนกับสิ่งสวยงามและความรู้สึก","อาจไม่ค่อยบอกความต้องการของตัวเอง"],
+ISFJ:[3,"ผู้ดูแลแสนอบอุ่น","ใส่ใจ น่าไว้ใจ จำรายละเอียดของคนที่รัก","อาจเกรงใจจนไม่กล้าปฏิเสธ"],
+ESFP:[10,"ดาวเด่นของงาน","สนุก เข้ากับคนง่าย อยู่กับปัจจุบันได้ดี","อาจละเลยการวางแผนระยะยาว"],
+ESFJ:[6,"เพื่อนที่ทุกคนพึ่งได้","ใส่ใจบรรยากาศ ประสานคนเก่ง","อาจกังวลเรื่องสายตาคนอื่นมากไป"],
+ISTP:[9,"ช่างฝีมือเงียบๆ","แก้ปัญหาตรงจุด ใจเย็นและลงมือเก่ง","อาจเก็บตัวจนคนไม่รู้ว่าคิดอะไรอยู่"],
+ISTJ:[5,"ผู้รักษาความเป็นระเบียบ","รับผิดชอบ ทำตามแผน และไว้ใจได้","อาจยึดวิธีเดิมจนปรับตัวยาก"],
+ESTJ:[11,"ผู้จัดการความยุติธรรม","ตรงไปตรงมา จัดการงานให้เป็นระบบ","อาจเข้มงวดจนลืมความยืดหยุ่น"],
+ESTP:[7,"นักลุยตัวจริง","กล้า ว่องไว แก้สถานการณ์เฉพาะหน้าเก่ง","อาจรีบจนไม่ทันมองผลระยะยาว"]
+};
+const LENS={
+NF:["สไตล์ NF มักถามว่า 'สิ่งนี้มีความหมายกับฉันไหม' ลองสังเกตว่าตอนนี้อะไรมีความหมายกับเธอ",
+"NF มักกลัวการต้องฝืนเป็นคนอื่น หรือทำสิ่งที่ไม่ตรงกับใจ ความกลัวของเธอเกี่ยวกับเรื่องนี้ไหม",
+"NF มักอยากใช้ชีวิตตรงกับสิ่งที่ยึดถือและช่วยให้คนอื่นดีขึ้น ภาพนั้นของเธอเป็นยังไง"],
+NT:["สไตล์ NT ชอบวิเคราะห์ระบบและหาเหตุผล ลองมองตัวเองตอนนี้เหมือนโจทย์ที่น่าสนใจ",
+"NT มักกลัวการไม่เก่งพอหรือไม่เข้าใจสิ่งที่อยากรู้ ความกลัวของเธอใกล้เคียงไหม",
+"NT มักอยากเชี่ยวชาญและสร้างสิ่งที่ดีกว่าเดิม เธออยากเก่งเรื่องอะไร"],
+SF:["สไตล์ SF ใส่ใจคนรอบตัวและสิ่งที่จับต้องได้ ลองดูว่าตอนนี้ใครหรืออะไรอยู่ใกล้ใจเธอ",
+"SF มักกลัวทำให้คนที่รักผิดหวังหรือสูญเสียความมั่นคง ความกลัวของเธอเกี่ยวข้องไหม",
+"SF มักอยากเป็นคนที่พึ่งพาได้และสร้างความสุขให้คนใกล้ตัว เธออยากเป็นแบบนั้นในรูปแบบไหน"],
+ST:["สไตล์ ST ถนัดมองความจริงและลงมือทำ ลองดูว่าตอนนี้เธอมีอะไรอยู่ในมือบ้าง",
+"ST มักกลัววางแผนพลาดหรือเสียเวลากับสิ่งไม่แน่นอน ความกลัวของเธอเป็นแบบนี้ไหม",
+"ST มักอยากเป็นคนที่ทำได้จริงและวางใจได้ เธออยากเห็นผลงานแบบไหนในอนาคต"]
+};
+const LEVELQ={
+3:["ตอนนี้วิชาหรือกิจกรรมไหนที่เธอทำแล้วรู้สึกเป็นตัวเองมากที่สุด?","ตอนเลือกว่าจะเรียนต่ออะไร สิ่งที่เธอกังวลที่สุดคืออะไร?","ถ้าลองเรียนสิ่งหนึ่งได้ฟรี 1 ปี เธออยากลองเรียนอะไร?"],
+6:["ตอนนี้เธอรู้จักตัวเองเรื่องไหนแล้ว และเรื่องไหนยังไม่ชัด?","ตอนเลือกคณะหรืออาชีพ สิ่งที่เธอกังวลที่สุดคืออะไร?","อีก 5 ปี เธออยากเห็นตัวเองทำอะไรอยู่ ในวันธรรมดาวันหนึ่ง?"]
+};
+const ACTIONS={
+3:["คุยกับพี่ ครู หรือผู้ปกครอง 1 คน เรื่องสิ่งที่เธอชอบ","ดูข้อมูลแผนการเรียนหรือสายอาชีพที่สนใจ 1 อย่าง","ลองเข้าชุมนุมหรือกิจกรรมที่ไม่เคยลอง 1 ครั้ง","เขียนบันทึกต่ออีก 5 นาทีก่อนนอน"],
+6:["หาข้อมูลคณะหรืออาชีพที่สนใจมา 1 อย่าง","คุยกับรุ่นพี่หรือคนที่ทำอาชีพที่สนใจ 1 คน","เขียนบันทึกต่ออีก 5 นาทีก่อนนอน","ลองทำสิ่งเล็กๆ ที่ไพ่ใบนั้นชวนให้ลอง"]
+};
+const POS=["ตัวฉันตอนนี้","สิ่งที่ฉันกลัว","สิ่งที่ฉันอยากเป็น"];
+const DIMS=[["EI","E","I","แสดงออก","ใคร่ครวญ"],["SN","S","N","เห็นจริง","เห็นภาพรวม"],["TF","T","F","เหตุผล","ความรู้สึก"],["JP","J","P","วางแผน","ยืดหยุ่น"]];
+const COLORS={E:"#F9CFCF",I:"#CFE0F5",S:"#D6F0C8",N:"#E3D0EE",T:"#C9E6F7",F:"#F9CFE4",J:"#FFF1B6",P:"#FFE0C4"};
+
+/* ---------- ภาพไพ่ (วาดจากแม่แบบเดียว เปลี่ยนสีและสัญลักษณ์ตามใบ) ---------- */
+const INK="#1D2A4D";
+const MOTIFS=[
+ (c)=>`<path d="M53 34 L60 56 L83 57 L65 71 L71 93 L53 80 L35 93 L41 71 L23 57 L46 56Z" fill="${c}" stroke="${INK}" stroke-width="2" stroke-linejoin="round"/>`,
+ (c)=>`<path d="M62 32 A30 30 0 1 0 62 96 A23 23 0 1 1 62 32Z" fill="${c}" stroke="${INK}" stroke-width="2" stroke-linejoin="round"/>`,
+ (c)=>`<circle cx="53" cy="64" r="17" fill="${c}" stroke="${INK}" stroke-width="2"/><g stroke="${c}" stroke-width="3" stroke-linecap="round"><path d="M53 34v8M53 86v8M23 64h8M75 64h8M32 43l6 6M68 79l6 6M74 43l-6 6M38 79l-6 6"/></g>`,
+ (c)=>`<path d="M53 96V62" stroke="${INK}" stroke-width="3" stroke-linecap="round"/><path d="M53 66C53 50 42 42 30 44 31 58 40 66 53 66Z" fill="${c}" stroke="${INK}" stroke-width="2" stroke-linejoin="round"/><path d="M53 58C53 44 63 36 76 38 75 52 66 58 53 58Z" fill="${c}" stroke="${INK}" stroke-width="2" stroke-linejoin="round"/>`,
+ (c)=>`<circle cx="42" cy="52" r="13" fill="none" stroke="${c}" stroke-width="6"/><path d="M53 58L82 86M72 76l8-8M64 68l7-7" stroke="${c}" stroke-width="6" stroke-linecap="round"/>`,
+ (c)=>`<circle cx="53" cy="66" r="30" fill="${c}" opacity=".22"/><path d="M53 36v8" stroke="${c}" stroke-width="3" stroke-linecap="round"/><rect x="40" y="46" width="26" height="36" rx="8" fill="${c}" stroke="${INK}" stroke-width="2"/><path d="M47 46v36M59 46v36" stroke="${INK}" stroke-width="1.2" opacity=".5"/>`,
+ (c)=>`<g fill="none" stroke="${c}" stroke-width="4" stroke-linecap="round"><path d="M22 50q10-10 21 0t21 0 21 0"/><path d="M22 66q10-10 21 0t21 0 21 0"/><path d="M22 82q10-10 21 0t21 0 21 0"/></g>`,
+ (c)=>`<path d="M53 92C20 70 24 40 42 40c8 0 11 6 11 6s3-6 11-6c18 0 22 30-11 52Z" fill="${c}" stroke="${INK}" stroke-width="2" stroke-linejoin="round"/>`
+];
+const HUES=[262,214,290,330,24,170,350,200,36,248,188,300,226,10,156,276,50,238,264,44,318,140];
+function cardSVG(i,w){
+  const c=CARDS[i],h=HUES[i%HUES.length],sky=`hsl(${h} 38% 34%)`,hill1=`hsl(${(h+40)%360} 28% 26%)`,hill2=`hsl(${(h+60)%360} 26% 20%)`,glow=`hsl(${(h+50)%360} 90% 82%)`;
+  const stars=[[18,22],[84,20],[24,50],[88,48],[70,28],[16,86],[90,80]].map((p,k)=>`<circle cx="${p[0]}" cy="${p[1]}" r="${k%2?1.2:1.7}" fill="#FFF7DA"/>`).join("");
+  return `<svg class="card" viewBox="0 0 106 160" ${w?`width="${w}" height="${Math.round(w*160/106)}"`:""} role="img" aria-label="ไพ่ ${c[0]} ${c[1]}">
+  <rect x="1.5" y="1.5" width="103" height="157" rx="12" fill="#F6F1E4" stroke="${INK}" stroke-width="2.5"/>
+  <rect x="8" y="8" width="90" height="114" rx="8" fill="${sky}" stroke="${INK}" stroke-width="1.5"/>
+  ${stars}
+  <path d="M8 98C28 84 60 90 98 78V114Q98 122 90 122H16Q8 122 8 114Z" fill="${hill1}"/>
+  <path d="M8 108C40 98 70 104 98 96V114Q98 122 90 122H16Q8 122 8 114Z" fill="${hill2}"/>
+  ${MOTIFS[i%MOTIFS.length](glow)}
+  <text x="53" y="139" text-anchor="middle" font-family="Mali,sans-serif" font-weight="700" font-size="${c[0].length>10?10.5:13}" fill="${INK}">${c[0]}</text>
+  <text x="53" y="152" text-anchor="middle" font-family="Sarabun,sans-serif" font-weight="600" font-size="7.5" letter-spacing=".8" fill="#4B5578">${c[1].toUpperCase()}</text></svg>`;
+}
+function backSVG(){return `<svg viewBox="0 0 106 160" aria-hidden="true"><rect x="1.5" y="1.5" width="103" height="157" rx="12" fill="#34467A" stroke="#B9A7E0" stroke-width="2"/><rect x="10" y="10" width="86" height="140" rx="8" fill="none" stroke="#B9A7E0" stroke-width="1.6" stroke-dasharray="3 5"/><path d="M53 54L59 70 76 71 63 82 68 99 53 89 38 99 43 82 30 71 47 70Z" fill="#FFF3B0" stroke="${INK}" stroke-width="2" stroke-linejoin="round"/><g fill="#B9A7E0"><circle cx="24" cy="30" r="2.4"/><circle cx="82" cy="28" r="2"/><circle cx="20" cy="128" r="2"/><circle cx="84" cy="130" r="2.4"/></g></svg>`}
+function creature(sz){return `<svg viewBox="0 0 120 120" width="${sz}" height="${sz}" role="img" aria-label="ปุยฟู ตัวการ์ตูนกลมๆ ถือโคมไฟดวงเล็ก"><circle cx="94" cy="86" r="26" fill="#FFF3B0" opacity=".2"/><ellipse cx="60" cy="110" rx="32" ry="6" fill="#0F1830" opacity=".4"/><path d="M58 30C58 19 52 12 43 11 45 22 50 28 58 30Z" fill="#BFEBD7" stroke="${INK}" stroke-width="1.6" stroke-linejoin="round"/><path d="M62 30C62 17 70 10 79 12 77 23 70 28 62 30Z" fill="#9FD9BF" stroke="${INK}" stroke-width="1.6" stroke-linejoin="round"/><ellipse cx="21" cy="74" rx="9" ry="15" fill="#E9DFC6" stroke="${INK}" stroke-width="1.8" transform="rotate(-14 21 74)"/><circle cx="60" cy="70" r="40" fill="#FFF8EA" stroke="${INK}" stroke-width="2"/><circle cx="46" cy="62" r="4.2" fill="${INK}"/><circle cx="74" cy="62" r="4.2" fill="${INK}"/><circle cx="47.6" cy="60.4" r="1.4" fill="#fff"/><circle cx="75.6" cy="60.4" r="1.4" fill="#fff"/><ellipse cx="37" cy="74" rx="6.5" ry="4" fill="#F4A98C" opacity=".65"/><ellipse cx="83" cy="74" rx="6.5" ry="4" fill="#F4A98C" opacity=".65"/><path d="M55.5 70L64.5 70 60 77Z" fill="#F4A98C" stroke="${INK}" stroke-width="1.3" stroke-linejoin="round"/><ellipse cx="99" cy="76" rx="9" ry="15" fill="#E9DFC6" stroke="${INK}" stroke-width="1.8" transform="rotate(14 99 76)"/><path d="M92 70V62" stroke="${INK}" stroke-width="2" stroke-linecap="round"/><rect x="86" y="70" width="16" height="20" rx="4" fill="#FFF3B0" stroke="${INK}" stroke-width="1.8"/></svg>`}
+
+/* ---------- Supabase + state ---------- */
+const SUPABASE_URL = "https://ikkhjslmtjwrxzxvtokb.supabase.co";
+const ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlra2hqc2xtdGp3cnh6eHZ0b2tiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM3NDMzNjksImV4cCI6MjA5OTMxOTM2OX0.3OR_9mEv82Ns1LLjx5nnRwJYzrtKFtWCWd1bPuQfNKU";
+const EMAIL_DOMAIN = "guidance-pcw.local";
+const CONSENT_VERSION = "v1";
+const sb = supabase.createClient(SUPABASE_URL, ANON_KEY);
+
+let S, profile = null, history = [];
+function reset(keepLevel){S={screen:"welcome",level:keepLevel||guessLevel(),q:0,ans:[],type:[],computed:"",deck:[],picks:[],flipped:[false,false,false],active:-1,res:-1,note:"",share:false,action:-1,saving:false,msg:""}}
+function guessLevel(){const m=profile&&profile.class_room&&String(profile.class_room).match(/ม\.?\s*(\d)/);const g=m?+m[1]:0;return (g===3||g===6)?g:0}
+const $=document.getElementById("app");
+const esc=t=>String(t??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const mbti=()=>S.type.join("");
+const group=()=>S.type[1]+S.type[2];
+const li=()=>S.level===3?1:2;
+const firstName=()=>String((profile&&profile.display_name)||"").trim().split(/\s+/)[0]||"เธอ";
+function counts(){const c={};QS.forEach((q,i)=>{const l=S.ans[i];if(l)c[l]=(c[l]||0)+1});return c}
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function toast(t){const el=document.getElementById("toast");el.textContent=t;el.classList.add("show");setTimeout(()=>el.classList.remove("show"),3200)}
+function go(s){S.screen=s;render();window.scrollTo({top:0,behavior:"smooth"})}
+function render(){$.innerHTML=({login,consent,welcome,survey,result,pick,reveal,reflect,done,final})[S.screen]()}
+const fmtDate=d=>new Date(d).toLocaleDateString("th-TH",{day:"numeric",month:"short",year:"2-digit"});
+
+/* ---------- เข้าสู่ระบบ + ความยินยอม ---------- */
+async function boot(){
+  const {data:{session}}=await sb.auth.getSession();
+  if(!session){S={screen:"login",msg:""};return render()}
+  const {data:p}=await sb.from("profiles").select("id,display_name,role,class_room").eq("id",session.user.id).maybeSingle();
+  if(!p){await sb.auth.signOut();S={screen:"login",msg:"ไม่พบข้อมูลผู้ใช้"};return render()}
+  profile=p;
+  reset();
+  const {data:c,error}=await sb.from("tarot_consents").select("consented").eq("student_id",p.id).maybeSingle();
+  if(error){S.screen="welcome";S.msg="โหลดข้อมูลไม่สำเร็จ: "+error.message;return render()}
+  if(!(c&&c.consented)){S.screen="consent";return render()}
+  await loadHistory();
+  render();
+}
+async function loadHistory(){
+  const {data:ss}=await sb.from("tarot_sessions").select("id,level,mbti,cards,created_at").eq("student_id",profile.id).order("created_at",{ascending:false}).limit(5);
+  history=ss||[];
+  if(history.length){
+    const {data:rs}=await sb.from("tarot_reflections").select("session_id,body,shared_with_teacher").in("session_id",history.map(h=>h.id));
+    const m={};(rs||[]).forEach(r=>m[r.session_id]=r);history.forEach(h=>h.refl=m[h.id]||null);
+  }
+}
+async function doLogin(){
+  const u=document.getElementById("liUser").value.trim(),p=document.getElementById("liPass").value,b=document.getElementById("btnLogin"),m=document.getElementById("liMsg");
+  if(!u||!p){m.textContent="กรอกรหัสนักเรียนและรหัสผ่านก่อนนะ";m.hidden=false;return}
+  b.disabled=true;
+  const {error}=await sb.auth.signInWithPassword({email:u+"@"+EMAIL_DOMAIN,password:p});
+  b.disabled=false;
+  if(error){m.textContent="เข้าสู่ระบบไม่สำเร็จ: รหัสนักเรียนหรือรหัสผ่านไม่ถูกต้อง";m.hidden=false;return}
+  boot();
+}
+async function logout(){await sb.auth.signOut();location.reload()}
+async function giveConsent(){
+  const b=document.getElementById("btnConsent");b.disabled=true;
+  const {error}=await sb.from("tarot_consents").upsert({student_id:profile.id,consented:true,consented_by:"student",text_version:CONSENT_VERSION,recorded_at:new Date().toISOString()},{onConflict:"student_id"});
+  if(error){b.disabled=false;return toast("บันทึกไม่สำเร็จ: "+error.message)}
+  await loadHistory();go("welcome");
+}
+async function withdrawConsent(){
+  if(!S.confirmWithdraw){S.confirmWithdraw=true;return render()}
+  const {error}=await sb.from("tarot_consents").update({consented:false}).eq("student_id",profile.id);
+  if(error)return toast("ถอนไม่สำเร็จ: "+error.message);
+  S.confirmWithdraw=false;toast("ถอนความยินยอมแล้ว ข้อมูลที่เคยบันทึกยังอยู่ แจ้งครูถ้าต้องการให้ลบ");go("consent")
+}
+
+function login(){return `<div class="panel">
+<div class="center">${creature(110)}</div>
+<h1 class="center">การ์ดสำรวจใจ</h1>
+<p class="center sub">ใช้บัญชีเดียวกับคลังแนะแนว</p>
+<div class="note" id="liMsg" hidden></div>
+<p style="margin-top:14px;font-weight:600">รหัสนักเรียน</p>
+<input type="text" id="liUser" autocomplete="username" inputmode="numeric">
+<p style="margin-top:12px;font-weight:600">รหัสผ่าน</p>
+<input type="password" id="liPass" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+<button class="btn" id="btnLogin" onclick="doLogin()">เข้าสู่ระบบ</button></div>`}
+
+function consent(){return `<div class="panel">
+<h2>ก่อนเริ่ม อ่านสักนิดนะ</h2>
+<p class="sub">กิจกรรมนี้เป็นเกมสะท้อนคิด ไม่ได้ทำนายอนาคต และไม่ใช่การวินิจฉัย</p>
+<div class="lens"><b>ระบบจะเก็บอะไร</b><br>ผลแนวโน้มจากแบบสั้น ไพ่ที่เธอปู สิ่งที่เลือกลองทำ และแบบวัดก่อน-หลัง (ถ้าครูเปิดให้ทำ) เพื่อให้ครูเห็นภาพรวมของห้องและพัฒนากิจกรรมแนะแนว</div>
+<div class="lens" style="margin-top:10px"><b>ใครเห็นอะไร</b><br>ครูเห็นผลแนวโน้มและไพ่ของเธอ ส่วน <b>บันทึกสะท้อนคิด ครูจะอ่านได้ก็ต่อเมื่อเธอกดแชร์เอง</b> ถ้าไม่แชร์ จะมีแค่เธอที่อ่านได้</div>
+<div class="lens" style="margin-top:10px"><b>สิทธิ์ของเธอ</b><br>เล่นหรือไม่เล่นก็ได้ ไม่มีผลต่อคะแนน และถอนความยินยอมได้ทุกเมื่อ ถ้ายังไม่แน่ใจ ลองถามผู้ปกครองหรือครูแนะแนวก่อน</div>
+<label class="sw"><input type="checkbox" id="cbConsent" onchange="document.getElementById('btnConsent').disabled=!this.checked"><span>ฉันอ่านแล้ว และยินยอมให้เก็บข้อมูลตามที่ระบุ</span></label>
+<button class="btn" id="btnConsent" disabled onclick="giveConsent()">ยืนยันและเริ่มเล่น</button>
+<button class="btn ghost" onclick="logout()">ออกจากระบบ</button></div>`}
+
+/* ---------- หน้าจอเกม ---------- */
+function welcome(){
+const ok=!!S.level;
+const hist=history.length?`<details style="margin-top:16px" open><summary>การเล่นครั้งก่อนของฉัน</summary>${history.map(h=>`<div class="lens" style="margin-top:8px"><b>${fmtDate(h.created_at)} · ม.${h.level} · ${h.mbti}</b><br>${(h.cards||[]).map(c=>esc(c.card)).join(" · ")}${h.refl?`<br><span class="sub">บันทึก${h.refl.shared_with_teacher?" (แชร์ครูแล้ว)":" (ส่วนตัว)"}: ${esc(h.refl.body)}</span>`:""}</div>`).join("")}</details>`:"";
+return `<div class="panel">
+<div class="center"><span class="pill">คาบแนะแนว · 50 นาที</span></div>
+<div class="center" style="margin-top:6px">${creature(120)}</div>
+<h1 class="center">การ์ดสำรวจใจ</h1>
+<p class="center sub">สวัสดี ${esc(firstName())} ไพ่ไม่ได้ทำนายอนาคต แต่ชวนเธอถามใจตัวเอง</p>
+${S.msg?`<div class="note">${esc(S.msg)}</div>`:""}
+<p style="margin-top:16px;font-weight:600">เธอเรียนอยู่ชั้นไหน?</p>
+<button type="button" class="lvl l3" aria-pressed="${S.level===3}" onclick="setLevel(3)"><span class="badge">ม.3</span><span><b>เลือกเส้นทางหลังจบ ม.ต้น</b><small>สำรวจสิ่งที่ชอบและสิ่งที่ถนัด</small></span></button>
+<button type="button" class="lvl l6" aria-pressed="${S.level===6}" onclick="setLevel(6)"><span class="badge">ม.6</span><span><b>เลือกคณะและอนาคต</b><small>ต่อยอดสู่ TCAS และอาชีพ</small></span></button>
+<button class="btn" ${ok?"":"disabled"} onclick="go('survey')">เริ่มเลย</button>
+${hist}
+<div class="center" style="margin-top:14px">
+<button class="back-link" onclick="logout()">ออกจากระบบ</button>
+<button class="back-link" onclick="withdrawConsent()">${S.confirmWithdraw?"แตะอีกครั้งเพื่อยืนยันการถอนความยินยอม":"ถอนความยินยอม"}</button></div></div>`}
+function setLevel(l){S.level=l;render()}
+
+function survey(){const i=S.q,q=QS[i],k=li();
+return `<div class="panel"><button class="back-link" onclick="back()">← ย้อนกลับ</button>
+<div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="${QS.length}" aria-valuenow="${i}"><i style="width:${(i/QS.length)*100}%"></i></div>
+<span class="pill">ม.${S.level} · ข้อ ${i+1} / ${QS.length}</span>
+<h2 style="margin-top:12px">${q[k]}</h2>
+<button class="opt" onclick="choose('${q[3][0]}')">${q[3][k]}</button>
+<button class="opt" onclick="choose('${q[4][0]}')">${q[4][k]}</button>
+<div class="mini" style="margin-top:14px">${creature(64)}<span class="sub">ไม่มีคำตอบถูกผิด เลือกอันที่ "ใกล้เคียงที่สุด" ก็พอ</span></div></div>`}
+function choose(l){S.ans[S.q]=l;if(S.q<QS.length-1){S.q++;render()}else{S.type=DIMS.map(d=>(counts()[d[1]]||0)>=2?d[1]:d[2]);S.computed=S.type.join("");go("result")}}
+function back(){if(S.q>0){S.q--;S.ans.length=S.q;render()}else go("welcome")}
+function flip(i){const d=DIMS[i];S.type[i]=S.type[i]===d[1]?d[2]:d[1];render()}
+
+function result(){const t=TYPES[mbti()],c=counts();
+const bars=DIMS.map(d=>{const b=c[d[2]]||0,pos=12+(b/3)*76;
+return `<div class="bar"><div class="lbl"><span>${d[1]} ${d[3]}</span><span>${d[4]} ${d[2]}</span></div><div class="track"><div class="fill" style="width:${pos}%"></div><div class="dot" style="left:${pos}%"></div></div></div>`}).join("");
+const lt=S.type.map((l,i)=>`<button class="letter" aria-label="ตัวอักษร ${l} แตะเพื่อสลับ" style="background:${COLORS[l]}" onclick="flip(${i})">${l}</button>`).join("");
+const now=S.level===3?"ตอนนี้ ":"";
+return `<div class="panel center">
+<p class="sub">${esc(firstName())} ${now}มีแนวโน้มเป็น…</p>
+<div class="letters">${lt}</div>
+<p class="sub" style="font-size:13px">แตะตัวอักษรเพื่อปรับได้ ถ้ารู้สึกว่ายังไม่ตรงกับเธอ</p>
+<h2 style="margin-top:12px;font-size:28px">${t[1]}</h2>
+<div style="margin-top:12px" class="cardwrap">${cardSVG(t[0],150)}</div>
+<p class="sub">ไพ่ประจำตัวของเธอ · ${CARDS[t[0]][0]}</p>
+<div style="text-align:left">${bars}
+<p><b>จุดแข็งที่เห็นตอนนี้:</b> ${t[2]}</p>
+<p><b>ชวนสังเกต:</b> ${t[3]}</p></div>
+<div class="note" style="text-align:left">นี่คือผลเบื้องต้นจากแบบสั้น 12 ข้อ ไม่ใช่ผลวินิจฉัย และไม่ได้บอกว่าเธอเป็นคนแบบไหนตลอดไป ใช้เป็นเลนส์ส่องดูตัวเองเฉยๆ นะ</div>
+<button class="btn" onclick="startPick()">ไปปูไพ่ 3 ใบกัน</button></div>`}
+
+function startPick(){S.deck=shuffle([...Array(22).keys()]).slice(0,12);S.picks=[];S.flipped=[false,false,false];S.active=-1;go("pick")}
+function pickCard(i){const k=S.picks.indexOf(i);if(k>=0)S.picks.splice(k,1);else if(S.picks.length<3)S.picks.push(i);render()}
+function pick(){
+const g=S.deck.map(i=>`<button type="button" class="back-card ${S.picks.includes(i)?"on":""}" aria-pressed="${S.picks.includes(i)}" aria-label="ไพ่คว่ำ" onclick="pickCard(${i})">${backSVG()}</button>`).join("");
+return `<div class="panel"><h2>เลือกไพ่ 3 ใบ</h2>
+<p class="sub">หายใจลึกๆ แล้วเลือกใบที่รู้สึก "ใช่" โดยไม่ต้องคิดมาก<br>เลือกแล้ว <b>${S.picks.length}/3</b></p>
+<div class="grid">${g}</div>
+<button class="btn" ${S.picks.length<3?"disabled":""} onclick="go('reveal')">เปิดไพ่</button></div>`}
+
+function openCard(k){S.flipped[k]=true;S.active=k;render()}
+function reveal(){
+const row=[0,1,2].map(k=>`<div><div class="slot">${POS[k]}</div>${S.flipped[k]
+?`<button type="button" class="slot-btn ${S.active===k?"sel":""}" aria-label="อ่านไพ่ ${POS[k]} อีกครั้ง" onclick="S.active=${k};render()">${cardSVG(S.picks[k])}</button>`
+:`<button type="button" class="slot-btn" aria-label="เปิดไพ่ ${POS[k]}" onclick="openCard(${k})">${backSVG()}</button>`}</div>`).join("");
+let d="";if(S.active>=0){const c=CARDS[S.picks[S.active]];d=`<div class="detail"><span class="pill">${POS[S.active]}</span>
+<h2 style="margin-top:10px">${c[0]}</h2><div class="sub" style="letter-spacing:.4px">${c[1].toUpperCase()} · ${c[2]}</div>
+<p>${c[3]}</p>
+<div class="lens"><b>ลองสังเกตตัวเอง</b><br>${LENS[group()][S.active]}</div>
+<div class="q">${c[4]}</div>
+<div class="q" style="background:rgba(185,167,224,.18)">${LEVELQ[S.level][S.active]}</div></div>`}
+const all=S.flipped.every(Boolean);
+return `<div class="panel"><h2>ไพ่ของเธอ</h2><p class="sub">แตะไพ่ที่คว่ำอยู่เพื่อเปิดทีละใบ แล้วแตะซ้ำเพื่ออ่านอีกรอบได้</p>
+<div class="row3">${row}</div>${d}
+<button class="btn" ${all?"":"disabled"} onclick="go('reflect')">ไปเขียนบันทึก</button></div>`}
+
+function reflect(){
+const opts=S.picks.map((p,k)=>`<button type="button" class="chip ${S.res===k?"on":""}" aria-pressed="${S.res===k}" onclick="S.res=${k};render()"><b>${POS[k]} · ${CARDS[p][0]}</b><small>${CARDS[p][4]}</small></button>`).join("");
+return `<div class="panel"><h2>คำถามไหนโดนใจที่สุด?</h2>
+<p class="sub">เลือก 1 ข้อ แล้วเขียนตอบสั้นๆ 2–3 ประโยคก็พอ (เว้นว่างได้)</p>${opts}
+<textarea id="note" maxlength="1500" placeholder="เขียนอะไรก็ได้ที่คิดออก…" oninput="S.note=this.value">${esc(S.note)}</textarea>
+<label class="sw"><input type="checkbox" id="share" ${S.share?"checked":""} onchange="S.share=this.checked"><span>ให้ครูอ่านบันทึกนี้ได้ <span class="sub">(ถ้าไม่ติ๊ก บันทึกจะเก็บไว้ให้เธออ่านคนเดียว ครูมองไม่เห็น)</span></span></label>
+<button class="btn" ${S.res<0?"disabled":""} onclick="go('done')">ต่อไป</button></div>`}
+
+function done(){
+const chips=ACTIONS[S.level].map((a,i)=>`<button type="button" class="chip ${S.action===i?"on":""}" aria-pressed="${S.action===i}" onclick="S.action=${i};render()">${a}</button>`).join("");
+return `<div class="panel"><h2>ก่อนคาบหน้า ลองทำสักอย่าง</h2><p class="sub">เลือก 1 ข้อที่เป็นไปได้จริงที่สุด</p>${chips}
+<button class="btn" id="btnSave" ${S.action<0?"disabled":""} onclick="save()">บันทึกผล</button></div>`}
+
+async function save(){
+  if(S.saving)return;S.saving=true;
+  const b=document.getElementById("btnSave");if(b){b.disabled=true;b.textContent="กำลังบันทึก…"}
+  const row={student_id:profile.id,level:S.level,mbti:mbti(),mbti_adjusted:S.computed!==mbti(),survey_answers:S.ans,
+    cards:S.picks.map((p,k)=>({position:POS[k],card:CARDS[p][1],index:p})),resonated_position:S.res,next_action:ACTIONS[S.level][S.action]};
+  const {data:ses,error}=await sb.from("tarot_sessions").insert(row).select("id").single();
+  if(error){S.saving=false;if(b){b.disabled=false;b.textContent="บันทึกผล"}return toast("บันทึกไม่สำเร็จ: "+error.message)}
+  const body=S.note.trim();
+  if(body){
+    const {error:e2}=await sb.from("tarot_reflections").insert({session_id:ses.id,student_id:profile.id,body,shared_with_teacher:!!S.share});
+    if(e2)toast("บันทึกผลแล้ว แต่เก็บบันทึกสะท้อนคิดไม่สำเร็จ: "+e2.message);
+  }
+  S.saving=false;S.savedNote=!!body;
+  await loadHistory();go("final");
+}
+function final(){return `<div class="panel center"><div>${creature(120)}</div><h1 style="font-size:30px">เก่งมากเลย ${esc(firstName())}</h1>
+<p>บันทึกเข้าระบบเรียบร้อยแล้ว<br>ไพ่ใบที่ทักเธอวันนี้คือ <b>${CARDS[S.picks[S.res]][0]}</b></p>
+${S.savedNote?`<p class="sub">${S.share?"ครูอ่านบันทึกของเธอได้":"บันทึกของเธอเป็นส่วนตัว ครูมองไม่เห็น"}</p>`:""}
+<div class="note" style="text-align:left">ผลนี้เป็นแค่จุดเริ่มต้นของการคุยกับตัวเอง ไม่ใช่คำตัดสิน เปลี่ยนใจได้เสมอ</div>
+<button class="btn" onclick="reset(S.level);go('welcome')">กลับหน้าแรก</button></div>`}
+
+reset();
+boot();
+</script>
+</body>
+</html>
