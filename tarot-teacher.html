@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>การ์ดสำรวจใจ — สรุปสำหรับครู | แนะให้แนว</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Mitr:wght@400;500;600&family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{
+  --ink:#22313A; --ink-soft:#5B6B72; --board:#EFF3F1; --card:#FFFFFF;
+  --pine:#0F6B5C; --pine-deep:#0A4F44; --pine-tint:#E2F0EC;
+  --note:#FFD34D; --note-deep:#8A6D00; --line:#DCE4E1; --danger:#C0392B; --lav:#6A55B0; --lav-tint:#ECE8F7;
+  --radius:14px; --shadow:0 2px 10px rgba(34,49,58,.08);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Sarabun',sans-serif;background:var(--board);color:var(--ink);font-size:16px;line-height:1.55;min-height:100vh}
+h1,h2,h3,.brand{font-family:'Mitr',sans-serif;font-weight:600}
+button{font-family:inherit;cursor:pointer}
+input,select,textarea{font-family:inherit;font-size:16px}
+:focus-visible{outline:3px solid var(--note);outline-offset:2px;border-radius:6px}
+.wrap{max-width:980px;margin:0 auto;padding:0 16px 64px}
+header.app{background:var(--pine);color:#fff;padding:14px 0}
+header.app .wrap{display:flex;align-items:center;gap:12px;padding-bottom:0;flex-wrap:wrap}
+.brand{font-size:1.15rem;display:flex;align-items:center;gap:10px}
+.brand .logo{width:34px;height:34px;border-radius:9px;background:var(--note);color:var(--pine-deep);display:grid;place-items:center;font-size:1.05rem;flex:none}
+.brand small{display:block;font-family:'Sarabun';font-weight:400;font-size:.72rem;opacity:.85}
+.spacer{flex:1}
+.iconbtn{background:rgba(255,255,255,.14);border:none;color:#fff;border-radius:999px;padding:7px 14px;font-size:.85rem;text-decoration:none}
+.folder-tabs{display:flex;gap:4px;overflow-x:auto;padding:22px 2px 0;scrollbar-width:none}
+.ftab{flex:none;background:#fff;color:var(--ink-soft);font-family:'Mitr';font-size:.92rem;font-weight:500;padding:9px 18px 12px;border-radius:12px 12px 0 0;border:1px solid var(--line);border-bottom:none;position:relative;top:4px;opacity:.82}
+.ftab.active{top:0;opacity:1;color:var(--ink);border-top:4px solid var(--pine);box-shadow:0 -3px 8px rgba(34,49,58,.06);z-index:2}
+.folder-body{background:#fff;border:1px solid var(--line);border-radius:0 var(--radius) var(--radius) var(--radius);padding:18px;box-shadow:var(--shadow)}
+.filters{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px}
+.filters select{padding:8px 12px;border:1.5px solid var(--line);border-radius:10px;background:#fff;min-height:40px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:18px}
+.stat{border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:var(--board)}
+.stat b{display:block;font-family:'Mitr';font-size:1.6rem;color:var(--pine-deep);line-height:1.2}
+.stat span{font-size:.8rem;color:var(--ink-soft)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+@media (max-width:760px){.grid2{grid-template-columns:1fr}}
+h3.sec{font-size:1rem;color:var(--pine-deep);margin:4px 0 10px}
+.row{display:flex;align-items:center;gap:10px;margin:6px 0;font-size:.88rem}
+.row .lbl{flex:none;width:130px}
+.row .track{flex:1;height:14px;border-radius:999px;background:var(--board);overflow:hidden}
+.row .fill{height:100%;border-radius:999px;background:var(--pine)}
+.row .fill.lav{background:var(--lav)}
+.row .n{flex:none;width:34px;text-align:right;color:var(--ink-soft);font-variant-numeric:tabular-nums}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px}
+table{width:100%;border-collapse:collapse;font-size:.88rem}
+th,td{padding:9px 12px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap}
+th{background:var(--board);font-weight:700;position:sticky;top:0}
+tr:last-child td{border-bottom:none}
+.pill{border-radius:999px;padding:2px 11px;font-size:.74rem;font-weight:700;white-space:nowrap;display:inline-block}
+.pill.ok{background:var(--pine-tint);color:var(--pine-deep)}
+.pill.warn{background:#FFF3CE;color:var(--note-deep)}
+.pill.off{background:var(--board);color:var(--ink-soft)}
+.pill.lav{background:var(--lav-tint);color:var(--lav)}
+.refl{border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:10px}
+.refl .meta{font-size:.8rem;color:var(--ink-soft);margin-bottom:4px}
+.refl p{white-space:pre-wrap;word-break:break-word}
+.note{background:#FFF8DC;border:1px solid #F0DE9A;border-radius:12px;padding:11px 14px;font-size:.86rem;margin-bottom:14px}
+.btn{border:none;border-radius:9px;padding:10px 16px;font-size:.9rem;font-weight:600;display:inline-flex;align-items:center;gap:6px;justify-content:center;background:var(--pine);color:#fff}
+.btn:hover{background:var(--pine-deep)}
+.btn.ghost{background:#fff;border:1.5px solid var(--line);color:var(--ink-soft)}
+.btn.warn{background:var(--note);color:var(--ink)}
+.btn:disabled{opacity:.55;cursor:wait}
+.empty{padding:30px 16px;text-align:center;color:var(--ink-soft)}
+.loading{text-align:center;padding:40px;color:var(--ink-soft)}
+.login-stage{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background:linear-gradient(160deg,var(--pine) 0%,var(--pine-deep) 60%),var(--pine)}
+.login-card{background:#fff;border-radius:20px;padding:30px 26px;max-width:400px;width:100%;box-shadow:0 18px 50px rgba(0,0,0,.28)}
+.login-card .logo-big{width:58px;height:58px;border-radius:16px;background:var(--note);color:var(--pine-deep);display:grid;place-items:center;font-size:1.5rem;font-weight:600;margin:0 auto 12px}
+.login-card h1{text-align:center;font-size:1.2rem;color:var(--pine-deep)}
+.login-card .sub{text-align:center;font-size:.83rem;color:var(--ink-soft);margin-bottom:20px}
+.field{margin-bottom:13px}
+.field label{display:block;font-size:.83rem;font-weight:700;margin-bottom:5px}
+.field input{width:100%;padding:10px 12px;border:1.5px solid var(--line);border-radius:10px}
+.msg{border-radius:10px;padding:10px 13px;font-size:.85rem;margin-bottom:12px;display:none;background:#FBEAE7;color:var(--danger)}
+.msg.show{display:block}
+#toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:11px 20px;border-radius:999px;font-size:.88rem;box-shadow:0 6px 20px rgba(0,0,0,.3);opacity:0;pointer-events:none;transition:opacity .25s;z-index:99;max-width:90vw}
+#toast.show{opacity:1}
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+
+<div id="loginStage" class="login-stage hidden">
+  <div class="login-card">
+    <div class="logo-big">🔮</div>
+    <h1>การ์ดสำรวจใจ — สรุปสำหรับครู</h1>
+    <div class="sub">ใช้บัญชีเดียวกับคลังแนะแนว</div>
+    <div id="liMsg" class="msg"></div>
+    <div class="field"><label for="liUser">ชื่อผู้ใช้</label><input id="liUser" autocomplete="username"></div>
+    <div class="field"><label for="liPass">รหัสผ่าน</label><input id="liPass" type="password" autocomplete="current-password"></div>
+    <button id="btnLogin" class="btn" style="width:100%;padding:12px">เข้าสู่ระบบ</button>
+  </div>
+</div>
+
+<div id="appStage" class="hidden">
+  <header class="app"><div class="wrap">
+    <div class="brand"><span class="logo">🔮</span><span>การ์ดสำรวจใจ — สรุปสำหรับครู<small>แนะให้แนว</small></span></div>
+    <div class="spacer"></div>
+    <a class="iconbtn" href="index.html" title="กลับหน้าหลัก">🏠</a>
+    <button class="iconbtn" id="btnLogout">ออกจากระบบ</button>
+  </div></header>
+  <div class="wrap">
+    <nav class="folder-tabs" id="tabs">
+      <button class="ftab active" data-t="overview">ภาพรวม</button>
+      <button class="ftab" data-t="students">นักเรียน</button>
+      <button class="ftab" data-t="refl">บันทึกที่แชร์</button>
+      <button class="ftab" data-t="consent">ความยินยอม</button>
+      <button class="ftab" data-t="prepost">ก่อน-หลัง</button>
+    </nav>
+    <div class="folder-body" id="body"><div class="loading">กำลังโหลด…</div></div>
+  </div>
+</div>
+<div id="toast" role="status"></div>
+
+<script>
+const SUPABASE_URL = "https://ikkhjslmtjwrxzxvtokb.supabase.co";
+const ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlra2hqc2xtdGp3cnh6eHZ0b2tiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM3NDMzNjksImV4cCI6MjA5OTMxOTM2OX0.3OR_9mEv82Ns1LLjx5nnRwJYzrtKFtWCWd1bPuQfNKU";
+const EMAIL_DOMAIN = "guidance-pcw.local";
+const sb = supabase.createClient(SUPABASE_URL, ANON_KEY);
+
+const CARD_TH = ["ผู้เริ่มต้น","นักสร้างสรรค์","เสียงภายใน","ผู้เติบโต","ผู้วางโครง","ผู้สืบทอด","ทางเลือกของใจ","ผู้มุ่งหน้า","ความอ่อนโยนที่แข็งแรง","ผู้ใคร่ครวญ","จังหวะชีวิต","ความเป็นธรรม","มุมมองใหม่","ปล่อยวาง","ความพอดี","สิ่งที่ผูกใจ","จุดเปลี่ยนฉับพลัน","ความหวัง","ความไม่ชัดเจน","ความสุขที่เป็นตัวเอง","เสียงเรียก","ความสมบูรณ์"];
+const POS = ["ตัวฉันตอนนี้","สิ่งที่ฉันกลัว","สิ่งที่ฉันอยากเป็น"];
+const AXES = [["E","I","แสดงออก","ใคร่ครวญ"],["S","N","เห็นจริง","เห็นภาพรวม"],["T","F","เหตุผล","ความรู้สึก"],["J","P","วางแผน","ยืดหยุ่น"]];
+
+let me=null, tab="overview", loaded=false;
+let students=[], sessions=[], consents=new Map(), shared=[];
+const F={level:0, room:""};
+let confirmBulk=false;
+
+const $=id=>document.getElementById(id);
+const esc=s=>(s??"").toString().replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+function toast(t){$("toast").textContent=t;$("toast").classList.add("show");setTimeout(()=>$("toast").classList.remove("show"),3000)}
+const fmtDate=d=>new Date(d).toLocaleDateString("th-TH",{day:"numeric",month:"short",year:"2-digit"});
+const gradeOf=r=>{const m=String(r||"").match(/ม\.?\s*(\d)/);return m?+m[1]:0};
+const cmpRoom=(a,b)=>String(a).localeCompare(String(b),"th",{numeric:true});
+
+async function fetchAll(build){ // PostgREST จำกัด 1,000 แถว → แบ่งหน้า
+  let out=[],from=0;
+  for(;;){const {data,error}=await build().range(from,from+999);if(error)throw error;out=out.concat(data||[]);if(!data||data.length<1000)break;from+=1000}
+  return out;
+}
+
+async function boot(){
+  const {data:{session}}=await sb.auth.getSession();
+  if(!session){$("loginStage").classList.remove("hidden");return}
+  const {data:p}=await sb.from("profiles").select("id,display_name,role").eq("id",session.user.id).maybeSingle();
+  if(!p){await sb.auth.signOut();$("loginStage").classList.remove("hidden");return toast("ไม่พบข้อมูลผู้ใช้")}
+  me=p;$("loginStage").classList.add("hidden");$("appStage").classList.remove("hidden");
+  if(!["teacher","admin"].includes(p.role)){
+    $("tabs").classList.add("hidden");
+    $("body").innerHTML=`<div class="empty">หน้านี้สำหรับครูและแอดมินเท่านั้นค่ะ<br><a href="tarot-student.html">ไปที่หน้าเล่นของนักเรียน</a></div>`;return;
+  }
+  $("tabs").querySelectorAll(".ftab").forEach(b=>b.onclick=()=>{tab=b.dataset.t;$("tabs").querySelectorAll(".ftab").forEach(x=>x.classList.toggle("active",x===b));confirmBulk=false;render()});
+  await load();
+}
+$("btnLogin").onclick=async()=>{
+  const u=$("liUser").value.trim(),p=$("liPass").value,m=$("liMsg");
+  if(!u||!p){m.textContent="กรอกชื่อผู้ใช้และรหัสผ่านก่อนนะคะ";m.classList.add("show");return}
+  $("btnLogin").disabled=true;
+  const {error}=await sb.auth.signInWithPassword({email:u+"@"+EMAIL_DOMAIN,password:p});
+  $("btnLogin").disabled=false;
+  if(error){m.textContent="เข้าสู่ระบบไม่สำเร็จ: ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง";m.classList.add("show");return}
+  location.reload();
+};
+$("liPass").addEventListener("keydown",e=>{if(e.key==="Enter")$("btnLogin").click()});
+$("btnLogout").onclick=async()=>{await sb.auth.signOut();location.reload()};
+
+async function load(){
+  $("body").innerHTML=`<div class="loading">กำลังโหลดข้อมูล…</div>`;
+  try{
+    const [st,se,co,sh]=await Promise.all([
+      fetchAll(()=>sb.from("profiles").select("id,display_name,class_room,student_id").eq("role","student").order("id")),
+      fetchAll(()=>sb.from("tarot_sessions").select("id,student_id,level,mbti,mbti_adjusted,cards,resonated_position,next_action,created_at").order("created_at",{ascending:false})),
+      fetchAll(()=>sb.from("tarot_consents").select("student_id,consented,consented_by,recorded_at").order("student_id")),
+      fetchAll(()=>sb.from("tarot_reflections").select("id,session_id,student_id,body,created_at").eq("shared_with_teacher",true).order("created_at",{ascending:false}))
+    ]);
+    students=st.sort((a,b)=>cmpRoom(a.class_room,b.class_room)||String(a.student_id||"").localeCompare(String(b.student_id||"")));
+    sessions=se;consents=new Map(co.map(c=>[c.student_id,c]));shared=sh;loaded=true;
+  }catch(e){$("body").innerHTML=`<div class="empty">โหลดข้อมูลไม่สำเร็จ: ${esc(e.message||e)}</div>`;return}
+  render();
+}
+
+const stuById=()=>new Map(students.map(s=>[s.id,s]));
+function rooms(){return [...new Set(students.map(s=>s.class_room).filter(Boolean))].sort(cmpRoom)}
+function scopeStudents(){return students.filter(s=>(!F.room||s.class_room===F.room)&&(!F.level||gradeOf(s.class_room)===F.level))}
+function scopeSessions(){const ids=new Set(scopeStudents().map(s=>s.id));return sessions.filter(x=>ids.has(x.student_id)&&(!F.level||x.level===F.level))}
+
+function filtersHtml(withLevel=true){
+  return `<div class="filters">
+    ${withLevel?`<select id="fLevel" aria-label="ระดับชั้น"><option value="0">ทุกระดับ</option><option value="3" ${F.level===3?"selected":""}>ม.3</option><option value="6" ${F.level===6?"selected":""}>ม.6</option></select>`:""}
+    <select id="fRoom" aria-label="ห้อง"><option value="">ทุกห้อง</option>${rooms().filter(r=>!F.level||gradeOf(r)===F.level||!withLevel).map(r=>`<option ${F.room===r?"selected":""}>${esc(r)}</option>`).join("")}</select>
+  </div>`;
+}
+function bindFilters(){
+  const l=$("fLevel"),r=$("fRoom");
+  if(l)l.onchange=()=>{F.level=+l.value;if(F.room&&F.level&&gradeOf(F.room)!==F.level)F.room="";confirmBulk=false;render()};
+  if(r)r.onchange=()=>{F.room=r.value;confirmBulk=false;render()};
+}
+const bar=(label,n,max,cls="")=>`<div class="row"><span class="lbl">${esc(label)}</span><span class="track"><span class="fill ${cls}" style="display:block;width:${max?Math.round(n/max*100):0}%"></span></span><span class="n">${n}</span></div>`;
+
+function render(){
+  if(!loaded)return;
+  ({overview,students:studentsTab,refl,consent,prepost})[tab]();
+}
+
+/* ═══ ภาพรวม ═══ */
+function overview(){
+  const st=scopeStudents(),se=scopeSessions();
+  const players=new Set(se.map(x=>x.student_id)).size;
+  const consented=st.filter(s=>consents.get(s.id)?.consented).length;
+  const types={},cardsCount={},axes=AXES.map(()=>[0,0]);let adj=0;
+  se.forEach(x=>{types[x.mbti]=(types[x.mbti]||0)+1;if(x.mbti_adjusted)adj++;
+    AXES.forEach((a,i)=>{const k=x.mbti.indexOf(a[0])===i?0:1;axes[i][k]++});
+    (x.cards||[]).forEach(c=>{if(Number.isInteger(c.index))cardsCount[c.index]=(cardsCount[c.index]||0)+1})});
+  const typeRows=Object.entries(types).sort((a,b)=>b[1]-a[1]);
+  const maxT=typeRows.length?typeRows[0][1]:0;
+  const cardRows=Object.entries(cardsCount).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  const maxC=cardRows.length?cardRows[0][1]:0;
+  $("body").innerHTML=`${filtersHtml()}
+  <div class="stats">
+    <div class="stat"><b>${st.length}</b><span>นักเรียนในขอบเขตที่เลือก</span></div>
+    <div class="stat"><b>${consented}</b><span>ยินยอมแล้ว (${st.length?Math.round(consented/st.length*100):0}%)</span></div>
+    <div class="stat"><b>${players}</b><span>เล่นแล้ว (${st.length?Math.round(players/st.length*100):0}%)</span></div>
+    <div class="stat"><b>${se.length}</b><span>จำนวนครั้งที่เล่น</span></div>
+    <div class="stat"><b>${se.length?Math.round(adj/se.length*100):0}%</b><span>ปรับผล MBTI เอง</span></div>
+  </div>
+  ${se.length?`<div class="grid2">
+    <div><h3 class="sec">แนวโน้มรายมิติ</h3>${AXES.map((a,i)=>`<div class="row"><span class="lbl">${a[0]} ${a[2]}</span><span class="track" style="display:flex"><span style="width:${Math.round(axes[i][0]/se.length*100)}%;background:var(--pine)"></span><span style="width:${Math.round(axes[i][1]/se.length*100)}%;background:var(--lav)"></span></span><span class="lbl" style="text-align:right;width:130px">${a[3]} ${a[1]}</span></div>`).join("")}
+      <h3 class="sec" style="margin-top:18px">ประเภทที่พบ</h3>${typeRows.map(([t,n])=>bar(t,n,maxT)).join("")}</div>
+    <div><h3 class="sec">ไพ่ที่ถูกเลือกบ่อย</h3>${cardRows.length?cardRows.map(([i,n])=>bar(CARD_TH[i]||("ใบที่ "+i),n,maxC,"lav")).join(""):`<div class="empty">ยังไม่มีข้อมูล</div>`}
+      <div class="note" style="margin-top:16px">ผล MBTI เป็นแนวโน้มจากแบบสั้น 12 ข้อ ใช้ดูภาพรวมของห้องเท่านั้น ไม่ควรใช้ตัดสินรายบุคคล</div></div>
+  </div>
+  <div style="margin-top:16px"><button class="btn ghost" id="btnCsv">ส่งออก CSV (ไม่รวมบันทึกส่วนตัว)</button></div>`
+  :`<div class="empty">ยังไม่มีข้อมูลการเล่นในขอบเขตที่เลือก</div>`}`;
+  bindFilters();
+  const c=$("btnCsv");if(c)c.onclick=exportCsv;
+}
+function exportCsv(){
+  const m=stuById();
+  const head=["รหัสนักเรียน","ชื่อ","ห้อง","ระดับ","MBTI","ปรับผลเอง","ไพ่: ตัวฉันตอนนี้","ไพ่: สิ่งที่ฉันกลัว","ไพ่: สิ่งที่ฉันอยากเป็น","สิ่งที่เลือกลอง","วันที่"];
+  const rows=scopeSessions().map(x=>{const s=m.get(x.student_id)||{};const c=x.cards||[];
+    return [s.student_id,s.display_name,s.class_room,"ม."+x.level,x.mbti,x.mbti_adjusted?"ใช่":"ไม่",...[0,1,2].map(i=>CARD_TH[c[i]?.index]||c[i]?.card||""),x.next_action,new Date(x.created_at).toISOString().slice(0,10)]});
+  const q=v=>`"${String(v??"").replace(/"/g,'""')}"`;
+  const csv="﻿"+[head,...rows].map(r=>r.map(q).join(",")).join("\r\n");
+  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));
+  a.download="tarot-sessions.csv";document.body.appendChild(a);a.click();a.remove();
+}
+
+/* ═══ นักเรียน ═══ */
+function studentsTab(){
+  const st=scopeStudents(),last=new Map();
+  sessions.forEach(x=>{if(!last.has(x.student_id))last.set(x.student_id,x)});
+  const rows=st.map(s=>{const c=consents.get(s.id),l=last.get(s.id);
+    const status=l?`<span class="pill ok">เล่นแล้ว</span>`:(c?.consented?`<span class="pill warn">ยินยอมแล้ว ยังไม่เล่น</span>`:`<span class="pill off">ยังไม่เริ่ม</span>`);
+    return `<tr><td>${esc(s.student_id||"")}</td><td>${esc(s.display_name||"")}</td><td>${esc(s.class_room||"")}</td><td>${status}</td><td>${l?`<span class="pill lav">${esc(l.mbti)}</span>`:"—"}</td><td>${l?esc(((l.cards||[]).map(c=>CARD_TH[c.index]||c.card)).join(" · ")):"—"}</td><td>${l?fmtDate(l.created_at):"—"}</td></tr>`}).join("");
+  $("body").innerHTML=`${filtersHtml()}
+  ${st.length>400?`<div class="note">แสดงนักเรียน ${st.length} คน เลือกห้องเพื่อให้ดูง่ายขึ้นค่ะ</div>`:""}
+  <div class="tablewrap"><table><thead><tr><th>เลขประจำตัว</th><th>ชื่อ</th><th>ห้อง</th><th>สถานะ</th><th>MBTI ล่าสุด</th><th>ไพ่ล่าสุด</th><th>วันที่</th></tr></thead><tbody>${rows||`<tr><td colspan="7" class="empty">ไม่พบนักเรียน</td></tr>`}</tbody></table></div>`;
+  bindFilters();
+}
+
+/* ═══ บันทึกที่แชร์ ═══ */
+function refl(){
+  const m=stuById(),ses=new Map(sessions.map(x=>[x.id,x]));
+  const ids=new Set(scopeStudents().map(s=>s.id));
+  const list=shared.filter(r=>ids.has(r.student_id));
+  $("body").innerHTML=`${filtersHtml()}
+  <div class="note">แสดงเฉพาะบันทึกที่นักเรียน <b>กดแชร์ให้ครูเอง</b> บันทึกที่ไม่แชร์ ระบบไม่เปิดให้ครูเห็น ควรใช้เพื่อดูแลนักเรียน ไม่นำไปเผยแพร่โดยระบุชื่อ</div>
+  ${list.length?list.map(r=>{const s=m.get(r.student_id)||{},x=ses.get(r.session_id);
+    const c=x&&x.resonated_position!=null?(x.cards||[])[x.resonated_position]:null;
+    return `<div class="refl"><div class="meta"><b>${esc(s.display_name||"")}</b> · ${esc(s.class_room||"")} · ${fmtDate(r.created_at)}${c?` · ข้อที่โดนใจ: ${esc(POS[x.resonated_position])} (${esc(CARD_TH[c.index]||c.card)})`:""}</div><p>${esc(r.body)}</p></div>`}).join("")
+  :`<div class="empty">ยังไม่มีบันทึกที่นักเรียนแชร์ในขอบเขตที่เลือก</div>`}`;
+  bindFilters();
+}
+
+/* ═══ ความยินยอม ═══ */
+function consent(){
+  const st=scopeStudents();
+  const done=st.filter(s=>consents.get(s.id)?.consented).length;
+  const without=st.filter(s=>!consents.has(s.id));
+  const byStaff=st.filter(s=>consents.get(s.id)?.consented&&consents.get(s.id).consented_by==="staff").length;
+  $("body").innerHTML=`${filtersHtml(false)}
+  <div class="stats">
+    <div class="stat"><b>${st.length}</b><span>นักเรียนในขอบเขตที่เลือก</span></div>
+    <div class="stat"><b>${done}</b><span>ยินยอมแล้ว</span></div>
+    <div class="stat"><b>${byStaff}</b><span>ครูบันทึกให้ (จากเอกสาร)</span></div>
+    <div class="stat"><b>${without.length}</b><span>ยังไม่มีบันทึกเลย</span></div>
+  </div>
+  <div class="note">นักเรียนติ๊กยินยอมเองได้ในแอป ถ้าโรงเรียนเก็บหนังสือยินยอมจากผู้ปกครองเป็นเอกสารไว้แล้ว ใช้ปุ่มด้านล่างบันทึกให้ทั้งห้องได้ ระบบจะ <b>ไม่ทับ</b> นักเรียนที่เคยถอนความยินยอมหรือมีบันทึกอยู่แล้ว</div>
+  ${F.room?`<button class="btn ${confirmBulk?"warn":""}" id="btnBulk" ${without.length?"":"disabled"}>${confirmBulk?`แตะอีกครั้งเพื่อยืนยัน บันทึกให้ ${without.length} คน`:`บันทึกว่าได้รับหนังสือยินยอมของห้อง ${esc(F.room)}`}</button>`:`<div class="empty">เลือกห้องก่อนเพื่อบันทึกความยินยอมทั้งห้อง</div>`}`;
+  bindFilters();
+  const b=$("btnBulk");if(b)b.onclick=bulkConsent;
+}
+async function bulkConsent(){
+  const without=scopeStudents().filter(s=>!consents.has(s.id));
+  if(!without.length)return;
+  if(!confirmBulk){confirmBulk=true;return consent()}
+  $("btnBulk").disabled=true;
+  const now=new Date().toISOString();
+  const rows=without.map(s=>({student_id:s.id,consented:true,consented_by:"staff",recorded_by:me.id,note:"บันทึกจากหนังสือยินยอมที่โรงเรียนเก็บไว้",recorded_at:now}));
+  let err=null;
+  for(let i=0;i<rows.length;i+=200){
+    const {error}=await sb.from("tarot_consents").upsert(rows.slice(i,i+200),{onConflict:"student_id",ignoreDuplicates:true});
+    if(error){err=error;break}
+  }
+  confirmBulk=false;
+  if(err){toast("บันทึกไม่สำเร็จ: "+err.message);return consent()}
+  rows.forEach(r=>consents.set(r.student_id,{student_id:r.student_id,consented:true,consented_by:"staff",recorded_at:now}));
+  toast("บันทึกความยินยอมแล้ว "+rows.length+" คน");consent();
+}
+
+/* ═══ ก่อน-หลัง ═══ */
+async function prepost(){
+  $("body").innerHTML=`<div class="loading">กำลังโหลด…</div>`;
+  const {data,error}=await sb.from("tarot_prepost_summary").select("*").order("round_label",{ascending:false});
+  if(error){$("body").innerHTML=`<div class="empty">โหลดไม่สำเร็จ: ${esc(error.message)}</div>`;return}
+  if(!data||!data.length){
+    $("body").innerHTML=`<div class="empty"><b>ยังไม่มีข้อมูลแบบวัดก่อน-หลัง</b><br>แบบวัดยังไม่เปิดใช้ ต้องร่างข้อคำถามและให้ผู้เชี่ยวชาญตรวจ IOC ก่อน ตารางในฐานข้อมูลพร้อมรับข้อมูลแล้ว</div>`;return}
+  $("body").innerHTML=`<div class="tablewrap"><table><thead><tr><th>รอบ</th><th>ระดับ</th><th>ห้อง</th><th>ช่วง</th><th>จำนวน (คน)</th><th>ค่าเฉลี่ย</th><th>S.D.</th></tr></thead><tbody>${data.map(r=>`<tr><td>${esc(r.round_label)}</td><td>ม.${r.level}</td><td>${esc(r.class_room||"")}</td><td>${r.phase==="pre"?"ก่อน":"หลัง"}</td><td>${r.n}</td><td>${r.mean_total}</td><td>${r.sd_total??"—"}</td></tr>`).join("")}</tbody></table></div>`;
+}
+
+boot();
+</script>
+</body>
+</html>
