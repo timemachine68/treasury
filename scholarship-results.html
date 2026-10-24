@@ -184,7 +184,7 @@
     <div id="resultMsg" class="msg"></div>
     <div id="rankWrap" class="card hidden">
       <div class="row-head">
-        <div><span class="eyebrow">อันดับผู้สมัคร</span><h2 class="sec" style="margin-bottom:0" id="rankTitle">ผลการคัดกรอง</h2></div>
+        <div><button class="back" id="homeBtn" type="button" style="margin:0 0 6px">‹ กลับหน้าเลือกทุน</button><br><span class="eyebrow">อันดับผู้สมัคร</span><h2 class="sec" style="margin-bottom:0" id="rankTitle">ผลการคัดกรอง</h2></div>
         <span class="muted" id="rankCount"></span>
       </div>
       <div id="rankBody"></div>
@@ -348,7 +348,7 @@ async function loadRanking(){
 
   // applications (has disqualified + reason + status + self_reported)
   const {data:apps}=await sb.from("applications")
-    .select("id,profile_id,status,disqualified,disqualified_reason,submitted_at")
+    .select("id,profile_id,status,disqualified,disqualified_reason,submitted_at,is_external_award")
     .eq("scholarship_id",CUR_SCH.id).neq("status","withdrawn");
   if(!apps||!apps.length){
     body.innerHTML=`<div class="empty">
@@ -390,10 +390,10 @@ async function loadRanking(){
     const st=STATUS_LABEL[r.app.status]||r.app.status;
     html+=`<tr class="clk" data-app="${r.app.id}">
       <td><div class="rankno ${cls}">${i+1}</div></td>
-      <td><b>${esc(r.p.display_name||"—")}</b><div class="muted">${esc(r.p.student_id||"")}</div></td>
+      <td><b>${esc(r.p.display_name||"—")}</b>${r.app.is_external_award?' <span class="adj-badge">ทุนนอกระบบ</span>':""}<div class="muted">${esc(r.p.student_id||"")}</div></td>
       <td>${esc(r.p.class_room||"—")}</td>
       <td style="text-align:right"><span class="score-big">${sc}</span>${adj}</td>
-      <td style="text-align:right"><span class="status-tag st-${r.app.status}">${st}</span></td></tr>`;
+      <td style="text-align:right"><span class="status-tag st-${r.app.status}">${st}</span>${ME&&ME.role==="admin"?`<button class="linkbtn del-row" data-del="${r.app.id}" data-name="${esc(r.p.display_name||"")}" style="color:#b3402f;margin-left:10px">ลบ</button>`:""}</td></tr>`;
     if(q && i===CUR_SCH.quota-1 && qualified.length>CUR_SCH.quota){
       html+=`</tbody></table><div class="quota-line">เส้นโควตา · ${CUR_SCH.quota} ทุน</div><table class="rank"><tbody>`;
     }
@@ -407,12 +407,31 @@ async function loadRanking(){
       html+=`<tr class="clk" data-app="${r.app.id}">
         <td style="width:44px"><div class="rankno dq">✕</div></td>
         <td><b>${esc(r.p.display_name||"—")}</b><div class="muted">${esc(r.p.student_id||"")}</div></td>
-        <td colspan="3"><span class="dq-reason">${esc(r.app.disqualified_reason||"ไม่ผ่านเกณฑ์")}</span></td></tr>`;
+        <td colspan="3"><span class="dq-reason">${esc(r.app.disqualified_reason||"ไม่ผ่านเกณฑ์")}</span>${ME&&ME.role==="admin"?`<button class="linkbtn del-row" data-del="${r.app.id}" data-name="${esc(r.p.display_name||"")}" style="color:#b3402f;margin-left:10px">ลบ</button>`:""}</td></tr>`;
     });
     html+=`</tbody></table>`;
   }
   body.innerHTML=html;
   body.querySelectorAll("[data-app]").forEach(tr=>tr.onclick=()=>openDetail(tr.dataset.app));
+  body.querySelectorAll("[data-del]").forEach(b=>b.onclick=e=>{e.stopPropagation();deleteApp(b.dataset.del,b.dataset.name);});
+}
+
+/* กลับหน้าเลือกทุน (ไม่แตะข้อมูลที่กรอกไว้) */
+function goHome(){
+  $("#schSelect").value="";CUR_SCH=null;
+  $("#rankWrap").classList.add("hidden");$("#computeBtn").disabled=true;
+  $("#schMeta").textContent="";msg($("#resultMsg"),"","");
+  show("result");
+}
+
+/* ผู้ดูแลลบรายชื่อที่กรอกผิด */
+async function deleteApp(id,name){
+  if(!ME||ME.role!=="admin")return;
+  if(!confirm("ลบรายชื่อ “"+(name||"นี้")+"” ออกจากทุนนี้?\nคะแนนของรายชื่อนี้จะหายไปด้วย และกู้คืนไม่ได้"))return;
+  const {error}=await sb.rpc("admin_delete_application",{p_application_id:id,p_reason:null});
+  if(error){msg($("#resultMsg"),"ลบไม่สำเร็จ: "+error.message,"err");return;}
+  msg($("#resultMsg"),"ลบรายชื่อ “"+(name||"")+"” แล้ว","ok");
+  await loadRanking();
 }
 
 /* detail */
@@ -421,7 +440,7 @@ async function openDetail(appId){
   show("detail");
   $("#critScores").innerHTML='<div class="spin"></div>';
   const {data:app}=await sb.from("applications")
-    .select("id,profile_id,status,disqualified,disqualified_reason,student_statement,self_reported").eq("id",appId).single();
+    .select("id,profile_id,status,disqualified,disqualified_reason,student_statement,self_reported,is_external_award").eq("id",appId).single();
   CUR_APP=app;
   const {data:p}=await sb.from("profiles").select("display_name,student_id,class_room").eq("id",app.profile_id).single();
   $("#dName").textContent=p?.display_name||"—";
@@ -515,6 +534,7 @@ async function setStatus(val){
   CUR_APP.status=val;renderStatusActions();
   msg($("#detailMsg"),"อัปเดตสถานะเป็น “"+(STATUS_LABEL[val]||val)+"” แล้ว","ok");
 }
+
 
 function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
 
@@ -615,6 +635,7 @@ $("#loginBtn").onclick=login;
 $("#password").addEventListener("keydown",e=>{if(e.key==="Enter")login();});
 $("#logoutBtn").onclick=logout;
 $("#schSelect").onchange=onSelectSch;
+$("#homeBtn").onclick=goHome;
 $("#computeBtn").onclick=computeAll;
 $("#backBtn").onclick=()=>{show("result");loadRanking();};
 

@@ -122,7 +122,6 @@
       <div class="kpi"><div class="label">นักเรียนที่ได้รับทุน</div><div class="value" id="kpiCount">–</div></div>
       <div class="kpi"><div class="label">ยอดเงินทุนรวม</div><div class="value" id="kpiAmount">–</div></div>
       <div class="kpi"><div class="label">จำนวนทุนที่มอบ</div><div class="value" id="kpiFunds">–</div></div>
-      <div class="kpi"><div class="label">คะแนนเฉลี่ยผู้ได้ทุน</div><div class="value" id="kpiScore">–</div></div>
     </div>
 
     <div class="grid2">
@@ -244,7 +243,6 @@ function renderEmpty() {
   $("#kpiCount").textContent = "0";
   $("#kpiAmount").textContent = fmtBaht(0);
   $("#kpiFunds").textContent = "0";
-  $("#kpiScore").textContent = "–";
   $("#tableWrap").innerHTML = `<div class="empty">ยังไม่มีนักเรียนที่ได้รับทุนในระบบ — พอครูกด "ให้ทุน" ในหน้าคัดกรอง ข้อมูลจะขึ้นที่นี่อัตโนมัติ</div>`;
 }
 
@@ -255,14 +253,10 @@ function renderYear(year) {
   const totalCount = rows.reduce((s, r) => s + Number(r.awarded_count), 0);
   const totalAmount = rows.reduce((s, r) => s + Number(r.total_amount || 0), 0);
   const fundCount = new Set(rows.map(r => r.scholarship_id)).size;
-  const avgScore = yearAwards.length
-    ? (yearAwards.reduce((s, r) => s + Number(r.total_score || 0), 0) / yearAwards.length).toFixed(2)
-    : "–";
 
   $("#kpiCount").textContent = totalCount.toLocaleString("th-TH");
   $("#kpiAmount").textContent = fmtBaht(totalAmount);
   $("#kpiFunds").textContent = fundCount.toLocaleString("th-TH");
-  $("#kpiScore").textContent = avgScore;
 
   const byFund = {};
   rows.forEach(r => { byFund[r.scholarship_name] = (byFund[r.scholarship_name] || 0) + Number(r.awarded_count); });
@@ -278,7 +272,7 @@ function renderYear(year) {
   } else {
     tableWrap.innerHTML = `
       <table>
-        <thead><tr><th>ชื่อ-สกุล</th><th>รหัสนักเรียน</th><th>ชั้น</th><th>ทุน</th><th>คะแนนรวม</th><th>จำนวนเงิน</th></tr></thead>
+        <thead><tr><th>ชื่อ-สกุล</th><th>รหัสนักเรียน</th><th>ชั้น</th><th>ทุน</th><th>จำนวนเงิน</th></tr></thead>
         <tbody>
           ${yearAwards.map(r => `
             <tr>
@@ -286,7 +280,6 @@ function renderYear(year) {
               <td>${esc(r.student_id ?? "-")}</td>
               <td>${esc(r.class_room ?? "-")}</td>
               <td><span class="badge">${esc(r.scholarship_name)}</span></td>
-              <td>${esc(r.total_score ?? "-")}</td>
               <td>${fmtBaht(r.amount_per_grant)}</td>
             </tr>`).join("")}
         </tbody>
@@ -342,9 +335,9 @@ $("#csvBtn")?.addEventListener("click", () => {
   const year = $("#yearSelect").value;
   const rows = allAwards.filter(r => r.academic_year === year);
   if (rows.length === 0) return;
-  const header = ["ชื่อ-สกุล", "รหัสนักเรียน", "ชั้น", "ทุน", "หน่วยงาน", "คะแนนรวม", "จำนวนเงิน"];
+  const header = ["ชื่อ-สกุล", "รหัสนักเรียน", "ชั้น", "ทุน", "หน่วยงาน", "จำนวนเงิน"];
   const csv = [header.join(",")].concat(
-    rows.map(r => [r.display_name, r.student_id, r.class_room, r.scholarship_name, r.provider, r.total_score, r.amount_per_grant]
+    rows.map(r => [r.display_name, r.student_id, r.class_room, r.scholarship_name, r.provider, r.amount_per_grant]
       .map(v => `"${(v ?? "").toString().replace(/"/g, '""')}"`).join(","))
   ).join("\n");
   const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8;" });
