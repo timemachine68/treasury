@@ -227,7 +227,9 @@ const EMAIL_DOMAIN = "guidance-pcw.local";
 const CONSENT_VERSION = "v1";
 const sb = supabase.createClient(SUPABASE_URL, ANON_KEY);
 
-let S, profile = null, history = [];
+let S, profile = null, history = [], cfg = null, myPP = [];
+const PP_ITEMS=["ฉันบอกได้ว่าตัวเองสนใจเรื่องอะไรเป็นพิเศษ","ฉันบอกได้ว่าตัวเองถนัดหรือทำได้ดีในเรื่องใดบ้าง","ฉันรู้ว่าสิ่งใดสำคัญกับชีวิตของฉัน เช่น ความมั่นคง ความสร้างสรรค์ การช่วยเหลือผู้อื่น","ฉันรู้ว่าจะหาข้อมูลสายการเรียนหรืออาชีพที่สนใจได้จากที่ไหน","ฉันอธิบายได้ว่าเส้นทางการเรียนต่อหรืออาชีพที่สนใจต้องเตรียมตัวอย่างไร","ฉันเคยหาข้อมูลหรือพูดคุยกับผู้รู้เกี่ยวกับเส้นทางที่สนใจแล้วอย่างน้อยหนึ่งครั้ง","ฉันเลือกเส้นทางการเรียนต่อหรืออาชีพที่เหมาะกับตัวเองได้","ฉันมีเส้นทางที่สนใจอย่างน้อยหนึ่งทางที่เลือกเพราะความต้องการของตัวเอง","เมื่อมีหลายทางเลือก ฉันเปรียบเทียบข้อดีข้อเสียก่อนตัดสินใจได้","ฉันตั้งเป้าหมายระยะสั้น (ภายในหนึ่งภาคเรียน) เพื่อเข้าใกล้เส้นทางที่เลือกได้","ฉันรู้ว่าต้องเตรียมตัวอะไรบ้างในปีการศึกษานี้","ฉันวางแผนขั้นตอนเพื่อไปให้ถึงเป้าหมายได้","ถ้าแผนแรกไม่เป็นไปตามที่หวัง ฉันมีทางเลือกสำรองอย่างน้อยหนึ่งทาง","เมื่อรู้สึกลังเลหรือกังวลเรื่องอนาคต ฉันรู้ว่าจะขอคำปรึกษาจากใครได้","แม้ความเห็นของคนรอบตัวต่างจากของฉัน ฉันก็อธิบายเหตุผลของการเลือกของตัวเองได้"];
+const PP_SCALE=["ไม่ตรงกับฉันเลย","ตรงเล็กน้อย","ตรงปานกลาง","ตรงมาก","ตรงที่สุด"];
 function reset(keepLevel){S={screen:"welcome",level:keepLevel||guessLevel(),q:0,ans:[],type:[],computed:"",deck:[],picks:[],flipped:[false,false,false],active:-1,res:-1,note:"",share:false,action:-1,saving:false,msg:""}}
 function guessLevel(){const m=profile&&profile.class_room&&String(profile.class_room).match(/ม\.?\s*(\d)/);const g=m?+m[1]:0;return (g===3||g===6)?g:0}
 const $=document.getElementById("app");
@@ -240,7 +242,7 @@ function counts(){const c={};QS.forEach((q,i)=>{const l=S.ans[i];if(l)c[l]=(c[l]
 function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
 function toast(t){const el=document.getElementById("toast");el.textContent=t;el.classList.add("show");setTimeout(()=>el.classList.remove("show"),3200)}
 function go(s){S.screen=s;render();window.scrollTo({top:0,behavior:"smooth"})}
-function render(){$.innerHTML=({login,consent,welcome,survey,result,pick,reveal,reflect,done,final})[S.screen]()}
+function render(){$.innerHTML=({login,consent,welcome,prepost,survey,result,pick,reveal,reflect,done,final})[S.screen]()}
 const fmtDate=d=>new Date(d).toLocaleDateString("th-TH",{day:"numeric",month:"short",year:"2-digit"});
 
 /* ---------- เข้าสู่ระบบ + ความยินยอม ---------- */
@@ -260,6 +262,9 @@ async function boot(){
 async function loadHistory(){
   const {data:ss}=await sb.from("tarot_sessions").select("id,level,mbti,cards,created_at").eq("student_id",profile.id).order("created_at",{ascending:false}).limit(5);
   history=ss||[];
+  const {data:g}=await sb.from("tarot_prepost_config").select("round_label,instrument_version,pre_open,post_open").eq("id",1).maybeSingle();
+  cfg=g||null;myPP=[];
+  if(cfg){const {data:pp}=await sb.from("tarot_prepost").select("phase").eq("student_id",profile.id).eq("round_label",cfg.round_label);myPP=(pp||[]).map(x=>x.phase)}
   if(history.length){
     const {data:rs}=await sb.from("tarot_reflections").select("session_id,body,shared_with_teacher").in("session_id",history.map(h=>h.id));
     const m={};(rs||[]).forEach(r=>m[r.session_id]=r);history.forEach(h=>h.refl=m[h.id]||null);
@@ -312,6 +317,8 @@ function consent(){return `<div class="panel">
 /* ---------- หน้าจอเกม ---------- */
 function welcome(){
 const ok=!!S.level;
+const ppPhase=cfg&&((cfg.pre_open&&!myPP.includes("pre"))?"pre":(cfg.post_open&&!myPP.includes("post"))?"post":"");
+const ppBox=ppPhase?`<div class="note" style="margin-top:16px"><b>${ppPhase==="pre"?"แบบสำรวจก่อนเริ่มกิจกรรม":"แบบสำรวจหลังทำกิจกรรม"}</b><br>15 ข้อ ใช้เวลาไม่ถึง 5 นาที ไม่มีถูกผิด ไม่มีผลต่อคะแนน<button class="btn" ${ok?"":"disabled"} onclick="startPP('${ppPhase}')">ทำแบบสำรวจ</button>${ok?"":"<span class='sub'>เลือกชั้นด้านบนก่อนนะ</span>"}</div>`:(cfg&&(cfg.pre_open||cfg.post_open)?`<div class="sub" style="margin-top:12px">ทำแบบสำรวจรอบนี้ครบแล้ว ขอบคุณนะ</div>`:"");
 const hist=history.length?`<details style="margin-top:16px" open><summary>การเล่นครั้งก่อนของฉัน</summary>${history.map(h=>`<div class="lens" style="margin-top:8px"><b>${fmtDate(h.created_at)} · ม.${h.level} · ${h.mbti}</b><br>${(h.cards||[]).map(c=>esc(c.card)).join(" · ")}${h.refl?`<br><span class="sub">บันทึก${h.refl.shared_with_teacher?" (แชร์ครูแล้ว)":" (ส่วนตัว)"}: ${esc(h.refl.body)}</span>`:""}</div>`).join("")}</details>`:"";
 return `<div class="panel">
 <div class="center"><span class="pill">คาบแนะแนว · 50 นาที</span></div>
@@ -323,10 +330,31 @@ ${S.msg?`<div class="note">${esc(S.msg)}</div>`:""}
 <button type="button" class="lvl l3" aria-pressed="${S.level===3}" onclick="setLevel(3)"><span class="badge">ม.3</span><span><b>เลือกเส้นทางหลังจบ ม.ต้น</b><small>สำรวจสิ่งที่ชอบและสิ่งที่ถนัด</small></span></button>
 <button type="button" class="lvl l6" aria-pressed="${S.level===6}" onclick="setLevel(6)"><span class="badge">ม.6</span><span><b>เลือกคณะและอนาคต</b><small>ต่อยอดสู่ TCAS และอาชีพ</small></span></button>
 <button class="btn" ${ok?"":"disabled"} onclick="go('survey')">เริ่มเลย</button>
+${ppBox}
 ${hist}
 <div class="center" style="margin-top:14px">
 <button class="back-link" onclick="logout()">ออกจากระบบ</button>
 <button class="back-link" onclick="withdrawConsent()">${S.confirmWithdraw?"แตะอีกครั้งเพื่อยืนยันการถอนความยินยอม":"ถอนความยินยอม"}</button></div></div>`}
+function startPP(ph){S.ppPhase=ph;S.pp=PP_ITEMS.map(()=>0);S.ppSaving=false;go("prepost")}
+function prepost(){
+const n=S.pp.filter(Boolean).length,ph=S.ppPhase==="pre"?"ก่อนเริ่ม":"หลังทำกิจกรรม";
+const rows=PP_ITEMS.map((t,i)=>`<fieldset class="lens" style="margin-top:10px;border:0"><legend style="font-weight:600">${i+1}. ${esc(t)}</legend><div style="display:flex;gap:6px;margin-top:8px">${[1,2,3,4,5].map(v=>`<button type="button" class="chip ${S.pp[i]===v?"on":""}" style="flex:1;width:auto;margin:0;padding:10px 0;text-align:center" aria-pressed="${S.pp[i]===v}" aria-label="${v} ${PP_SCALE[v-1]}" onclick="setPP(${i},${v})">${v}</button>`).join("")}</div></fieldset>`).join("");
+return `<div class="panel"><h2>แบบสำรวจ${ph}</h2><p class="sub">อ่านแต่ละข้อแล้วเลือกว่า "ตรงกับเธอแค่ไหนในตอนนี้" ไม่มีคำตอบถูกหรือผิด และไม่มีผลต่อคะแนนในรายวิชา</p>
+<div class="note">1 = ${PP_SCALE[0]} · 2 = ${PP_SCALE[1]} · 3 = ${PP_SCALE[2]} · 4 = ${PP_SCALE[3]} · 5 = ${PP_SCALE[4]}</div>
+${rows}<p class="sub" style="margin-top:12px">ตอบแล้ว ${n} จาก ${PP_ITEMS.length} ข้อ</p>
+<button class="btn" id="btnPP" ${n<PP_ITEMS.length||S.ppSaving?"disabled":""} onclick="savePP()">ส่งคำตอบ</button>
+<button class="btn ghost" onclick="go('welcome')">ไว้ทีหลัง</button></div>`}
+function setPP(i,v){S.pp[i]=v;const y=window.scrollY;render();window.scrollTo(0,y)}
+async function savePP(){
+  if(S.ppSaving||S.pp.some(v=>!v))return;S.ppSaving=true;render();
+  const total=S.pp.reduce((a,b)=>a+b,0);
+  const {error}=await sb.from("tarot_prepost").insert({student_id:profile.id,round_label:cfg.round_label,instrument_version:cfg.instrument_version,phase:S.ppPhase,level:S.level,items:S.pp,total});
+  S.ppSaving=false;
+  if(error){
+    if(error.code==="23505"){toast("รอบนี้เธอทำไปแล้ว");await loadHistory();return go("welcome")}
+    render();return toast("ส่งไม่สำเร็จ ครูอาจปิดรอบแล้ว หรือเน็ตมีปัญหา ลองใหม่อีกครั้งนะ")}
+  await loadHistory();toast("ส่งแล้ว ขอบคุณนะ");go("welcome")
+}
 function setLevel(l){S.level=l;render()}
 
 function survey(){const i=S.q,q=QS[i],k=li();
