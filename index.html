@@ -790,6 +790,10 @@ textarea.csvbox{font-family:monospace;font-size:.82rem;min-height:120px}
       <label><input type="checkbox" value="manage" checked>👥 จัดการบัญชี</label>
       <label><input type="checkbox" value="announcements" data-default="off">📢 ประกาศข่าวประชาสัมพันธ์ได้</label>
     </div>
+    <div style="margin-top:14px;padding:10px 12px;border:1px solid var(--line,#ddd);border-radius:12px">
+      <div class="roomchecks" style="flex-direction:column;align-items:stretch"><label><input type="checkbox" id="permGuidance">🧭 เป็นครูแนะแนว</label></div>
+      <p class="field hint" style="margin-top:6px">ติ๊กแล้วครูคนนี้เข้าหน้าจัดการของระบบโควตา ทุน MOU ช้างเผือก หนังสืออนุญาตทำงาน และดูข้อมูลนักเรียนในระบบเหล่านั้นได้ (เฉพาะครูแนะแนวเท่านั้น)</p>
+    </div>
     <div id="permAppsWrap" style="margin-top:14px;padding-top:12px;border-top:1px dashed var(--line,#ddd)">
       <div style="font-weight:700;margin-bottom:6px">🧩 ระบบของเรา ที่ครูคนนี้เห็น</div>
       <div class="roomchecks" style="flex-direction:column;align-items:stretch">
@@ -2986,6 +2990,7 @@ async function openPermModal(uid){
     if(i.dataset.default === "off"){ i.checked = !!(mp && mp[i.value] === true); } // opt-in: ปิดไว้ก่อนจนกว่าจะติ๊กให้ชัดเจน
     else { i.checked = !mp || mp[i.value] !== false; } // opt-out: เปิดไว้ก่อนตามของเดิม
   });
+  $("permGuidance").checked = u.is_guidance === true;
   // ระบบของเรา: โหลดรายการถ้ายังไม่มี
   if(typeof extApps === "undefined" || !extApps.length){
     const {data} = await sb.from("external_systems").select("*").order("sort_order").order("created_at");
@@ -3024,10 +3029,10 @@ $("btnPermSave").onclick = async ()=>{
     obj.appsOnly = ids;
   }
   $("btnPermSave").disabled = true;
-  const {error} = await sb.from("profiles").update({menu_permissions:obj}).eq("id", permUid);
+  const {error} = await sb.from("profiles").update({menu_permissions:obj, is_guidance:$("permGuidance").checked}).eq("id", permUid);
   $("btnPermSave").disabled = false;
   if(error) return msg("permMsg", error.message, "err");
-  if(u) u.menu_permissions = obj;
+  if(u){ u.menu_permissions = obj; u.is_guidance = $("permGuidance").checked; }
   $("permModal").classList.remove("show");
   toast("บันทึกสิทธิ์เมนูเรียบร้อย ✅ (มีผลตอนครูล็อกอินครั้งถัดไป) ");
 };
