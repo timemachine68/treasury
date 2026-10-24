@@ -85,6 +85,16 @@ header.app .wrap{display:flex;align-items:center;gap:12px;padding-bottom:0;flex-
 @media (max-width:560px){.row2{grid-template-columns:1fr}}
 .badge.uni{background:#E6F0FA;color:#1F4E79}
 .badge.ai{background:#F1E9FB;color:#5B3A8C}
+.badge.shared{background:#FDECE6;color:#9A3F22}
+.sub-card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:10px}
+.sub-card .q{font-family:'Mitr';font-size:1.02rem;line-height:1.5;margin-bottom:6px}
+.sub-card .meta{font-size:.78rem;color:var(--ink-soft);line-height:1.7}
+.sub-card .tip{background:#FFF9E3;border:1px dashed var(--note);border-radius:10px;padding:8px 10px;font-size:.84rem;margin-top:8px;white-space:pre-wrap}
+.sub-card .acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.pill.pending{background:#FFF3CE;color:var(--note-deep)}
+.pill.approved{background:var(--pine-tint);color:var(--pine-deep)}
+.pill.rejected{background:#F7E3E0;color:var(--danger)}
+.cnt{font-size:.74rem;color:var(--ink-soft);text-align:right;margin-top:3px}
 .target-panel{background:linear-gradient(120deg,#FFF8DC,#fff);border:1.5px dashed var(--note-deep)}
 .target-panel .row2{margin-top:4px}
 .target-note{font-size:.82rem;color:var(--ink-soft);margin-top:2px;line-height:1.6}
@@ -294,6 +304,36 @@ audio{width:100%;margin-top:6px}
   </div>
 </div></div>
 
+<!-- โมดัล: ครูตรวจคำถามที่นักเรียนแชร์ -->
+<div class="modal-back" id="subModal"><div class="modal">
+  <h2>📨 ตรวจคำถามที่นักเรียนแชร์</h2>
+  <div id="subInfo" class="hint" style="margin-bottom:10px"></div>
+  <div id="subMsg" class="msg"></div>
+  <div class="field"><label>คำถาม * (แก้ถ้อยคำได้ ตัดชื่อบุคคลออกให้หมดก่อนรับ)</label><textarea id="sbText" maxlength="300"></textarea></div>
+  <div class="row2">
+    <div class="field"><label>หมวด</label><select id="sbCat"></select></div>
+    <div class="field"><label>ชุดเฉพาะมหาวิทยาลัย</label><select id="sbUni"></select></div>
+  </div>
+  <div class="row2">
+    <div class="field"><label>ประเภทคำถาม</label>
+      <select id="sbAi"><option value="false">คำถามทั่วไปของหมวด</option><option value="true">🤖 คำถามเกี่ยวกับ AI ในสาขา</option></select></div>
+    <div class="field"><label>ภาษา</label><select id="sbLang"><option value="th">ไทย</option><option value="en">อังกฤษ</option></select></div>
+  </div>
+  <div class="field"><label>แนวทางการตอบ (นักเรียนเห็นหลังตอบเสร็จ)</label><textarea id="sbGuide"></textarea></div>
+  <div class="row2">
+    <div class="field"><label>ระดับความยาก</label>
+      <select id="sbDiff"><option value="easy">ง่าย</option><option value="medium" selected>ปานกลาง</option><option value="hard">ยาก</option></select></div>
+    <div class="field"><label>เวลาแนะนำ (วินาที)</label><input id="sbSec" type="number" value="120" min="30" max="600"></div>
+  </div>
+  <div class="field"><label>ถ้าไม่รับ: บอกเหตุผลให้นักเรียนรู้ (ไม่บังคับ)</label>
+    <input id="sbReason" maxlength="300" placeholder="เช่น ซ้ำกับคำถามเดิม / มีข้อมูลส่วนตัวของบุคคล"></div>
+  <div class="foot">
+    <button class="btn ghost" onclick="closeModal('subModal')">ปิด</button>
+    <button class="btn danger" id="btnSubReject">ไม่รับ</button>
+    <button class="btn primary" id="btnSubApprove">✅ รับเข้าคลัง</button>
+  </div>
+</div></div>
+
 <div id="toast"></div>
 
 <script>
@@ -402,9 +442,11 @@ function buildTabs(){
   if(profile.role==="student"){
     t.push({id:"practice", label:"🎯 ฝึกซ้อม", c:"#F2B84B"});
     t.push({id:"myresults", label:"📋 ผลของฉัน", c:"#4E9BB9"});
+    t.push({id:"share", label:"🗣 แชร์คำถาม", c:"#E07A5F"});
     t.push({id:"prep", label:"✅ เตรียมตัว", c:"#7FB069"});
   }else{
     t.push({id:"review", label:"📥 งานตรวจ", c:"#F2B84B"});
+    t.push({id:"inbox", label:"📨 คำถามจากนักเรียน", c:"#E07A5F"});
     t.push({id:"progress", label:"📈 พัฒนาการ", c:"#4E9BB9"});
     t.push({id:"bank", label:"🗂 คลังคำถาม", c:"#8E7CC3"});
     t.push({id:"prep", label:"✅ เตรียมตัว", c:"#7FB069"});
@@ -412,12 +454,18 @@ function buildTabs(){
   $("tabs").innerHTML = t.map(x=>`<button class="ftab" data-t="${x.id}" style="--tabc:${x.c}"><span class="dot"></span>${x.label}</button>`).join("");
   $("tabs").querySelectorAll(".ftab").forEach(b=> b.onclick = ()=> go(b.dataset.t));
   go("home");
+  if(isStaff()) refreshInboxBadge();
+}
+async function refreshInboxBadge(){
+  const {count} = await sb.from("iv_question_submissions").select("id",{count:"exact",head:true}).eq("status","pending");
+  const b = $("tabs").querySelector('[data-t="inbox"]');
+  if(b) b.innerHTML = `<span class="dot"></span>📨 คำถามจากนักเรียน${count? ` (${count})`:""}`;
 }
 function go(tab){
   if(pr && pr.active && tab!=="practice"){ if(!confirm("กำลังซ้อมอยู่ ออกจากห้องซ้อมใช่ไหม? คำตอบที่ตอบแล้วจะถูกเก็บไว้")) return; stopTimer(); stopRecorder(true); pr=null; }
   curTab = tab;
   $("tabs").querySelectorAll(".ftab").forEach(b=> b.classList.toggle("active", b.dataset.t===tab));
-  ({home:renderHome, practice:renderPractice, myresults:renderMyResults, review:renderReview, bank:renderBank, prep:renderPrep, progress:renderProgress})[tab]();
+  ({home:renderHome, practice:renderPractice, myresults:renderMyResults, review:renderReview, bank:renderBank, prep:renderPrep, progress:renderProgress, share:renderShare, inbox:renderInbox})[tab]();
 }
 
 /* ═══════════ หน้าแรก ═══════════ */
@@ -493,7 +541,7 @@ function targetLine(s){
 function qTypeBadges(q){
   if(!q) return "";
   const u = q.university_id && unis.find(x=>x.id===q.university_id);
-  return (u? ` <span class="badge uni">🏛 ${esc(u.short_name||u.name)}</span>`:"") + (q.is_ai? ` <span class="badge ai">🤖 AI</span>`:"");
+  return (u? ` <span class="badge uni">🏛 ${esc(u.short_name||u.name)}</span>`:"") + (q.is_ai? ` <span class="badge ai">🤖 AI</span>`:"") + (q.is_student_shared? ` <span class="badge shared">🗣 รุ่นพี่แชร์</span>`:"");
 }
 const isBasePool = q => q.is_active && !q.university_id && !q.is_ai;
 function shuffle(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); const t=a[i]; a[i]=a[j]; a[j]=t; } return a; }
@@ -909,7 +957,7 @@ let bankCat = "all", bankType = "all", editingQ = null;
 async function renderBank(){
   const activeCats = cats;
   const typeOk = (q,v) => v==="all" || (v==="base" && !q.university_id && !q.is_ai)
-    || (v==="ai" && q.is_ai) || (v==="uni" && !!q.university_id);
+    || (v==="ai" && q.is_ai) || (v==="uni" && !!q.university_id) || (v==="shared" && !!q.is_student_shared);
   const uniName = id => { const u = unis.find(x=>x.id===id); return u? (u.short_name||u.name) : ""; };
   const list = questions.filter(q=> (bankCat==="all"? true : q.category_id===bankCat) && typeOk(q,bankType))
     .sort((a,b)=> (a.category_id>b.category_id?1:-1) || uniName(a.university_id).localeCompare(uniName(b.university_id),"th")
@@ -923,7 +971,7 @@ async function renderBank(){
       <button class="btn primary" id="btnAddQ">＋ เพิ่มคำถาม</button>
     </div>
     <div class="chips" style="margin:-4px 0 12px">
-      ${[["all","ทุกประเภท"],["base","คำถามตามหมวด"],["uni","🏛 เฉพาะมหาวิทยาลัย"],["ai","🤖 เกี่ยวกับ AI"]].map(([v,l])=>
+      ${[["all","ทุกประเภท"],["base","คำถามตามหมวด"],["uni","🏛 เฉพาะมหาวิทยาลัย"],["ai","🤖 เกี่ยวกับ AI"],["shared","🗣 รุ่นพี่แชร์"]].map(([v,l])=>
         `<button class="chip ${bankType===v?"active":""}" data-bt="${v}">${l} (${questions.filter(q=> (bankCat==="all"||q.category_id===bankCat) && typeOk(q,v)).length})</button>`).join("")}
     </div>
     <div class="tbl-wrap"><table>
@@ -979,6 +1027,143 @@ async function delQuestion(id){
   if(error) return toast("ลบไม่สำเร็จ: "+error.message);
   toast("ลบเรียบร้อย"); await loadBase(); renderBank();
 }
+
+/* ═══════════ แชร์คำถามสัมภาษณ์ (นักเรียน) ═══════════ */
+const ROUND_LABEL = {portfolio:"รอบ Portfolio", quota:"รอบโควตา", direct:"รับตรง", admission:"แอดมิชชัน", other:"อื่น ๆ"};
+const SUB_LABEL = {pending:"รอครูตรวจ", approved:"รับเข้าคลังแล้ว 🎉", rejected:"ไม่รับ"};
+async function renderShare(){
+  $("body").innerHTML = `<div class="loading">กำลังโหลด…</div>`;
+  const {data:mine, error} = await sb.from("iv_question_submissions").select("*")
+    .eq("student_id",profile.id).order("created_at",{ascending:false}).limit(200);
+  if(curTab!=="share") return;
+  if(error) return $("body").innerHTML = `<div class="empty">โหลดไม่สำเร็จ: ${esc(error.message)}</div>`;
+  const list = mine||[], pend = list.filter(x=>x.status==="pending").length;
+  $("body").innerHTML = `
+  <div class="panel">
+    <h2>🗣 ไปสัมภาษณ์มาแล้ว? แชร์คำถามให้เพื่อนและรุ่นต่อไป</h2>
+    <p style="font-size:.88rem;color:var(--ink-soft);margin-bottom:12px">พิมพ์คำถามที่กรรมการถามจริง ครูแนะแนวจะตรวจก่อนนำเข้าคลัง
+      คนอื่นจะไม่เห็นชื่อของคุณ และคำถามที่ผ่านจะถูกสุ่มไปอยู่ในชุดซ้อมของทุกคน</p>
+    <div id="shMsg" class="msg"></div>
+    <div class="row2">
+      <div class="field"><label for="shUni">มหาวิทยาลัย</label>
+        <input id="shUni" list="dlShUni" maxlength="120" autocomplete="off" placeholder="เลือกหรือพิมพ์ชื่อ">
+        <datalist id="dlShUni">${unis.filter(u=>u.is_active).map(u=>`<option value="${esc(u.name)}">`).join("")}</datalist></div>
+      <div class="field"><label for="shFac">คณะ / สาขา</label>
+        <input id="shFac" list="dlShFac" maxlength="120" autocomplete="off" placeholder="เลือกหรือพิมพ์ชื่อ">
+        <datalist id="dlShFac">${facs.map(f=>`<option value="${esc(f.name)}">`).join("")}</datalist></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label for="shRound">สมัครรอบไหน (ไม่บังคับ)</label>
+        <select id="shRound"><option value="">— ไม่ระบุ —</option>${Object.entries(ROUND_LABEL).map(([k,v])=>`<option value="${k}">${v}</option>`).join("")}</select></div>
+      <div class="field"><label for="shLang">ภาษาของคำถาม</label>
+        <select id="shLang"><option value="th">ไทย</option><option value="en">อังกฤษ</option></select></div>
+    </div>
+    <div class="field"><label for="shQ">คำถามที่กรรมการถาม *</label>
+      <textarea id="shQ" maxlength="300" placeholder="เช่น ถ้าเพื่อนในทีมไม่ทำงาน คุณจะทำอย่างไร"></textarea>
+      <div class="cnt" id="shQc">0 / 300</div></div>
+    <div class="field"><label for="shTip">คุณตอบอย่างไร หรืออยากแนะนำอะไรเพื่อน (ไม่บังคับ)</label>
+      <textarea id="shTip" maxlength="500" placeholder="เช่น กรรมการอยากฟังตัวอย่างจริงมากกว่าคำตอบกว้าง ๆ"></textarea>
+      <div class="cnt" id="shTc">0 / 500</div></div>
+    <label style="display:flex;gap:8px;align-items:flex-start;font-size:.85rem;margin:6px 0 12px">
+      <input type="checkbox" id="shOk" style="margin-top:4px">
+      <span>ฉันไม่ได้ใส่ชื่อหรือข้อมูลส่วนตัวของใคร (ทั้งตัวเอง กรรมการ และเพื่อน)</span></label>
+    <button class="btn primary" id="btnShareSend">ส่งให้ครูตรวจ</button>
+    <span style="font-size:.78rem;color:var(--ink-soft);margin-left:8px">รอตรวจอยู่ ${pend}/10 ข้อ</span>
+  </div>
+  <h2 style="margin:6px 0 10px;color:var(--pine-deep);font-size:1.02rem">คำถามที่ฉันส่งไว้</h2>
+  ${list.length? list.map(x=>`<div class="sub-card">
+      <div class="q">${esc(x.question_text)}</div>
+      <div class="meta"><span class="pill ${x.status}">${SUB_LABEL[x.status]}</span>
+        ${[x.target_university,x.target_faculty,ROUND_LABEL[x.round_label]].filter(Boolean).map(esc).join(" · ")}
+        · ${fmtDate(x.created_at)}</div>
+      ${x.status==="rejected" && x.reject_reason? `<div class="tip">เหตุผลจากครู: ${esc(x.reject_reason)}</div>`:""}
+      ${x.status==="pending"? `<div class="acts"><button class="btn danger sm" data-dsub="${x.id}">ลบ</button></div>`:""}
+    </div>`).join("") : `<div class="empty"><div class="big">🗣</div>ยังไม่เคยแชร์คำถาม</div>`}`;
+  const cnt = (a,b,n)=> $(a).addEventListener("input", ()=> $(b).textContent = $(a).value.length+" / "+n);
+  cnt("shQ","shQc",300); cnt("shTip","shTc",500);
+  document.querySelectorAll("[data-dsub]").forEach(b=> b.onclick = async ()=>{
+    if(!confirm("ลบคำถามนี้ออกจากรายการรอตรวจใช่ไหม?")) return;
+    const {error} = await sb.from("iv_question_submissions").delete().eq("id",b.dataset.dsub).eq("status","pending");
+    if(error) return toast("ลบไม่สำเร็จ: "+error.message);
+    toast("ลบแล้ว"); renderShare();
+  });
+  $("btnShareSend").onclick = async ()=>{
+    const q = $("shQ").value.trim(), uniTxt = $("shUni").value.trim(), facTxt = $("shFac").value.trim();
+    if(q.length<10) return msg("shMsg","พิมพ์คำถามให้ละเอียดอีกนิดนะ (อย่างน้อย 10 ตัวอักษร)","err");
+    if(!$("shOk").checked) return msg("shMsg","ติ๊กยืนยันก่อนว่าไม่ได้ใส่ข้อมูลส่วนตัวของใคร","err");
+    const u = matchUni(uniTxt);
+    $("btnShareSend").disabled = true;
+    const {error} = await sb.from("iv_question_submissions").insert({
+      student_id:profile.id, university_id:u?.id||null, target_university:uniTxt||null, target_faculty:facTxt||null,
+      round_label:$("shRound").value||null, question_text:q, answer_tip:$("shTip").value.trim()||null, lang:$("shLang").value});
+    $("btnShareSend").disabled = false;
+    if(error) return msg("shMsg", error.code==="23505"? "คุณส่งคำถามนี้ไปแล้ว" : "ส่งไม่สำเร็จ: "+error.message, "err");
+    toast("ส่งให้ครูแล้ว ขอบคุณที่แชร์ 💛"); renderShare();
+  };
+}
+
+/* ═══════════ กล่องคำถามจากนักเรียน (ครูแนะแนว) ═══════════ */
+let inboxFilter = "pending", subs = [], curSub = null;
+async function renderInbox(){
+  $("body").innerHTML = `<div class="loading">กำลังโหลด…</div>`;
+  const {data, error} = await fetchAllRows(()=> sb.from("iv_question_submissions")
+    .select("*, student:profiles!iv_question_submissions_student_id_fkey(display_name,class_room)")
+    .order("created_at",{ascending:false}).order("id"));
+  if(curTab!=="inbox") return;
+  if(error) return $("body").innerHTML = `<div class="empty">โหลดไม่สำเร็จ: ${esc(error.message)}</div>`;
+  subs = data||[];
+  const cnt = v => subs.filter(x=>x.status===v).length;
+  const list = subs.filter(x=>x.status===inboxFilter);
+  $("body").innerHTML = `
+  <div class="chips" style="margin-bottom:12px">
+    ${["pending","approved","rejected"].map(v=>`<button class="chip ${inboxFilter===v?"active":""}" data-sf="${v}">${SUB_LABEL[v].replace(" 🎉","")} (${cnt(v)})</button>`).join("")}
+  </div>
+  ${list.length? list.map(x=>`<div class="sub-card">
+    <div class="q">${esc(x.question_text)}</div>
+    <div class="meta"><span class="pill ${x.status}">${SUB_LABEL[x.status]}</span>
+      ${[x.target_university,x.target_faculty,ROUND_LABEL[x.round_label],x.lang==="en"?"อังกฤษ":""].filter(Boolean).map(esc).join(" · ")}<br>
+      ส่งโดย ${esc(x.student?.display_name||"-")} ${x.student?.class_room? "("+esc(x.student.class_room)+")":""} · ${fmtDate(x.created_at)}</div>
+    ${x.answer_tip? `<div class="tip">เคล็ดลับจากนักเรียน: ${esc(x.answer_tip)}</div>`:""}
+    ${x.status==="rejected" && x.reject_reason? `<div class="tip">เหตุผลที่ไม่รับ: ${esc(x.reject_reason)}</div>`:""}
+    ${x.status==="pending"? `<div class="acts"><button class="btn primary sm" data-rv="${x.id}">ตรวจ / รับเข้าคลัง</button></div>`:""}
+  </div>`).join("") : `<div class="empty"><div class="big">📭</div>ไม่มีรายการ</div>`}`;
+  document.querySelectorAll("[data-sf]").forEach(b=> b.onclick = ()=>{ inboxFilter=b.dataset.sf; renderInbox(); });
+  document.querySelectorAll("[data-rv]").forEach(b=> b.onclick = ()=> openSubModal(b.dataset.rv));
+  refreshInboxBadge();
+}
+function openSubModal(id){
+  curSub = subs.find(x=>x.id===id); if(!curSub) return;
+  const fac = matchFac(curSub.target_faculty), uni = unis.find(u=>u.id===curSub.university_id);
+  const general = cats.find(c=>c.sort_order===1) || cats[0];
+  $("subInfo").textContent = [curSub.target_university, curSub.target_faculty, ROUND_LABEL[curSub.round_label]].filter(Boolean).join(" · ") || "ไม่ได้ระบุมหาวิทยาลัย/คณะ";
+  $("sbCat").innerHTML = cats.map(c=>`<option value="${c.id}">${esc(c.emoji)} ${esc(c.name)}</option>`).join("");
+  $("sbCat").value = (curSub.lang==="en"? cats.find(c=>/English/.test(c.name))?.id : fac?.category_id) || general?.id;
+  $("sbUni").innerHTML = `<option value="">— ไม่เฉพาะมหาวิทยาลัย —</option>` + unis.map(u=>`<option value="${u.id}">${esc(u.name)}</option>`).join("");
+  $("sbUni").value = uni?.id || "";
+  $("sbText").value = curSub.question_text; $("sbGuide").value = curSub.answer_tip||"";
+  $("sbAi").value = "false"; $("sbLang").value = curSub.lang; $("sbDiff").value = "medium"; $("sbSec").value = 120; $("sbReason").value = "";
+  $("subMsg").className = "msg"; $("subModal").classList.add("show");
+}
+$("btnSubApprove").onclick = async ()=>{
+  if(!curSub) return;
+  const uniId = $("sbUni").value||null, isAi = $("sbAi").value==="true";
+  if(uniId && isAi) return msg("subMsg","เลือกได้แบบเดียว: เฉพาะมหาวิทยาลัย หรือ คำถาม AI","err");
+  $("btnSubApprove").disabled = true;
+  const {error} = await sb.rpc("iv_approve_submission",{p_id:curSub.id, p_category_id:$("sbCat").value, p_university_id:uniId, p_is_ai:isAi,
+    p_question_text:$("sbText").value, p_guide_answer:$("sbGuide").value, p_difficulty:$("sbDiff").value, p_seconds:+$("sbSec").value||120, p_lang:$("sbLang").value});
+  $("btnSubApprove").disabled = false;
+  if(error) return msg("subMsg", error.message, "err");
+  closeModal("subModal"); toast("รับเข้าคลังแล้ว ✅"); await loadBase(); renderInbox();
+};
+$("btnSubReject").onclick = async ()=>{
+  if(!curSub) return;
+  if(!confirm("ไม่รับคำถามนี้ใช่ไหม?")) return;
+  $("btnSubReject").disabled = true;
+  const {error} = await sb.rpc("iv_reject_submission",{p_id:curSub.id, p_reason:$("sbReason").value});
+  $("btnSubReject").disabled = false;
+  if(error) return msg("subMsg", error.message, "err");
+  closeModal("subModal"); toast("บันทึกว่าไม่รับแล้ว"); renderInbox();
+};
 
 /* ═══════════ เฟส 2: กราฟพัฒนาการ ═══════════ */
 const CHART_C = {self:"#3E8FD0", teacher:"#0B8468"}; // ผ่านการตรวจ CVD-safe แล้ว
