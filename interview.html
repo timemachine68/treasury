@@ -82,6 +82,16 @@ header.app .wrap{display:flex;align-items:center;gap:12px;padding-bottom:0;flex-
 .field textarea{min-height:74px;resize:vertical}
 .field .hint{font-size:.74rem;color:var(--ink-soft);margin-top:4px}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:560px){.row2{grid-template-columns:1fr}}
+.badge.uni{background:#E6F0FA;color:#1F4E79}
+.badge.ai{background:#F1E9FB;color:#5B3A8C}
+.target-panel{background:linear-gradient(120deg,#FFF8DC,#fff);border:1.5px dashed var(--note-deep)}
+.target-panel .row2{margin-top:4px}
+.target-note{font-size:.82rem;color:var(--ink-soft);margin-top:2px;line-height:1.6}
+.target-note b{color:var(--pine-deep)}
+.rescard.reco{border-color:var(--note-deep);box-shadow:0 0 0 2px var(--note)}
+.reco-tag{align-self:flex-start;background:var(--note);color:var(--pine-deep);font-size:.72rem;font-weight:700;border-radius:999px;padding:2px 10px}
+.set-plan{background:var(--pine-tint);border-radius:10px;padding:10px 12px;font-size:.84rem;color:var(--pine-deep);margin-bottom:13px;line-height:1.6}
 @media (max-width:520px){.row2{grid-template-columns:1fr}}
 .seg{display:flex;border:1.5px solid var(--line);border-radius:10px;overflow:hidden}
 .seg button{flex:1;border:none;background:#fff;padding:9px;font-size:.86rem;color:var(--ink-soft)}
@@ -210,6 +220,7 @@ audio{width:100%;margin-top:6px}
 <!-- โมดัล: ตั้งค่าก่อนเริ่มซ้อม -->
 <div class="modal-back" id="setupModal"><div class="modal">
   <h2 id="setupTitle">เริ่มฝึกซ้อม</h2>
+  <div class="set-plan" id="setupPlan"></div>
   <div class="field"><label>จำนวนคำถามในเซ็ตนี้</label>
     <div class="seg" id="setupCount">
       <button data-v="3">3 ข้อ</button><button data-v="5" class="active">5 ข้อ</button><button data-v="7">7 ข้อ</button>
@@ -230,6 +241,13 @@ audio{width:100%;margin-top:6px}
   <h2 id="qModalTitle">เพิ่มคำถาม</h2>
   <div id="qMsg" class="msg"></div>
   <div class="field"><label>หมวด</label><select id="qCat"></select></div>
+  <div class="row2">
+    <div class="field"><label>ชุดเฉพาะมหาวิทยาลัย</label><select id="qUni"></select>
+      <div class="hint">เลือกเมื่อเป็นคำถามของมหาวิทยาลัยนั้นโดยเฉพาะ จะถูกผสมเข้าเซ็ตเมื่อนักเรียนระบุมหาวิทยาลัยนี้</div></div>
+    <div class="field"><label>ประเภทคำถาม</label>
+      <select id="qAi"><option value="false">คำถามทั่วไปของหมวด</option><option value="true">🤖 คำถามเกี่ยวกับ AI ในสาขา</option></select>
+      <div class="hint">คำถาม AI จะถูกสุ่มใส่เซ็ตละ 1 ข้อ</div></div>
+  </div>
   <div class="field"><label>คำถาม *</label><textarea id="qText"></textarea></div>
   <div class="field"><label>แนวทางการตอบ (นักเรียนเห็นหลังตอบเสร็จ)</label><textarea id="qGuide"></textarea></div>
   <div class="row2">
@@ -291,7 +309,8 @@ const SCORE_LABEL = {1:"ต้องพัฒนา",2:"พอใช้",3:"ด�
 const BUCKET = "iv-recordings";
 
 /* ═══════════ สถานะ ═══════════ */
-let profile = null, cats = [], rubric = [], questions = [];
+let profile = null, cats = [], rubric = [], questions = [], unis = [], facs = [];
+let target = {uni:"", fac:""}, targetLoaded = false; // เป้าหมายที่นักเรียนระบุ (ไม่บังคับ)
 let curTab = "", pr = null; // pr = practice state
 
 const $ = id => document.getElementById(id);
@@ -359,12 +378,14 @@ $("liPass").addEventListener("keydown", e=>{ if(e.key==="Enter") $("btnLogin").c
 $("btnLogout").onclick = async ()=>{ await sb.auth.signOut(); location.reload(); };
 
 async function loadBase(){
-  const [c, r, q] = await Promise.all([
+  const [c, r, q, u, f] = await Promise.all([
     sb.from("iv_categories").select("*").order("sort_order"),
     sb.from("iv_rubric_criteria").select("*").eq("is_active",true).order("sort_order"),
-    fetchAllRows(()=> sb.from("iv_questions").select("*").order("created_at").order("id"))
+    fetchAllRows(()=> sb.from("iv_questions").select("*").order("created_at").order("id")),
+    sb.from("iv_universities").select("*").order("sort_order").order("name"),
+    sb.from("iv_faculty_options").select("*").eq("is_active",true).order("sort_order").order("name")
   ]);
-  cats = c.data||[]; rubric = r.data||[]; questions = q.data||[];
+  cats = c.data||[]; rubric = r.data||[]; questions = q.data||[]; unis = u.data||[]; facs = f.data||[];
 }
 
 /* ═══════════ แท็บ ═══════════ */
@@ -453,39 +474,148 @@ async function renderHome(){
 
 /* ═══════════ ฝึกซ้อม: เลือกหมวด ═══════════ */
 let setupCat = null;
-function renderPractice(){
+/* ═══════════ เป้าหมาย: มหาวิทยาลัย / คณะ ═══════════ */
+// เทียบชื่อแบบหลวม ๆ: ตัดช่องว่าง จุด และคำนำหน้า "มหาวิทยาลัย/ม./มรภ./มทร." ออก
+const normName = t => (t||"").toLowerCase().replace(/[\s.\-()]/g,"")
+  .replace(/^(มหาวิทยาลัย|สถาบัน|มรภ|มทร|ม)/,"");
+function matchUni(text){
+  const n = normName(text); if(!n) return null;
+  return unis.filter(u=>u.is_active).find(u=> [u.name,u.short_name,...(u.aliases||[])].some(x=> x && normName(x)===n)) || null;
+}
+function matchFac(text){
+  const n = normName(text); if(!n) return null;
+  return facs.find(f=> normName(f.name)===n || f.name.split("/").some(x=> normName(x)===n)) || null;
+}
+function targetLine(s){
+  const t = [s.target_university, s.target_faculty].filter(Boolean).join(" · ");
+  return t? `<div style="font-size:.74rem;color:var(--ink-soft);white-space:normal">🎯 ${esc(t)}</div>` : "";
+}
+function qTypeBadges(q){
+  if(!q) return "";
+  const u = q.university_id && unis.find(x=>x.id===q.university_id);
+  return (u? ` <span class="badge uni">🏛 ${esc(u.short_name||u.name)}</span>`:"") + (q.is_ai? ` <span class="badge ai">🤖 AI</span>`:"");
+}
+const isBasePool = q => q.is_active && !q.university_id && !q.is_ai;
+function shuffle(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); const t=a[i]; a[i]=a[j]; a[j]=t; } return a; }
+function catLang(cat){ // หมวดที่คำถามส่วนใหญ่เป็นภาษาอังกฤษ ใช้คำถามมหาวิทยาลัยภาษาอังกฤษ
+  const qs = questions.filter(q=>q.category_id===cat.id && isBasePool(q));
+  return qs.length && qs.filter(q=>q.lang==="en").length > qs.length/2 ? "en" : "th";
+}
+// ผสมเซ็ต: หมวดที่เลือกเป็นหลัก + เฉพาะมหาวิทยาลัย (3 ข้อ→1, 5–7 ข้อ→2) + AI ในสาขา 1 ข้อ
+function buildSet(cat, count, uni){
+  const lang = catLang(cat);
+  const base = shuffle(questions.filter(q=>q.category_id===cat.id && isBasePool(q)));
+  const ai   = shuffle(questions.filter(q=>q.category_id===cat.id && q.is_active && q.is_ai && !q.university_id));
+  const uq   = uni? shuffle(questions.filter(q=>q.is_active && q.university_id===uni.id && q.lang===lang)) : [];
+  let nUni = Math.min(uq.length, uni? (count>=5? 2:1) : 0);
+  let nAi  = Math.min(ai.length, 1);
+  const nBase = Math.min(base.length, count - nUni - nAi);
+  // ถ้าคำถามหมวดไม่พอ เติมจากคำถามมหาวิทยาลัย/AI ที่เหลือ
+  let short = count - nUni - nAi - nBase;
+  while(short>0 && nUni<uq.length){ nUni++; short--; }
+  while(short>0 && nAi<ai.length){ nAi++; short--; }
+  const b = base.slice(0,nBase), u = uq.slice(0,nUni), a = ai.slice(0,nAi);
+  const list = [...b.slice(0,1), ...u, ...b.slice(1), ...a];   // ข้อแรกเป็นคำถามอุ่นเครื่องของหมวด
+  return {list, nBase:b.length, nUni:u.length, nAi:a.length, lang};
+}
+function targetNote(){
+  const uni = matchUni(target.uni), fac = matchFac(target.fac);
+  const parts = [];
+  if(target.uni.trim()){
+    parts.push(uni ? `🏛 มีชุดคำถามเฉพาะ <b>${esc(uni.short_name||uni.name)}</b> ระบบจะผสมให้ในเซ็ตซ้อม`
+                   : `🏛 ยังไม่มีชุดคำถามเฉพาะ "${esc(target.uni.trim())}" ระบบจะใช้คำถามทั่วไปแทน`);
+  }
+  if(target.fac.trim()){
+    const c = fac && cats.find(x=>x.id===fac.category_id);
+    parts.push(c ? `📚 หมวดที่แนะนำสำหรับคณะนี้: <b>${esc(c.emoji)} ${esc(c.name)}</b>`
+                 : `📚 เลือกหมวดที่ใกล้กับคณะ "${esc(target.fac.trim())}" ที่สุดได้เลย`);
+  }
+  parts.push("🤖 ทุกเซ็ตมีคำถามเรื่อง AI ในสาขานั้น 1 ข้อ");
+  return parts.join("<br>");
+}
+async function loadLastTarget(){
+  if(targetLoaded) return; targetLoaded = true;
+  const {data} = await sb.from("iv_sessions").select("target_university,target_faculty")
+    .eq("student_id", profile.id).or("target_university.not.is.null,target_faculty.not.is.null")
+    .order("created_at",{ascending:false}).limit(1);
+  if(data && data[0]){ target.uni = data[0].target_university||""; target.fac = data[0].target_faculty||""; }
+}
+async function renderPractice(){
   if(pr && pr.active) return renderPracticeRoom();
-  const activeCats = cats.filter(c=>c.is_active);
+  await loadLastTarget();
+  if(curTab!=="practice") return;
   $("body").innerHTML = `
+    <div class="panel target-panel">
+      <h2>🎯 สัมภาษณ์ที่ไหน คณะอะไร <span style="font-size:.78rem;font-weight:400;color:var(--ink-soft)">(ไม่บังคับ)</span></h2>
+      <div class="row2">
+        <div class="field"><label for="tgUni">มหาวิทยาลัย</label>
+          <input id="tgUni" list="dlUni" maxlength="120" autocomplete="off" placeholder="เลือกหรือพิมพ์ชื่อ เช่น บูรพา" value="${esc(target.uni)}">
+          <datalist id="dlUni">${unis.filter(u=>u.is_active).map(u=>`<option value="${esc(u.name)}">`).join("")}</datalist></div>
+        <div class="field"><label for="tgFac">คณะ / สาขา</label>
+          <input id="tgFac" list="dlFac" maxlength="120" autocomplete="off" placeholder="เลือกหรือพิมพ์ชื่อ เช่น วิศวกรรมศาสตร์" value="${esc(target.fac)}">
+          <datalist id="dlFac">${facs.map(f=>`<option value="${esc(f.name)}">`).join("")}</datalist></div>
+      </div>
+      <div class="target-note" id="tgNote">${targetNote()}</div>
+      <div style="margin-top:8px"><button class="btn ghost sm" id="btnTgClear">ล้างเป้าหมาย</button></div>
+    </div>
     <h2 style="margin-bottom:4px;color:var(--pine-deep)">เลือกหมวดคำถามที่จะฝึกวันนี้</h2>
     <p style="font-size:.85rem;color:var(--ink-soft);margin-bottom:14px">เลือกหมวดตรงกับคณะเป้าหมาย หรือเริ่มจาก "คำถามทั่วไป" ก่อนก็ได้</p>
-    <div class="grid">${activeCats.map(c=>{
-      const n = questions.filter(q=>q.category_id===c.id && q.is_active).length;
-      return `<article class="rescard" style="--gc:${esc(c.color)}">
-        <h3>${esc(c.emoji)} ${esc(c.name)}</h3>
-        <div class="meta"><span>${n} คำถาม</span></div>
-        <div class="actions"><button class="btn primary sm" onclick="openSetup('${c.id}')" ${n? "":"disabled"}>เริ่มซ้อม</button></div>
-      </article>`;}).join("")}</div>`;
+    <div class="grid" id="catGrid"></div>`;
+  const onTarget = ()=>{ target.uni = $("tgUni").value; target.fac = $("tgFac").value; $("tgNote").innerHTML = targetNote(); renderCatGrid(); };
+  ["change","input"].forEach(ev=>{ $("tgUni").addEventListener(ev, onTarget); $("tgFac").addEventListener(ev, onTarget); });
+  $("btnTgClear").onclick = ()=>{ $("tgUni").value=""; $("tgFac").value=""; onTarget(); };
+  renderCatGrid();
+}
+function renderCatGrid(){
+  const fac = matchFac(target.fac), recoId = fac && fac.category_id;
+  const activeCats = cats.filter(c=>c.is_active).slice()
+    .sort((a,b)=> ((b.id===recoId) - (a.id===recoId)) || (a.sort_order-b.sort_order));
+  $("catGrid").innerHTML = activeCats.map(c=>{
+    const n = questions.filter(q=>q.category_id===c.id && isBasePool(q)).length;
+    const nAi = questions.filter(q=>q.category_id===c.id && q.is_active && q.is_ai && !q.university_id).length;
+    return `<article class="rescard ${c.id===recoId?"reco":""}" style="--gc:${esc(c.color)}">
+      ${c.id===recoId? `<span class="reco-tag">⭐ แนะนำสำหรับคณะนี้</span>`:""}
+      <h3>${esc(c.emoji)} ${esc(c.name)}</h3>
+      <div class="meta"><span>${n} คำถาม${nAi? ` · AI ${nAi} ข้อ`:""}</span></div>
+      <div class="actions"><button class="btn primary sm" onclick="openSetup('${c.id}')" ${n? "":"disabled"}>เริ่มซ้อม</button></div>
+    </article>`;}).join("");
 }
 function openSetup(catId){
   setupCat = cats.find(c=>c.id===catId);
   $("setupTitle").textContent = `เริ่มฝึกซ้อม · ${setupCat.emoji} ${setupCat.name}`;
+  renderSetupPlan();
   $("setupModal").classList.add("show");
 }
+function renderSetupPlan(){
+  if(!setupCat) return;
+  const count = +document.querySelector("#setupCount .active").dataset.v;
+  const uni = matchUni(target.uni);
+  const plan = buildSet(setupCat, count, uni);
+  const lines = [`📋 เซ็ตนี้มี ${plan.list.length} ข้อ`];
+  if(plan.nBase) lines.push(`• คำถามหมวดนี้ ${plan.nBase} ข้อ`);
+  if(plan.nUni)  lines.push(`• คำถามเฉพาะ ${esc(uni.short_name||uni.name)} ${plan.nUni} ข้อ`);
+  else if(target.uni.trim()) lines.push(`• ยังไม่มีคำถามเฉพาะมหาวิทยาลัยนี้ ใช้คำถามทั่วไปแทน`);
+  if(plan.nAi)   lines.push(`• คำถามเรื่อง AI ในสาขา ${plan.nAi} ข้อ`);
+  if(target.fac.trim()) lines.push(`🎓 คณะเป้าหมาย: ${esc(target.fac.trim())}`);
+  $("setupPlan").innerHTML = lines.join("<br>");
+}
 document.querySelectorAll("#setupCount button, #setupMode button").forEach(b=>{
-  b.onclick = ()=>{ b.parentElement.querySelectorAll("button").forEach(x=>x.classList.remove("active")); b.classList.add("active"); };
+  b.onclick = ()=>{ b.parentElement.querySelectorAll("button").forEach(x=>x.classList.remove("active")); b.classList.add("active");
+    if(b.parentElement.id==="setupCount") renderSetupPlan(); };
 });
 $("btnStartSet").onclick = async ()=>{
   const count = +document.querySelector("#setupCount .active").dataset.v;
   const mode = document.querySelector("#setupMode .active").dataset.v;
-  const pool = questions.filter(q=>q.category_id===setupCat.id && q.is_active);
-  const picked = pool.sort(()=>Math.random()-.5).slice(0, Math.min(count, pool.length));
+  const uni = matchUni(target.uni);
+  const picked = buildSet(setupCat, count, uni).list;
   if(!picked.length) return toast("หมวดนี้ยังไม่มีคำถาม");
+  const tUni = target.uni.trim().slice(0,120) || null, tFac = target.fac.trim().slice(0,120) || null;
   if(mode==="audio" && !(navigator.mediaDevices && window.MediaRecorder)){
     toast("อุปกรณ์นี้ไม่รองรับการอัดเสียง — เปลี่ยนเป็นโหมดพิมพ์ให้แล้ว");
   }
   $("btnStartSet").disabled = true;
-  const {data:s, error} = await sb.from("iv_sessions").insert({student_id:profile.id, kind:"solo", category_id:setupCat.id}).select().single();
+  const {data:s, error} = await sb.from("iv_sessions").insert({student_id:profile.id, kind:"solo", category_id:setupCat.id,
+    university_id: uni? uni.id : null, target_university: uni? uni.name : tUni, target_faculty: tFac}).select().single();
   $("btnStartSet").disabled = false;
   if(error) return toast("เริ่มไม่สำเร็จ: "+error.message);
   closeModal("setupModal");
@@ -500,7 +630,7 @@ function renderPracticeRoom(){
   $("body").innerHTML = `<div class="practice-stage">
     <div class="q-progress">${pr.list.map((_,i)=>`<span class="${i<pr.idx?"done":i===pr.idx?"now":""}"></span>`).join("")}</div>
     <div class="q-card">
-      <div class="qno">${esc(pr.cat.emoji)} ${esc(pr.cat.name)} · ข้อ ${pr.idx+1}/${pr.list.length} · ระดับ${DIFF_LABEL[q.difficulty]}</div>
+      <div class="qno">${esc(pr.cat.emoji)} ${esc(pr.cat.name)} · ข้อ ${pr.idx+1}/${pr.list.length} · ระดับ${DIFF_LABEL[q.difficulty]}${qTypeBadges(q)}</div>
       <div class="qtext">${esc(q.question_text)}</div>
       <div class="timer" id="timer">⏱ <span id="timerVal">${fmtSec(q.suggested_seconds)}</span></div>
       ${pr.mode==="text"
@@ -590,7 +720,7 @@ function renderSelfAssess(){
   $("body").innerHTML = `<div class="practice-stage">
     <div class="panel" style="background:var(--pine-tint)"><h2>🎉 ตอบครบแล้ว! เทียบคำตอบกับแนวทาง แล้วประเมินตัวเองกันหน่อย</h2></div>
     ${pr.answers.map((a,i)=>`<div class="answer-review">
-      <div class="q">ข้อ ${i+1}. ${esc(a.question_text)} <small style="color:var(--ink-soft)">(ใช้เวลา ${fmtSec(a.seconds_used||0)})</small></div>
+      <div class="q">ข้อ ${i+1}. ${esc(a.question_text)}${qTypeBadges(questions.find(x=>x.id===a.question_id))} <small style="color:var(--ink-soft)">(ใช้เวลา ${fmtSec(a.seconds_used||0)})</small></div>
       <div class="mine">${a.media_kind==="audio"? "🎙️ ตอบด้วยเสียง (ฟังย้อนหลังได้ที่หน้า ผลของฉัน)" : esc(a.answer_text||"— ข้ามข้อนี้ —")}</div>
       ${a.guide_answer? `<div class="guide"><b>💡 แนวทางการตอบ:</b> ${esc(a.guide_answer)}</div>`:""}
     </div>`).join("")}
@@ -644,7 +774,7 @@ async function renderMyResults(){
     <tr><th>วันที่</th><th>หมวด</th><th>สถานะ</th><th>ประเมินตนเอง</th><th>คะแนนจากครู</th><th></th></tr>
     ${ss.map(s=>`<tr>
       <td>${fmtDate(s.created_at)}</td>
-      <td>${esc(s.iv_categories?.emoji||"")} ${esc(s.iv_categories?.name||"-")}</td>
+      <td>${esc(s.iv_categories?.emoji||"")} ${esc(s.iv_categories?.name||"-")}${targetLine(s)}</td>
       <td><span class="pill ${s.status}">${STATUS_LABEL[s.status]}</span></td>
       <td>${avg(s,"self")??"-"}</td>
       <td>${avg(s,"teacher")? `<b style="color:var(--pine-deep)">${avg(s,"teacher")}</b>`:"-"}</td>
@@ -697,12 +827,13 @@ async function openSessionDetail(id, teacherMode, backTab){
       <div style="font-size:.85rem;color:var(--ink-soft)">
         ${teacherMode? `นักเรียน: <b>${esc(s.profiles?.display_name||"-")}</b> (${esc(s.profiles?.class_room||"-")}) · `:""}
         ซ้อมเมื่อ ${fmtDate(s.created_at)}${s.submitted_at? ` · ส่งเมื่อ ${fmtDate(s.submitted_at)}`:""}</div>
+      ${(s.target_university||s.target_faculty)? `<div style="font-size:.85rem;color:var(--pine-deep);margin-top:4px">🎯 เป้าหมาย: ${esc([s.target_university, s.target_faculty].filter(Boolean).join(" · "))}</div>`:""}
       ${lockedByOther? `<div class="hint" style="margin-top:8px">🔒 ตรวจแล้วโดยครูท่านอื่น ดูได้อย่างเดียว แก้ไขไม่ได้</div>`:""}
       ${teacherMode? `<div style="margin-top:10px"><button class="btn ghost sm" id="btnAIPrep">🤖 เตรียมข้อมูลให้ AI ช่วยวิเคราะห์</button>
         <div class="hint" style="margin-top:4px">คัดลอกสรุปคำตอบ+เกณฑ์ไปวางในแอป AI ที่คุณสะดวกใช้เอง (เช่น Gemini, ChatGPT) — ระบบไม่ส่งข้อมูลออกอัตโนมัติ ไม่มีค่าใช้จ่ายเพิ่ม</div></div>`:""}
     </div>
     ${(ans||[]).map((a,i)=>`<div class="answer-review">
-      <div class="q">ข้อ ${i+1}. ${esc(a.question_text)} <small style="color:var(--ink-soft)">(${fmtSec(a.seconds_used||0)})</small></div>
+      <div class="q">ข้อ ${i+1}. ${esc(a.question_text)}${qTypeBadges(questions.find(x=>x.id===a.question_id))} <small style="color:var(--ink-soft)">(${fmtSec(a.seconds_used||0)})</small></div>
       ${a.media_kind==="audio" && urls[a.id]? `<audio controls src="${esc(urls[a.id])}"></audio>`
         : `<div class="mine">${esc(a.answer_text||"— ไม่ได้ตอบ/ข้าม —")}</div>`}
       ${a.guide_answer? `<div class="guide"><b>💡 แนวทางการตอบ:</b> ${esc(a.guide_answer)}</div>`:""}
@@ -766,7 +897,7 @@ async function renderReview(){
         <td>${s.submitted_at? fmtDate(s.submitted_at):"-"}</td>
         <td><b>${esc(s.profiles?.display_name||"-")}</b></td>
         <td>${esc(s.profiles?.class_room||"-")}</td>
-        <td>${esc(s.iv_categories?.emoji||"")} ${esc(s.iv_categories?.name||"-")}</td>
+        <td>${esc(s.iv_categories?.emoji||"")} ${esc(s.iv_categories?.name||"-")}${targetLine(s)}</td>
         <td><span class="pill ${s.status}">${STATUS_LABEL[s.status]}</span></td>
         <td><button class="btn ${s.status==="submitted"?"primary":"ghost"} sm" onclick="openSessionDetail('${s.id}', true)">${s.status==="submitted"?"ตรวจ":"เปิดดู"}</button></td>
       </tr>`).join("")}</table></div>`}`;
@@ -774,11 +905,15 @@ async function renderReview(){
 }
 
 /* ═══════════ คลังคำถาม (ครู/แอดมิน) ═══════════ */
-let bankCat = "all", editingQ = null;
+let bankCat = "all", bankType = "all", editingQ = null;
 async function renderBank(){
   const activeCats = cats;
-  const list = questions.filter(q=> bankCat==="all"? true : q.category_id===bankCat)
-    .sort((a,b)=> (a.category_id>b.category_id?1:-1) || a.question_text.localeCompare(b.question_text,"th"));
+  const typeOk = (q,v) => v==="all" || (v==="base" && !q.university_id && !q.is_ai)
+    || (v==="ai" && q.is_ai) || (v==="uni" && !!q.university_id);
+  const uniName = id => { const u = unis.find(x=>x.id===id); return u? (u.short_name||u.name) : ""; };
+  const list = questions.filter(q=> (bankCat==="all"? true : q.category_id===bankCat) && typeOk(q,bankType))
+    .sort((a,b)=> (a.category_id>b.category_id?1:-1) || uniName(a.university_id).localeCompare(uniName(b.university_id),"th")
+                  || a.question_text.localeCompare(b.question_text,"th"));
   $("body").innerHTML = `
     <div class="toolbar">
       <div class="chips" style="flex:1">
@@ -787,11 +922,15 @@ async function renderBank(){
       </div>
       <button class="btn primary" id="btnAddQ">＋ เพิ่มคำถาม</button>
     </div>
+    <div class="chips" style="margin:-4px 0 12px">
+      ${[["all","ทุกประเภท"],["base","คำถามตามหมวด"],["uni","🏛 เฉพาะมหาวิทยาลัย"],["ai","🤖 เกี่ยวกับ AI"]].map(([v,l])=>
+        `<button class="chip ${bankType===v?"active":""}" data-bt="${v}">${l} (${questions.filter(q=> (bankCat==="all"||q.category_id===bankCat) && typeOk(q,v)).length})</button>`).join("")}
+    </div>
     <div class="tbl-wrap"><table>
       <tr><th>คำถาม</th><th>หมวด</th><th>ระดับ</th><th>เวลา</th><th>สถานะ</th><th></th></tr>
       ${list.map(q=>{ const c = cats.find(x=>x.id===q.category_id);
         return `<tr style="${q.is_active?"":"opacity:.5"}">
-        <td style="white-space:normal;min-width:260px">${esc(q.question_text)}</td>
+        <td style="white-space:normal;min-width:260px">${esc(q.question_text)}${qTypeBadges(q)}</td>
         <td style="white-space:nowrap">${esc(c?.emoji||"")} ${esc((c?.name||"").split(" ·")[0])}</td>
         <td>${DIFF_LABEL[q.difficulty]}</td><td>${fmtSec(q.suggested_seconds)}</td>
         <td>${q.is_active? '<span class="badge type">ใช้งาน</span>':'<span class="badge link">ปิด</span>'}</td>
@@ -799,6 +938,7 @@ async function renderBank(){
             <button class="btn danger sm" data-dq="${q.id}">ลบ</button></td></tr>`;}).join("")}
     </table></div>`;
   document.querySelectorAll("[data-c]").forEach(b=> b.onclick = ()=>{ bankCat=b.dataset.c; renderBank(); });
+  document.querySelectorAll("[data-bt]").forEach(b=> b.onclick = ()=>{ bankType=b.dataset.bt; renderBank(); });
   document.querySelectorAll("[data-eq]").forEach(b=> b.onclick = ()=> openQModal(b.dataset.eq));
   document.querySelectorAll("[data-dq]").forEach(b=> b.onclick = ()=> delQuestion(b.dataset.dq));
   $("btnAddQ").onclick = ()=> openQModal(null);
@@ -808,6 +948,9 @@ function openQModal(qid){
   $("qModalTitle").textContent = editingQ? "แก้ไขคำถาม" : "เพิ่มคำถาม";
   $("qCat").innerHTML = cats.map(c=>`<option value="${c.id}">${esc(c.emoji)} ${esc(c.name)}</option>`).join("");
   $("qCat").value = editingQ?.category_id || (bankCat!=="all"? bankCat : cats[0]?.id);
+  $("qUni").innerHTML = `<option value="">— ไม่เฉพาะมหาวิทยาลัย —</option>` + unis.map(u=>`<option value="${u.id}">${esc(u.name)}${u.is_active?"":" (ปิดไว้)"}</option>`).join("");
+  $("qUni").value = editingQ?.university_id || "";
+  $("qAi").value = String(editingQ ? !!editingQ.is_ai : bankType==="ai");
   $("qText").value = editingQ?.question_text||""; $("qGuide").value = editingQ?.guide_answer||"";
   $("qDiff").value = editingQ?.difficulty||"medium"; $("qSec").value = editingQ?.suggested_seconds||120;
   $("qLang").value = editingQ?.lang||"th"; $("qActive").value = String(editingQ?.is_active ?? true);
@@ -816,7 +959,9 @@ function openQModal(qid){
 }
 $("btnQSave").onclick = async ()=>{
   const row = {category_id:$("qCat").value, question_text:$("qText").value.trim(), guide_answer:$("qGuide").value.trim()||null,
-    difficulty:$("qDiff").value, suggested_seconds:+$("qSec").value||120, lang:$("qLang").value, is_active:$("qActive").value==="true"};
+    difficulty:$("qDiff").value, suggested_seconds:+$("qSec").value||120, lang:$("qLang").value, is_active:$("qActive").value==="true",
+    university_id:$("qUni").value||null, is_ai:$("qAi").value==="true"};
+  if(row.university_id && row.is_ai) return msg("qMsg","คำถามหนึ่งข้อเลือกได้แบบเดียว: เฉพาะมหาวิทยาลัย หรือ คำถาม AI","err");
   if(!row.question_text) return msg("qMsg","กรอกคำถามก่อนนะคะ","err");
   $("btnQSave").disabled = true;
   const {error} = editingQ
