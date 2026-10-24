@@ -11,54 +11,74 @@
 <script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.js"></script>
 <style>
   :root{
-    --green-deep:#1f4a34;
-    --green:#2d6a4a;
-    --green-soft:#e7f0e9;
-    --cream:#faf7f0;
-    --card:#ffffff;
-    --border:#e6e1d6;
-    --text:#2b2b28;
-    --muted:#6b7268;
-    --amber:#c98a3a;
-    --danger:#a23b30;
-    --danger-tint:#f6e6e2;
+    --green-deep:#1f4a34; --green:#2d6a4a; --green-soft:#e7f0e9; --cream:#faf7f0;
+    --card:#ffffff; --border:#e6e1d6; --text:#2b2b28; --muted:#5f665c;
+    --amber:#c98a3a; --danger:#a23b30; --danger-tint:#f6e6e2;
   }
   *{box-sizing:border-box}
-  body{
-    margin:0; padding:24px; background:var(--cream); color:var(--text);
-    font-family:'Sarabun',sans-serif;
-  }
+  body{margin:0;padding:24px 20px 40px;background:var(--cream);color:var(--text);font-family:'Sarabun',sans-serif}
   h1,h2,h3,.mitr{font-family:'Mitr',sans-serif}
   .wrap{max-width:1180px;margin:0 auto}
-  header{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:12px;margin-bottom:20px}
-  header h1{font-size:26px;margin:0 0 4px;color:var(--green-deep)}
-  header p{margin:0;color:var(--muted);font-size:14px}
-  .controls{display:flex;gap:10px;align-items:center}
-  select,button,input{
-    font-family:'Sarabun',sans-serif;font-size:15px;
-    border:1px solid var(--border);border-radius:10px;
-    padding:10px 14px;background:#fff;color:var(--text);
-  }
-  button.primary{background:var(--green-deep);color:#fff;border:none;cursor:pointer}
+  header{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:12px;margin-bottom:18px}
+  header h1{font-size:28px;font-weight:500;margin:4px 0 0;color:var(--green-deep)}
+  .eyebrow{font-size:12px;letter-spacing:.06em;color:var(--muted);font-weight:600}
+  .controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  select,button,input{font-family:'Sarabun',sans-serif;font-size:15px;border:1px solid var(--border);border-radius:10px;padding:10px 14px;background:#fff;color:var(--text);min-height:44px}
+  button{cursor:pointer}
+  button.primary{background:var(--green-deep);color:#fff;border:none}
   button.primary:hover{background:var(--green)}
-  button.ghost{cursor:pointer}
-  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:20px}
-  .kpi{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:18px 20px}
-  .kpi .label{font-size:13px;color:var(--muted);margin-bottom:6px}
-  .kpi .value{font-size:28px;font-weight:700;color:var(--green-deep);font-family:'Mitr',sans-serif}
-  .kpi .sub{font-size:12px;color:var(--muted);margin-top:4px}
-  .grid2{display:grid;grid-template-columns:1.1fr 0.9fr;gap:16px;margin-bottom:16px}
-  @media(max-width:860px){.grid2{grid-template-columns:1fr}}
-  .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px}
-  .card h3{margin:0 0 14px;font-size:16px;color:var(--green-deep)}
-  table{width:100%;border-collapse:collapse;font-size:14px}
-  th,td{text-align:left;padding:10px 8px;border-bottom:1px solid var(--border)}
-  th{color:var(--muted);font-weight:600;font-size:13px}
-  tr:last-child td{border-bottom:none}
-  .badge{display:inline-block;background:var(--green-soft);color:var(--green-deep);border-radius:999px;padding:3px 10px;font-size:12px}
+  button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #c98a3a;outline-offset:2px}
+  .stack-col{display:flex;flex-direction:column;gap:18px}
+  .years{display:flex;gap:10px;flex-wrap:wrap}
+  .yr{font-weight:600;border-radius:999px;padding:9px 18px}
+  .yr.on{background:var(--green-deep);color:#fff;border-color:var(--green-deep)}
+  .hero{background:var(--green-deep);border-radius:22px;padding:28px;color:#fff;display:flex;flex-wrap:wrap;gap:28px 40px}
+  .hero .cell{flex:1 1 220px;min-width:0}
+  .hero .lab{font-size:14px;color:#cfe3d6}
+  .hero .num{font-family:'Mitr',sans-serif;font-size:50px;line-height:1.15;font-weight:500;margin:4px 0 8px;overflow-wrap:anywhere}
+  .hero .num small{font-size:20px;font-weight:400;margin-left:6px;color:#cfe3d6}
+  .chip{display:inline-block;font-size:13px;font-weight:600;border-radius:999px;padding:4px 12px;background:#e9d3a8;color:#4a3410}
+  .chip.n{background:rgba(255,255,255,.14);color:#e6f0ea}
+  .row2{display:flex;flex-wrap:wrap;gap:18px;align-items:stretch}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:22px}
+  .card .h2{font-family:'Mitr',sans-serif;font-weight:500;font-size:18px;color:var(--green-deep);margin:2px 0 0}
+  .fr{display:flex;flex-direction:column;gap:16px;margin-top:16px}
+  .fr .top{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+  .fr .nm{font-weight:600;font-size:15px}
+  .fr .pv{font-size:13px;color:var(--muted)}
+  .fr .val{font-family:'Mitr',sans-serif;font-size:15px;white-space:nowrap}
+  .fr .val small{font-family:'Sarabun',sans-serif;font-size:13px;color:var(--muted);margin-left:8px}
+  .track{height:12px;background:#eef2ee;border-radius:999px;margin-top:8px;overflow:hidden}
+  .fill{height:100%;background:var(--green);border-radius:999px}
+  .stackbar{display:flex;height:34px;border-radius:10px;overflow:hidden;margin-top:18px;gap:2px}
+  .lv{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid #eee9de;font-size:15px}
+  .lv:last-child{border-bottom:0}
+  .dot{width:14px;height:14px;border-radius:4px;flex:none}
+  .lv .c{margin-left:auto;font-family:'Mitr',sans-serif}
+  .lv .p{width:54px;text-align:right;color:var(--muted);font-size:13px}
+  .cols{display:flex;align-items:flex-end;gap:20px;height:210px;margin-top:18px;padding:0 6px;border-bottom:1px solid var(--border);overflow-x:auto}
+  .col{flex:1 0 64px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:6px;height:100%;border:0;background:none;padding:0;min-height:0}
+  .col .b{width:100%;max-width:92px;background:#b9d1c2;border-radius:10px 10px 0 0;min-height:4px}
+  .col.on .b{background:var(--green)}
+  .col:hover .b{background:#7fae93}
+  .col.on:hover .b{background:var(--green)}
+  .col .v{font-family:'Mitr',sans-serif;font-size:16px}
+  .cl{display:flex;gap:20px;padding:8px 6px 0;overflow-x:auto}
+  .cl div{flex:1 0 64px;text-align:center;font-size:13px;color:var(--muted)}
+  .cl div b{display:block;color:var(--text);font-size:14px}
+  .tw{overflow-x:auto}
+  table{width:100%;border-collapse:collapse;font-size:15px}
+  th{text-align:left;font-size:13px;color:var(--muted);font-weight:600;padding:10px;border-bottom:2px solid var(--border);white-space:nowrap}
+  td{padding:11px 10px;border-bottom:1px solid #eee9de}
+  tbody tr:nth-child(even) td{background:#fbfaf6}
+  .tg{display:inline-block;background:var(--green-soft);color:var(--green-deep);border-radius:999px;padding:3px 12px;font-size:13px;font-weight:600}
+  .fchips{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}
+  .fchip{font-weight:600;font-size:13px;border-radius:999px;padding:8px 14px;min-height:40px}
+  .fchip.on{background:var(--green-soft);border-color:var(--green);color:var(--green-deep)}
   .empty{color:var(--muted);text-align:center;padding:40px 0;font-size:14px}
-  .footer-note{color:var(--muted);font-size:12px;margin-top:18px;text-align:center}
+  .footer-note{color:var(--muted);font-size:12px;margin-top:6px;text-align:center}
   .hidden{display:none!important}
+  .offscreen{position:absolute;left:-9999px;top:0;width:0;height:0;overflow:hidden}
   .login-card{max-width:380px;margin:8vh auto 0;text-align:left}
   .login-card label{display:block;margin-bottom:14px;font-size:14px;font-weight:600}
   .login-card input{width:100%;margin-top:6px;font-weight:400}
@@ -70,7 +90,8 @@
   @media print{
     .no-print{display:none !important}
     body{background:#fff;padding:0}
-    .card{break-inside:avoid}
+    .card,.hero{break-inside:avoid;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .fill,.col .b,.dot,.stackbar div,.chip{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   }
 </style>
 </head>
@@ -78,8 +99,8 @@
 <div class="wrap">
   <header>
     <div>
-      <h1>🎓 สรุปทุนการศึกษาประจำปี</h1>
-      <p>โรงเรียนพูลเจริญวิทยาคม · เฉพาะครูแนะแนวและผู้ดูแลระบบ</p>
+      <div class="eyebrow">โรงเรียนพูลเจริญวิทยาคม · เฉพาะครูแนะแนวและผู้ดูแลระบบ</div>
+      <h1>สรุปทุนการศึกษาประจำปี</h1>
     </div>
     <div class="controls no-print" id="whoami" hidden>
       <span id="whoName" style="font-size:14px;color:var(--muted)"></span>
@@ -111,43 +132,64 @@
   </section>
 
   <!-- MAIN -->
-  <div id="mainView" class="hidden">
-    <div class="controls no-print" style="margin-bottom:16px">
+  <div id="mainView" class="hidden stack-col">
+    <div class="controls no-print" style="justify-content:space-between">
       <button class="ghost" onclick="location.href='scholarship-hub.html'">‹ กลับหน้าจัดการทุน</button>
-      <select id="yearSelect"><option value="">กำลังโหลดปี...</option></select>
-      <button class="ghost" id="printBtn">🖨️ พิมพ์ / บันทึกเป็น PDF</button>
-      <button class="ghost" id="csvBtn">⬇️ ดาวน์โหลด CSV</button>
-      <button class="primary" id="docxBtn">📄 สรุปสำหรับผู้บริหาร (Word)</button>
-    </div>
-
-    <div class="kpis" id="kpis">
-      <div class="kpi"><div class="label">นักเรียนที่ได้รับทุน</div><div class="value" id="kpiCount">–</div></div>
-      <div class="kpi"><div class="label">ยอดเงินทุนรวม</div><div class="value" id="kpiAmount">–</div></div>
-      <div class="kpi"><div class="label">จำนวนทุนที่มอบ</div><div class="value" id="kpiFunds">–</div></div>
-    </div>
-
-    <div class="grid2">
-      <div class="card">
-        <h3>จำนวนผู้ได้รับทุน แยกตามทุน (ปีที่เลือก)</h3>
-        <canvas id="byFundChart" height="220"></canvas>
-      </div>
-      <div class="card">
-        <h3>สัดส่วนตามระดับชั้น</h3>
-        <canvas id="byLevelChart" height="220"></canvas>
+      <div class="controls">
+        <button class="ghost" id="printBtn">พิมพ์ / PDF</button>
+        <button class="ghost" id="csvBtn">ดาวน์โหลด CSV</button>
+        <button class="primary" id="docxBtn">สรุปสำหรับผู้บริหาร (Word)</button>
       </div>
     </div>
 
-    <div class="card" style="margin-bottom:16px">
-      <h3>แนวโน้มย้อนหลัง (ทุกปีที่มีข้อมูล)</h3>
-      <canvas id="trendChart" height="90"></canvas>
+    <select id="yearSelect" class="hidden" aria-hidden="true"><option value="">กำลังโหลดปี...</option></select>
+    <div class="years no-print" id="yearTabs" role="group" aria-label="เลือกปีการศึกษา"></div>
+
+    <div class="hero">
+      <div class="cell"><div class="lab">นักเรียนที่ได้รับทุน</div>
+        <div class="num"><span id="kpiCount">–</span><small>คน</small></div><span class="chip" id="dCount">&nbsp;</span></div>
+      <div class="cell"><div class="lab">ยอดเงินทุนรวม</div>
+        <div class="num" id="kpiAmount">–</div><span class="chip" id="dAmount">&nbsp;</span></div>
+      <div class="cell"><div class="lab">จำนวนทุนที่มอบ</div>
+        <div class="num"><span id="kpiFunds">–</span><small>ทุน</small></div><span class="chip n" id="kpiAvg">&nbsp;</span></div>
+    </div>
+
+    <div class="row2">
+      <div class="card" style="flex:1.4 1 520px;min-width:0">
+        <div class="eyebrow">แยกตามทุน</div>
+        <h2 class="h2">ทุนไหนมอบให้ใครมากที่สุด</h2>
+        <div class="fr" id="fundBars"></div>
+      </div>
+      <div class="card" style="flex:1 1 340px;min-width:0">
+        <div class="eyebrow">แยกตามระดับชั้น</div>
+        <h2 class="h2">ผู้ได้รับทุนอยู่ชั้นไหนบ้าง</h2>
+        <div id="levelBox"></div>
+      </div>
     </div>
 
     <div class="card">
-      <h3>รายชื่อผู้ได้รับทุน (ปีที่เลือก)</h3>
-      <div id="tableWrap"><div class="empty">กำลังโหลดข้อมูล...</div></div>
+      <div class="eyebrow">แนวโน้มย้อนหลัง</div>
+      <h2 class="h2">จำนวนผู้ได้รับทุนรายปี <span class="eyebrow no-print" style="font-family:'Sarabun'">· กดที่แท่งเพื่อดูปีนั้น</span></h2>
+      <div class="cols" id="trendCols"></div>
+      <div class="cl" id="trendLabels"></div>
     </div>
 
-    <p class="footer-note">ระบบนี้ดึงข้อมูลสดผ่านฟังก์ชัน scholarship_annual_summary() (ตรวจสิทธิ์ role ที่ฝั่งฐานข้อมูล) — พอครูกด "ให้ทุน" ในหน้าคัดกรอง ข้อมูลจะขึ้นที่นี่ทันทีโดยไม่ต้องทำอะไรเพิ่ม</p>
+    <div class="card">
+      <div class="controls" style="justify-content:space-between;align-items:flex-end">
+        <div><div class="eyebrow">รายชื่อ</div><h2 class="h2" id="listTitle">ผู้ได้รับทุน</h2></div>
+        <input id="qBox" class="no-print" type="search" placeholder="ค้นหาชื่อ รหัส หรือห้อง" aria-label="ค้นหาในรายชื่อ" style="flex:0 1 300px">
+      </div>
+      <div class="fchips no-print" id="fundChips"></div>
+      <div class="tw" id="tableWrap"><div class="empty">กำลังโหลดข้อมูล...</div></div>
+    </div>
+
+    <p class="footer-note">ข้อมูลดึงสดจากฐานข้อมูล (ตรวจสิทธิ์ครู/ผู้ดูแลที่ฝั่งฐานข้อมูล) — พอครูกด "ให้ทุน" ในหน้าคัดกรอง ตัวเลขจะขึ้นที่นี่ทันที</p>
+
+    <!-- กราฟสำหรับสร้างไฟล์ Word (ไม่แสดงบนหน้าจอ) -->
+    <div class="offscreen" aria-hidden="true">
+      <canvas id="byFundChart" width="900" height="420"></canvas>
+      <canvas id="byLevelChart" width="600" height="420"></canvas>
+    </div>
   </div>
 </div>
 
@@ -160,7 +202,7 @@ const $ = s => document.querySelector(s);
 let ME = null;
 let allSummary = [];
 let allAwards = [];
-let byFundChart, byLevelChart, trendChart;
+let byFundChart, byLevelChart;
 
 const fmtBaht = n => "฿" + Number(n || 0).toLocaleString("th-TH");
 function msg(el, text, type){ el.textContent=text; el.className = "msg " + (type||""); }
@@ -211,127 +253,168 @@ function show(which){
 }
 
 /* ---------- DATA (ผ่าน RPC เท่านั้น — view เดิมถูก revoke จาก anon/authenticated แล้ว) ---------- */
+let curYear = "", fundFilter = "", qText = "";
+const LV_COLORS = ["#1f4a34", "#2d6a4a", "#5b9a78", "#c98a3a", "#e0b06b", "#9bb7a5"];
+const byNum = (a, b) => String(a).localeCompare(String(b), "th", { numeric: true });
+
 async function loadData() {
   const { data, error } = await sb.rpc("scholarship_annual_summary");
-
   if (error) {
-    $("#tableWrap").innerHTML =
-      `<div class="empty">โหลดข้อมูลไม่สำเร็จ: ${esc(error.message)}</div>`;
+    $("#tableWrap").innerHTML = `<div class="empty">โหลดข้อมูลไม่สำเร็จ: ${esc(error.message)}</div>`;
     return;
   }
-
   allSummary = data?.summary || [];
   allAwards = data?.awards || [];
 
-  const years = [...new Set(allSummary.map(r => r.academic_year))].sort().reverse();
-  const yearSelect = $("#yearSelect");
-
+  const years = [...new Set(allSummary.map(r => String(r.academic_year)))].sort().reverse();
   if (years.length === 0) {
-    yearSelect.innerHTML = `<option value="">ยังไม่มีข้อมูล</option>`;
+    $("#yearSelect").innerHTML = `<option value="">ยังไม่มีข้อมูล</option>`;
+    $("#yearTabs").innerHTML = "";
     renderEmpty();
-    renderTrend();
     return;
   }
+  $("#yearSelect").innerHTML = years.map(y => `<option value="${esc(y)}">ปีการศึกษา ${esc(y)}</option>`).join("");
+  setYear(years[0]);
+}
 
-  yearSelect.innerHTML = years.map(y => `<option value="${y}">ปีการศึกษา ${y}</option>`).join("");
-  yearSelect.value = years[0];
-  yearSelect.onchange = () => renderYear(yearSelect.value);
-
-  renderYear(years[0]);
-  renderTrend();
+function setYear(y) {
+  curYear = String(y); fundFilter = ""; qText = ""; $("#qBox").value = "";
+  $("#yearSelect").value = curYear;
+  const years = [...new Set(allSummary.map(r => String(r.academic_year)))].sort();
+  $("#yearTabs").innerHTML = years.map(v =>
+    `<button class="yr${v === curYear ? " on" : ""}" data-y="${esc(v)}" aria-pressed="${v === curYear}">ปีการศึกษา ${esc(v)}</button>`).join("");
+  $("#yearTabs").querySelectorAll("[data-y]").forEach(b => b.onclick = () => setYear(b.dataset.y));
+  renderYear(curYear);
 }
 
 function renderEmpty() {
   $("#kpiCount").textContent = "0";
   $("#kpiAmount").textContent = fmtBaht(0);
   $("#kpiFunds").textContent = "0";
+  ["#dCount", "#dAmount", "#kpiAvg"].forEach(i => $(i).textContent = "ยังไม่มีข้อมูล");
+  $("#fundBars").innerHTML = `<div class="empty">ยังไม่มีทุนที่ให้แล้ว</div>`;
+  $("#levelBox").innerHTML = `<div class="empty">ยังไม่มีข้อมูล</div>`;
+  $("#trendCols").innerHTML = ""; $("#trendLabels").innerHTML = "";
+  $("#fundChips").innerHTML = "";
   $("#tableWrap").innerHTML = `<div class="empty">ยังไม่มีนักเรียนที่ได้รับทุนในระบบ — พอครูกด "ให้ทุน" ในหน้าคัดกรอง ข้อมูลจะขึ้นที่นี่อัตโนมัติ</div>`;
 }
 
-function renderYear(year) {
-  const rows = allSummary.filter(r => r.academic_year === year);
-  const yearAwards = allAwards.filter(r => r.academic_year === year);
+const sumYear = y => {
+  const rr = allSummary.filter(r => String(r.academic_year) === y);
+  return { n: rr.reduce((s, r) => s + Number(r.awarded_count), 0), amt: rr.reduce((s, r) => s + Number(r.total_amount || 0), 0) };
+};
+const delta = (cur, prev, unit, hasPrev) => {
+  if (!hasPrev) return "ปีแรกที่มีข้อมูล";
+  if (cur === prev) return "เท่ากับปีก่อน";
+  const d = Math.abs(cur - prev).toLocaleString("th-TH");
+  return `${cur > prev ? "เพิ่มขึ้น" : "ลดลง"} ${unit === "฿" ? "฿" + d : d + " " + unit} จากปีก่อน`;
+};
 
-  const totalCount = rows.reduce((s, r) => s + Number(r.awarded_count), 0);
-  const totalAmount = rows.reduce((s, r) => s + Number(r.total_amount || 0), 0);
+function renderYear(year) {
+  const rows = allSummary.filter(r => String(r.academic_year) === year);
+  const { n: totalCount, amt: totalAmount } = sumYear(year);
   const fundCount = new Set(rows.map(r => r.scholarship_id)).size;
+
+  const years = [...new Set(allSummary.map(r => String(r.academic_year)))].sort();
+  const pi = years.indexOf(year) - 1, hasPrev = pi >= 0;
+  const prev = hasPrev ? sumYear(years[pi]) : { n: 0, amt: 0 };
 
   $("#kpiCount").textContent = totalCount.toLocaleString("th-TH");
   $("#kpiAmount").textContent = fmtBaht(totalAmount);
   $("#kpiFunds").textContent = fundCount.toLocaleString("th-TH");
+  $("#dCount").textContent = delta(totalCount, prev.n, "คน", hasPrev);
+  $("#dAmount").textContent = delta(totalAmount, prev.amt, "฿", hasPrev);
+  $("#kpiAvg").textContent = totalCount ? "เฉลี่ย " + fmtBaht(Math.round(totalAmount / totalCount)) + " ต่อคน" : "–";
 
-  const byFund = {};
-  rows.forEach(r => { byFund[r.scholarship_name] = (byFund[r.scholarship_name] || 0) + Number(r.awarded_count); });
-  byFundChart = drawBar("byFundChart", byFundChart, Object.keys(byFund), Object.values(byFund));
+  /* ตามทุน */
+  const byFundMap = {};
+  rows.forEach(r => {
+    const f = byFundMap[r.scholarship_id] ||= { name: r.scholarship_name, provider: r.provider, n: 0, amt: 0 };
+    f.n += Number(r.awarded_count); f.amt += Number(r.total_amount || 0);
+  });
+  const funds = Object.values(byFundMap).sort((a, b) => b.n - a.n);
+  const maxN = Math.max(1, ...funds.map(f => f.n));
+  $("#fundBars").innerHTML = funds.map(f => `
+    <div><div class="top"><div><div class="nm">${esc(f.name)}</div><div class="pv">${esc(f.provider || "-")}</div></div>
+      <div class="val">${f.n.toLocaleString("th-TH")} คน<small>${fmtBaht(f.amt)}</small></div></div>
+      <div class="track"><div class="fill" style="width:${Math.max(3, f.n * 100 / maxN)}%"></div></div></div>`).join("");
 
+  /* ตามระดับชั้น */
   const byLevel = {};
   rows.forEach(r => { const lv = r.class_level || "ไม่ระบุ"; byLevel[lv] = (byLevel[lv] || 0) + Number(r.awarded_count); });
-  byLevelChart = drawDonut("byLevelChart", byLevelChart, Object.keys(byLevel), Object.values(byLevel));
+  const lvKeys = Object.keys(byLevel).sort((a, b) => a === "ไม่ระบุ" ? 1 : b === "ไม่ระบุ" ? -1 : byNum(a, b));
+  $("#levelBox").innerHTML = totalCount ? `
+    <div class="stackbar" role="img" aria-label="สัดส่วนผู้ได้รับทุนตามระดับชั้น">${lvKeys.map((k, i) =>
+      `<div style="flex:${byLevel[k]};background:${LV_COLORS[i % LV_COLORS.length]}" title="${esc(k)}"></div>`).join("")}</div>
+    <div style="margin-top:12px">${lvKeys.map((k, i) => `
+      <div class="lv"><span class="dot" style="background:${LV_COLORS[i % LV_COLORS.length]}"></span>${esc(k)}
+      <span class="c">${byLevel[k].toLocaleString("th-TH")} คน</span><span class="p">${Math.round(byLevel[k] * 100 / totalCount)}%</span></div>`).join("")}</div>`
+    : `<div class="empty">ยังไม่มีข้อมูล</div>`;
 
-  const tableWrap = $("#tableWrap");
-  if (yearAwards.length === 0) {
-    tableWrap.innerHTML = `<div class="empty">ปีนี้ยังไม่มีผู้ได้รับทุน</div>`;
-  } else {
-    tableWrap.innerHTML = `
-      <table>
-        <thead><tr><th>ชื่อ-สกุล</th><th>รหัสนักเรียน</th><th>ชั้น</th><th>ทุน</th><th>จำนวนเงิน</th></tr></thead>
-        <tbody>
-          ${yearAwards.map(r => `
-            <tr>
-              <td>${esc(r.display_name ?? "-")}</td>
-              <td>${esc(r.student_id ?? "-")}</td>
-              <td>${esc(r.class_room ?? "-")}</td>
-              <td><span class="badge">${esc(r.scholarship_name)}</span></td>
-              <td>${fmtBaht(r.amount_per_grant)}</td>
-            </tr>`).join("")}
-        </tbody>
-      </table>`;
-  }
-}
+  /* แนวโน้ม */
+  const ys = years.map(y => ({ y, ...sumYear(y) }));
+  const maxY = Math.max(1, ...ys.map(o => o.n));
+  $("#trendCols").innerHTML = ys.map(o => `
+    <button class="col${o.y === year ? " on" : ""}" data-y="${esc(o.y)}" aria-label="ปีการศึกษา ${esc(o.y)} ${o.n} คน">
+      <span class="v">${o.n.toLocaleString("th-TH")}</span><div class="b" style="height:${Math.max(3, o.n * 80 / maxY)}%"></div></button>`).join("");
+  $("#trendCols").querySelectorAll("[data-y]").forEach(b => b.onclick = () => setYear(b.dataset.y));
+  $("#trendLabels").innerHTML = ys.map(o => `<div><b>${esc(o.y)}</b>${fmtBaht(o.amt)}</div>`).join("");
 
-function renderTrend() {
-  const byYear = {};
-  allSummary.forEach(r => { byYear[r.academic_year] = (byYear[r.academic_year] || 0) + Number(r.awarded_count); });
-  const years = Object.keys(byYear).sort();
-  const ctx = $("#trendChart");
-  if (trendChart) trendChart.destroy();
-  trendChart = new Chart(ctx, {
-    type: "line",
-    data: {
-      labels: years.map(y => "ปี " + y),
-      datasets: [{
-        label: "จำนวนผู้ได้รับทุน",
-        data: years.map(y => byYear[y]),
-        borderColor: "#2d6a4a",
-        backgroundColor: "rgba(45,106,74,0.15)",
-        fill: true, tension: 0.3, pointRadius: 4
-      }]
-    },
-    options: { animation: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
+  /* ตัวกรองทุน + ตาราง */
+  const names = funds.map(f => f.name);
+  $("#fundChips").innerHTML = names.length > 1
+    ? [["", "ทุกทุน"], ...names.map(n => [n, n])].map(([v, l]) =>
+        `<button class="fchip${v === fundFilter ? " on" : ""}" data-f="${esc(v)}">${esc(l)}</button>`).join("") : "";
+  $("#fundChips").querySelectorAll("[data-f]").forEach(b => b.onclick = () => {
+    fundFilter = b.dataset.f;
+    $("#fundChips").querySelectorAll("[data-f]").forEach(x => x.classList.toggle("on", x.dataset.f === fundFilter));
+    renderTable();
   });
+
+  /* กราฟสำหรับไฟล์ Word (ซ่อนจากหน้าจอ) */
+  byFundChart = drawBar("byFundChart", byFundChart, funds.map(f => f.name), funds.map(f => f.n));
+  byLevelChart = drawDonut("byLevelChart", byLevelChart, lvKeys, lvKeys.map(k => byLevel[k]));
+
+  renderTable();
 }
 
+function renderTable() {
+  const all = allAwards.filter(r => String(r.academic_year) === curYear);
+  const q = qText.trim().toLowerCase();
+  const list = all.filter(r =>
+    (!fundFilter || r.scholarship_name === fundFilter) &&
+    (!q || [r.display_name, r.student_id, r.class_room].some(v => String(v ?? "").toLowerCase().includes(q))));
+  $("#listTitle").textContent = `ผู้ได้รับทุน ปีการศึกษา ${curYear} (${list.length.toLocaleString("th-TH")}${list.length !== all.length ? " จาก " + all.length.toLocaleString("th-TH") : ""} คน)`;
+  if (all.length === 0) { $("#tableWrap").innerHTML = `<div class="empty">ปีนี้ยังไม่มีผู้ได้รับทุน</div>`; return; }
+  if (list.length === 0) { $("#tableWrap").innerHTML = `<div class="empty">ไม่พบรายชื่อที่ตรงกับที่ค้นหา</div>`; return; }
+  $("#tableWrap").innerHTML = `
+    <table>
+      <thead><tr><th>ชื่อ-สกุล</th><th>รหัสนักเรียน</th><th>ชั้น</th><th>ทุน</th><th style="text-align:right">จำนวนเงิน</th></tr></thead>
+      <tbody>${list.map(r => `
+        <tr><td>${esc(r.display_name ?? "-")}</td><td>${esc(r.student_id ?? "-")}</td><td>${esc(r.class_room ?? "-")}</td>
+        <td><span class="tg">${esc(r.scholarship_name)}</span></td><td style="text-align:right">${fmtBaht(r.amount_per_grant)}</td></tr>`).join("")}</tbody>
+    </table>`;
+}
+$("#qBox")?.addEventListener("input", e => { qText = e.target.value; renderTable(); });
+
+/* กราฟสำหรับไฟล์ Word — วาดลง canvas ที่ซ่อนไว้ ขนาดคงที่ ไม่มีแอนิเมชัน */
 function drawBar(id, existing, labels, data) {
-  const ctx = $("#"+id);
   if (existing) existing.destroy();
-  return new Chart(ctx, {
+  return new Chart($("#" + id), {
     type: "bar",
     data: { labels, datasets: [{ label: "จำนวน (คน)", data, backgroundColor: "#2d6a4a", borderRadius: 6 }] },
-    options: { animation: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
+    options: { responsive: false, animation: false, plugins: { legend: { display: false } },
+      scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
   });
 }
-
 function drawDonut(id, existing, labels, data) {
-  const ctx = $("#"+id);
   if (existing) existing.destroy();
-  const palette = ["#2d6a4a", "#c98a3a", "#7a9e8a", "#e0b06b", "#4a7a63", "#b5cbb9"];
-  return new Chart(ctx, {
+  return new Chart($("#" + id), {
     type: "doughnut",
-    data: { labels, datasets: [{ data, backgroundColor: palette }] },
-    options: { animation: false, plugins: { legend: { position: "bottom" } } }
+    data: { labels, datasets: [{ data, backgroundColor: LV_COLORS }] },
+    options: { responsive: false, animation: false, plugins: { legend: { position: "bottom" } } }
   });
 }
-
 
 /* ---------- สรุปสำหรับผู้บริหาร (Word) ---------- */
 function canvasPng(id) {
@@ -351,8 +434,8 @@ function canvasPng(id) {
 async function buildExecDocx() {
   const D = window.docx;
   const year = $("#yearSelect").value;
-  const rows = allSummary.filter(r => r.academic_year === year);
-  const awards = allAwards.filter(r => r.academic_year === year);
+  const rows = allSummary.filter(r => String(r.academic_year) === year);
+  const awards = allAwards.filter(r => String(r.academic_year) === year);
   if (!year || awards.length === 0) return false;
 
   const FONT = "TH Sarabun New", GREEN = "2D6A4A", LIGHT = "E8F1EB";
@@ -405,11 +488,11 @@ async function buildExecDocx() {
   if (topAmt && topAmt.amt > 0) points.push(`ทุนที่มียอดเงินสูงสุดคือ ${topAmt.name} (${baht(topAmt.amt)})`);
   const lvKeys = Object.keys(byLevel).sort((a, b) => byLevel[b] - byLevel[a]);
   if (lvKeys[0]) points.push(`ระดับชั้นที่ได้รับทุนมากที่สุดคือ ${lvKeys[0]} (${num(byLevel[lvKeys[0]])} คน)`);
-  const years = [...new Set(allSummary.map(r => r.academic_year))].sort();
+  const years = [...new Set(allSummary.map(r => String(r.academic_year)))].sort();
   const yi = years.indexOf(year);
   if (yi > 0) {
     const py = years[yi - 1];
-    const pr = allSummary.filter(r => r.academic_year === py);
+    const pr = allSummary.filter(r => String(r.academic_year) === py);
     const pn = pr.reduce((s, r) => s + Number(r.awarded_count), 0);
     const pa = pr.reduce((s, r) => s + Number(r.total_amount || 0), 0);
     const cmp = (a, b, unit) => a === b ? `เท่ากับ` : `${a > b ? "เพิ่มขึ้น" : "ลดลง"} ${num(Math.abs(a - b))} ${unit} เมื่อเทียบกับ`;
@@ -472,7 +555,7 @@ async function buildExecDocx() {
   if (years.length > 1) {
     kids.push(head("แนวโน้มย้อนหลัง"));
     const trow = years.map(y => {
-      const rr = allSummary.filter(r => r.academic_year === y);
+      const rr = allSummary.filter(r => String(r.academic_year) === y);
       return ["ปีการศึกษา " + y, num(rr.reduce((s, r) => s + Number(r.awarded_count), 0)),
               num(rr.reduce((s, r) => s + Number(r.total_amount || 0), 0))];
     });
@@ -524,7 +607,7 @@ $("#docxBtn")?.addEventListener("click", async () => {
 $("#printBtn")?.addEventListener("click", () => window.print());
 $("#csvBtn")?.addEventListener("click", () => {
   const year = $("#yearSelect").value;
-  const rows = allAwards.filter(r => r.academic_year === year);
+  const rows = allAwards.filter(r => String(r.academic_year) === year);
   if (rows.length === 0) return;
   const header = ["ชื่อ-สกุล", "รหัสนักเรียน", "ชั้น", "ทุน", "หน่วยงาน", "จำนวนเงิน"];
   const csv = [header.join(",")].concat(
