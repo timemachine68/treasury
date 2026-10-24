@@ -465,9 +465,7 @@ function closeEdit(){
 
 function bindEdit(){
   document.getElementById('btn-edit-cancel').addEventListener('click', closeEdit);
-  document.getElementById('edit-modal').addEventListener('click', e => {
-    if (e.target.id === 'edit-modal') closeEdit();
-  });
+  // ไม่ปิดเมื่อคลิกพื้นหลัง — กันบันทึกที่กำลังแก้หาย ปิดได้ด้วยปุ่มยกเลิกเท่านั้น
 
   document.getElementById('btn-edit-save').addEventListener('click', async () => {
     const msg = document.getElementById('edit-msg');

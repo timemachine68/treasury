@@ -244,8 +244,12 @@ async function loadList(){
       <p>ยังไม่มีนักเรียนลงทะเบียนข้อมูลในปีนี้</p></div>`;return;
   }
   const ids=vps.map(v=>v.profile_id);
-  const {data:profs}=await sb.from("profiles").select("id,display_name,student_id,class_room").in("id",ids);
-  const pMap={};(profs||[]).forEach(p=>pMap[p.id]=p);
+  const profs=[];
+  for(let i=0;i<ids.length;i+=100){ // แบ่งทีละ 100 คน กันลิงก์ยาวเกินเมื่อมีนักเรียนเยอะ
+    const {data:pp}=await sb.from("profiles").select("id,display_name,student_id,class_room").in("id",ids.slice(i,i+100));
+    profs.push(...(pp||[]));
+  }
+  const pMap={};profs.forEach(p=>pMap[p.id]=p);
   ROWS=vps.map(v=>({...v,p:pMap[v.profile_id]||{}}))
     .sort((a,b)=>(b.urgency_level??0)-(a.urgency_level??0));
   renderList();

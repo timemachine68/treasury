@@ -436,11 +436,20 @@ async function loadEvents(){
   const studentSet = new Set();
   if(S.events.length){
     const ids = S.events.map(e=>e.id);
-    const {data:pts} = await sb.from('award_participants').select('id,event_id,profile_id').in('event_id', ids);
-    (pts||[]).forEach(p => {
-      S.counts[p.event_id] = (S.counts[p.event_id]||0) + 1;
-      if(p.profile_id) studentSet.add(p.profile_id);
-    });
+    // แบ่งรายการละ 40 กิจกรรม (กันลิงก์ยาวเกิน) และแบ่งหน้าทีละ 1,000 แถว (กันถูกตัดเงียบ ๆ)
+    for(let i=0; i<ids.length; i+=40){
+      const part = ids.slice(i, i+40);
+      for(let from=0; ; from+=1000){
+        const {data:pts, error:pe} = await sb.from('award_participants')
+          .select('id,event_id,profile_id').in('event_id', part).order('id').range(from, from+999);
+        if(pe){ toast('นับจำนวนผู้ได้รับรางวัลไม่ครบ ลองโหลดหน้าใหม่อีกครั้ง'); break; }
+        (pts||[]).forEach(p => {
+          S.counts[p.event_id] = (S.counts[p.event_id]||0) + 1;
+          if(p.profile_id) studentSet.add(p.profile_id);
+        });
+        if(!pts || pts.length < 1000) break;
+      }
+    }
   }
   renderSummary(studentSet.size, Object.values(S.counts).reduce((a,b)=>a+b, 0));
   renderList();

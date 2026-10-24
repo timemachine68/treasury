@@ -1404,8 +1404,8 @@ $("btnPwSave").onclick = async ()=>{
   $("pwModal").classList.remove("show"); toast("เปลี่ยนรหัสผ่านเรียบร้อย ✅");
 };
 
-/* ปิดโมดัลเมื่อคลิกพื้นหลัง */
-document.querySelectorAll(".modal-back").forEach(m=> m.addEventListener("click", e=>{ if(e.target===m) m.classList.remove("show"); }));
+/* ปิดโมดัลเมื่อคลิกพื้นหลัง — เฉพาะหน้าต่างที่แค่ดูข้อมูล (หน้าต่างที่ต้องกรอกฟอร์มไม่ปิด กันข้อมูลที่พิมพ์หาย) */
+["textViewModal"].forEach(id=>{ const m=document.getElementById(id); if(m) m.addEventListener("click", e=>{ if(e.target===m) m.classList.remove("show"); }); });
 
 /* ═══════════ เฟส 2: งานมอบหมาย ═══════════ */
 let assignments=[], mySubs={}, allSubs=[], allStudents=[], rosterAid=null, rosterRoom="all";
