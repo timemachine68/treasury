@@ -223,7 +223,7 @@ audio{width:100%;margin-top:6px}
   <div class="set-plan" id="setupPlan"></div>
   <div class="field"><label>จำนวนคำถามในเซ็ตนี้</label>
     <div class="seg" id="setupCount">
-      <button data-v="3">3 ข้อ</button><button data-v="5" class="active">5 ข้อ</button><button data-v="7">7 ข้อ</button>
+      <button data-v="5" class="active">5 ข้อ</button><button data-v="7">7 ข้อ</button><button data-v="9">9 ข้อ</button>
     </div></div>
   <div class="field"><label>รูปแบบการตอบ</label>
     <div class="seg" id="setupMode">
@@ -501,14 +501,14 @@ function catLang(cat){ // หมวดที่คำถามส่วนให
   const qs = questions.filter(q=>q.category_id===cat.id && isBasePool(q));
   return qs.length && qs.filter(q=>q.lang==="en").length > qs.length/2 ? "en" : "th";
 }
-// ผสมเซ็ต: หมวดที่เลือกเป็นหลัก + เฉพาะมหาวิทยาลัย (3 ข้อ→1, 5–7 ข้อ→2) + AI ในสาขา 1 ข้อ
+// ผสมเซ็ต: หมวดที่เลือกเป็นหลัก + เฉพาะมหาวิทยาลัย (5 ข้อ→2, 7 ข้อ→2, 9 ข้อ→3) + AI ในสาขา (5–7 ข้อ→1, 9 ข้อ→2)
 function buildSet(cat, count, uni){
   const lang = catLang(cat);
   const base = shuffle(questions.filter(q=>q.category_id===cat.id && isBasePool(q)));
   const ai   = shuffle(questions.filter(q=>q.category_id===cat.id && q.is_active && q.is_ai && !q.university_id));
   const uq   = uni? shuffle(questions.filter(q=>q.is_active && q.university_id===uni.id && q.lang===lang)) : [];
-  let nUni = Math.min(uq.length, uni? (count>=5? 2:1) : 0);
-  let nAi  = Math.min(ai.length, 1);
+  let nUni = Math.min(uq.length, uni? (count>=9? 3:2) : 0);
+  let nAi  = Math.min(ai.length, count>=9? 2:1);
   const nBase = Math.min(base.length, count - nUni - nAi);
   // ถ้าคำถามหมวดไม่พอ เติมจากคำถามมหาวิทยาลัย/AI ที่เหลือ
   let short = count - nUni - nAi - nBase;
