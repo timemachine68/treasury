@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Mitr:wght@400;500;600&family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.js"></script>
 <style>
 :root{
   --ink:#22313A; --ink-soft:#5B6B72; --board:#EFF3F1; --card:#FFFFFF;
@@ -96,6 +97,16 @@ td{padding:8px 10px;border-bottom:1px solid var(--line)}
 .loading{text-align:center;padding:40px;color:var(--ink-soft)}
 .hidden{display:none!important}
 .expwrap{margin-top:8px;font-size:.8rem;color:var(--ink-soft)}
+.scope{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;margin-bottom:14px}
+.scope .field{margin:0;min-width:170px}
+.rhead{background:var(--pine-tint);border-radius:12px;padding:12px 16px;margin-bottom:14px}
+.rhead b{font-family:'Mitr',sans-serif;color:var(--pine-deep);font-weight:600}
+.note{font-size:.82rem;color:var(--ink-soft)}
+.barcell{display:flex;align-items:center;gap:8px;min-width:90px}
+.barcell .bar{height:10px;border-radius:5px;background:var(--pine);flex:none}
+td.num,th.num{text-align:right;white-space:nowrap}
+.obs{padding-left:20px}
+.obs li{margin:5px 0}
 </style>
 </head>
 <body>
@@ -186,16 +197,23 @@ function go(tab){
 }
 
 async function fetchRequests(){
-  const {data, error} = await sb.from("work_permit_requests")
-    .select("*, profiles!work_permit_requests_student_id_fkey(display_name, class_room)")
-    .order("created_at",{ascending:false});
-  if(error){ toast("โหลดข้อมูลไม่สำเร็จ: "+error.message); return []; }
-  return data||[];
+  // PostgREST ตัดที่ 1,000 แถว จึงดึงทีละ 1,000 จนหมด (เรียงด้วย created_at แล้ว id เพื่อไม่ให้หน้าซ้ำ/ตกหล่น)
+  const all = [], size = 1000;
+  for(let from=0;;from+=size){
+    const {data, error} = await sb.from("work_permit_requests")
+      .select("*, profiles!work_permit_requests_student_id_fkey(display_name, class_room)")
+      .order("created_at",{ascending:false}).order("id").range(from, from+size-1);
+    if(error){ toast("โหลดข้อมูลไม่สำเร็จ: "+error.message); return null; }
+    all.push(...(data||[]));
+    if(!data || data.length<size) break;
+  }
+  return all;
 }
 
 async function renderQueue(){
   $("body").innerHTML = `<div class="loading">กำลังโหลด…</div>`;
   const rows = await fetchRequests();
+  if(!rows){ $("body").innerHTML = `<div class="empty">โหลดข้อมูลไม่สำเร็จ กรุณารีเฟรชหน้านี้แล้วลองใหม่</div>`; return; }
   const filtered = statusFilter==="all" ? rows : rows.filter(r=>r.status===statusFilter);
   const chips = ["all","submitted","processing","ready","received","cancelled"];
   const chipHtml = chips.map(c=>`<button class="chip ${statusFilter===c?'active':''}" data-f="${c}">${c==="all"?"ทั้งหมด":STATUS_LABEL[c]}</button>`).join("");
@@ -234,35 +252,335 @@ async function updateStatus(payload){
   renderQueue();
 }
 
+/* ===================== สารสนเทศ + รายงานสถานที่ ===================== */
+// ปีการศึกษา (พ.ศ.) และภาคเรียน นับจากวันที่ยื่นคำขอ (เวลาไทย)
+//   ภาคเรียนที่ 1 = พ.ค.–ต.ค.   ภาคเรียนที่ 2 = พ.ย.–เม.ย. (ม.ค.–เม.ย. นับเป็นปีการศึกษาก่อนหน้า)
+function acadOf(iso){
+  const d = new Date(new Date(iso).getTime() + 7*3600*1000);
+  const y = d.getUTCFullYear(), m = d.getUTCMonth()+1;
+  if(m>=5 && m<=10) return {year:y+543, term:1};
+  if(m>=11)         return {year:y+543, term:2};
+  return {year:y+542, term:2};
+}
+const LEVELS = ["ม.1","ม.2","ม.3","ม.4","ม.5","ม.6"];
+function levelOf(room){
+  const s = (room||"").toString();
+  const m = /ม\.?\s*([1-6])/.exec(s) || /^\s*([1-6])\s*\//.exec(s);
+  return m ? "ม."+m[1] : "ไม่ระบุ";
+}
+function normPlace(s){ return (s||"").toString().normalize("NFC").replace(/[​-‍﻿]/g,"").replace(/\s+/g," ").trim(); }
+const termLabel = t => t==="all" ? "ทั้งปีการศึกษา" : "ภาคเรียนที่ "+t;
+const pct = (n,t) => t ? (n*100/t).toFixed(1)+"%" : "—";
+const thLongDate = d => d.toLocaleDateString("th-TH",{day:"numeric",month:"long",year:"numeric"});
+
+function buildReport(rows, year, term){
+  const inScope = []; let cancelled = 0;
+  rows.forEach(r=>{
+    const a = acadOf(r.created_at);
+    if(a.year!==year) return;
+    if(term!=="all" && a.term!==Number(term)) return;
+    if(r.status==="cancelled"){ cancelled++; return; }
+    inScope.push({...r, _term:a.term});
+  });
+  const total = inScope.length;
+  const byType = {internship:0, work_permit:0};
+  const byTerm = {1:{internship:0,work_permit:0}, 2:{internship:0,work_permit:0}};
+  const lv = {}; LEVELS.forEach(l=>lv[l]=0);
+  const students = new Set(); let done = 0;
+  const pm = new Map(); let noPlace = 0;
+  inScope.forEach(r=>{
+    const t = r.request_type==="internship" ? "internship" : "work_permit";
+    byType[t]++; byTerm[r._term][t]++;
+    if(r.status==="received") done++;
+    students.add(r.student_id);
+    const l = levelOf(r.profiles?.class_room); lv[l] = (lv[l]||0)+1;
+    const nm = normPlace(r.employer_name);
+    if(!nm){ noPlace++; return; }
+    const key = nm.toLowerCase();
+    let p = pm.get(key);
+    if(!p){ p = {names:{}, internship:0, work_permit:0, count:0, st:new Set()}; pm.set(key,p); }
+    p.names[nm] = (p.names[nm]||0)+1;
+    p[t]++; p.count++; p.st.add(r.student_id);
+  });
+  const places = [...pm.values()].map(p=>({
+    name: Object.entries(p.names).sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0],"th"))[0][0],
+    internship:p.internship, work_permit:p.work_permit, count:p.count, students:p.st.size
+  })).sort((a,b)=>b.count-a.count||b.students-a.students||a.name.localeCompare(b.name,"th"));
+  const levels = LEVELS.map(l=>({label:l, count:lv[l]}));
+  if(lv["ไม่ระบุ"]) levels.push({label:"ไม่ระบุ", count:lv["ไม่ระบุ"]});
+
+  // ข้อสังเกต (ทุกข้อมาจากตัวเลขจริง ไม่ตีความเพิ่ม)
+  const obs = [];
+  if(places.length){
+    const topN = places[0].count, tops = places.filter(p=>p.count===topN);
+    if(tops.length===1) obs.push(`สถานที่ที่นักเรียนขอมากที่สุดคือ "${tops[0].name}" จำนวน ${topN} คำขอ (${pct(topN,total)} ของคำขอทั้งหมด)`);
+    else obs.push(`มีสถานที่ที่นักเรียนขอมากที่สุดเท่ากัน ${tops.length} แห่ง แห่งละ ${topN} คำขอ ได้แก่ ${tops.slice(0,3).map(p=>'"'+p.name+'"').join(", ")}${tops.length>3?" และอื่น ๆ":""}`);
+    const once = places.filter(p=>p.count===1).length;
+    obs.push(`มีสถานที่ทั้งหมด ${places.length} แห่ง${once?` โดย ${once} แห่งมีนักเรียนขอเพียง 1 คำขอ`:""}`);
+  }
+  obs.push(`หนังสือฝึกงาน ${byType.internship} คำขอ (${pct(byType.internship,total)}) และหนังสืออนุญาตทำงาน ${byType.work_permit} คำขอ (${pct(byType.work_permit,total)})`);
+  const topLv = [...levels].sort((a,b)=>b.count-a.count)[0];
+  if(topLv && topLv.count>0) obs.push(`ระดับชั้นที่ยื่นคำขอมากที่สุดคือ ${topLv.label} จำนวน ${topLv.count} คำขอ (${pct(topLv.count,total)})`);
+  if(noPlace) obs.push(`มี ${noPlace} คำขอที่ไม่ได้ระบุชื่อสถานที่ จึงไม่นับรวมในการจัดอันดับสถานที่`);
+  obs.push(`ดำเนินการเสร็จและนักเรียนรับเอกสารแล้ว ${done} คำขอ (${pct(done,total)}) อยู่ระหว่างดำเนินการ ${total-done} คำขอ${cancelled?` และมีคำขอที่ยกเลิก ${cancelled} คำขอ (ไม่นับรวมในสถิติ)`:""}`);
+
+  return {year, term, total, noPlace, byType, byTerm, levels, places, studentCount:students.size, done, pending:total-done, cancelled, obs};
+}
+
+/* ---------- หน้าจอ ---------- */
+let allRows = [], scope = {year:null, term:"all"}, showAllPlaces = false;
+
 async function renderStats(){
   $("body").innerHTML = `<div class="loading">กำลังโหลด…</div>`;
   const rows = await fetchRequests();
-  const total = rows.length;
-  const received = rows.filter(r=>r.status==="received").length;
-  const workPermit = rows.filter(r=>r.request_type==="work_permit").length;
-  const internship = rows.filter(r=>r.request_type==="internship").length;
+  if(!rows){ $("body").innerHTML = `<div class="empty">โหลดข้อมูลไม่สำเร็จ กรุณารีเฟรชหน้านี้แล้วลองใหม่</div>`; return; }
+  allRows = rows;
+  paintStats();
+}
 
-  const byStudent = {};
-  rows.forEach(r=>{
-    const key = r.student_id;
-    if(!byStudent[key]) byStudent[key] = {name:r.profiles?.display_name||"—", room:r.profiles?.class_room||"", count:0};
-    byStudent[key].count++;
-  });
-  const topStudents = Object.values(byStudent).sort((a,b)=>b.count-a.count).slice(0,8);
-  const topHtml = topStudents.length ? topStudents.map(s=>
-    `<tr><td>${esc(s.name)}${s.room? " · "+esc(s.room):""}</td><td style="text-align:right;font-weight:700">${s.count} ครั้ง</td></tr>`
-  ).join("") : `<tr><td colspan="2" style="text-align:center;color:var(--ink-soft)">ยังไม่มีข้อมูล</td></tr>`;
+function paintStats(){
+  const rows = allRows;
+  const cur = acadOf(new Date().toISOString()).year;
+  const withData = [...new Set(rows.map(r=>acadOf(r.created_at).year))];
+  const years = [...new Set([cur, ...withData])].sort((a,b)=>b-a);
+  if(!scope.year || !years.includes(scope.year)) scope.year = withData.includes(cur) || !withData.length ? cur : Math.max(...withData);
+  const rep = buildReport(rows, scope.year, scope.term);
+
+  const yearOpts = years.map(y=>`<option value="${y}" ${y===scope.year?"selected":""}>ปีการศึกษา ${y}</option>`).join("");
+  const termOpts = [["all","ทั้งปีการศึกษา"],["1","ภาคเรียนที่ 1 (พ.ค.–ต.ค.)"],["2","ภาคเรียนที่ 2 (พ.ย.–เม.ย.)"]]
+    .map(([v,l])=>`<option value="${v}" ${String(scope.term)===v?"selected":""}>${l}</option>`).join("");
+
+  let inner;
+  if(!rep.total){
+    inner = `<div class="empty">ยังไม่มีคำขอใน ปีการศึกษา ${rep.year} ${termLabel(rep.term)}${rep.cancelled?` (มีคำขอที่ยกเลิก ${rep.cancelled} รายการ ซึ่งไม่นับในสถิติ)`:""}</div>`;
+  } else {
+    const maxP = rep.places[0].count;
+    const shown = showAllPlaces ? rep.places : rep.places.slice(0,10);
+    const placeRows = shown.map((p,i)=>`<tr>
+      <td class="num">${i+1}</td><td>${esc(p.name)}</td>
+      <td class="num">${p.internship}</td><td class="num">${p.work_permit}</td>
+      <td><div class="barcell"><div class="bar" style="width:${Math.max(2,Math.round(p.count*100/maxP))}px"></div><b>${p.count}</b></div></td>
+      <td class="num">${p.students}</td><td class="num">${pct(p.count,rep.total)}</td></tr>`).join("");
+    const moreBtn = rep.places.length>10 ? `<button class="btn ghost sm" id="btnMorePlaces" style="margin-top:10px">${showAllPlaces?"แสดงเฉพาะ 10 อันดับแรก":"แสดงทั้งหมด "+rep.places.length+" แห่ง"}</button>` : "";
+    const maxL = Math.max(1,...rep.levels.map(l=>l.count));
+    const lvRows = rep.levels.map(l=>`<tr><td>${esc(l.label)}</td><td><div class="barcell"><div class="bar" style="width:${Math.round(l.count*100/maxL)*1.2+2}px"></div><b>${l.count}</b></div></td><td class="num">${pct(l.count,rep.total)}</td></tr>`).join("");
+    const termPanel = String(rep.term)==="all" ? `<div class="panel"><h2>เปรียบเทียบรายภาคเรียน</h2><div class="tbl-wrap"><table>
+      <thead><tr><th>ภาคเรียน</th><th class="num">ฝึกงาน</th><th class="num">อนุญาตทำงาน</th><th class="num">รวม</th></tr></thead><tbody>
+      ${[1,2].map(t=>{const x=rep.byTerm[t];return `<tr><td>ภาคเรียนที่ ${t}</td><td class="num">${x.internship}</td><td class="num">${x.work_permit}</td><td class="num"><b>${x.internship+x.work_permit}</b></td></tr>`;}).join("")}
+      </tbody></table></div></div>` : "";
+
+    // นักเรียนที่ยื่นบ่อย (ดูในหน้าจอเท่านั้น ไม่ใส่ในรายงานที่เสนอผู้บริหาร)
+    const byStudent = {};
+    rows.filter(r=>{ const a=acadOf(r.created_at); return a.year===rep.year && (rep.term==="all"||a.term===Number(rep.term)) && r.status!=="cancelled"; })
+      .forEach(r=>{ const k=r.student_id; if(!byStudent[k]) byStudent[k]={name:r.profiles?.display_name||"—", room:r.profiles?.class_room||"", count:0}; byStudent[k].count++; });
+    const topStudents = Object.values(byStudent).sort((a,b)=>b.count-a.count).slice(0,8);
+    const topHtml = topStudents.map(s=>`<tr><td>${esc(s.name)}${s.room?" · "+esc(s.room):""}</td><td class="num"><b>${s.count} ครั้ง</b></td></tr>`).join("");
+
+    inner = `
+    <div class="stats">
+      <div class="stat"><div class="num">${rep.total}</div><div class="lab">คำขอทั้งหมด</div></div>
+      <div class="stat"><div class="num">${rep.places.length}</div><div class="lab">สถานที่ทั้งหมด (แห่ง)</div></div>
+      <div class="stat"><div class="num">${rep.studentCount}</div><div class="lab">นักเรียนที่ยื่น (คน)</div></div>
+      <div class="stat"><div class="num">${rep.done}</div><div class="lab">รับเอกสารแล้ว</div></div>
+      <div class="stat"><div class="num">${rep.byType.internship}</div><div class="lab">ฝึกงาน</div></div>
+      <div class="stat"><div class="num">${rep.byType.work_permit}</div><div class="lab">อนุญาตทำงาน</div></div>
+    </div>
+    <div class="panel"><h2>สถานที่ที่นักเรียนขอมากที่สุด</h2>
+      <div class="note" style="margin-bottom:8px">ชื่อสถานที่ที่สะกดต่างกันเล็กน้อย (เว้นวรรค ตัวพิมพ์เล็ก/ใหญ่) จะนับรวมเป็นแห่งเดียวกัน</div>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th class="num">#</th><th>สถานที่</th><th class="num">ฝึกงาน</th><th class="num">อนุญาตทำงาน</th><th>รวมคำขอ</th><th class="num">นักเรียน (คน)</th><th class="num">ร้อยละ</th></tr></thead>
+        <tbody>${placeRows}</tbody></table></div>${moreBtn}
+    </div>
+    <div class="panel"><h2>แยกตามระดับชั้น</h2><div class="tbl-wrap"><table>
+      <thead><tr><th>ระดับชั้น</th><th>จำนวนคำขอ</th><th class="num">ร้อยละ</th></tr></thead><tbody>${lvRows}</tbody></table></div></div>
+    ${termPanel}
+    <div class="panel"><h2>ข้อสังเกตจากข้อมูล</h2><ul class="obs">${rep.obs.map(o=>`<li>${esc(o)}</li>`).join("")}</ul></div>
+    <div class="panel"><h2>นักเรียนที่ยื่นคำขอบ่อยที่สุด</h2><div class="note" style="margin-bottom:8px">ดูได้เฉพาะในหน้านี้ ไม่แสดงในไฟล์รายงานที่เสนอผู้บริหาร</div>
+      <div class="tbl-wrap"><table><tbody>${topHtml}</tbody></table></div></div>`;
+  }
 
   $("body").innerHTML = `
-    <div class="stats">
-      <div class="stat"><div class="num">${total}</div><div class="lab">คำขอทั้งหมด</div></div>
-      <div class="stat"><div class="num">${received}</div><div class="lab">รับเอกสารแล้ว</div></div>
-      <div class="stat"><div class="num">${workPermit}</div><div class="lab">อนุญาตทำงาน</div></div>
-      <div class="stat"><div class="num">${internship}</div><div class="lab">ฝึกงาน</div></div>
+    <div class="scope">
+      <div class="field"><label>ปีการศึกษา</label><select id="selYear">${yearOpts}</select></div>
+      <div class="field"><label>ภาคเรียน</label><select id="selTerm">${termOpts}</select></div>
+      <div class="spacer"></div>
+      <button class="btn primary" id="btnDocx" ${rep.total?"":"disabled"}>⬇ ดาวน์โหลดรายงาน (.docx)</button>
     </div>
-    <div class="panel"><h2>นักเรียนที่ยื่นคำขอบ่อยที่สุด</h2>
-      <div class="tbl-wrap"><table><tbody>${topHtml}</tbody></table></div>
-    </div>`;
+    <div class="rhead"><b>รายงานปีการศึกษา ${rep.year} · ${termLabel(rep.term)}</b>
+      <div class="note">นับจากวันที่ยื่นคำขอ ไม่นับคำขอที่ยกเลิก</div></div>
+    ${inner}`;
+  $("selYear").onchange = e=>{ scope.year = Number(e.target.value); showAllPlaces=false; paintStats(); };
+  $("selTerm").onchange = e=>{ scope.term = e.target.value; showAllPlaces=false; paintStats(); };
+  const mb = $("btnMorePlaces"); if(mb) mb.onclick = ()=>{ showAllPlaces=!showAllPlaces; paintStats(); };
+  $("btnDocx").onclick = async ()=>{
+    const b = $("btnDocx"); b.disabled = true; const old = b.textContent; b.textContent = "กำลังสร้างไฟล์…";
+    try{ await downloadReport(buildReport(allRows, scope.year, scope.term)); }
+    catch(e){ console.error(e); toast("สร้างไฟล์ไม่สำเร็จ ลองใหม่อีกครั้ง หรือตรวจว่าเชื่อมต่ออินเทอร์เน็ตอยู่"); }
+    b.disabled = false; b.textContent = old;
+  };
+}
+
+/* ---------- สร้างไฟล์ Word ---------- */
+// ใส่ตัวคั่นความกว้างศูนย์ (U+200B) ระหว่างคำไทย เพื่อให้ Word ตัดบรรทัดถูกที่ (ใช้ตัวตัดคำของเบราว์เซอร์)
+let _seg = null; try{ _seg = new Intl.Segmenter("th",{granularity:"word"}); }catch(e){}
+function zw(t){
+  if(!_seg || !t) return t;
+  return t.replace(/[฀-๿]+/g, run=>{ const out=[]; for(const s of _seg.segment(run)) out.push(s.segment); return out.join("​"); });
+}
+const DOCX_FONT = "TH Sarabun New";
+
+function dxRun(text, o={}){
+  const sz = o.size||32;
+  return new docx.TextRun({text:zw(String(text)), font:{ascii:DOCX_FONT,hAnsi:DOCX_FONT,cs:DOCX_FONT,eastAsia:DOCX_FONT},
+    size:sz, sizeComplexScript:sz, bold:!!o.bold, boldComplexScript:!!o.bold, color:o.color||"000000"});
+}
+function dxPara(children, o={}){
+  return new docx.Paragraph({children, alignment:o.align||docx.AlignmentType.LEFT,
+    spacing:{before:o.before||0, after:o.after===undefined?120:o.after, line:o.line||300, lineRule:docx.LineRuleType.AUTO},
+    indent:o.indent, keepNext:!!o.keepNext, keepLines:true, pageBreakBefore:!!o.pageBreak});
+}
+function dxTable(headers, rows, widths, aligns){
+  const D = docx, line = {style:D.BorderStyle.SINGLE, size:4, color:"8FA39D"};
+  const borders = {top:line,bottom:line,left:line,right:line};
+  const cell = (txt,i,hdr)=> new D.TableCell({
+    width:{size:widths[i], type:D.WidthType.DXA}, borders, verticalAlign:D.VerticalAlign.CENTER,
+    shading: hdr ? {type:D.ShadingType.CLEAR, fill:"E2F0EC", color:"auto"} : undefined,
+    margins:{top:40,bottom:40,left:80,right:80},
+    children:[dxPara([dxRun(txt,{size:30,bold:hdr})],{align: hdr ? D.AlignmentType.CENTER : aligns[i], after:0, line:250})]});
+  return new D.Table({
+    width:{size:widths.reduce((a,b)=>a+b,0), type:D.WidthType.DXA}, columnWidths:widths,
+    rows:[ new D.TableRow({tableHeader:true, cantSplit:true, children:headers.map((h,i)=>cell(h,i,true))}),
+           ...rows.map(r=>new D.TableRow({cantSplit:true, children:r.map((c,i)=>cell(c,i,false))})) ]});
+}
+function fitText(g, text, maxW){
+  if(g.measureText(text).width<=maxW) return text;
+  let s = text; while(s.length>1 && g.measureText(s+"…").width>maxW) s = s.slice(0,-1);
+  return s+"…";
+}
+async function placeChart(places){
+  try{
+    const top = places.slice(0,10); if(!top.length) return null;
+    try{ await document.fonts.load("400 28px Sarabun"); await document.fonts.load("600 28px Sarabun"); }catch(e){}
+    const W=1200, rowH=56, padV=20, labelW=480, valW=90, H=padV*2+rowH*top.length;
+    const c = document.createElement("canvas"); c.width=W; c.height=H;
+    const g = c.getContext("2d"); g.fillStyle="#fff"; g.fillRect(0,0,W,H); g.textBaseline="middle";
+    const max = Math.max(...top.map(p=>p.count)), barX = labelW+16, barMax = W-barX-valW-20;
+    const F = "Sarabun, 'Noto Sans Thai', Tahoma, sans-serif";
+    top.forEach((p,i)=>{
+      const y = padV+i*rowH+rowH/2;
+      g.font = "400 28px "+F; g.fillStyle="#22313A"; g.textAlign="right";
+      g.fillText(fitText(g,(i+1)+". "+p.name,labelW), labelW, y);
+      const w = Math.max(4, Math.round(barMax*p.count/max));
+      g.fillStyle="#0F6B5C"; g.fillRect(barX, y-14, w, 28);
+      g.font = "600 28px "+F; g.fillStyle="#0A4F44"; g.textAlign="left"; g.fillText(String(p.count), barX+w+10, y);
+    });
+    const blob = await new Promise(res=>c.toBlob(res,"image/png"));
+    return {data:new Uint8Array(await blob.arrayBuffer()), w:600, h:Math.round(600*H/W)};
+  }catch(e){ return null; }
+}
+
+async function buildDocx(rep, who, chart){
+  const D = docx, A = D.AlignmentType, kids = [];
+  const C = (t,o={})=>dxPara([dxRun(t,o)],{align:A.CENTER, after:o.after===undefined?60:o.after, line:o.line||320});
+  const scopeTxt = `ปีการศึกษา ${rep.year}${rep.term==="all"?"":" ภาคเรียนที่ "+rep.term}`;
+  let n = 0;
+  const H = t=>{ n++; kids.push(dxPara([dxRun(`${n}. ${t}`,{size:34,bold:true})],{before:240,after:100,keepNext:true})); };
+  const P = t=>kids.push(dxPara([dxRun(t)],{indent:{firstLine:720}}));
+
+  kids.push(C("โรงเรียนพูลเจริญวิทยาคม",{size:40,bold:true}));
+  kids.push(C("สำนักงานเขตพื้นที่การศึกษามัธยมศึกษาสมุทรปราการ"));
+  kids.push(C("งานแนะแนว",{after:240}));
+  kids.push(C("รายงานสรุปสถิติการขอหนังสือฝึกงานและหนังสืออนุญาตทำงานของนักเรียน",{size:38,bold:true,after:80}));
+  kids.push(C(scopeTxt+(rep.term==="all"?" (ทั้งปีการศึกษา)":""),{size:34,bold:true,after:60}));
+  kids.push(C("ข้อมูล ณ วันที่ "+thLongDate(new Date()),{after:280}));
+
+  kids.push(dxPara([dxRun("เรียน  ผู้อำนวยการโรงเรียนพูลเจริญวิทยาคม",{bold:true})]));
+  P(`งานแนะแนวขอรายงานสถิติการขอหนังสือฝึกงานและหนังสืออนุญาตทำงานของนักเรียน ประจำ${scopeTxt} เพื่อใช้เป็นสารสนเทศประกอบการวางแผนงานแนะแนวและการดูแลนักเรียน โดยนับจากวันที่นักเรียนยื่นคำขอผ่านระบบ ไม่นับคำขอที่ยกเลิก มีรายละเอียดดังนี้`);
+
+  H("สรุปภาพรวม");
+  kids.push(dxTable(["รายการ","จำนวน","หน่วย"],[
+    ["คำขอทั้งหมด", rep.total, "คำขอ"],
+    ["นักเรียนที่ยื่นคำขอ", rep.studentCount, "คน"],
+    ["สถานที่ฝึกงาน/ทำงาน", rep.places.length, "แห่ง"],
+    ["หนังสือฝึกงาน", rep.byType.internship, "คำขอ"],
+    ["หนังสืออนุญาตทำงาน", rep.byType.work_permit, "คำขอ"],
+    ["นักเรียนรับเอกสารแล้ว", rep.done, "คำขอ"],
+    ["อยู่ระหว่างดำเนินการ", rep.pending, "คำขอ"],
+    ["คำขอที่ยกเลิก (ไม่นับรวม)", rep.cancelled, "คำขอ"],
+  ].map(r=>[r[0],String(r[1]),r[2]]),[5026,2000,2000],[A.LEFT,A.CENTER,A.CENTER]));
+
+  H("สถานที่ฝึกงานและทำงาน");
+  const topK = Math.min(10, rep.places.length);
+  P(`ในช่วงนี้มีสถานที่ที่นักเรียนขอหนังสือทั้งหมด ${rep.places.length} แห่ง ตารางและแผนภาพแสดง ${topK} อันดับแรก เรียงตามจำนวนคำขอ`);
+  if(chart){
+    kids.push(dxPara([new D.ImageRun({data:chart.data, transformation:{width:chart.w, height:chart.h}})],{after:40,keepNext:true,line:240}));
+    kids.push(dxPara([dxRun(`แผนภาพที่ 1 สถานที่ที่นักเรียนขอมากที่สุด ${topK} อันดับแรก (จำนวนคำขอ)`,{size:28})],{after:160,align:A.CENTER}));
+  }
+  const prow = (p,i)=>[String(i+1),p.name,String(p.internship),String(p.work_permit),String(p.count),String(p.students),pct(p.count,rep.total)];
+  const pHead = ["ลำดับ","สถานที่","ฝึกงาน","อนุญาตทำงาน","รวมคำขอ","นักเรียน (คน)","ร้อยละ"];
+  const pW = [800,2500,1050,1250,1000,1250,1176], pA = [A.CENTER,A.LEFT,A.CENTER,A.CENTER,A.CENTER,A.CENTER,A.CENTER];
+  kids.push(dxTable(pHead, rep.places.slice(0,10).map(prow), pW, pA));
+  if(rep.places.length>10) kids.push(dxPara([dxRun(`หมายเหตุ รายชื่อสถานที่ทั้งหมด ${rep.places.length} แห่ง อยู่ในภาคผนวก`,{size:28})],{before:80}));
+
+  H("จำนวนคำขอแยกตามระดับชั้น");
+  kids.push(dxTable(["ระดับชั้น","จำนวนคำขอ","ร้อยละ"], rep.levels.map(l=>[l.label,String(l.count),pct(l.count,rep.total)]),[3026,3000,3000],[A.CENTER,A.CENTER,A.CENTER]));
+
+  if(rep.term==="all"){
+    H("เปรียบเทียบรายภาคเรียน");
+    kids.push(dxTable(["ภาคเรียน","ฝึกงาน","อนุญาตทำงาน","รวม"],
+      [1,2].map(t=>{const x=rep.byTerm[t]; return ["ภาคเรียนที่ "+t,String(x.internship),String(x.work_permit),String(x.internship+x.work_permit)];}),
+      [3026,2000,2000,2000],[A.CENTER,A.CENTER,A.CENTER,A.CENTER]));
+  }
+
+  H("ข้อสังเกตจากข้อมูล");
+  rep.obs.forEach((o,i)=>kids.push(dxPara([dxRun(`${i+1}) ${o}`)],{indent:{left:360}})));
+
+  // ช่องลงนาม
+  const R = {left:4400};
+  kids.push(dxPara([dxRun("ผู้รายงาน",{bold:true})],{before:360,keepNext:true,indent:R,after:60}));
+  kids.push(dxPara([dxRun("ลงชื่อ .................................")],{keepNext:true,indent:R,after:0,before:240}));
+  kids.push(dxPara([dxRun(`( ${who||"................................."} )`)],{keepNext:true,indent:R,after:0}));
+  kids.push(dxPara([dxRun("ครูแนะแนว")],{indent:R,after:240}));
+  kids.push(dxPara([dxRun("ความเห็นของผู้บริหารโรงเรียน",{bold:true})],{keepNext:true,after:60}));
+  kids.push(dxPara([dxRun(".................................................................................")],{keepNext:true,after:0}));
+  kids.push(dxPara([dxRun(".................................................................................")],{keepNext:true,after:0}));
+  kids.push(dxPara([dxRun("ลงชื่อ .................................")],{keepNext:true,indent:R,after:0,before:240}));
+  kids.push(dxPara([dxRun("( ................................. )")],{keepNext:true,indent:R,after:0}));
+  kids.push(dxPara([dxRun("ผู้อำนวยการโรงเรียนพูลเจริญวิทยาคม")],{indent:R,after:0}));
+
+  if(rep.places.length>10){
+    kids.push(dxPara([dxRun("ภาคผนวก  รายชื่อสถานที่ทั้งหมด",{size:36,bold:true})],{pageBreak:true,after:60}));
+    kids.push(dxPara([dxRun(`${scopeTxt} จำนวน ${rep.places.length} แห่ง เรียงตามจำนวนคำขอ`,{size:30})],{after:120}));
+    kids.push(dxTable(pHead, rep.places.map(prow), pW, pA));
+  }
+
+  const footer = new D.Footer({children:[new D.Paragraph({alignment:A.CENTER, children:[
+    new D.TextRun({text:"รายงานจากระบบแนะให้แนว · หน้า ", font:DOCX_FONT, size:26, sizeComplexScript:26}),
+    new D.TextRun({children:[D.PageNumber.CURRENT], font:DOCX_FONT, size:26, sizeComplexScript:26}),
+    new D.TextRun({text:" จาก ", font:DOCX_FONT, size:26, sizeComplexScript:26}),
+    new D.TextRun({children:[D.PageNumber.TOTAL_PAGES], font:DOCX_FONT, size:26, sizeComplexScript:26}),
+  ]})]});
+
+  return new D.Document({
+    creator:"ระบบแนะให้แนว", title:"รายงานสรุปสถิติการขอหนังสือฝึกงานและหนังสืออนุญาตทำงาน "+scopeTxt,
+    styles:{default:{document:{run:{font:{ascii:DOCX_FONT,hAnsi:DOCX_FONT,cs:DOCX_FONT,eastAsia:DOCX_FONT}, size:32, sizeComplexScript:32}}}},
+    sections:[{properties:{page:{size:{width:11906,height:16838}, margin:{top:1440,bottom:1300,left:1440,right:1440}}},
+      footers:{default:footer}, children:kids}]
+  });
+}
+
+async function downloadReport(rep){
+  if(typeof docx==="undefined") return toast("โหลดตัวสร้างไฟล์ไม่สำเร็จ ตรวจอินเทอร์เน็ตแล้วลองใหม่");
+  if(!rep.total) return toast("ไม่มีข้อมูลในช่วงที่เลือก");
+  const chart = await placeChart(rep.places);
+  const doc = await buildDocx(rep, profile?.display_name, chart);
+  const blob = await docx.Packer.toBlob(doc);
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `work-permit-report_${rep.year}_${rep.term==="all"?"full-year":"term"+rep.term}.docx`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 4000);
+  toast("ดาวน์โหลดรายงานแล้ว");
 }
 
 boot();

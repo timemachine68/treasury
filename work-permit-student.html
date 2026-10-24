@@ -182,6 +182,9 @@ async function renderHome(){
     .eq("student_id", profile.id).order("created_at",{ascending:false});
   if(error){ toast("โหลดข้อมูลไม่สำเร็จ: "+error.message); return; }
   const rows = data||[];
+  // รายชื่อสถานที่ที่เคยมีผู้ขอ ใช้ช่วยพิมพ์ (ถ้าโหลดไม่ได้ก็พิมพ์เองได้ตามปกติ)
+  let places = [];
+  try{ const {data:pl} = await sb.rpc("work_permit_place_suggestions"); places = (pl||[]).map(x=>x.place).filter(Boolean); }catch(e){}
 
   const listHtml = rows.length ? rows.map(r=>{
     const stepIdx = STEP_ORDER.indexOf(r.status);
@@ -209,7 +212,7 @@ async function renderHome(){
         <button data-v="internship">ฝึกงาน</button>
       </div>
       <div id="formMsg" class="msg"></div>
-      <div class="field"><label>ชื่อสถานประกอบการ *</label><input id="fEmployer"></div>
+      <div class="field"><label>ชื่อสถานประกอบการ *</label><input id="fEmployer" list="placeList" autocomplete="off" placeholder="เลือกจากรายการ หรือพิมพ์ชื่อเอง"><datalist id="placeList">${places.map(n=>`<option value="${esc(n)}"></option>`).join("")}</datalist></div>
       <div class="field"><label>ลักษณะงานที่ทำ *</label><input id="fJob"></div>
       <div class="row2">
         <div class="field"><label>วันที่เริ่ม *</label><input id="fStart" type="date"></div>
