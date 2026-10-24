@@ -316,7 +316,8 @@ async function fetchAllStudents(cols){
   }
   return all;
 }
-const isStaff = () => profile && (profile.role==="teacher"||profile.role==="admin");
+// ผู้ดูแลระบบซ้อมสัมภาษณ์ = admin หรือครูแนะแนว (ตรงกับฟังก์ชัน iv_is_staff() ในฐานข้อมูล)
+const isStaff = () => profile && (profile.role==="admin" || (profile.role==="teacher" && profile.is_guidance===true));
 
 /* ═══════════ เข้าสู่ระบบ ═══════════ */
 async function boot(){
@@ -356,6 +357,13 @@ async function loadBase(){
 /* ═══════════ แท็บ ═══════════ */
 function buildTabs(){
   const t = [];
+  if(profile.role!=="student" && !isStaff()){
+    $("tabs").innerHTML = "";
+    $("body").innerHTML = `<div class="panel"><h2>หน้านี้สำหรับครูแนะแนว</h2>
+      <p style="font-size:.92rem;color:var(--ink-soft)">ระบบซ้อมสัมภาษณ์มีคำตอบและเสียงของนักเรียน จึงเปิดให้เฉพาะครูแนะแนวดูแล
+      ถ้าต้องการช่วยตรวจงาน กรุณาติดต่องานแนะแนวเพื่อขอสิทธิ์</p></div>`;
+    return;
+  }
   t.push({id:"home", label:"🏠 หน้าแรก", c:"#0F6B5C"});
   if(profile.role==="student"){
     t.push({id:"practice", label:"🎯 ฝึกซ้อม", c:"#F2B84B"});
