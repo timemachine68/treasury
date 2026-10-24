@@ -8,6 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Mitr:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.js"></script>
 <style>
   :root{
     --green-deep:#1f4a34;
@@ -116,6 +117,7 @@
       <select id="yearSelect"><option value="">กำลังโหลดปี...</option></select>
       <button class="ghost" id="printBtn">🖨️ พิมพ์ / บันทึกเป็น PDF</button>
       <button class="ghost" id="csvBtn">⬇️ ดาวน์โหลด CSV</button>
+      <button class="primary" id="docxBtn">📄 สรุปสำหรับผู้บริหาร (Word)</button>
     </div>
 
     <div class="kpis" id="kpis">
@@ -305,7 +307,7 @@ function renderTrend() {
         fill: true, tension: 0.3, pointRadius: 4
       }]
     },
-    options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
+    options: { animation: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
   });
 }
 
@@ -315,7 +317,7 @@ function drawBar(id, existing, labels, data) {
   return new Chart(ctx, {
     type: "bar",
     data: { labels, datasets: [{ label: "จำนวน (คน)", data, backgroundColor: "#2d6a4a", borderRadius: 6 }] },
-    options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
+    options: { animation: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
   });
 }
 
@@ -326,9 +328,198 @@ function drawDonut(id, existing, labels, data) {
   return new Chart(ctx, {
     type: "doughnut",
     data: { labels, datasets: [{ data, backgroundColor: palette }] },
-    options: { plugins: { legend: { position: "bottom" } } }
+    options: { animation: false, plugins: { legend: { position: "bottom" } } }
   });
 }
+
+
+/* ---------- สรุปสำหรับผู้บริหาร (Word) ---------- */
+function canvasPng(id) {
+  const c = document.getElementById(id);
+  if (!c || !c.width) return null;
+  // วางบนพื้นขาวกันพื้นหลังโปร่งใสเป็นสีดำใน Word
+  const t = document.createElement("canvas");
+  t.width = c.width; t.height = c.height;
+  const g = t.getContext("2d");
+  g.fillStyle = "#fff"; g.fillRect(0, 0, t.width, t.height); g.drawImage(c, 0, 0);
+  const b64 = t.toDataURL("image/png").split(",")[1];
+  const bin = atob(b64), u8 = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+  return { data: u8, ratio: t.height / t.width };
+}
+
+async function buildExecDocx() {
+  const D = window.docx;
+  const year = $("#yearSelect").value;
+  const rows = allSummary.filter(r => r.academic_year === year);
+  const awards = allAwards.filter(r => r.academic_year === year);
+  if (!year || awards.length === 0) return false;
+
+  const FONT = "TH Sarabun New", GREEN = "2D6A4A", LIGHT = "E8F1EB";
+  const num = n => Number(n || 0).toLocaleString("th-TH");
+  const baht = n => Number(n || 0).toLocaleString("th-TH") + " บาท";
+  const run = (text, o = {}) => new D.TextRun({ text: String(text ?? ""), font: FONT, size: 32, ...o });
+  const para = (text, o = {}) => new D.Paragraph({ spacing: { after: 100 }, ...o.p, children: [run(text, o.r)] });
+  const head = text => new D.Paragraph({
+    spacing: { before: 280, after: 120 }, keepNext: true,
+    border: { bottom: { style: D.BorderStyle.SINGLE, size: 8, color: GREEN, space: 2 } },
+    children: [run(text, { bold: true, size: 36, color: GREEN })]
+  });
+  const cell = (text, o = {}) => new D.TableCell({
+    width: { size: o.w || 20, type: D.WidthType.PERCENTAGE },
+    shading: o.fill ? { type: D.ShadingType.CLEAR, color: "auto", fill: o.fill } : undefined,
+    margins: { top: 60, bottom: 60, left: 100, right: 100 },
+    children: [new D.Paragraph({ alignment: o.align || D.AlignmentType.LEFT,
+      children: [run(text, { bold: !!o.bold, color: o.color, size: o.size || 30 })] })]
+  });
+  const table = (heads, widths, aligns, body) => new D.Table({
+    width: { size: 100, type: D.WidthType.PERCENTAGE },
+    rows: [
+      new D.TableRow({ tableHeader: true, cantSplit: true, children: heads.map((h, i) =>
+        cell(h, { w: widths[i], fill: GREEN, color: "FFFFFF", bold: true, align: aligns[i] })) }),
+      ...body.map((r, ri) => new D.TableRow({ cantSplit: true, children: r.map((v, i) =>
+        cell(v, { w: widths[i], align: aligns[i], fill: ri % 2 ? "F6F9F7" : undefined,
+                  bold: r.bold })) }))
+    ]
+  });
+  const R = D.AlignmentType.RIGHT, L = D.AlignmentType.LEFT, C = D.AlignmentType.CENTER;
+
+  /* รวมตามทุน */
+  const byFund = {};
+  rows.forEach(r => {
+    const f = byFund[r.scholarship_id] ||= { name: r.scholarship_name, provider: r.provider, per: r.amount_per_grant, n: 0, amt: 0 };
+    f.n += Number(r.awarded_count); f.amt += Number(r.total_amount || 0);
+  });
+  const funds = Object.values(byFund).sort((a, b) => b.n - a.n);
+  const totalN = funds.reduce((s, f) => s + f.n, 0);
+  const totalAmt = funds.reduce((s, f) => s + f.amt, 0);
+
+  const byLevel = {};
+  rows.forEach(r => { const lv = r.class_level || "ไม่ระบุ"; byLevel[lv] = (byLevel[lv] || 0) + Number(r.awarded_count); });
+
+  /* ข้อสังเกตสำคัญ (สร้างจากข้อมูลจริง) */
+  const points = [];
+  points.push(`ปีการศึกษา ${year} มีนักเรียนได้รับทุน ${num(totalN)} คน จาก ${num(funds.length)} ทุน รวมเงินทุน ${baht(totalAmt)}`);
+  if (funds[0]) points.push(`ทุนที่มีผู้ได้รับมากที่สุดคือ ${funds[0].name} (${num(funds[0].n)} คน)`);
+  const topAmt = [...funds].sort((a, b) => b.amt - a.amt)[0];
+  if (topAmt && topAmt.amt > 0) points.push(`ทุนที่มียอดเงินสูงสุดคือ ${topAmt.name} (${baht(topAmt.amt)})`);
+  const lvKeys = Object.keys(byLevel).sort((a, b) => byLevel[b] - byLevel[a]);
+  if (lvKeys[0]) points.push(`ระดับชั้นที่ได้รับทุนมากที่สุดคือ ${lvKeys[0]} (${num(byLevel[lvKeys[0]])} คน)`);
+  const years = [...new Set(allSummary.map(r => r.academic_year))].sort();
+  const yi = years.indexOf(year);
+  if (yi > 0) {
+    const py = years[yi - 1];
+    const pr = allSummary.filter(r => r.academic_year === py);
+    const pn = pr.reduce((s, r) => s + Number(r.awarded_count), 0);
+    const pa = pr.reduce((s, r) => s + Number(r.total_amount || 0), 0);
+    const cmp = (a, b, unit) => a === b ? `เท่ากับ` : `${a > b ? "เพิ่มขึ้น" : "ลดลง"} ${num(Math.abs(a - b))} ${unit} เมื่อเทียบกับ`;
+    points.push(`จำนวนผู้ได้รับทุน${cmp(totalN, pn, "คน")}ปีการศึกษา ${py} (${num(pn)} คน) และยอดเงิน${cmp(totalAmt, pa, "บาท")}ปีก่อน (${baht(pa)})`);
+  }
+
+  const kpi = (label, value) => new D.TableCell({
+    width: { size: 33, type: D.WidthType.PERCENTAGE },
+    shading: { type: D.ShadingType.CLEAR, color: "auto", fill: LIGHT },
+    margins: { top: 120, bottom: 120, left: 120, right: 120 },
+    children: [
+      new D.Paragraph({ alignment: C, children: [run(label, { size: 28, color: "555555" })] }),
+      new D.Paragraph({ alignment: C, children: [run(value, { size: 44, bold: true, color: GREEN })] })
+    ]
+  });
+
+  const img = (id, w) => {
+    const p = canvasPng(id); if (!p) return null;
+    return new D.Paragraph({ alignment: C, spacing: { after: 120 }, children: [
+      new D.ImageRun({ data: p.data, type: "png", transformation: { width: w, height: Math.round(w * p.ratio) } })] });
+  };
+
+  const kids = [];
+  kids.push(new D.Paragraph({ alignment: C, spacing: { after: 40 },
+    children: [run("โรงเรียนพูลเจริญวิทยาคม", { size: 32, color: "555555" })] }));
+  kids.push(new D.Paragraph({ alignment: C, spacing: { after: 40 },
+    children: [run("สรุปผลการมอบทุนการศึกษา", { size: 52, bold: true, color: GREEN })] }));
+  kids.push(new D.Paragraph({ alignment: C, spacing: { after: 240 },
+    children: [run("ปีการศึกษา " + year, { size: 40, bold: true })] }));
+
+  kids.push(new D.Table({ width: { size: 100, type: D.WidthType.PERCENTAGE },
+    borders: { top: { style: D.BorderStyle.NONE }, bottom: { style: D.BorderStyle.NONE }, left: { style: D.BorderStyle.NONE },
+               right: { style: D.BorderStyle.NONE }, insideHorizontal: { style: D.BorderStyle.NONE }, insideVertical: { style: D.BorderStyle.NONE } },
+    rows: [new D.TableRow({ children: [
+      kpi("นักเรียนที่ได้รับทุน", num(totalN) + " คน"),
+      kpi("ยอดเงินทุนรวม", baht(totalAmt)),
+      kpi("จำนวนทุนที่มอบ", num(funds.length) + " ทุน")] })] }));
+
+  kids.push(head("ข้อสังเกตสำคัญ"));
+  points.forEach(t => kids.push(new D.Paragraph({ bullet: { level: 0 }, spacing: { after: 80 }, children: [run(t)] })));
+
+  kids.push(head("สรุปรายทุน"));
+  const fb = funds.map(f => [f.name, f.provider || "-", num(f.n), f.per ? num(f.per) : "-", num(f.amt)]);
+  const tot = ["รวมทั้งหมด", "", num(totalN), "", num(totalAmt)]; tot.bold = true;
+  kids.push(table(["ทุน", "หน่วยงาน", "ผู้ได้รับ (คน)", "เงินต่อทุน (บาท)", "รวม (บาท)"],
+    [32, 22, 13, 16, 17], [L, L, R, R, R], [...fb, tot]));
+
+  const charts = [img("byFundChart", 520), img("byLevelChart", 380)].filter(Boolean);
+  if (charts.length) {
+    kids.push(head("ภาพรวมเป็นกราฟ"));
+    kids.push(para("จำนวนผู้ได้รับทุนแยกตามทุน", { p: { keepNext: true }, r: { bold: true } }));
+    if (charts[0]) kids.push(charts[0]);
+    if (charts[1]) { kids.push(para("สัดส่วนผู้ได้รับทุนแยกตามระดับชั้น", { p: { keepNext: true }, r: { bold: true } })); kids.push(charts[1]); }
+  }
+
+  kids.push(head("จำนวนผู้ได้รับทุนแยกตามระดับชั้น"));
+  kids.push(table(["ระดับชั้น", "จำนวน (คน)", "สัดส่วน"], [40, 30, 30], [L, R, R],
+    lvKeys.map(k => [k, num(byLevel[k]), (byLevel[k] * 100 / totalN).toFixed(1) + "%"])));
+
+  if (years.length > 1) {
+    kids.push(head("แนวโน้มย้อนหลัง"));
+    const trow = years.map(y => {
+      const rr = allSummary.filter(r => r.academic_year === y);
+      return ["ปีการศึกษา " + y, num(rr.reduce((s, r) => s + Number(r.awarded_count), 0)),
+              num(rr.reduce((s, r) => s + Number(r.total_amount || 0), 0))];
+    });
+    kids.push(table(["ปีการศึกษา", "ผู้ได้รับทุน (คน)", "ยอดเงินรวม (บาท)"], [34, 33, 33], [L, R, R], trow));
+  }
+
+  kids.push(new D.Paragraph({ pageBreakBefore: true, children: [] }));
+  kids.push(head("ภาคผนวก: รายชื่อผู้ได้รับทุน ปีการศึกษา " + year));
+  kids.push(table(["ที่", "ชื่อ-สกุล", "ชั้น", "ทุน"], [8, 36, 14, 42], [C, L, L, L],
+    awards.map((r, i) => [String(i + 1), r.display_name || "-", r.class_room || "-", r.scholarship_name || "-"])));
+
+  const today = new Date().toLocaleDateString("th-TH", { year: "numeric", month: "long", day: "numeric" });
+  kids.push(new D.Paragraph({ spacing: { before: 300 }, alignment: R,
+    children: [run("จัดทำโดย ฝ่ายแนะแนว · ข้อมูล ณ วันที่ " + today, { size: 26, color: "666666" })] }));
+
+  const doc = new D.Document({
+    creator: "ฝ่ายแนะแนว โรงเรียนพูลเจริญวิทยาคม",
+    title: "สรุปผลการมอบทุนการศึกษา ปีการศึกษา " + year,
+    styles: { default: { document: { run: { font: FONT, size: 32 } } } },
+    sections: [{
+      properties: { page: { margin: { top: 1000, bottom: 1000, left: 1100, right: 1100 } } },
+      footers: { default: new D.Footer({ children: [new D.Paragraph({ alignment: C,
+        children: [new D.TextRun({ children: ["หน้า ", D.PageNumber.CURRENT], font: FONT, size: 26, color: "777777" })] })] }) },
+      children: kids
+    }]
+  });
+  const blob = await D.Packer.toBlob(doc);
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `สรุปทุนการศึกษา-ปี${year}.docx`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  return true;
+}
+
+$("#docxBtn")?.addEventListener("click", async () => {
+  const btn = $("#docxBtn"), old = btn.textContent;
+  btn.disabled = true; btn.textContent = "กำลังสร้างไฟล์…";
+  try {
+    if (!window.docx) throw new Error("โหลดตัวสร้างไฟล์ Word ไม่สำเร็จ ตรวจอินเทอร์เน็ตแล้วลองใหม่");
+    const ok = await buildExecDocx();
+    btn.textContent = ok ? "✓ ดาวน์โหลดแล้ว" : "ปีนี้ยังไม่มีผู้ได้รับทุน";
+  } catch (e) {
+    btn.textContent = "สร้างไฟล์ไม่สำเร็จ"; console.error(e);
+  }
+  setTimeout(() => { btn.textContent = old; btn.disabled = false; }, 2500);
+});
 
 $("#printBtn")?.addEventListener("click", () => window.print());
 $("#csvBtn")?.addEventListener("click", () => {
