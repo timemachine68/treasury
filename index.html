@@ -790,7 +790,15 @@ textarea.csvbox{font-family:monospace;font-size:.82rem;min-height:120px}
       <label><input type="checkbox" value="manage" checked>👥 จัดการบัญชี</label>
       <label><input type="checkbox" value="announcements" data-default="off">📢 ประกาศข่าวประชาสัมพันธ์ได้</label>
     </div>
-    <p class="field hint" style="margin-top:10px">หมายเหตุ: การ์ดใน "ระบบของเรา" สำหรับบัญชีที่ถูกจำกัดสิทธิ์แบบพิเศษ (เช่น บัญชีกลุ่มสาระ) ต้องตั้งค่าเพิ่มเติมทางฐานข้อมูล ติดต่อผู้ดูแลระบบ</p>
+    <div id="permAppsWrap" style="margin-top:14px;padding-top:12px;border-top:1px dashed var(--line,#ddd)">
+      <div style="font-weight:700;margin-bottom:6px">🧩 ระบบของเรา ที่ครูคนนี้เห็น</div>
+      <div class="roomchecks" style="flex-direction:column;align-items:stretch">
+        <label><input type="radio" name="permAppsMode" value="all" checked>เห็นทุกระบบที่เปิดให้ครู</label>
+        <label><input type="radio" name="permAppsMode" value="selected">เลือกเฉพาะบางระบบ</label>
+      </div>
+      <div class="roomchecks" id="permApps" style="flex-direction:column;align-items:stretch;margin-top:8px;display:none"></div>
+      <p class="field hint" id="permAppsHint" style="margin-top:6px"></p>
+    </div>
     <div class="foot">
       <button class="btn ghost" id="btnPermCancel">ยกเลิก</button>
       <button class="btn primary" id="btnPermSave">บันทึกสิทธิ์</button>
@@ -2969,7 +2977,7 @@ function copyOvSummary(silent){
 
 /* ═══════════ เฟส 5: สิทธิ์เมนูของครู ═══════════ */
 let permUid = null;
-function openPermModal(uid){
+async function openPermModal(uid){
   permUid = uid; msg("permMsg","");
   const u = users.find(x=>x.id===uid); if(!u) return;
   $("permTitle").textContent = "🔐 สิทธิ์เมนู: " + u.display_name;
@@ -2978,17 +2986,48 @@ function openPermModal(uid){
     if(i.dataset.default === "off"){ i.checked = !!(mp && mp[i.value] === true); } // opt-in: ปิดไว้ก่อนจนกว่าจะติ๊กให้ชัดเจน
     else { i.checked = !mp || mp[i.value] !== false; } // opt-out: เปิดไว้ก่อนตามของเดิม
   });
+  // ระบบของเรา: โหลดรายการถ้ายังไม่มี
+  if(typeof extApps === "undefined" || !extApps.length){
+    const {data} = await sb.from("external_systems").select("*").order("sort_order").order("created_at");
+    if(data) extApps = data;
+  }
+  const list = (extApps||[]).filter(a=> (a.visible_to||[]).includes("teacher"));
+  const only = mp && Array.isArray(mp.appsOnly) ? mp.appsOnly : null;
+  const box = $("permApps");
+  box.innerHTML = list.length
+    ? list.map(a=>`<label><input type="checkbox" value="${esc(a.id)}"${only&&only.includes(a.id)?" checked":""}>${esc(a.icon||"🔗")} ${esc(a.title)}</label>`).join("")
+    : '<span class="hint">ยังไม่มีระบบที่เปิดให้ครู</span>';
+  document.querySelector('input[name="permAppsMode"][value="'+(only?"selected":"all")+'"]').checked = true;
+  permAppsToggle();
   $("permModal").classList.add("show");
 }
+function permAppsToggle(){
+  const sel = document.querySelector('input[name="permAppsMode"]:checked').value === "selected";
+  $("permApps").style.display = sel ? "flex" : "none";
+  $("permAppsHint").textContent = sel
+    ? "ติ๊กเฉพาะระบบที่ให้ครูคนนี้เห็น (ต้องเลือกอย่างน้อย 1 ระบบ)"
+    : "ครูคนนี้จะเห็นทุกระบบที่เปิดให้ครูตามปกติ";
+}
+document.querySelectorAll('input[name="permAppsMode"]').forEach(r=> r.onchange = permAppsToggle);
 $("btnPermCancel").onclick = ()=> $("permModal").classList.remove("show");
 $("btnPermSave").onclick = async ()=>{
+  const u = users.find(x=>x.id===permUid);
   const obj = {};
   $("permChecks").querySelectorAll("input").forEach(i=> obj[i.value] = i.checked);
+  // เก็บคีย์อื่นที่มีอยู่เดิมไว้ (ยกเว้น appsOnly ที่จัดการด้านล่าง)
+  const old = (u && u.menu_permissions) || {};
+  Object.keys(old).forEach(k=>{ if(!(k in obj) && k !== "appsOnly") obj[k] = old[k]; });
+  const mode = document.querySelector('input[name="permAppsMode"]:checked').value;
+  if(mode === "selected"){
+    const ids = [...$("permApps").querySelectorAll("input:checked")].map(i=>i.value);
+    if(!ids.length) return msg("permMsg","กรุณาติ๊กเลือกอย่างน้อย 1 ระบบ หรือเลือก “เห็นทุกระบบ”","err");
+    obj.appsOnly = ids;
+  }
   $("btnPermSave").disabled = true;
   const {error} = await sb.from("profiles").update({menu_permissions:obj}).eq("id", permUid);
   $("btnPermSave").disabled = false;
   if(error) return msg("permMsg", error.message, "err");
-  const u = users.find(x=>x.id===permUid); if(u) u.menu_permissions = obj;
+  if(u) u.menu_permissions = obj;
   $("permModal").classList.remove("show");
   toast("บันทึกสิทธิ์เมนูเรียบร้อย ✅ (มีผลตอนครูล็อกอินครั้งถัดไป) ");
 };
