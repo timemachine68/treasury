@@ -190,7 +190,8 @@ async function renderHome(){
     const stepIdx = STEP_ORDER.indexOf(r.status);
     const stepsHtml = r.status==="cancelled" ? "" : `<div class="steps">${STEP_ORDER.map((s,i)=>
       `<div class="step ${i<=stepIdx?'on':''}">${STATUS_LABEL[s]}</div>`).join("")}</div>`;
-    const cancelBtn = r.status==="submitted" ? `<button class="btn ghost sm" data-cancel="${r.id}" style="margin-top:10px">ยกเลิกคำขอ</button>` : "";
+    const cancelBtn = (r.status==="submitted" ? `<button class="btn ghost sm" data-cancel="${r.id}" style="margin-top:10px">ยกเลิกคำขอ</button> ` : "")
+      + ((r.status==="submitted"||r.status==="cancelled") ? `<button class="btn ghost sm" data-del="${r.id}" style="margin-top:10px;color:var(--danger)">ลบคำขอนี้</button>` : "");
     return `<div class="reqcard">
       <div class="top">
         <div><h3>${esc(r.employer_name)}</h3><div class="meta">${esc(r.job_description)}</div>
@@ -227,6 +228,7 @@ async function renderHome(){
     $("typeSeg").querySelectorAll("button").forEach(x=>x.classList.toggle("active", x===b));
   });
   $("body").querySelectorAll("[data-cancel]").forEach(b=> b.onclick = ()=> cancelRequest(b.dataset.cancel));
+  $("body").querySelectorAll("[data-del]").forEach(b=> b.onclick = ()=> deleteRequest(b.dataset.del));
   $("btnSubmit").onclick = submitRequest;
 }
 
@@ -243,6 +245,15 @@ async function submitRequest(){
   $("btnSubmit").disabled = false;
   if(error) return msg("formMsg","ส่งคำขอไม่สำเร็จ: "+error.message,"err");
   toast("ส่งคำขอแล้ว");
+  renderHome();
+}
+
+async function deleteRequest(id){
+  if(!confirm("ลบคำขอนี้ถาวรใช่ไหม? (ลบแล้วกู้คืนไม่ได้ ถ้ากรอกผิดให้ลบแล้วยื่นใหม่ได้เลย)")) return;
+  const {data, error} = await sb.from("work_permit_requests").delete().eq("id", id).select("id");
+  if(error) return toast("ลบไม่สำเร็จ: "+error.message);
+  if(!data || !data.length){ toast("ลบไม่ได้ เพราะครูรับเรื่องไปแล้ว ถ้ากรอกผิดให้แจ้งครูแนะแนว"); return renderHome(); }
+  toast("ลบคำขอแล้ว");
   renderHome();
 }
 

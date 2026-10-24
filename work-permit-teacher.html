@@ -222,6 +222,7 @@ async function renderQueue(){
     const nextStatus = NEXT_STATUS[r.status];
     const actionBtn = nextStatus ? `<button class="btn primary sm" data-act="${r.id}|${nextStatus}">${NEXT_LABEL[r.status]}</button>` : "";
     const cancelBtn = r.status==="submitted" ? `<button class="btn ghost sm" data-act="${r.id}|cancelled">ยกเลิกคำขอ</button>` : "";
+    const delBtn = `<button class="btn ghost sm" style="margin-left:auto;color:var(--danger)" data-del="${r.id}|${esc(stu.display_name||"")}|${esc(r.employer_name||"")}">ลบ</button>`;
     return `<div class="reqcard">
       <div class="top">
         <div>
@@ -234,12 +235,23 @@ async function renderQueue(){
           <span class="pill ${r.status}">${STATUS_LABEL[r.status]}</span>
         </div>
       </div>
-      <div class="foot">${actionBtn}${cancelBtn}</div>
+      <div class="foot">${actionBtn}${cancelBtn}${delBtn}</div>
     </div>`;
   }).join("") : `<div class="empty">ไม่มีคำขอในสถานะนี้</div>`;
   $("body").innerHTML = `<div class="toolbar"><div class="chips">${chipHtml}</div></div>${cardsHtml}`;
   $("body").querySelectorAll("[data-f]").forEach(b=> b.onclick = ()=>{ statusFilter=b.dataset.f; renderQueue(); });
   $("body").querySelectorAll("[data-act]").forEach(b=> b.onclick = ()=> updateStatus(b.dataset.act));
+  $("body").querySelectorAll("[data-del]").forEach(b=> b.onclick = ()=> deleteRequest(b.dataset.del));
+}
+
+async function deleteRequest(payload){
+  const [id, who, place] = payload.split("|");
+  if(!confirm(`ลบคำขอของ ${who||"นักเรียน"} (${place||"-"}) ถาวรใช่ไหม?\nลบแล้วกู้คืนไม่ได้ และจะไม่นับในสถิติ\n(ถ้าแค่ไม่อยากให้นับ ใช้ "ยกเลิกคำขอ" แทนได้)`)) return;
+  const {data, error} = await sb.from("work_permit_requests").delete().eq("id", id).select("id");
+  if(error) return toast("ลบไม่สำเร็จ: "+error.message);
+  if(!data || !data.length) return toast("ลบไม่ได้ ลองรีเฟรชหน้านี้แล้วทำใหม่");
+  toast("ลบคำขอแล้ว");
+  renderQueue();
 }
 
 async function updateStatus(payload){
