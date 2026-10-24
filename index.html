@@ -866,6 +866,21 @@ async function fetchAllTgatAttempts(){
   return {data: all};
 }
 
+// iv_sessions เพิ่มแถวทุกครั้งที่นักเรียนซ้อมสัมภาษณ์ 1 เซ็ต — แบ่งหน้าเหมือน fetchAllTgatAttempts
+async function fetchAllIvSessions(){
+  let all = [], from = 0, pageSize = 1000;
+  while(true){
+    const {data, error} = await sb.from("iv_sessions")
+      .select("id,student_id,kind,status,category_id,submitted_at,reviewed_at")
+      .order("created_at").order("id").range(from, from+pageSize-1);
+    if(error){ console.error("fetchAllIvSessions error:", error.message); break; }
+    all = all.concat(data||[]);
+    if(!data || data.length < pageSize) break;
+    from += pageSize;
+  }
+  return {data: all};
+}
+
 /* ═══════════ ค่าคงที่ ═══════════ */
 const GRADES = [
   {key:"all", label:"ทั้งหมด", color:"var(--gall)"},
@@ -2613,7 +2628,7 @@ async function loadOverview(){
     sb.from("scholarships").select("id,name"),
     sb.from("work_permit_requests").select("id,student_id,request_type,employer_name,status,work_start_date,created_at"),
     sb.from("chang_phueak_applications").select("id,profile_id,track,status,submitted_at"),
-    sb.from("iv_sessions").select("id,student_id,kind,status,category_id,submitted_at,reviewed_at"),
+    fetchAllIvSessions(),
     sb.from("iv_categories").select("id,name,emoji"),
     sb.from("vulnerable_profiles").select("id,profile_id,urgency_level,academic_year,verified_at"),
     sb.from("award_participants")

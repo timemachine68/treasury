@@ -317,6 +317,19 @@ async function fetchAllStudents(cols){
   return all;
 }
 // ผู้ดูแลระบบซ้อมสัมภาษณ์ = admin หรือครูแนะแนว (ตรงกับฟังก์ชัน iv_is_staff() ในฐานข้อมูล)
+// ดึงทุกแถวโดยแบ่งหน้าทีละ 1,000 (PostgREST ตัดที่ 1,000 แถวเงียบ ๆ)
+// build = ฟังก์ชันที่คืน query ใหม่ทุกครั้ง และต้องมี .order() ที่เรียงได้แน่นอน (ใส่ id ปิดท้าย)
+async function fetchAllRows(build){
+  let all = [], from = 0, pageSize = 1000;
+  while(true){
+    const {data, error} = await build().range(from, from+pageSize-1);
+    if(error) return {data: all, error};
+    all = all.concat(data||[]);
+    if(!data || data.length < pageSize) break;
+    from += pageSize;
+  }
+  return {data: all, error: null};
+}
 const isStaff = () => profile && (profile.role==="admin" || (profile.role==="teacher" && profile.is_guidance===true));
 
 /* ═══════════ เข้าสู่ระบบ ═══════════ */
@@ -349,7 +362,7 @@ async function loadBase(){
   const [c, r, q] = await Promise.all([
     sb.from("iv_categories").select("*").order("sort_order"),
     sb.from("iv_rubric_criteria").select("*").eq("is_active",true).order("sort_order"),
-    sb.from("iv_questions").select("*")
+    fetchAllRows(()=> sb.from("iv_questions").select("*").order("created_at").order("id"))
   ]);
   cats = c.data||[]; rubric = r.data||[]; questions = q.data||[];
 }
@@ -412,7 +425,7 @@ async function renderHome(){
         </ul></div>`;
   }else{
     const [{data:ss}, students] = await Promise.all([
-      sb.from("iv_sessions").select("id,student_id,status,submitted_at,created_at"),
+      fetchAllRows(()=> sb.from("iv_sessions").select("id,student_id,status,submitted_at,created_at").order("created_at").order("id")),
       fetchAllStudents("id,display_name,class_room")
     ]);
     const all = ss||[], stuMap = Object.fromEntries((students||[]).map(s=>[s.id,s]));
@@ -724,13 +737,10 @@ async function openSessionDetail(id, teacherMode, backTab){
     $("btnSaveReview").onclick = async ()=>{
       if(Object.keys(teacherScores).length < rubric.length) return toast("ให้คะแนนให้ครบทุกเกณฑ์ก่อนนะคะ");
       $("btnSaveReview").disabled = true;
-      const rows = Object.entries(teacherScores).map(([cid,score])=>({
-        session_id:id, criteria_id:cid, scorer_role:"teacher", scorer_id:profile.id, score}));
-      const {error:e1} = await sb.from("iv_scores").upsert(rows, {onConflict:"session_id,criteria_id,scorer_role"});
-      const {error:e2} = await sb.from("iv_sessions").update({status:"reviewed", reviewed_at:new Date().toISOString(),
-        reviewer_id:profile.id, teacher_comment:$("tComment").value.trim()||null}).eq("id",id);
+      // บันทึกคะแนน + สถานะ + ความเห็นในคำสั่งเดียว (ถ้าเน็ตหลุดจะไม่บันทึกครึ่ง ๆ กลาง ๆ)
+      const {error} = await sb.rpc("iv_save_review", {p_session_id:id, p_scores:teacherScores, p_comment:$("tComment").value});
       $("btnSaveReview").disabled = false;
-      if(e1||e2) return toast("บันทึกไม่สำเร็จ: "+(e1||e2).message);
+      if(error) return toast("บันทึกไม่สำเร็จ: "+error.message);
       toast("บันทึกผลตรวจเรียบร้อย ✅"); go("review");
     };
   }
@@ -740,9 +750,9 @@ async function openSessionDetail(id, teacherMode, backTab){
 let reviewFilter = "submitted";
 async function renderReview(){
   $("body").innerHTML = `<div class="loading">กำลังโหลด…</div>`;
-  const {data:ss, error} = await sb.from("iv_sessions")
+  const {data:ss, error} = await fetchAllRows(()=> sb.from("iv_sessions")
     .select("*, iv_categories(name,emoji), profiles!iv_sessions_student_id_fkey(display_name,class_room)")
-    .neq("status","draft").order("submitted_at",{ascending:true});
+    .neq("status","draft").order("submitted_at",{ascending:true}).order("id"));
   if(error) return $("body").innerHTML = `<div class="empty">โหลดไม่สำเร็จ: ${esc(error.message)}</div>`;
   const list = (ss||[]).filter(s=> reviewFilter==="all" ? true : s.status===reviewFilter);
   $("body").innerHTML = `
