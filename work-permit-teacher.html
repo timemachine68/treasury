@@ -154,7 +154,7 @@ const STATUS_LABEL = {submitted:"ยื่นแล้ว", processing:"กำ�
 const NEXT_STATUS = {submitted:"processing", processing:"ready", ready:"received"};
 const NEXT_LABEL = {submitted:"รับเรื่อง", processing:"เอกสารเสร็จแล้ว", ready:"รับเอกสารแล้ว"};
 
-let profile = null, curTab = "queue", statusFilter = "all";
+let profile = null, curTab = "queue", statusFilter = "all", queueRows = [];
 
 const $ = id => document.getElementById(id);
 const esc = s => (s??"").toString().replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -214,6 +214,7 @@ async function renderQueue(){
   $("body").innerHTML = `<div class="loading">กำลังโหลด…</div>`;
   const rows = await fetchRequests();
   if(!rows){ $("body").innerHTML = `<div class="empty">โหลดข้อมูลไม่สำเร็จ กรุณารีเฟรชหน้านี้แล้วลองใหม่</div>`; return; }
+  queueRows = rows;
   const filtered = statusFilter==="all" ? rows : rows.filter(r=>r.status===statusFilter);
   const chips = ["all","submitted","processing","ready","received","cancelled"];
   const chipHtml = chips.map(c=>`<button class="chip ${statusFilter===c?'active':''}" data-f="${c}">${c==="all"?"ทั้งหมด":STATUS_LABEL[c]}</button>`).join("");
@@ -261,7 +262,13 @@ async function updateStatus(payload){
   if(newStatus==="processing") patch.processed_by = profile.id;
   const {error} = await sb.from("work_permit_requests").update(patch).eq("id", id);
   if(error) return toast("อัปเดตไม่สำเร็จ: "+error.message);
-  toast("อัปเดตสถานะแล้ว");
+  if(newStatus==="ready"){
+    // เมื่อกด "เอกสารเสร็จแล้ว" ระบบส่งอีเมลแจ้งนักเรียนเองจากอีเมลที่กรอกตอนยื่นคำขอ
+    const r = queueRows.find(x=>x.id===id);
+    toast(r && !r.contact_email
+      ? "อัปเดตแล้ว แต่นักเรียนคนนี้ไม่มีอีเมลในคำขอ (คำขอเก่า) กรุณาแจ้งนักเรียนด้วยวิธีอื่น"
+      : "อัปเดตสถานะแล้ว ระบบกำลังส่งอีเมลแจ้งนักเรียน");
+  } else toast("อัปเดตสถานะแล้ว");
   renderQueue();
 }
 
