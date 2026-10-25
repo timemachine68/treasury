@@ -2422,12 +2422,7 @@ async function loadStrength(){
 
 /* ── เกียรติบัตร/รางวัลที่นักเรียนบันทึกเอง ── */
 function renderStAwards(){
-  const verHtml = stVerified.length ? `<div style="margin-bottom:10px"><span style="font-size:.78rem;font-weight:600;color:var(--ink-soft);display:block;margin-bottom:4px">✅ ผลงานที่ครูกลุ่มสาระบันทึกและครูแนะแนวยืนยันแล้ว (TCASVerified)</span>${stVerified.map(x=>{
-    const lv = AW_LEVEL_LABEL_MAP[x.level] || x.level || "";
-    const tp = OV_TCAS_TYPE_LABEL[x.tcas_type] || x.tcas_type || "";
-    const detail = x.prize_name || x.exp_name || "";
-    return `<span class="awardchip">🎖️ ${esc(x.title||"-")}${tp?" · "+esc(tp):""}${lv?" · "+esc(lv):""}${detail?" · "+esc(detail):""}${x.academic_year?" (ปี "+esc(x.academic_year)+")":""}</span>`;
-  }).join("")}</div>` : "";
+  const verHtml = stVerified.length ? `<div style="margin-bottom:10px"><span style="font-size:.78rem;font-weight:600;color:var(--ink-soft);display:block;margin-bottom:4px">✅ ผลงานที่ครูกลุ่มสาระบันทึกและครูแนะแนวยืนยันแล้ว (TCASVerified)</span>${verifiedAwardChips(stVerified)}</div>` : "";
   $("saVerified").innerHTML = verHtml;
   const list = stTags.filter(t=>t.type==="award").sort((a,b)=> b.created_at.localeCompare(a.created_at));
   $("saList").innerHTML = list.length ? list.map(aw=>{
@@ -2474,7 +2469,7 @@ function renderStStudent(){
   $("stProfile").innerHTML = has? profileHTML(profile, stAssess, stTags, {student:true}) : "";
   if(has){
     const pr = $("stProfile").querySelector("[data-print]");
-    if(pr) pr.onclick = ()=> printProfile(profile, stAssess, stTags);
+    if(pr) pr.onclick = ()=> printProfile(profile, stAssess, stTags, stVerified);
     const redo = $("stProfile").querySelector("[data-redo]");
     if(redo) redo.onclick = startQuiz;
   }
@@ -2533,6 +2528,14 @@ function formatAwardNote(title,level,year,extra){
   return [title,level,year,extra].map(clean).join("|");
 }
 
+function verifiedAwardChips(list){
+  return (list||[]).map(x=>{
+    const lv = AW_LEVEL_LABEL_MAP[x.level] || x.level || "";
+    const tp = OV_TCAS_TYPE_LABEL[x.tcas_type] || x.tcas_type || "";
+    const detail = x.prize_name || x.exp_name || "";
+    return `<span class="awardchip">🎖️ ${esc(x.title||"-")}${tp?" · "+esc(tp):""}${lv?" · "+esc(lv):""}${detail?" · "+esc(detail):""}${x.academic_year?" (ปี "+esc(x.academic_year)+")":""}</span>`;
+  }).join("");
+}
 function profileHTML(stu, assess, tags, opt={}){
   // แยก RIASEC tags กับ awards ออกจากกัน
   const riasecTags = tags.filter(t=>TYPE_KEYS.includes(t.type));
@@ -2571,7 +2574,9 @@ function profileHTML(stu, assess, tags, opt={}){
       ? `<button data-delaward="${aw.id}" title="ลบรางวัล">×</button>` : "";
     const self = aw.tagged_by===aw.student_id ? ` <small>(นักเรียนบันทึกเอง)</small>` : "";
     return `<span class="awardchip">🏆 ${esc(p.title)}${lvLabel?" · "+esc(lvLabel):""}${p.year?" ("+esc(p.year)+")":""}${p.extra?" · "+esc(p.extra):""}${self}${del}</span>`;
-  }).join("") : `<span class="duechip">ยังไม่มีรางวัล</span>`;
+  }).join("") : "";
+  const verChips = verifiedAwardChips(opt.verified);
+  const awardAll = (verChips || awardList) ? verChips + awardList : `<span class="duechip">ยังไม่มีรางวัล</span>`;
   return `<div class="panel">
     <h2>🌟 โปรไฟล์จุดแข็ง: ${esc(stu.display_name)} ${stu.class_room? "("+esc(stu.class_room)+")":""}</h2>
     ${assess? `<p class="duechip" style="margin-bottom:10px">ทำแบบประเมินล่าสุด ${thDate(assess.done_at)} · คะแนน = แบบประเมิน + แท็กจากครู (แท็กละ 2 คะแนน)</p>`
@@ -2581,7 +2586,7 @@ function profileHTML(stu, assess, tags, opt={}){
     <h2 style="margin-top:14px">🏷️ จุดแข็งที่ครูมองเห็น</h2>
     <div>${tagList}</div>
     ${opt.student? "" : `<h2 style="margin-top:14px">🏆 เกียรติบัตร / รางวัล</h2>
-    <div>${awardList}</div>`}
+    <div>${awardAll}</div>`}
     ${opt.student? `<div class="actions noprint" style="margin-top:14px">
       <button class="btn note" data-print>🖨️ พิมพ์/บันทึก PDF</button>
       <button class="btn ghost" data-redo>ทำแบบประเมินใหม่</button>
@@ -2589,13 +2594,13 @@ function profileHTML(stu, assess, tags, opt={}){
   </div>`;
 }
 
-function printProfile(stu, assess, allTags){
+function printProfile(stu, assess, allTags, verified=[]){
   // ส่ง allTags ทั้งหมด (RIASEC + award) profileHTML แยกเอง
   $("printArea").innerHTML = `
     <div style="text-align:center;margin-bottom:12px">
       <h2 style="font-family:'Mitr'">ไกด์จุดแข็งของฉัน 🌟</h2>
       <p style="font-size:.85rem">งานแนะแนว "แนะให้แนว" โรงเรียนพูลเจริญวิทยาคม · พิมพ์เมื่อ ${new Date().toLocaleDateString("th-TH")}</p>
-    </div>` + profileHTML(stu, assess, allTags, {});
+    </div>` + profileHTML(stu, assess, allTags, {verified});
   window.print();
 }
 
