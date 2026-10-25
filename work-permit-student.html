@@ -182,6 +182,9 @@ async function renderHome(){
     .eq("student_id", profile.id).order("created_at",{ascending:false});
   if(error){ toast("โหลดข้อมูลไม่สำเร็จ: "+error.message); return; }
   const rows = data||[];
+  // ใส่เบอร์/อีเมลจากคำขอครั้งล่าสุดให้ก่อน (แก้ได้) นักเรียนจะได้ไม่ต้องกรอกซ้ำ
+  const lastC = rows.find(r=>r.contact_phone || r.contact_email) || {};
+  const lastPhone = lastC.contact_phone||"", lastEmail = lastC.contact_email||"";
   // รายชื่อสถานที่ที่เคยมีผู้ขอ ใช้ช่วยพิมพ์ (ถ้าโหลดไม่ได้ก็พิมพ์เองได้ตามปกติ)
   let places = [];
   try{ const {data:pl} = await sb.rpc("work_permit_place_suggestions"); places = (pl||[]).map(x=>x.place).filter(Boolean); }catch(e){}
@@ -219,6 +222,10 @@ async function renderHome(){
         <div class="field"><label>วันที่เริ่ม *</label><input id="fStart" type="date"></div>
         <div class="field"><label>วันที่สิ้นสุด *</label><input id="fEnd" type="date"></div>
       </div>
+      <div class="row2">
+        <div class="field"><label>เบอร์โทรศัพท์ที่ติดต่อได้ *</label><input id="fPhone" type="tel" inputmode="numeric" autocomplete="tel" maxlength="14" placeholder="เช่น 0812345678" value="${esc(lastPhone)}"></div>
+        <div class="field"><label>อีเมล *</label><input id="fEmail" type="email" autocomplete="email" maxlength="120" placeholder="เช่น name@gmail.com" value="${esc(lastEmail)}"></div>
+      </div>
       <div class="field"><label>เหตุผล/หมายเหตุ</label><textarea id="fReason"></textarea></div>
       <button class="btn primary" id="btnSubmit">ส่งคำขอ</button>
     </div>`;
@@ -235,12 +242,16 @@ async function renderHome(){
 async function submitRequest(){
   const employer = $("fEmployer").value.trim(), job = $("fJob").value.trim();
   const start = $("fStart").value, end = $("fEnd").value, reason = $("fReason").value.trim();
-  if(!employer || !job || !start || !end) return msg("formMsg","กรอกข้อมูลที่มี * ให้ครบก่อนนะคะ","err");
+  const phone = $("fPhone").value.replace(/[\s\-().]/g,""), email = $("fEmail").value.trim();
+  if(!employer || !job || !start || !end || !phone || !email) return msg("formMsg","กรอกข้อมูลที่มี * ให้ครบก่อนนะคะ","err");
+  if(!/^0[0-9]{8,9}$/.test(phone)) return msg("formMsg","เบอร์โทรศัพท์ไม่ถูกต้อง ให้พิมพ์เฉพาะตัวเลข 9-10 หลัก เช่น 0812345678","err");
+  if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return msg("formMsg","อีเมลไม่ถูกต้อง ตรวจอีกครั้ง เช่น name@gmail.com","err");
   if(end < start) return msg("formMsg","วันที่สิ้นสุดต้องไม่ก่อนวันที่เริ่ม","err");
   $("btnSubmit").disabled = true;
   const {error} = await sb.from("work_permit_requests").insert({
     student_id: profile.id, request_type: reqType, employer_name: employer,
-    job_description: job, work_start_date: start, work_end_date: end, reason: reason||null
+    job_description: job, work_start_date: start, work_end_date: end, reason: reason||null,
+    contact_phone: phone, contact_email: email
   });
   $("btnSubmit").disabled = false;
   if(error) return msg("formMsg","ส่งคำขอไม่สำเร็จ: "+error.message,"err");

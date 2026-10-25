@@ -229,6 +229,7 @@ async function renderQueue(){
           <h3>${esc(stu.display_name||"—")} ${stu.class_room? "· "+esc(stu.class_room):""}</h3>
           <div class="meta">${esc(r.employer_name)} · ${esc(r.job_description)}</div>
           <div class="meta">${fmtDate(r.work_start_date)} – ${fmtDate(r.work_end_date)} · ยื่นเมื่อ ${fmtDate(r.created_at)}</div>
+          ${(r.contact_phone||r.contact_email) ? `<div class="meta">ติดต่อ: ${r.contact_phone?`📞 <a href="tel:${esc(r.contact_phone)}">${esc(r.contact_phone)}</a>`:""}${r.contact_phone&&r.contact_email?" · ":""}${r.contact_email?`✉ <a href="mailto:${esc(r.contact_email)}">${esc(r.contact_email)}</a>`:""}</div>` : `<div class="meta">ติดต่อ: — (คำขอเก่า ไม่ได้กรอกไว้)</div>`}
         </div>
         <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">
           <span class="badge type-${r.request_type}">${TYPE_LABEL[r.request_type]}</span>
