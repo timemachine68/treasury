@@ -740,6 +740,17 @@ textarea.csvbox{font-family:monospace;font-size:.82rem;min-height:120px}
         <label><input type="checkbox" value="student">นักเรียน</label>
       </div>
     </div>
+    <div class="field" id="apGradesWrap" style="display:none"><label>นักเรียนระดับชั้นไหนเห็นบ้าง</label>
+      <div class="roomchecks" id="apGrades">
+        <label><input type="checkbox" value="ม.1">ม.1</label>
+        <label><input type="checkbox" value="ม.2">ม.2</label>
+        <label><input type="checkbox" value="ม.3">ม.3</label>
+        <label><input type="checkbox" value="ม.4">ม.4</label>
+        <label><input type="checkbox" value="ม.5">ม.5</label>
+        <label><input type="checkbox" value="ม.6">ม.6</label>
+      </div>
+      <p class="field hint" style="margin-top:6px">ไม่ติ๊กเลย = นักเรียนทุกระดับชั้นเห็น</p>
+    </div>
     <div class="foot">
       <button class="btn ghost" id="btnAppCancel">ยกเลิก</button>
       <button class="btn primary" id="btnAppSave">บันทึก</button>
@@ -2253,6 +2264,11 @@ async function loadApps(){
   // กรองตาม visible_to จริง: admin เห็นทุกลิงก์ (เพื่อจัดการ) ส่วนครู/นักเรียนเห็นเฉพาะที่ตั้งค่าให้มองเห็น
   const myGroup = profile.role==="student" ? "student" : "teacher";
   visibleApps = profile.role==="admin" ? extApps : extApps.filter(a=> (a.visible_to||[]).includes(myGroup));
+  // นักเรียนเห็นเฉพาะระบบที่เปิดให้ระดับชั้นของตัวเอง (student_grades ว่าง = ทุกระดับชั้น)
+  if(profile.role==="student"){
+    const myGrade = (profile.class_room||"").split("/")[0].trim();
+    visibleApps = visibleApps.filter(a=> !(a.student_grades||[]).length || (a.student_grades||[]).includes(myGrade));
+  }
   // บัญชีที่ถูกจำกัดสิทธิ์เมนู (เช่น บัญชีกลุ่มสาระของระบบผลงานนักเรียน) จะเห็นเฉพาะระบบที่อนุญาตไว้ใน appsOnly เท่านั้น
   const appsOnly = profile.menu_permissions && Array.isArray(profile.menu_permissions.appsOnly)
     ? profile.menu_permissions.appsOnly : null;
@@ -2274,7 +2290,7 @@ function renderApps(){
   $("appEmpty").classList.toggle("hidden", list.length>0);
   $("appEmptyText") && ($("appEmptyText").textContent = appFilter==="all" ? "ยังไม่มีลิงก์ระบบ" : appFilter.startsWith("cat:") ? `ยังไม่มีลิงก์ระบบหมวด${appFilter.slice(4)}` : `ยังไม่มีลิงก์ระบบสำหรับ${appFilter==="teacher"?"ครู":"นักเรียน"}`);
   $("appGrid").innerHTML = list.map(a=>`<article class="rescard" style="--gc:var(--g5)">
-    <div class="top">${a.category?`<span class="badge link">${esc(a.category)}</span>`:""}${(a.visible_to||[]).map(v=>`<span class="badge type">${v==="teacher"?"ครู":"นักเรียน"}</span>`).join("")}</div>
+    <div class="top">${a.category?`<span class="badge link">${esc(a.category)}</span>`:""}${(a.visible_to||[]).map(v=>`<span class="badge type">${v==="teacher"?"ครู":"นักเรียน"+(profile.role==="admin"?gradesLabel(a.student_grades):"")}</span>`).join("")}</div>
     <h3>${esc(a.icon||"🔗")} ${esc(a.title)}</h3>
     ${a.description?`<p class="desc">${esc(a.description)}</p>`:""}
     <div class="actions">
@@ -2288,6 +2304,14 @@ function renderApps(){
 }
 $("btnAddApp").onclick = ()=> openAppModal(null);
 $("btnAppCancel").onclick = ()=> $("appModal").classList.remove("show");
+function gradesLabel(g){
+  const nums = [...new Set((g||[]).map(x=>+String(x).replace("ม.","")))].filter(n=>n>=1&&n<=6).sort((a,b)=>a-b);
+  if(!nums.length || nums.length===6) return "";
+  const contiguous = nums.every((n,i)=> i===0 || n===nums[i-1]+1);
+  return " "+(contiguous && nums.length>1 ? `ม.${nums[0]}–${nums[nums.length-1]}` : nums.map(n=>"ม."+n).join(","));
+}
+function apGradesToggle(){ $("apGradesWrap").style.display = $("apVis").querySelector('input[value="student"]').checked ? "" : "none"; }
+$("apVis").addEventListener("change", apGradesToggle);
 function openAppModal(id){
   editingAppId = id; msg("appMsg","");
   const a = id? extApps.find(x=>x.id===id) : null;
@@ -2296,6 +2320,8 @@ function openAppModal(id){
   $("apDesc").value = a?.description||""; $("apUrl").value = a?.url||"";
   $("apCategory").value = a?.category||"";
   $("apVis").querySelectorAll("input").forEach(i=> i.checked = a? (a.visible_to||[]).includes(i.value) : i.value==="teacher");
+  $("apGrades").querySelectorAll("input").forEach(i=> i.checked = !!(a && (a.student_grades||[]).includes(i.value)));
+  apGradesToggle();
   $("appModal").classList.add("show");
 }
 $("btnAppSave").onclick = async ()=>{
@@ -2304,7 +2330,9 @@ $("btnAppSave").onclick = async ()=>{
   if(!title) return msg("appMsg","ใส่ชื่อระบบก่อนนะคะ","err");
   if(!/^https?:\/\//.test(url)) return msg("appMsg","ลิงก์ต้องขึ้นต้นด้วย http:// หรือ https://","err");
   if(vis.length===0) return msg("appMsg","เลือกอย่างน้อย 1 กลุ่มที่มองเห็นนะคะ","err");
-  const row = { title, url, description:$("apDesc").value.trim()||null, icon:$("apIcon").value.trim()||"🔗", visible_to:vis, category:$("apCategory").value.trim()||null };
+  const row = { title, url, description:$("apDesc").value.trim()||null, icon:$("apIcon").value.trim()||"🔗", visible_to:vis, category:$("apCategory").value.trim()||null,
+    student_grades: vis.includes("student") ? ([...$("apGrades").querySelectorAll("input:checked")].map(i=>i.value).filter((v,_,arr)=>arr.length<6)||null) : null };
+  if(row.student_grades && !row.student_grades.length) row.student_grades = null;
   $("btnAppSave").disabled = true;
   const {error} = editingAppId
     ? await sb.from("external_systems").update(row).eq("id", editingAppId)
