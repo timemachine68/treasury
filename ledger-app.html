@@ -113,6 +113,19 @@ textarea{resize:vertical}
 .addcat{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
 .addcat input{flex:1 1 160px;width:auto}
 .ytbl{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}.ytbl th,.ytbl td{padding:10px 8px;text-align:right;border-bottom:1px solid var(--line2);white-space:nowrap}.ytbl th:first-child,.ytbl td:first-child{text-align:left}.ytbl tfoot td{font-weight:700;border-bottom:0;background:var(--line2)}
+/* จอแคบกว่า ~1,200px: คอลัมน์กว้างคงที่รวมกันกินที่หมด คอลัมน์ "รายการ" เหลือไม่กี่ตัวอักษร จึงเปลี่ยนเป็นการ์ดต่อรายการ */
+@media (max-width:1180px){
+  .tbl,.tbl.small{min-width:0}
+  .tr.h{display:none}
+  .tr:not(.h){display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"date amt" "desc desc" "cat by" "act act";gap:4px 12px;align-items:start;padding:14px 0}
+  .c-date{grid-area:date;flex:none}
+  .c-amt{grid-area:amt;flex:none;font-size:18px}
+  .c-amt:empty{display:none}
+  .c-desc{grid-area:desc}
+  .c-cat{grid-area:cat;flex:none}
+  .c-by{grid-area:by;flex:none;text-align:right;font-size:14px}
+  .c-act{grid-area:act;flex:none;margin-top:6px}
+}
 @media (max-width:640px){ h1{font-size:23px} .wrap{padding:0 14px} nav.tabs button{padding:0 14px} .kpi.main .v{font-size:32px} }
 </style>
 </head>

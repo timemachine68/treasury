@@ -134,6 +134,14 @@ td{padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
 .pill.student{background:#E8EEF7;color:#3D5A80}
 .viewtabs{display:flex;gap:8px;margin:20px 0 14px}
 .viewtabs .btn{border-radius:999px}
+/* โทรศัพท์: ปุ่มเมนูมีหลายปุ่ม ให้เลื่อนข้างในแถบเดียว ไม่ให้ทั้งหน้าเลื่อนข้างหรือข้อความในปุ่มขึ้นหลายบรรทัด */
+@media (max-width:640px){
+  .viewtabs{overflow-x:auto;flex-wrap:nowrap;scrollbar-width:none;-webkit-overflow-scrolling:touch;padding-bottom:4px}
+  .viewtabs::-webkit-scrollbar{display:none}
+  .viewtabs .btn{flex:0 0 auto;white-space:nowrap}
+  .viewtabs .spacer{display:none}
+  #btnAdd{order:-1}
+}
 textarea.csvbox{font-family:monospace;font-size:.82rem;min-height:120px}
 .csv-result{max-height:200px;overflow-y:auto;font-size:.8rem;margin-top:10px}
 .csv-result .bad{color:var(--danger)}
