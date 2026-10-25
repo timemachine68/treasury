@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ภาพรวมระบบแนะให้แนว · สำหรับผู้บริหาร</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Mitr:wght@400;500;600&family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --pine:#1d4b38; --pine-dk:#123024; --pine-lt:#2f6b4f;
+  --note:#f7f4ea; --paper:#fffdf7; --bark:#6d5c46;
+  --gold:#c1902c; --rust:#a6482f; --line:#ddd5c4;
+  --ink:#20241f; --muted:#7c7566; --r:14px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{font-family:'Sarabun',system-ui,sans-serif;color:var(--ink);background:var(--note);line-height:1.6}
+h1,h2,h3{font-family:'Mitr',sans-serif;font-weight:500}
+button{font-family:inherit;font-size:1rem;cursor:pointer}
+input{font-family:inherit;font-size:1rem}
+a{color:inherit;text-decoration:none}
+.hide{display:none !important}
+
+.wrap{max-width:1040px;margin:0 auto;padding:0 16px 72px}
+header.top{background:var(--pine);color:#fff;padding:16px 0;box-shadow:0 2px 10px rgba(18,48,36,.18)}
+header.top .wrap{display:flex;align-items:center;gap:12px;padding-bottom:0}
+header.top h1{margin:0;font-size:1.15rem;flex:1}
+header.top .who{font-size:.85rem;opacity:.85;text-align:right}
+.linkbtn{background:none;border:1px solid rgba(255,255,255,.45);color:#fff;border-radius:8px;padding:5px 11px;font-size:.85rem}
+.linkbtn:hover{background:rgba(255,255,255,.14)}
+
+.login{max-width:390px;margin:9vh auto;background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:30px 26px;box-shadow:0 10px 34px rgba(18,48,36,.10)}
+.login h2{margin:0 0 4px;font-size:1.3rem;color:var(--pine-dk)}
+.login p.sub{margin:0 0 20px;color:var(--muted);font-size:.9rem}
+label.f{display:block;margin:12px 0 4px;font-size:.87rem;font-weight:600;color:var(--bark)}
+input[type=text],input[type=password]{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:9px;background:var(--paper);color:var(--ink)}
+input:focus,button:focus-visible{outline:2px solid var(--pine-lt);outline-offset:2px}
+.btn{background:var(--pine);color:#fff;border:none;border-radius:9px;padding:10px 18px;font-weight:600}
+.btn:hover{background:var(--pine-lt)}
+.btn:disabled{background:#9aa79f;cursor:not-allowed}
+.btn.block{width:100%}
+.btn.gold{background:var(--gold);color:#20241f}
+.btn.gold:hover:not(:disabled){background:#d3a23d}
+.spin{display:inline-block;width:15px;height:15px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:sp .7s linear infinite;vertical-align:-2px}
+@keyframes sp{to{transform:rotate(360deg)}}
+.msg{padding:10px 13px;border-radius:9px;margin:10px 0;font-size:.9rem}
+.msg.err{background:#fbe7e0;border:1px solid #e8bfb2;color:#8d3b26}
+.msg.ok{background:#e8f2ea;border:1px solid #c5dccb;color:var(--pine-dk)}
+
+.hero{margin-top:22px;background:var(--pine);color:#f7f4ea;border-radius:var(--r);border-bottom:5px solid var(--gold);padding:26px 26px 24px;display:flex;flex-wrap:wrap;gap:16px;justify-content:space-between;align-items:flex-end}
+.hero .main{flex:1 1 30rem;min-width:0}
+.hero .school{margin:0;font-size:.85rem;color:#e8dfb8}
+.hero h2{margin:.2rem 0 .7rem;font-size:1.7rem;line-height:1.3;color:#fff}
+.hero .take{margin:0;max-width:44rem;font-size:1.05rem;line-height:1.75}
+.hero .take b{color:#f1d675;font-weight:700}
+.hero .act{text-align:right}
+.hero .note{min-height:1.3rem;margin:6px 0 0;font-size:.82rem;color:#e8dfb8}
+
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-top:16px}
+.tile{background:var(--paper);border:1px solid var(--line);border-radius:var(--r);padding:16px 16px 14px}
+.tile .lab{font-weight:600;font-size:.92rem;color:var(--bark)}
+.tile .num{font-family:'Mitr',sans-serif;font-size:2.1rem;line-height:1.15;color:var(--pine-dk);margin:2px 0}
+.tile .sub{font-size:.82rem;color:var(--muted)}
+.tile .sub b{color:var(--ink)}
+
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:14px;margin-top:14px}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:var(--r);padding:20px;min-width:0;position:relative}
+.card h3{margin:0 0 2px;font-size:1.05rem;color:var(--pine-dk)}
+.card p.hint{margin:0 0 14px;font-size:.85rem;color:var(--muted)}
+.card.full{margin-top:14px}
+
+.cols{display:flex;align-items:flex-end;gap:10px;height:200px;padding-top:22px}
+.col{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;min-width:0}
+.col .v{font-weight:700;font-size:.9rem;margin-bottom:4px}
+.col .bar{width:70%;max-width:56px;background:var(--pine-lt);border-radius:6px 6px 0 0;min-height:2px}
+.col .l{margin-top:6px;font-size:.85rem;color:var(--muted)}
+
+.sys{margin-bottom:16px}
+.sys .nm{font-size:.95rem;margin-bottom:4px}
+.track{display:flex;gap:2px;height:30px}
+.seg{display:flex;align-items:center;justify-content:center;min-width:30px;color:#fff;font-size:.82rem;font-weight:700;border-radius:5px}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:6px;font-size:.82rem;color:var(--muted)}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+
+.cover{display:flex;flex-wrap:wrap;gap:6px 22px;align-items:baseline}
+.cover .big{font-family:'Mitr',sans-serif;font-size:2.6rem;color:var(--pine-dk);line-height:1.1}
+.cover .txt{font-size:.92rem;color:var(--muted)}
+.cover .txt b{color:var(--ink)}
+.meter{height:16px;border-radius:99px;background:#e9e3d2;overflow:hidden;margin-top:10px}
+.meter div{height:100%;width:0;background:var(--pine-lt);border-radius:99px;transition:width .5s}
+
+.twrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;font-size:.82rem;color:var(--muted);font-weight:600;padding:8px 10px;border-bottom:2px solid var(--line)}
+td{padding:10px;border-bottom:1px solid var(--line)}
+th.r,td.r{text-align:right;font-variant-numeric:tabular-nums}
+tr.zero td{color:var(--muted)}
+.tag{display:inline-block;margin-left:8px;font-size:.75rem;background:#efe9d8;color:var(--bark);border-radius:99px;padding:1px 9px}
+
+.foot{margin:18px 2px 0;font-size:.82rem;color:var(--muted)}
+.state{text-align:center;padding:60px 16px;color:var(--muted)}
+.state b{display:block;font-family:'Mitr',sans-serif;color:var(--bark);font-size:1.1rem;margin-bottom:6px}
+.empty-line{color:var(--muted);font-size:.9rem;padding:20px 0;text-align:center}
+@media (max-width:560px){.hero h2{font-size:1.4rem}.hero .act{text-align:left;width:100%}.btn.gold{width:100%}}
+@media (prefers-reduced-motion:reduce){*{animation:none !important;transition:none !important}}
+</style>
+</head>
+<body>
+
+<section id="loginView" class="hide">
+  <div class="login">
+    <h2>ภาพรวมสำหรับผู้บริหาร</h2>
+    <p class="sub">ระบบแนะให้แนว · โรงเรียนพูลเจริญวิทยาคม</p>
+    <div id="loginMsg"></div>
+    <label class="f" for="u">ชื่อผู้ใช้</label>
+    <input id="u" type="text" autocomplete="username">
+    <label class="f" for="p">รหัสผ่าน</label>
+    <input id="p" type="password" autocomplete="current-password">
+    <div style="margin-top:18px"><button id="btnLogin" class="btn block">เข้าสู่ระบบ</button></div>
+  </div>
+</section>
+
+<section id="appView" class="hide">
+  <header class="top">
+    <div class="wrap">
+      <a href="index.html" class="linkbtn" title="กลับหน้าหลัก" style="flex:none">🏠</a>
+      <h1>ภาพรวมระบบแนะให้แนว</h1>
+      <div class="who" id="whoName"></div>
+      <button id="btnLogout" class="linkbtn">ออก</button>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <div id="stateBox" class="state"><span class="spin" style="border-color:rgba(29,75,56,.25);border-top-color:var(--pine)"></span><br>กำลังโหลดตัวเลข…</div>
+
+    <div id="content" class="hide">
+      <div class="hero">
+        <div class="main">
+          <p class="school">โรงเรียนพูลเจริญวิทยาคม · งานแนะแนว</p>
+          <h2>ภาพรวมระบบแนะให้แนว</h2>
+          <p class="take" id="take"></p>
+        </div>
+        <div class="act">
+          <button id="btnDocx" class="btn gold">ดาวน์โหลดสรุป (.docx)</button>
+          <p class="note" id="docxNote" role="status"></p>
+        </div>
+      </div>
+
+      <div class="tiles" id="tiles"></div>
+
+      <div class="grid2">
+        <div class="card">
+          <h3>นักเรียนแยกตามระดับชั้น</h3>
+          <p class="hint">จำนวนบัญชีนักเรียนในระบบตอนนี้</p>
+          <div id="levels"></div>
+        </div>
+        <div class="card">
+          <h3>สถานะใบสมัครแต่ละระบบ</h3>
+          <p class="hint">ทุนการศึกษา โควตา และโครงการช้างเผือก ความยาวแถบเทียบกันได้</p>
+          <div id="status"></div>
+        </div>
+      </div>
+
+      <div class="card full">
+        <h3>นักเรียนที่ลงทะเบียนข้อมูลแล้ว</h3>
+        <p class="hint">ต้องลงทะเบียนก่อน จึงส่งผลงานเข้าระบบ TCASVerified ได้</p>
+        <div id="cover"></div>
+      </div>
+
+      <div class="card full">
+        <h3>สถานะรายโมดูล</h3>
+        <p class="hint">แถวสีจางคือโมดูลที่ยังไม่มีข้อมูล</p>
+        <div class="twrap"><table><thead><tr><th>โมดูล</th><th>สิ่งที่นับ</th><th class="r">จำนวน</th></tr></thead><tbody id="mods"></tbody></table></div>
+      </div>
+
+      <p class="foot" id="foot"></p>
+    </div>
+  </div>
+</section>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+const SUPABASE_URL  = 'https://ikkhjslmtjwrxzxvtokb.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlra2hqc2xtdGp3cnh6eHZ0b2tiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM3NDMzNjksImV4cCI6MjA5OTMxOTM2OX0.3OR_9mEv82Ns1LLjx5nnRwJYzrtKFtWCWd1bPuQfNKU';
+const EMAIL_DOMAIN  = 'guidance-pcw.local';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+const $ = s => document.querySelector(s);
+const fmt = n => Number(n || 0).toLocaleString('en-US');
+const pct = x => Math.round((x || 0) * 100) + '%';
+const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const thaiDate = d => new Intl.DateTimeFormat('th-TH', {dateStyle:'long'}).format(d);
+function msg(sel, text, kind){ const e=$(sel); e.innerHTML = text ? `<div class="msg ${kind||'ok'}">${text}</div>` : ''; }
+function show(sel){
+  $('#loginView').classList.toggle('hide', sel !== '#loginView');
+  $('#appView').classList.toggle('hide', sel !== '#appView');
+}
+
+const STATUS_COLOR = {
+  'อนุมัติแล้ว':'#2f6b4f', 'อยู่ในรายชื่อพิจารณา':'#c1902c', 'ส่งใบสมัครแล้ว':'#4f7ea8',
+  'กำลังพิจารณา':'#b8651f', 'ถอนใบสมัคร':'#9b9484'
+};
+const FALLBACK = ['#6d5c46','#a6482f','#4f7ea8','#2f6b4f','#c1902c'];
+
+let DATA = null;
+
+/* ---------------- โหลดข้อมูล ---------------- */
+async function boot(){
+  const {data:{session}} = await sb.auth.getSession();
+  if(!session){ show('#loginView'); return; }
+  const {data:prof} = await sb.from('profiles').select('id,display_name,role,is_guidance').eq('id', session.user.id).single();
+  if(!prof){ await sb.auth.signOut(); show('#loginView'); return; }
+  show('#appView');
+  $('#whoName').textContent = prof.display_name;
+  if(!(prof.role === 'admin' || prof.is_guidance)){
+    showState('หน้านี้สำหรับแอดมินและงานแนะแนว', 'บัญชีนี้ยังไม่มีสิทธิ์ดูภาพรวม ถ้าต้องการใช้งาน ติดต่องานแนะแนว');
+    return;
+  }
+  await load();
+}
+function showState(title, text, retry){
+  $('#content').classList.add('hide');
+  const b = $('#stateBox'); b.classList.remove('hide');
+  b.innerHTML = `<b>${esc(title)}</b>${esc(text)}` + (retry ? '<div style="margin-top:14px"><button class="btn" id="btnRetry">ลองใหม่</button></div>' : '');
+  if(retry) $('#btnRetry').addEventListener('click', load);
+}
+async function load(){
+  $('#stateBox').classList.remove('hide');
+  $('#stateBox').innerHTML = '<span class="spin" style="border-color:rgba(29,75,56,.25);border-top-color:var(--pine)"></span><br>กำลังโหลดตัวเลข…';
+  $('#content').classList.add('hide');
+  const {data, error} = await sb.rpc('exec_overview');
+  if(error){
+    if(error.code === '42501') showState('ไม่มีสิทธิ์ดูหน้านี้', 'เฉพาะแอดมินและงานแนะแนว');
+    else showState('โหลดตัวเลขไม่สำเร็จ', 'ตรวจอินเทอร์เน็ตแล้วลองใหม่อีกครั้ง', true);
+    return;
+  }
+  DATA = data;
+  render();
+}
+
+/* ---------------- วาดหน้า ---------------- */
+function modN(key){ const r = (DATA.modules||[]).find(m => m.module === key); return r ? Number(r.n) : 0; }
+
+function render(){
+  $('#stateBox').classList.add('hide');
+  $('#content').classList.remove('hide');
+
+  const students = modN('students'), identity = modN('identity');
+  const cov = students ? identity / students : 0;
+  const remaining = Math.max(students - identity, 0);
+
+  $('#take').innerHTML = `ตอนนี้มีนักเรียน <b>${fmt(students)}</b> คนอยู่ในระบบ ทุนการศึกษาอนุมัติแล้ว <b>${fmt(modN('scholarship_ok'))}</b> จาก <b>${fmt(modN('scholarship'))}</b> ใบสมัคร และนักเรียน <b>${pct(cov)}</b> ลงทะเบียนข้อมูลแล้ว`;
+
+  const tiles = [
+    ['นักเรียนในระบบ', fmt(students), 'บัญชีนักเรียนทุกระดับชั้น'],
+    ['ครูและผู้ดูแล', fmt(modN('teachers')), 'บัญชีครูและแอดมิน'],
+    ['ทุนที่อนุมัติแล้ว', fmt(modN('scholarship_ok')), `จากใบสมัครทั้งหมด <b>${fmt(modN('scholarship'))}</b> ใบ`],
+    ['ลงทะเบียนข้อมูลแล้ว', fmt(identity), `คิดเป็น <b>${pct(cov)}</b> ของนักเรียน`],
+    ['ประเมินจุดแข็ง', fmt(modN('strength')), 'ครั้งที่นักเรียนทำแบบประเมิน'],
+    ['ส่งงานในคลังแนะแนว', fmt(modN('submissions')), 'ชิ้นงานที่นักเรียนส่ง']
+  ];
+  $('#tiles').innerHTML = tiles.map(t => `<div class="tile"><div class="lab">${t[0]}</div><div class="num">${t[1]}</div><div class="sub">${t[2]}</div></div>`).join('');
+
+  /* ระดับชั้น */
+  const lv = DATA.levels || [];
+  if(!lv.length){ $('#levels').innerHTML = '<div class="empty-line">ยังไม่มีข้อมูลนักเรียน</div>'; }
+  else {
+    const mx = Math.max(...lv.map(r => r.n), 1);
+    $('#levels').innerHTML = '<div class="cols">' + lv.map(r =>
+      `<div class="col"><div class="v">${fmt(r.n)}</div><div class="bar" style="height:${Math.max(r.n / mx * 150, 2)}px" title="${esc(r.level)} · ${fmt(r.n)} คน"></div><div class="l">${esc(r.level)}</div></div>`).join('') + '</div>';
+  }
+
+  /* สถานะใบสมัคร */
+  const ap = DATA.app_status || [];
+  if(!ap.length){ $('#status').innerHTML = '<div class="empty-line">ยังไม่มีใบสมัคร</div>'; }
+  else {
+    const groups = {}; ap.forEach(r => (groups[r.sys] = groups[r.sys] || []).push(r));
+    const totals = Object.values(groups).map(g => g.reduce((s, r) => s + r.n, 0));
+    const mx = Math.max(...totals, 1), seen = [];
+    let html = '';
+    Object.keys(groups).forEach(name => {
+      const g = groups[name], total = g.reduce((s, r) => s + r.n, 0);
+      html += `<div class="sys"><div class="nm">${esc(name)}</div><div class="track" style="width:${Math.max(total / mx * 100, 16)}%">` +
+        g.map(r => {
+          if(!seen.includes(r.st)) seen.push(r.st);
+          const c = STATUS_COLOR[r.st] || FALLBACK[(seen.indexOf(r.st)) % FALLBACK.length];
+          return `<div class="seg" style="flex:${r.n} 1 0;background:${c}" title="${esc(name)} · ${esc(r.st)} ${fmt(r.n)} ใบ">${fmt(r.n)}</div>`;
+        }).join('') + '</div></div>';
+    });
+    html += '<div class="legend">' + seen.map(s => `<span><i style="background:${STATUS_COLOR[s] || FALLBACK[seen.indexOf(s) % FALLBACK.length]}"></i>${esc(s)}</span>`).join('') + '</div>';
+    $('#status').innerHTML = html;
+  }
+
+  /* ลงทะเบียนข้อมูล */
+  $('#cover').innerHTML = `<div class="cover"><span class="big">${pct(cov)}</span><span class="txt">ลงทะเบียนแล้ว <b>${fmt(identity)}</b> คน · ยังไม่ลงทะเบียน <b>${fmt(remaining)}</b> คน</span></div><div class="meter" role="img" aria-label="ลงทะเบียนแล้ว ${pct(cov)}"><div id="meterFill"></div></div>`;
+  requestAnimationFrame(() => { const f = $('#meterFill'); if(f) f.style.width = Math.min(cov * 100, 100) + '%'; });
+
+  /* ตาราง */
+  $('#mods').innerHTML = (DATA.modules || []).map(r =>
+    `<tr class="${Number(r.n) === 0 ? 'zero' : ''}"><td>${esc(r.name)}${Number(r.n) === 0 ? '<span class="tag">ยังไม่มีข้อมูล</span>' : ''}</td><td>${esc(r.measure)}</td><td class="r">${fmt(r.n)}</td></tr>`).join('');
+
+  $('#foot').textContent = 'ตัวเลขนับจากฐานข้อมูลของระบบทุกครั้งที่เปิดหน้านี้ ไม่แสดงข้อมูลรายบุคคล · ข้อมูล ณ วันที่ ' + thaiDate(new Date(DATA.generated_at || Date.now()));
+}
+
+/* ---------------- ดาวน์โหลด .docx (สร้างในเบราว์เซอร์) ---------------- */
+const CRC = (() => { const t = new Uint32Array(256); for(let n=0;n<256;n++){ let c=n; for(let k=0;k<8;k++) c = c&1 ? 0xEDB88320 ^ (c>>>1) : c>>>1; t[n]=c>>>0; } return t; })();
+function crc32(b){ let c = 0xFFFFFFFF; for(let i=0;i<b.length;i++) c = CRC[(c ^ b[i]) & 255] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; }
+function zip(files){
+  const enc = new TextEncoder(), chunks = [], central = [], now = new Date();
+  const dt = ((now.getFullYear()-1980)<<9) | ((now.getMonth()+1)<<5) | now.getDate();
+  const tm = (now.getHours()<<11) | (now.getMinutes()<<5) | (now.getSeconds()>>1);
+  let off = 0;
+  for(const f of files){
+    const name = enc.encode(f.name), crc = crc32(f.data), size = f.data.length;
+    const lh = new DataView(new ArrayBuffer(30));
+    lh.setUint32(0,0x04034b50,true); lh.setUint16(4,20,true); lh.setUint16(6,0x0800,true); lh.setUint16(8,0,true);
+    lh.setUint16(10,tm,true); lh.setUint16(12,dt,true); lh.setUint32(14,crc,true); lh.setUint32(18,size,true);
+    lh.setUint32(22,size,true); lh.setUint16(26,name.length,true); lh.setUint16(28,0,true);
+    chunks.push(new Uint8Array(lh.buffer), name, f.data);
+    const ch = new DataView(new ArrayBuffer(46));
+    ch.setUint32(0,0x02014b50,true); ch.setUint16(4,20,true); ch.setUint16(6,20,true); ch.setUint16(8,0x0800,true);
+    ch.setUint16(10,0,true); ch.setUint16(12,tm,true); ch.setUint16(14,dt,true); ch.setUint32(16,crc,true);
+    ch.setUint32(20,size,true); ch.setUint32(24,size,true); ch.setUint16(28,name.length,true);
+    ch.setUint16(30,0,true); ch.setUint16(32,0,true); ch.setUint16(34,0,true); ch.setUint16(36,0,true);
+    ch.setUint32(38,0,true); ch.setUint32(42,off,true);
+    central.push(new Uint8Array(ch.buffer), name);
+    off += 30 + name.length + size;
+  }
+  const cdSize = central.reduce((s, c) => s + c.length, 0);
+  const end = new DataView(new ArrayBuffer(22));
+  end.setUint32(0,0x06054b50,true); end.setUint16(4,0,true); end.setUint16(6,0,true);
+  end.setUint16(8,files.length,true); end.setUint16(10,files.length,true);
+  end.setUint32(12,cdSize,true); end.setUint32(16,off,true); end.setUint16(20,0,true);
+  return new Blob([...chunks, ...central, new Uint8Array(end.buffer)], {type:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'});
+}
+const xesc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const FONT = '<w:rFonts w:ascii="TH Sarabun New" w:hAnsi="TH Sarabun New" w:cs="TH Sarabun New"/>';
+function run(text, o={}){
+  const sz = o.size || 32;
+  return `<w:r><w:rPr>${FONT}${o.bold?'<w:b/><w:bCs/>':''}${o.color?`<w:color w:val="${o.color}"/>`:''}<w:sz w:val="${sz}"/><w:szCs w:val="${sz}"/></w:rPr><w:t xml:space="preserve">${xesc(text)}</w:t></w:r>`;
+}
+function para(text, o={}){
+  return `<w:p><w:pPr><w:spacing w:before="${o.before||0}" w:after="${o.after===undefined?120:o.after}"/>${o.align?`<w:jc w:val="${o.align}"/>`:''}</w:pPr>${run(text,o)}</w:p>`;
+}
+function table(headers, rows, widths, rightCols){
+  const line = n => `<w:${n} w:val="single" w:sz="4" w:space="0" w:color="BFBFBF"/>`;
+  const cell = (t,i,head) => `<w:tc><w:tcPr><w:tcW w:w="${widths[i]}" w:type="dxa"/>${head?'<w:shd w:val="clear" w:color="auto" w:fill="1D4B38"/>':''}</w:tcPr>${para(t,{size:30,after:0,bold:head,color:head?'FFFFFF':undefined,align:rightCols.includes(i)?'right':undefined})}</w:tc>`;
+  return `<w:tbl><w:tblPr><w:tblW w:w="${widths.reduce((a,b)=>a+b,0)}" w:type="dxa"/><w:tblBorders>${['top','left','bottom','right','insideH','insideV'].map(line).join('')}</w:tblBorders><w:tblCellMar><w:top w:w="40" w:type="dxa"/><w:left w:w="100" w:type="dxa"/><w:bottom w:w="40" w:type="dxa"/><w:right w:w="100" w:type="dxa"/></w:tblCellMar></w:tblPr><w:tblGrid>${widths.map(w=>`<w:gridCol w:w="${w}"/>`).join('')}</w:tblGrid>` +
+    `<w:tr><w:trPr><w:tblHeader/></w:trPr>${headers.map((h,i)=>cell(h,i,true)).join('')}</w:tr>` +
+    rows.map(r => `<w:tr>${r.map((t,i)=>cell(t,i,false)).join('')}</w:tr>`).join('') + '</w:tbl>';
+}
+function buildDocx(){
+  const d = DATA, date = thaiDate(new Date(d.generated_at || Date.now()));
+  let body = '';
+  body += para('สรุปภาพรวมระบบแนะให้แนว', {size:48, bold:true, color:'1D4B38', after:40});
+  body += para('โรงเรียนพูลเจริญวิทยาคม · งานแนะแนว · ข้อมูล ณ วันที่ ' + date, {size:28, color:'595959', after:200});
+  body += para($('#take').textContent, {after:240});
+  body += para('สถานะรายโมดูล', {size:36, bold:true, color:'1D4B38', before:120, after:100});
+  body += table(['โมดูล','สิ่งที่นับ','จำนวน'], d.modules.map(r => [r.name, r.measure, fmt(r.n)]), [3600,3600,1500], [2]);
+  if(d.levels.length){
+    body += para('นักเรียนแยกตามระดับชั้น', {size:36, bold:true, color:'1D4B38', before:300, after:100});
+    body += table(['ระดับชั้น','จำนวนนักเรียน'], d.levels.map(r => [r.level, fmt(r.n)]), [4500,4200], [1]);
+  }
+  if(d.app_status.length){
+    body += para('สถานะใบสมัครแต่ละระบบ', {size:36, bold:true, color:'1D4B38', before:300, after:100});
+    body += table(['ระบบ','สถานะ','จำนวนใบสมัคร'], d.app_status.map(r => [r.sys, r.st, fmt(r.n)]), [3600,3600,1500], [2]);
+  }
+  body += para('ตัวเลขนับจากฐานข้อมูลของระบบแนะให้แนว ณ เวลาที่ดาวน์โหลด ไม่มีข้อมูลรายบุคคล', {size:26, color:'595959', before:300});
+  const doc = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>' + body +
+    '<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1134" w:right="1134" w:bottom="1134" w:left="1134" w:header="567" w:footer="567" w:gutter="0"/></w:sectPr></w:body></w:document>';
+  const ct = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>';
+  const rels = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>';
+  const enc = new TextEncoder();
+  return zip([
+    {name:'[Content_Types].xml', data:enc.encode(ct)},
+    {name:'_rels/.rels', data:enc.encode(rels)},
+    {name:'word/document.xml', data:enc.encode(doc)}
+  ]);
+}
+$('#btnDocx').addEventListener('click', () => {
+  if(!DATA) return;
+  try {
+    const url = URL.createObjectURL(buildDocx());
+    const a = document.createElement('a');
+    a.href = url; a.download = 'guidance-overview-' + new Date().toISOString().slice(0,10) + '.docx';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+    $('#docxNote').textContent = 'ดาวน์โหลดแล้ว';
+  } catch(e){ $('#docxNote').textContent = 'สร้างไฟล์ไม่สำเร็จ ลองใหม่อีกครั้ง'; }
+});
+
+/* ---------------- เข้าสู่ระบบ ---------------- */
+async function login(){
+  const u=$('#u').value.trim(), p=$('#p').value;
+  if(!u||!p){ msg('#loginMsg','กรอกชื่อผู้ใช้และรหัสผ่านให้ครบก่อน','err'); return; }
+  const b=$('#btnLogin'); b.disabled=true; b.innerHTML='<span class="spin"></span> กำลังเข้าสู่ระบบ';
+  msg('#loginMsg','');
+  const {error} = await sb.auth.signInWithPassword({email:u+'@'+EMAIL_DOMAIN, password:p});
+  b.disabled=false; b.textContent='เข้าสู่ระบบ';
+  if(error){ msg('#loginMsg','ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง','err'); return; }
+  $('#p').value=''; await boot();
+}
+$('#btnLogin').addEventListener('click', login);
+$('#p').addEventListener('keydown', e => { if(e.key==='Enter') login(); });
+$('#u').addEventListener('keydown', e => { if(e.key==='Enter') $('#p').focus(); });
+$('#btnLogout').addEventListener('click', async () => { await sb.auth.signOut(); DATA = null; show('#loginView'); });
+
+boot();
+</script>
+</body>
+</html>
