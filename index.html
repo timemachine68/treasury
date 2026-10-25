@@ -422,7 +422,8 @@ textarea.csvbox{font-family:monospace;font-size:.82rem;min-height:120px}
         <div id="stProfile"></div>
         <div id="stAwardPanel" class="panel" style="margin-top:14px">
           <h2>🏆 เกียรติบัตร / รางวัล / การแข่งขันของฉัน</h2>
-          <p class="field hint" style="margin-bottom:10px">บันทึกรางวัลของตัวเองไว้ใช้ทำ Portfolio ได้เลย ครูแนะแนวจะเห็นรายการนี้ (ข้อมูลที่บันทึกเอง ยังไม่ผ่านการตรวจโดยครู)</p>
+          <div id="saVerified"></div>
+          <p class="field hint" style="margin-bottom:10px">บันทึกรางวัลของตัวเองไว้ใช้ทำ Portfolio ได้เลย ส่วนที่บันทึกเองนี้ครูจะเห็นด้วย แต่ยังไม่ผ่านการตรวจโดยครู</p>
           <div class="row2">
             <div class="field"><label for="saTitle">ชื่อรางวัล/การแข่งขัน *</label><input id="saTitle" maxlength="120" placeholder="เช่น ชนะเลิศการแข่งขันหุ่นยนต์"></div>
             <div class="field"><label for="saLevel">ระดับ</label>
@@ -2386,7 +2387,7 @@ const QUIZ = [
   {t:"C", q:"ฉันถนัดงานตัวเลข บัญชี หรือการบันทึกข้อมูลให้ถูกต้อง"}
 ];
 const TYPE_KEYS = ["R","I","A","S","E","C"];
-let stAssess=null, stTags=[], stAllAssess=[], stAllTags=[], stStudentsList=[], quizAnswers=[], stF={room:"all",q:""}, stSid=null, stTagType=null;
+let stVerified=[], stAssess=null, stTags=[], stAllAssess=[], stAllTags=[], stStudentsList=[], quizAnswers=[], stF={room:"all",q:""}, stSid=null, stTagType=null;
 
 function combineScores(assess, tags){
   // กรองเฉพาะ tag ที่เป็น RIASEC จริงๆ (ไม่รวม type="award")
@@ -2408,11 +2409,12 @@ async function loadStrength(){
     stStudentsList = stu||[]; stAllAssess = asm||[]; stAllTags = tg||[];
     renderStTeacher();
   }else{
-    const [{data:asm},{data:tg}] = await Promise.all([
+    const [{data:asm},{data:tg},{data:ver}] = await Promise.all([
       sb.from("strength_assessments").select("*").eq("student_id", profile.id).maybeSingle(),
-      sb.from("strength_tags").select("*").eq("student_id", profile.id).order("created_at",{ascending:false})
+      sb.from("strength_tags").select("*").eq("student_id", profile.id).order("created_at",{ascending:false}),
+      sb.rpc("my_verified_awards")  // ผลงานจาก TCASVerified ที่ครูยืนยันแล้ว (ของตัวเองเท่านั้น)
     ]);
-    stAssess = asm||null; stTags = tg||[];
+    stAssess = asm||null; stTags = tg||[]; stVerified = ver||[];
     renderStStudent();
   }
   $("stLoading").classList.add("hidden");
@@ -2420,6 +2422,13 @@ async function loadStrength(){
 
 /* ── เกียรติบัตร/รางวัลที่นักเรียนบันทึกเอง ── */
 function renderStAwards(){
+  const verHtml = stVerified.length ? `<div style="margin-bottom:10px"><span style="font-size:.78rem;font-weight:600;color:var(--ink-soft);display:block;margin-bottom:4px">✅ ผลงานที่ครูกลุ่มสาระบันทึกและครูแนะแนวยืนยันแล้ว (TCASVerified)</span>${stVerified.map(x=>{
+    const lv = AW_LEVEL_LABEL_MAP[x.level] || x.level || "";
+    const tp = OV_TCAS_TYPE_LABEL[x.tcas_type] || x.tcas_type || "";
+    const detail = x.prize_name || x.exp_name || "";
+    return `<span class="awardchip">🎖️ ${esc(x.title||"-")}${tp?" · "+esc(tp):""}${lv?" · "+esc(lv):""}${detail?" · "+esc(detail):""}${x.academic_year?" (ปี "+esc(x.academic_year)+")":""}</span>`;
+  }).join("")}</div>` : "";
+  $("saVerified").innerHTML = verHtml;
   const list = stTags.filter(t=>t.type==="award").sort((a,b)=> b.created_at.localeCompare(a.created_at));
   $("saList").innerHTML = list.length ? list.map(aw=>{
     const p = parseAwardNote(aw.note);
