@@ -445,14 +445,14 @@ textarea.csvbox{font-family:monospace;font-size:.82rem;min-height:120px}
     <div id="viewOverview" class="hidden">
       <div class="panel">
         <h2>🧑‍🎓 ภาพรวมนักเรียน 360°</h2>
-        <p class="field hint" style="margin-bottom:10px">รวมข้อมูลจากทุกระบบในคลังแนะแนวไว้ในหน้าเดียวต่อคน: งานที่ส่ง · ผลสำรวจเรียนต่อ · จุดแข็ง RIASEC</p>
+        <p class="field hint" style="margin-bottom:10px">รวมข้อมูลจากทุกระบบในคลังแนะแนวไว้ในหน้าเดียวต่อคน: ผลงานนักเรียน · ทุนการศึกษา · ขออนุญาตทำงาน (กดที่ช่องเพื่อดูรายละเอียดของคนนั้น)</p>
         <div class="toolbar">
           <div class="search"><input id="ovQ" placeholder="ค้นหาชื่อ/ห้อง…"></div>
           <div class="chips" id="ovRooms"></div>
         </div>
         <div class="tbl-wrap">
           <table>
-            <thead><tr><th>ชื่อผู้ใช้</th><th>ชื่อ-นามสกุล</th><th>ห้อง</th><th>งานที่ส่ง</th><th>สำรวจเรียนต่อ</th><th>จุดแข็ง</th><th></th></tr></thead>
+            <thead><tr><th>ชื่อผู้ใช้</th><th>ชื่อ-นามสกุล</th><th>ห้อง</th><th>ผลงานนักเรียน</th><th>ทุนการศึกษา</th><th>ขออนุญาตทำงาน</th><th></th></tr></thead>
             <tbody id="ovRows"></tbody>
           </table>
         </div>
@@ -2683,24 +2683,23 @@ function renderOverview(){
   list = [...list].sort((a,b)=> roomCompare(a.class_room, b.class_room) || (a.username||"").localeCompare(b.username||""));
 
   $("ovRows").innerHTML = list.map(s=>{
-    const asgs = ovAssignmentsFor_(s.class_room);
-    const done = asgs.filter(a=> ovSubmissions.some(sub=>sub.assignment_id===a.id && sub.student_id===s.id)).length;
-    const grade = studentGrade_(s.class_room);
-    const round = grade? ovLatestRoundFor_(grade) : null;
-    const myResp = round? ovResponses.find(r=>r.round_id===round.id && r.student_id===s.id) : null;
-    const surveyLabel = !round ? "-" : myResp ? `✅ ${esc(myResp.status||"ตอบแล้ว")}` : "⏳ ยังไม่ตอบ";
-    const assess = ovAssess.find(a=>a.student_id===s.id)||null;
-    const tags = ovTags.filter(t=>t.student_id===s.id);
-    const c = combineScores(assess, tags);
-    const top = [...TYPE_KEYS].sort((a,b)=>c[b]-c[a])[0];
-    const strengthLabel = c[top]>0 ? `${RIASEC[top].emoji} ${RIASEC[top].name}` : "-";
+    // ผลงานนักเรียน (เฉพาะที่ครูแนะแนวยืนยันแล้ว)
+    const aw = ovTcasAwards.filter(x=>x.profile_id===s.id).length;
+    const awLabel = aw ? `🏅 ${aw} รายการ` : "-";
+    // ทุนการศึกษา
+    const sch = ovScholarship.filter(x=>x.profile_id===s.id).sort((x,y)=>(y.submitted_at||"").localeCompare(x.submitted_at||""));
+    const schGot = sch.some(x=>x.status==="approved");
+    const schLabel = !sch.length ? "-" : schGot ? `🎓 ${OV_SCHOLARSHIP_STATUS.approved}` : `${esc(OV_SCHOLARSHIP_STATUS[sch[0].status]||sch[0].status)}${sch.length>1?` (${sch.length} ทุน)`:""}`;
+    // ขออนุญาตทำงาน/ฝึกงาน (ล่าสุด)
+    const wpl = ovWorkPermit.filter(x=>x.student_id===s.id).sort((x,y)=>(y.created_at||"").localeCompare(x.created_at||""));
+    const wpLabel = !wpl.length ? "-" : `${esc(OV_WORKPERMIT_TYPE[wpl[0].request_type]||"")} · ${esc(OV_WORKPERMIT_STATUS[wpl[0].status]||wpl[0].status)}${wpl.length>1?` (${wpl.length} คำขอ)`:""}`;
     return `<tr>
       <td><b>${esc(s.username)}</b></td>
       <td>${esc(s.display_name)}</td>
       <td>${esc(s.class_room||"-")}</td>
-      <td>${asgs.length? `${done}/${asgs.length}` : "-"}</td>
-      <td>${surveyLabel}</td>
-      <td>${strengthLabel}</td>
+      <td data-ovp="${s.id}" style="cursor:pointer">${awLabel}</td>
+      <td data-ovp="${s.id}" style="cursor:pointer">${schLabel}</td>
+      <td data-ovp="${s.id}" style="cursor:pointer">${wpLabel}</td>
       <td><button class="btn primary sm" data-ovp="${s.id}">ดูรายละเอียด</button></td>
     </tr>`;
   }).join("") || `<tr><td colspan="7" style="text-align:center;color:var(--ink-soft)">ไม่พบนักเรียน</td></tr>`;
