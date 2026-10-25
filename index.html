@@ -420,6 +420,31 @@ textarea.csvbox{font-family:monospace;font-size:.82rem;min-height:120px}
           <button class="btn primary" id="btnQuizSave" style="width:100%">ดูผลจุดแข็งของฉัน 🌟</button>
         </div>
         <div id="stProfile"></div>
+        <div id="stAwardPanel" class="panel" style="margin-top:14px">
+          <h2>🏆 เกียรติบัตร / รางวัล / การแข่งขันของฉัน</h2>
+          <p class="field hint" style="margin-bottom:10px">บันทึกรางวัลของตัวเองไว้ใช้ทำ Portfolio ได้เลย ครูแนะแนวจะเห็นรายการนี้ (ข้อมูลที่บันทึกเอง ยังไม่ผ่านการตรวจโดยครู)</p>
+          <div class="row2">
+            <div class="field"><label for="saTitle">ชื่อรางวัล/การแข่งขัน *</label><input id="saTitle" maxlength="120" placeholder="เช่น ชนะเลิศการแข่งขันหุ่นยนต์"></div>
+            <div class="field"><label for="saLevel">ระดับ</label>
+              <select id="saLevel">
+                <option value="school">ระดับโรงเรียน</option>
+                <option value="district">ระดับเขต/อำเภอ</option>
+                <option value="province">ระดับจังหวัด</option>
+                <option value="region">ระดับภาค</option>
+                <option value="national">ระดับประเทศ</option>
+                <option value="international">ระดับนานาชาติ</option>
+                <option value="other">อื่นๆ</option>
+              </select>
+            </div>
+          </div>
+          <div class="row2">
+            <div class="field"><label for="saYear">ปีที่ได้รับ (พ.ศ.)</label><input id="saYear" inputmode="numeric" maxlength="4" placeholder="เช่น 2568"></div>
+            <div class="field"><label for="saNote">หมายเหตุเพิ่มเติม</label><input id="saNote" maxlength="200" placeholder="เช่น จัดโดย สพฐ."></div>
+          </div>
+          <div id="saMsg" class="msg"></div>
+          <button class="btn note sm" id="btnSaSave">🏆 บันทึกรางวัล</button>
+          <div id="saList" style="margin-top:12px"></div>
+        </div>
       </div>
       <!-- ครู -->
       <div id="stTeacher" class="hidden">
@@ -2393,9 +2418,48 @@ async function loadStrength(){
   $("stLoading").classList.add("hidden");
 }
 
+/* ── เกียรติบัตร/รางวัลที่นักเรียนบันทึกเอง ── */
+function renderStAwards(){
+  const list = stTags.filter(t=>t.type==="award").sort((a,b)=> b.created_at.localeCompare(a.created_at));
+  $("saList").innerHTML = list.length ? list.map(aw=>{
+    const p = parseAwardNote(aw.note);
+    const lv = AW_LEVEL_LABEL_MAP[p.level] || p.level;
+    const mine = aw.tagged_by===profile.id;
+    return `<span class="awardchip">🏆 ${esc(p.title)}${lv?" · "+esc(lv):""}${p.year?" ("+esc(p.year)+")":""}${p.extra?" · "+esc(p.extra):""}${mine?"":" <small>(ครูบันทึกให้)</small>"}${mine?`<button data-saDel="${aw.id}" title="ลบรายการนี้">×</button>`:""}</span>`;
+  }).join("") : `<span class="duechip">ยังไม่มีรางวัล — บันทึกรางวัลแรกของคุณได้เลย</span>`;
+  $("saList").querySelectorAll("[data-saDel]").forEach(b=> b.onclick = async ()=>{
+    if(!confirm("ลบรางวัลนี้ใช่ไหม?")) return;
+    const {error} = await sb.from("strength_tags").delete().eq("id", b.dataset.sadel).eq("tagged_by", profile.id);
+    if(error) return toast("ลบไม่สำเร็จ: "+error.message);
+    stTags = stTags.filter(t=>t.id!==b.dataset.sadel);
+    renderStAwards();
+  });
+}
+$("btnSaSave").onclick = async ()=>{
+  const title = $("saTitle").value.trim();
+  const year = $("saYear").value.trim();
+  const extra = $("saNote").value.trim();
+  if(!title) return msg("saMsg","ใส่ชื่อรางวัลก่อนนะ","err");
+  if(year && !/^2[4-6]\d{2}$/.test(year)) return msg("saMsg","ปีที่ได้รับให้ใส่เป็น พ.ศ. 4 หลัก เช่น 2568","err");
+  const dup = stTags.some(t=>{ if(t.type!=="award") return false; const p=parseAwardNote(t.note); return p.title===title && p.year===year; });
+  if(dup) return msg("saMsg","มีรางวัลนี้ในรายการแล้ว","err");
+  $("btnSaSave").disabled = true;
+  const {data, error} = await sb.from("strength_tags").insert({
+    student_id:profile.id, type:"award", note:formatAwardNote(title, $("saLevel").value, year, extra),
+    tagged_by:profile.id, tagger_name:"นักเรียนบันทึกเอง"
+  }).select().single();
+  $("btnSaSave").disabled = false;
+  if(error) return msg("saMsg", error.message, "err");
+  stTags.unshift(data);
+  $("saTitle").value=""; $("saYear").value=""; $("saNote").value=""; msg("saMsg","");
+  toast("บันทึกรางวัลเรียบร้อย 🏆");
+  renderStAwards();
+};
+
 /* ── ฝั่งนักเรียน ── */
 function renderStStudent(){
-  const has = !!stAssess || stTags.length>0;
+  const has = !!stAssess || stTags.some(t=>TYPE_KEYS.includes(t.type));
+  renderStAwards();
   $("stIntro").classList.toggle("hidden", has);
   $("stQuiz").classList.add("hidden");
   $("stProfile").innerHTML = has? profileHTML(profile, stAssess, stTags, {student:true}) : "";
@@ -2496,7 +2560,8 @@ function profileHTML(stu, assess, tags, opt={}){
     const lvLabel = AW_LEVEL_LABEL_MAP[p.level] || p.level;
     const del = opt.canDelTag && (aw.tagged_by===profile.id || profile.role==="admin")
       ? `<button data-delaward="${aw.id}" title="ลบรางวัล">×</button>` : "";
-    return `<span class="awardchip">🏆 ${esc(p.title)}${lvLabel?" · "+esc(lvLabel):""}${p.year?" ("+esc(p.year)+")":""}${p.extra?" · "+esc(p.extra):""}${del}</span>`;
+    const self = aw.tagged_by===aw.student_id ? ` <small>(นักเรียนบันทึกเอง)</small>` : "";
+    return `<span class="awardchip">🏆 ${esc(p.title)}${lvLabel?" · "+esc(lvLabel):""}${p.year?" ("+esc(p.year)+")":""}${p.extra?" · "+esc(p.extra):""}${self}${del}</span>`;
   }).join("") : `<span class="duechip">ยังไม่มีรางวัล</span>`;
   return `<div class="panel">
     <h2>🌟 โปรไฟล์จุดแข็ง: ${esc(stu.display_name)} ${stu.class_room? "("+esc(stu.class_room)+")":""}</h2>
@@ -2506,8 +2571,8 @@ function profileHTML(stu, assess, tags, opt={}){
     <div style="margin-top:14px">${guide}</div>
     <h2 style="margin-top:14px">🏷️ จุดแข็งที่ครูมองเห็น</h2>
     <div>${tagList}</div>
-    <h2 style="margin-top:14px">🏆 เกียรติบัตร / รางวัล</h2>
-    <div>${awardList}</div>
+    ${opt.student? "" : `<h2 style="margin-top:14px">🏆 เกียรติบัตร / รางวัล</h2>
+    <div>${awardList}</div>`}
     ${opt.student? `<div class="actions noprint" style="margin-top:14px">
       <button class="btn note" data-print>🖨️ พิมพ์/บันทึก PDF</button>
       <button class="btn ghost" data-redo>ทำแบบประเมินใหม่</button>
