@@ -112,6 +112,7 @@ textarea{resize:vertical}
 .catitem{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:10px 0;border-bottom:1px solid var(--line2)}
 .addcat{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
 .addcat input{flex:1 1 160px;width:auto}
+.ytbl{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}.ytbl th,.ytbl td{padding:10px 8px;text-align:right;border-bottom:1px solid var(--line2);white-space:nowrap}.ytbl th:first-child,.ytbl td:first-child{text-align:left}.ytbl tfoot td{font-weight:700;border-bottom:0;background:var(--line2)}
 @media (max-width:640px){ h1{font-size:23px} .wrap{padding:0 14px} nav.tabs button{padding:0 14px} .kpi.main .v{font-size:32px} }
 </style>
 </head>
@@ -195,28 +196,50 @@ async function loadYears(){
   S.years=[];
   for(var y=cur;y>=min;y--)S.years.push(y);
   if(S.fy==null)S.fy=cur;
-  if(S.years.indexOf(S.fy)<0){S.years.push(S.fy);S.years.sort(function(x,y){return y-x;});}
+  if(S.fy&&S.years.indexOf(S.fy)<0){S.years.push(S.fy);S.years.sort(function(x,y){return y-x;});}
 }
 async function loadYear(){
   var id=++S.reqId;
   S.loading=true;S.loadError='';
   renderView();
-  var fy=S.fy,rg=fyRange(fy);
+  var fy=S.fy;
   try{
-    var res=await Promise.all([
-      sb.rpc('ledger_year_summary',{p_year:fy}),
-      sb.from('ledger_monthly_summary').select('*').eq('fiscal_year',fy),
-      sb.from('ledger_category_summary').select('*').eq('fiscal_year',fy),
-      fetchAllRows(function(){return sb.from('ledger_entries').select('*').gte('entry_date',rg[0]).lt('entry_date',rg[1])
-        .order('entry_date',{ascending:false}).order('created_at',{ascending:false}).order('id');})
-    ]);
-    if(id!==S.reqId)return;
-    if(res[0].error)throw res[0].error;
-    if(res[1].error)throw res[1].error;
-    if(res[2].error)throw res[2].error;
-    S.summary=Array.isArray(res[0].data)?res[0].data[0]:res[0].data;
-    S.monthly=res[1].data;S.catSum=res[2].data;S.entries=res[3];
-    await loadNames();
+    if(fy===0){
+      var yrs=S.years.slice().sort(function(a,b){return a-b;});
+      var ra=await Promise.all([
+        Promise.all(yrs.map(function(y){return sb.rpc('ledger_year_summary',{p_year:y});})),
+        fetchAllRows(function(){return sb.from('ledger_category_summary').select('*').order('fiscal_year').order('category_id').order('kind');}),
+        fetchAllRows(function(){return sb.from('ledger_entries').select('*').order('entry_date',{ascending:false}).order('created_at',{ascending:false}).order('id');})
+      ]);
+      if(id!==S.reqId)return;
+      var rows=ra[0].map(function(r){if(r.error)throw r.error;return Array.isArray(r.data)?r.data[0]:r.data;});
+      var agg={};
+      ra[1].forEach(function(r){var k=r.kind+'|'+r.category_id;if(!agg[k])agg[k]={kind:r.kind,category_id:r.category_id,category_name:r.category_name,total:0,entry_count:0};agg[k].total+=Number(r.total);agg[k].entry_count+=r.entry_count;});
+      var tin=0,tout=0,cin=0,cout=0;
+      rows.forEach(function(r){tin+=Number(r.total_in);tout+=Number(r.total_out);cin+=r.in_count;cout+=r.out_count;});
+      var first=rows[0],last=rows[rows.length-1];
+      S.yearRows=rows;
+      S.summary={fiscal_year:0,opening_balance:first?first.opening_balance:0,opening_source:first?first.opening_source:'none',total_in:tin,total_out:tout,in_count:cin,out_count:cout,balance:last?last.balance:0};
+      S.monthly=[];S.catSum=Object.keys(agg).map(function(k){return agg[k];});S.entries=ra[2];
+      await loadNames();
+    }else{
+      var rg=fyRange(fy);
+      var res=await Promise.all([
+        sb.rpc('ledger_year_summary',{p_year:fy}),
+        sb.from('ledger_monthly_summary').select('*').eq('fiscal_year',fy),
+        sb.from('ledger_category_summary').select('*').eq('fiscal_year',fy),
+        fetchAllRows(function(){return sb.from('ledger_entries').select('*').gte('entry_date',rg[0]).lt('entry_date',rg[1])
+          .order('entry_date',{ascending:false}).order('created_at',{ascending:false}).order('id');})
+      ]);
+      if(id!==S.reqId)return;
+      if(res[0].error)throw res[0].error;
+      if(res[1].error)throw res[1].error;
+      if(res[2].error)throw res[2].error;
+      S.yearRows=null;
+      S.summary=Array.isArray(res[0].data)?res[0].data[0]:res[0].data;
+      S.monthly=res[1].data;S.catSum=res[2].data;S.entries=res[3];
+      await loadNames();
+    }
   }catch(e){
     if(id!==S.reqId)return;
     S.loadError=thError(e);
@@ -256,8 +279,9 @@ function renderTabs(){
 function setTab(t){if(S.tab===t)return;S.tab=t;renderTabs();renderView();}
 function yearBar(){
   return '<div class="bar"><span style="font-weight:600">ปีงบประมาณ</span><div class="chips">'+
+    '<button type="button" class="chip" data-year="0" aria-pressed="'+(S.fy===0)+'">ทุกปีงบรวมกัน</button>'+
     S.years.map(function(y){return '<button type="button" class="chip" data-year="'+y+'" aria-pressed="'+(y===S.fy)+'">'+y+'</button>';}).join('')+
-    '</div><span class="muted tiny">1 ต.ค. '+(S.fy-1)+' – 30 ก.ย. '+S.fy+'</span><span class="grow"></span>'+
+    '</div><span class="muted tiny">'+(S.fy===0?'ปีงบ '+Math.min.apply(null,S.years)+' – '+Math.max.apply(null,S.years)+' รวมกัน':'1 ต.ค. '+(S.fy-1)+' – 30 ก.ย. '+S.fy)+'</span><span class="grow"></span>'+
     '<button type="button" class="btn primary" data-act="add">+ เพิ่มรายการ</button></div>';
 }
 function renderView(){
@@ -270,7 +294,7 @@ function renderView(){
     html+='<p class="muted">กำลังโหลด...</p>';
   }else{
     if(S.loading)html+='<p class="muted tiny">กำลังอัปเดตข้อมูล...</p>';
-    html+=S.tab==='summary'?summaryHtml():S.tab==='entries'?entriesHtml():settingsHtml();
+    html+=S.tab==='summary'?(S.fy===0?allSummaryHtml():summaryHtml()):S.tab==='entries'?entriesHtml():settingsHtml();
   }
   v.innerHTML=html;
 }
@@ -326,6 +350,49 @@ function summaryHtml(){
   '<div class="foot"><span>หน้านี้เห็นได้เฉพาะครูแนะแนวและผู้ดูแลระบบ ครูท่านอื่นและนักเรียนเปิดไม่ได้</span></div>';
 }
 
+function allSummaryHtml(){
+  var s=S.summary,rows=S.yearRows;if(!s||!rows||!rows.length)return '';
+  var maxV=0;rows.forEach(function(r){maxV=Math.max(maxV,Number(r.total_in),Number(r.total_out));});
+  var H=200;function bh(v){return v<=0?0:Math.max(3,Math.round(v/maxV*H));}
+  var chart=maxV?'<div class="chart-scroll"><div class="chart" role="img" aria-label="กราฟแท่งรายรับและรายจ่ายแยกตามปีงบประมาณ">'+
+    rows.map(function(r){var i=Number(r.total_in),o=Number(r.total_out);
+      return '<div class="m"><div class="bars"><div class="b" title="ปีงบ '+r.fiscal_year+' รับ '+fmt(i)+' บาท" style="height:'+bh(i)+'px;background:var(--g500)"></div>'+
+        '<div class="b" title="ปีงบ '+r.fiscal_year+' จ่าย '+fmt(o)+' บาท" style="height:'+bh(o)+'px;background:var(--gold)"></div></div><span class="lab">'+r.fiscal_year+'</span></div>';}).join('')+'</div></div>'+
+    '<div class="muted tiny">แท่งสูงสุดในกราฟ = '+fmt(maxV)+' บาท</div>'
+    :'<div class="empty">ยังไม่มีข้อมูลให้แสดงกราฟ</div>';
+  var tbl='<div class="scroll-x"><table class="ytbl" aria-label="สรุปแยกตามปีงบประมาณ"><thead><tr><th scope="col">ปีงบ</th><th scope="col">ยอดยกมา</th><th scope="col">รายรับ</th><th scope="col">รายจ่าย</th><th scope="col">คงเหลือปลายปี</th></tr></thead><tbody>'+
+    rows.slice().reverse().map(function(r){return '<tr><td><button type="button" class="btn small" data-year="'+r.fiscal_year+'">'+r.fiscal_year+'</button></td><td>'+fmt(r.opening_balance)+'</td><td class="in">+'+fmt(r.total_in)+'</td><td class="out">−'+fmt(r.total_out)+'</td><td><b>'+fmt(r.balance)+'</b></td></tr>';}).join('')+
+    '</tbody><tfoot><tr><td>รวมทุกปีงบ</td><td>'+fmt(s.opening_balance)+'</td><td class="in">+'+fmt(s.total_in)+'</td><td class="out">−'+fmt(s.total_out)+'</td><td>'+fmt(s.balance)+'</td></tr></tfoot></table></div>';
+  var calc=Number(s.opening_balance)+Number(s.total_in)-Number(s.total_out);
+  var mism=Math.abs(calc-Number(s.balance))>0.005?'<div class="notice">บางปีงบตั้งยอดยกมาไว้เอง ทำให้ยอดคงเหลือ ('+fmt(s.balance)+' บาท) ไม่เท่ากับ ยอดยกมาแรกสุด + รับ − จ่าย ('+fmt(calc)+' บาท) ตรวจยอดยกมาในหน้าตั้งค่าของแต่ละปีงบ</div>':'';
+  var outTotal=Number(s.total_out);
+  var cats=S.catSum.filter(function(r){return r.kind==='out';}).sort(function(a,b){return Number(b.total)-Number(a.total);});
+  var catHtml=cats.length?cats.map(function(c){
+    var pct=outTotal>0?Math.round(Number(c.total)/outTotal*100):0;
+    return '<div class="catrow"><div class="t"><span>'+esc(c.category_name)+'</span><b>'+fmt(c.total)+' บาท · '+pct+'%</b></div><div class="track"><i style="width:'+pct+'%"></i></div></div>';
+  }).join(''):'<div class="empty">ยังไม่มีรายจ่าย</div>';
+  var recent=S.entries.filter(function(e){return !e.voided_at;}).slice(0,5);
+  var hasAny=s.in_count>0||s.out_count>0;
+  return (hasAny?'':'<div class="notice">ยังไม่มีรายการ กด "+ เพิ่มรายการ" เพื่อเริ่มบันทึก</div>')+mism+
+  '<div class="kpis">'+
+    '<div class="kpi main"><span class="l">ยอดคงเหลือปัจจุบัน</span><span class="v">'+fmt(s.balance)+'</span><span class="s">บาท · คงเหลือปลายปีงบล่าสุด</span></div>'+
+    '<div class="kpi"><span class="l">ยอดยกมาแรกสุด</span><span class="v" style="color:var(--g900)">'+fmt(s.opening_balance)+'</span><span class="s">บาท · ต้นปีงบ '+rows[0].fiscal_year+'</span></div>'+
+    '<div class="kpi"><span class="l">รายรับรวมทุกปีงบ</span><span class="v in">+'+fmt(s.total_in)+'</span><span class="s">บาท · '+s.in_count+' รายการ</span></div>'+
+    '<div class="kpi"><span class="l">รายจ่ายรวมทุกปีงบ</span><span class="v out">−'+fmt(s.total_out)+'</span><span class="s">บาท · '+s.out_count+' รายการ</span></div>'+
+  '</div>'+
+  '<section class="card"><h2>สรุปแยกตามปีงบประมาณ</h2><p class="muted tiny" style="margin:4px 0 10px">กดเลขปีงบเพื่อดูรายละเอียดของปีนั้น</p>'+tbl+'</section>'+
+  '<div class="grid2"><section class="card" style="flex:2 1 560px"><div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;align-items:center;margin-bottom:12px"><h2>รายรับ-รายจ่ายรายปีงบ</h2>'+
+    '<div class="legend"><span><i style="background:var(--g500)"></i>รายรับ</span><span><i style="background:var(--gold)"></i>รายจ่าย</span></div></div>'+chart+'</section>'+
+  '<section class="card" style="flex:1 1 340px"><h2>รายจ่ายแยกตามหมวด (ทุกปีงบ)</h2>'+catHtml+'</section></div>'+
+  '<section class="card"><div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px"><h2>รายการล่าสุด</h2>'+
+    '<button type="button" class="btn small" data-tab="entries">ดูรายการทั้งหมด</button></div>'+
+    (recent.length?'<div class="scroll-x"><div class="tbl small" role="table" aria-label="รายการล่าสุด">'+
+      '<div class="tr h" role="row"><span class="c-date" role="columnheader">วันที่</span><span class="c-desc" role="columnheader">รายการ</span><span class="c-cat" role="columnheader">หมวดหมู่</span><span class="c-amt" role="columnheader">รับ (บาท)</span><span class="c-amt" role="columnheader">จ่าย (บาท)</span></div>'+
+      recent.map(function(e){return rowCells(e,false);}).join('')+'</div></div>':'<div class="empty">ยังไม่มีรายการ</div>')+
+  '</section>'+
+  '<div class="foot"><span>หน้านี้เห็นได้เฉพาะครูแนะแนวและผู้ดูแลระบบ ครูท่านอื่นและนักเรียนเปิดไม่ได้</span></div>';
+}
+
 /* ---------- หน้ารายการ ---------- */
 function rowCells(e,full){
   var voided=!!e.voided_at;
@@ -361,7 +428,7 @@ function entriesHtml(){
   var list=filteredEntries();
   var si=0,so=0;list.forEach(function(e){if(e.voided_at)return;if(e.kind==='in')si+=Number(e.amount);else so+=Number(e.amount);});
   var typeTabs=[['all','ทั้งหมด'],['in','รายรับ'],['out','รายจ่าย']].map(function(t){return '<button type="button" class="chip" data-type="'+t[0]+'" aria-pressed="'+(f.type===t[0])+'">'+t[1]+'</button>';}).join('');
-  var monthOpts='<option value="0">ทุกเดือน</option>'+FISCAL_ORDER.map(function(m){var y=m>=10?S.fy-544:S.fy-543;return '<option value="'+m+'"'+(f.month===m?' selected':'')+'>'+MON[m-1]+' '+(y+543)+'</option>';}).join('');
+  var monthOpts='<option value="0">ทุกเดือน</option>'+FISCAL_ORDER.map(function(m){var y=m>=10?S.fy-544:S.fy-543;return '<option value="'+m+'"'+(f.month===m?' selected':'')+'>'+MON[m-1]+(S.fy===0?'':' '+(y+543))+'</option>';}).join('');
   var catOpts='<option value="">ทุกหมวดหมู่</option>'+S.cats.map(function(c){return '<option value="'+esc(c.id)+'"'+(f.cat===c.id?' selected':'')+'>'+esc(c.name)+(c.kind==='in'?' (รับ)':' (จ่าย)')+'</option>';}).join('');
   return '<section class="card"><div class="filters">'+
     '<div class="field"><span class="lab-s">ประเภท</span><div class="chips">'+typeTabs+'</div></div>'+
@@ -373,7 +440,7 @@ function entriesHtml(){
   '<section class="card" style="padding-top:8px">'+(list.length?'<div class="scroll-x"><div class="tbl" role="table" aria-label="รายการรับ-จ่าย">'+
     '<div class="tr h" role="row"><span class="c-date" role="columnheader">วันที่</span><span class="c-desc" role="columnheader">รายการ</span><span class="c-cat" role="columnheader">หมวดหมู่</span><span class="c-amt" role="columnheader">รับ (บาท)</span><span class="c-amt" role="columnheader">จ่าย (บาท)</span><span class="c-by" role="columnheader">ผู้บันทึก</span><span class="c-act" role="columnheader">จัดการ</span></div>'+
     list.map(function(e){return rowCells(e,true);}).join('')+'</div></div>'
-    :'<div class="empty">'+(S.entries.length?'ไม่พบรายการตามที่เลือก ลองเปลี่ยนเดือนหรือหมวดหมู่':'ยังไม่มีรายการในปีงบนี้')+'</div>')+'</section>'+
+    :'<div class="empty">'+(S.entries.length?'ไม่พบรายการตามที่เลือก ลองเปลี่ยนเดือนหรือหมวดหมู่':(S.fy===0?'ยังไม่มีรายการ':'ยังไม่มีรายการในปีงบนี้'))+'</div>')+'</section>'+
   '<div class="foot"><span>รายการที่บันทึกแล้วลบไม่ได้ ถ้าผิดให้กด "ยกเลิกรายการ" ระบบจะเก็บเหตุผลและชื่อผู้ยกเลิกไว้ตรวจย้อนหลัง</span><span>แก้ไขหรือยกเลิกได้เฉพาะรายการที่ตัวเองบันทึก (ผู้ดูแลระบบทำได้ทุกรายการ)</span></div>';
 }
 
@@ -391,11 +458,12 @@ function settingsHtml(){
       }).join(''):'<div class="empty">ยังไม่มีหมวดหมู่</div>')+'</div>'+
       '<div class="addcat"><input type="text" id="new-'+kind+'" maxlength="60" placeholder="ชื่อหมวดใหม่" aria-label="ชื่อหมวด'+title+'ใหม่"><button type="button" class="btn solid" data-act="addcat" data-kind="'+kind+'">เพิ่มหมวด</button></div></section>';
   }
-  return '<section class="card"><h2>ยอดยกมาต้นปีงบ '+S.fy+'</h2>'+
+  var openCard=S.fy===0?'<section class="card"><h2>ยอดยกมาต้นปีงบ</h2><p class="muted" style="margin:6px 0 0">ตั้งยอดยกมาได้ทีละปีงบ กดเลือกปีงบด้านบนก่อน แล้วกลับมาที่หน้านี้</p></section>':null;
+  return (openCard||'<section class="card"><h2>ยอดยกมาต้นปีงบ '+S.fy+'</h2>'+
     '<p class="muted" style="margin:6px 0 12px">ตอนนี้: '+fmt(s?s.opening_balance:0)+' บาท · '+src+'</p>'+
     '<div class="filters"><div class="field" style="min-width:220px"><label for="open-amt">ยอดยกมา (บาท)</label><input id="open-amt" type="text" inputmode="decimal" value="'+(s?esc(Number(s.opening_balance).toFixed(2)):'0.00')+'"></div>'+
     '<button type="button" class="btn solid" data-act="saveopen">บันทึกยอดยกมา</button></div>'+
-    '<p class="muted tiny" style="margin:10px 0 0">ถ้าไม่ตั้ง ระบบจะยกยอดคงเหลือปีงบก่อนมาให้เอง เมื่อตั้งแล้วจะใช้ตัวเลขที่ตั้งไว้แทน (แก้ไขได้ แต่ลบไม่ได้)</p></section>'+
+    '<p class="muted tiny" style="margin:10px 0 0">ถ้าไม่ตั้ง ระบบจะยกยอดคงเหลือปีงบก่อนมาให้เอง เมื่อตั้งแล้วจะใช้ตัวเลขที่ตั้งไว้แทน (แก้ไขได้ แต่ลบไม่ได้)</p></section>')+
   '<div class="grid2">'+col('in','หมวดรายรับ')+col('out','หมวดรายจ่าย')+'</div>'+
   '<div class="foot"><span>หมวดที่มีรายการแล้วลบไม่ได้ ให้กด "ปิดใช้" แทน หมวดที่ปิดใช้จะไม่ขึ้นให้เลือกตอนเพิ่มรายการใหม่ แต่รายการเก่ายังอยู่ครบ</span></div>';
 }
@@ -474,7 +542,7 @@ function openEntryModal(entry){
       if(r.error)throw r.error;
       var fy=fyOfDate(date);
       if(S.years.indexOf(fy)<0){S.years.push(fy);S.years.sort(function(a,b){return b-a;});}
-      S.fy=fy;
+      if(S.fy!==0)S.fy=fy;
       closeModal();
       toast('บันทึกรายการแล้ว (ปีงบ '+fy+')');
       await loadYear();
@@ -520,7 +588,7 @@ document.addEventListener('click',async function(ev){
   var t=ev.target.closest('[data-tab],[data-year],[data-type],[data-act]');
   if(!t||t.closest('#modal'))return;
   if(t.hasAttribute('data-tab')&&t.getAttribute('data-act')==null){setTab(t.getAttribute('data-tab'));return;}
-  if(t.hasAttribute('data-year')){var y=+t.getAttribute('data-year');if(y!==S.fy){S.fy=y;S.filters.month=0;loadYear();}return;}
+  if(t.hasAttribute('data-year')){var y=+t.getAttribute('data-year');if(y!==S.fy){S.fy=y;S.summary=null;S.filters.month=0;loadYear();}return;}
   if(t.hasAttribute('data-type')){S.filters.type=t.getAttribute('data-type');renderView();return;}
   var act=t.getAttribute('data-act'),id=t.getAttribute('data-id');
   var entry=id?S.entries.filter(function(e){return e.id===id;})[0]:null;
