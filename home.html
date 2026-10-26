@@ -146,6 +146,14 @@ button.next:hover{background:#D5EAE3}
 .modal-back{position:fixed;inset:0;background:rgba(20,32,30,.45);display:none;align-items:flex-start;justify-content:center;padding:24px 14px;overflow-y:auto;z-index:50}
 .modal-back.show{display:flex}
 .modal{background:#fff;border-radius:16px;max-width:560px;width:100%;padding:22px;box-shadow:0 12px 40px rgba(0,0,0,.2)}
+.modal.wide{max-width:720px}
+.mg-row{display:flex;gap:10px;align-items:center;padding:9px 10px;border:1px solid var(--line);border-left:5px solid var(--c);border-radius:10px;margin-bottom:8px;background:#fff}
+.mg-row.past{opacity:.6}
+.mg-row input[type=checkbox]{width:20px;height:20px;flex:none;accent-color:var(--pine)}
+.mg-row .mt{flex:1;min-width:0;font-size:.92rem;font-weight:600;line-height:1.35;overflow-wrap:anywhere}
+.mg-row .ms{font-size:.78rem;color:var(--ink-soft);font-weight:400;margin-top:2px}
+.mg-list{max-height:52vh;overflow-y:auto;margin:10px 0}
+.mg-bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:space-between}
 .modal h2{font-size:1.15rem;margin-bottom:14px;color:var(--pine-deep)}
 .field{margin-bottom:13px}
 .field label,.field .lab{display:block;font-size:.85rem;font-weight:700;margin-bottom:5px}
@@ -202,6 +210,24 @@ button.next:hover{background:#D5EAE3}
     <h2 id="dtTitle"></h2>
     <div id="dtBody"></div>
     <div class="foot" id="dtFoot"></div>
+  </div>
+</div>
+
+<!-- โมดัลจัดการกำหนดการ (ครูแนะแนว) -->
+<div class="modal-back" id="mdManage" role="dialog" aria-modal="true" aria-labelledby="mgHead">
+  <div class="modal wide">
+    <h2 id="mgHead">📋 จัดการกำหนดการ</h2>
+    <div class="chips" id="mgChips"></div>
+    <div class="mg-bar" style="margin-top:10px">
+      <label style="display:flex;gap:6px;align-items:center;font-size:.88rem"><input type="checkbox" id="mgPast"> แสดงที่ผ่านไปแล้ว</label>
+      <label style="display:flex;gap:6px;align-items:center;font-size:.88rem"><input type="checkbox" id="mgAll"> เลือกทั้งหมดที่เห็น</label>
+    </div>
+    <div class="mg-list" id="mgList"></div>
+    <p class="muted" style="font-size:.82rem" id="mgNote"></p>
+    <div class="foot">
+      <button type="button" class="btn danger left" id="mgDel" disabled>ลบที่เลือก</button>
+      <button type="button" class="btn primary" id="mgClose">ปิด</button>
+    </div>
   </div>
 </div>
 
@@ -480,7 +506,7 @@ function renderNews(){
   return h+'</div>';
 }
 function renderUpcoming(){
-  var h='<div class="panel-h"><h2 id="hUp">⏰ ใกล้ถึงแล้ว</h2>'+(S.staff?'<button type="button" class="btn primary sm" data-act="add">+ เพิ่มกำหนดการ</button>':'')+'</div>';
+  var h='<div class="panel-h"><h2 id="hUp">⏰ ใกล้ถึงแล้ว</h2>'+(S.staff?'<span class="chips"><button type="button" class="btn ghost sm" data-act="manage">📋 จัดการ</button><button type="button" class="btn primary sm" data-act="add">+ เพิ่มกำหนดการ</button></span>':'')+'</div>';
   var list=upcomingList().slice(0,UPCOMING_N);
   if(!list.length)return h+'<div class="empty">'+(S.filter==='all'?'ยังไม่มีกำหนดการที่กำลังจะถึง':'ยังไม่มีกำหนดการในหมวดนี้')+'</div>';
   list.forEach(function(e){
@@ -587,6 +613,55 @@ $('dtFoot').addEventListener('click',async function(ev){
   }
 });
 
+/* ---------- จัดการกำหนดการ (ดูทั้งหมด / ลบทีละหลายรายการ) ---------- */
+var MG={cat:'all',past:false,sel:{}};
+function mgVisible(){
+  return S.events.filter(function(e){
+    return e.manual&&(MG.cat==='all'||e.cat===MG.cat)&&(MG.past||e.end>=S.today);
+  }).sort(function(a,b){return a.start<b.start?-1:a.start>b.start?1:0;});
+}
+function openManage(){MG.sel={};MG.cat='all';MG.past=false;$('mgPast').checked=false;$('mgAll').checked=false;renderManage();openModal('mdManage');}
+function renderManage(){
+  var cs=[['all','ทั้งหมด'],['national','สอบระดับชาติ'],['tcas','TCAS'],['guidance','งานแนะแนว'],['other','อื่น ๆ']];
+  $('mgChips').innerHTML=cs.map(function(c){return '<button type="button" class="chip'+(MG.cat===c[0]?' active':'')+'" data-mgcat="'+c[0]+'">'+c[1]+'</button>';}).join('');
+  var list=mgVisible(), h='';
+  if(!list.length)h='<div class="empty">ไม่มีกำหนดการที่ครูเพิ่มเองในหมวดนี้</div>';
+  list.forEach(function(e){
+    h+='<div class="mg-row cat-'+e.cat+(e.end<S.today?' past':'')+'"><input type="checkbox" data-mgsel="'+esc(e.id)+'" aria-label="เลือก '+esc(e.title)+'"'+(MG.sel[e.id]?' checked':'')+'>'+
+      '<div class="mt">'+esc(e.title)+'<div class="ms"><span class="badge cat">'+CAT_LABEL[e.cat]+'</span> '+esc(thRange(e.start,e.end))+(e.end<S.today?' · ผ่านไปแล้ว':'')+'</div></div>'+
+      '<button type="button" class="btn ghost sm" data-mgedit="'+esc(e.id)+'">แก้ไข</button>'+
+      '<button type="button" class="btn danger sm" data-mgone="'+esc(e.id)+'">ลบ</button></div>';
+  });
+  $('mgList').innerHTML=h;
+  var n=Object.keys(MG.sel).length;
+  $('mgDel').disabled=!n;$('mgDel').textContent=n?'ลบที่เลือก ('+n+')':'ลบที่เลือก';
+  $('mgNote').textContent='แสดง '+list.length+' รายการ · รายการเปิดรับสมัครทุน/โควตาที่ระบบใส่ให้เอง ลบที่นี่ไม่ได้ (ไปแก้ที่หน้าทุน/โควตา)';
+}
+async function mgDelete(ids){
+  if(!ids.length)return;
+  var names=ids.map(function(id){var e=findEvent(id);return e?'• '+e.title:'';}).filter(Boolean);
+  var msg=ids.length===1?'ลบกำหนดการ "'+(findEvent(ids[0])||{}).title+'" ใช่ไหม?':'ลบกำหนดการ '+ids.length+' รายการนี้ใช่ไหม?\n'+names.slice(0,8).join('\n')+(names.length>8?'\n… และอีก '+(names.length-8)+' รายการ':'');
+  if(!confirm(msg+'\nลบแล้วกู้คืนไม่ได้'))return;
+  $('mgDel').disabled=true;
+  var r=await sb.from('calendar_events').delete().in('id',ids).select('id');
+  if(r.error){renderManage();return toast(thError(r.error),true);}
+  var done=(r.data||[]).length;
+  ids.forEach(function(id){delete MG.sel[id];});
+  toast(done===ids.length?'ลบกำหนดการแล้ว '+done+' รายการ':'ลบได้ '+done+' จาก '+ids.length+' รายการ ลองโหลดหน้าใหม่',done!==ids.length);
+  await refreshEvents();renderManage();
+}
+$('mgChips').addEventListener('click',function(ev){var b=ev.target.closest('[data-mgcat]');if(!b)return;MG.cat=b.getAttribute('data-mgcat');$('mgAll').checked=false;renderManage();});
+$('mgPast').onchange=function(){MG.past=this.checked;$('mgAll').checked=false;renderManage();};
+$('mgAll').onchange=function(){var on=this.checked;mgVisible().forEach(function(e){if(on)MG.sel[e.id]=true;else delete MG.sel[e.id];});renderManage();};
+$('mgList').addEventListener('click',function(ev){
+  var one=ev.target.closest('[data-mgone]'),ed=ev.target.closest('[data-mgedit]'),cb=ev.target.closest('[data-mgsel]');
+  if(one)mgDelete([one.getAttribute('data-mgone')]);
+  else if(ed){closeModal('mdManage');openEventForm(ed.getAttribute('data-mgedit'));}
+  else if(cb){var id=cb.getAttribute('data-mgsel');if(cb.checked)MG.sel[id]=true;else delete MG.sel[id];renderManage();}
+});
+$('mgDel').onclick=function(){mgDelete(Object.keys(MG.sel));};
+$('mgClose').onclick=function(){closeModal('mdManage');};
+
 /* ---------- ฟอร์มกำหนดการ ---------- */
 function setCat(c){S.editCat=c;Array.prototype.forEach.call($('evCat').querySelectorAll('button'),function(b){var on=b.getAttribute('data-cat')===c;b.classList.toggle('active',on);b.setAttribute('aria-pressed',on);});}
 $('evCat').addEventListener('click',function(ev){var b=ev.target.closest('[data-cat]');if(b)setCat(b.getAttribute('data-cat'));});
@@ -684,6 +759,7 @@ $('root').addEventListener('click',function(ev){
   if(el.hasAttribute('data-act')){
     var a=el.getAttribute('data-act');
     if(a==='add')openEventForm(null);
+    else if(a==='manage')openManage();
     else if(a==='reload')location.reload();
     else if(a==='prev'||a==='next'){
       var y=S.ym.y,m=S.ym.m+(a==='next'?1:-1);
@@ -715,6 +791,7 @@ document.addEventListener('keydown',function(ev){
   if(ev.key!=='Escape')return;
   if($('mdDetail').classList.contains('show'))closeModal('mdDetail');
   if($('mdPin').classList.contains('show'))closeModal('mdPin');
+  if($('mdManage').classList.contains('show'))closeModal('mdManage');
 });
 
 /* ---------- เริ่มต้น ---------- */
