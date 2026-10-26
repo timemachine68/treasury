@@ -78,6 +78,11 @@ begin
   if new.status is distinct from 'มหาวิทยาลัย' then
     new.university_id := null; return new;
   end if;
+  -- แก้ข้อความชื่อโดยไม่ได้เปลี่ยน id (เช่น ฟอร์มรุ่นเก่า) ให้จับคู่ใหม่จากข้อความ
+  if tg_op = 'UPDATE' and new.institution is distinct from old.institution
+     and new.university_id is not distinct from old.university_id then
+    new.university_id := null;
+  end if;
   if new.university_id is null then
     new.university_id := public.match_university(new.institution);
   end if;
