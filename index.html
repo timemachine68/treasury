@@ -225,6 +225,7 @@ textarea.csvbox{font-family:monospace;font-size:.82rem;min-height:120px}
         <input id="liPass" type="password" autocomplete="current-password">
       </div>
       <button class="btn primary" id="btnLogin">เข้าสู่ระบบ</button>
+      <div class="msg ok" style="display:block;margin:14px 0 0;text-align:center">เข้าสู่ระบบแล้วจะเห็นข่าวประชาสัมพันธ์และกำหนดการสอบ</div>
     </div>
 
     <div id="bootstrapForm" class="hidden">
@@ -1003,9 +1004,12 @@ init();
 async function init(){
   const {data:{session:s}} = await sb.auth.getSession();
   session = s;
+  // หน้าแรก (home.html): เปิดเว็บครั้งแรกในแท็บนี้ให้ไปหน้าข่าว/ปฏิทินก่อน กลับมาจากหน้าอื่นแล้วอยู่หน้านี้ตามเดิม
+  if(session && !location.hash && !homeSeen()){ location.replace("home.html"); return; }
   if(session) await enterApp(); else await showLogin();
   sb.auth.onAuthStateChange((_e, s2)=>{ session = s2; });
 }
+function homeSeen(){ try{ return sessionStorage.getItem("pcw_home_seen")==="1"; }catch(e){ return true; } }
 
 async function showLogin(){
   $("appStage").classList.add("hidden");
@@ -1038,7 +1042,9 @@ async function enterApp(){
   $("tabWork").classList.toggle("hidden", !perms.work);
   $("tabSurvey").classList.toggle("hidden", !perms.survey);
   $("tabStrength").classList.toggle("hidden", !perms.strength);
-  const initial = perms.library? "library" : perms.work? "work" : perms.survey? "survey" : perms.strength? "strength" : "apps";
+  let initial = perms.library? "library" : perms.work? "work" : perms.survey? "survey" : perms.strength? "strength" : "apps";
+  if(location.hash==="#announce") initial = "announce";   // จากปุ่ม "ดูข่าวทั้งหมด" ในหน้าแรก
+  if(location.hash==="#apps") initial = "apps";           // จากปุ่ม "ระบบงานทั้งหมด" ในหน้าแรก
   switchView(initial);
   preloadAnnBadge();
 }
@@ -1065,7 +1071,8 @@ $("btnLogin").onclick = async ()=>{
   const {data, error} = await sb.auth.signInWithPassword({email:u+"@"+EMAIL_DOMAIN, password:p});
   $("btnLogin").disabled = false;
   if(error) return msg("loginMsg","ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง","err");
-  session = data.session; await enterApp();
+  session = data.session;
+  location.replace("home.html");
 };
 $("liPass").addEventListener("keydown", e=>{ if(e.key==="Enter") $("btnLogin").click(); });
 
