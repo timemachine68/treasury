@@ -685,7 +685,13 @@ textarea.csvbox{font-family:monospace;font-size:.82rem;min-height:120px}
     <div class="field"><label for="svStatus">หลังจบการศึกษา ฉันจะ… *</label>
       <select id="svStatus"></select>
     </div>
-    <div class="field hidden" id="svInstWrap"><label for="svInst" id="svInstLabel">ชื่อสถานศึกษา</label><input id="svInst"></div>
+    <div class="field hidden" id="svInstWrap"><label for="svInst" id="svInstLabel">ชื่อสถานศึกษา</label><input id="svInst" autocomplete="off">
+      <datalist id="svUniList"></datalist>
+      <p class="field hint hidden" id="svUniHint"></p>
+      <label class="hidden" id="svUniOtherWrap" style="display:flex;gap:8px;align-items:flex-start;font-weight:500;margin-top:6px;cursor:pointer">
+        <input type="checkbox" id="svUniOther" style="margin-top:4px"><span>ไม่มีในรายการ (ครูจะตรวจสอบชื่อให้)</span>
+      </label>
+    </div>
     <div class="field hidden" id="svProgWrap"><label for="svProg" id="svProgLabel">แผนการเรียน/สาขา</label><input id="svProg"></div>
     <div class="field hidden" id="svTcasWrap"><label for="svTcas">ติดรอบ TCAS</label>
       <select id="svTcas">
@@ -715,6 +721,16 @@ textarea.csvbox{font-family:monospace;font-size:.82rem;min-height:120px}
   </div>
 </div>
 
+<!-- ═══════════ โมดัล: ครูจัดชื่อมหาวิทยาลัยที่นักเรียนพิมพ์เอง ═══════════ -->
+<div class="modal-back" id="svUniFixModal">
+  <div class="modal" style="max-width:720px">
+    <h2>🎓 จัดชื่อมหาวิทยาลัยให้ตรงกัน</h2>
+    <p class="hint">ชื่อที่นักเรียนพิมพ์เองและยังไม่ตรงรายการ เลือกมหาวิทยาลัยที่ถูกต้อง ระบบจะจำชื่อนี้ไว้ รอบหน้าตรงกันเองอัตโนมัติ</p>
+    <div id="svUniFixList" style="max-height:55vh;overflow-y:auto"></div>
+    <div class="foot"><button class="btn ghost" id="btnSvUniFixClose">ปิด</button></div>
+  </div>
+</div>
+
 <!-- ═══════════ โมดัล: ครูดูผลสำรวจ ═══════════ -->
 <div class="modal-back" id="svRosterModal">
   <div class="modal" style="max-width:760px">
@@ -723,6 +739,7 @@ textarea.csvbox{font-family:monospace;font-size:.82rem;min-height:120px}
     <div class="toolbar">
       <div class="chips" id="svRooms"></div>
       <div class="spacer"></div>
+      <button class="btn note sm" id="btnSvUniFix">🎓 จัดชื่อมหาวิทยาลัย</button>
       <button class="btn note sm" id="btnSvCsv">⬇ ดาวน์โหลด CSV</button>
     </div>
     <div class="tbl-wrap" style="max-height:52vh;overflow-y:auto">
@@ -2117,6 +2134,40 @@ async function delRound(id){
 /* ── นักเรียน: ตอบแบบสำรวจ ── */
 $("btnSvFormCancel").onclick = ()=> $("svFormModal").classList.remove("show");
 $("svStatus").addEventListener("change", updateSvFields);
+/* ── ชื่อมหาวิทยาลัยมาตรฐาน (ตาราง iv_universities) ── */
+let svUnis = null;
+const normTh = t => String(t||"").toLowerCase().replace(/[\s.\-,()]/g,"");
+async function loadSvUnis(){
+  if(svUnis) return svUnis;
+  const {data} = await fetchAllRows(()=> sb.from("iv_universities").select("id,name,short_name,aliases,sort_order").eq("is_active",true).order("sort_order").order("name"));
+  svUnis = data||[];
+  $("svUniList").innerHTML = svUnis.map(u=>`<option value="${esc(u.name)}" label="${esc([u.short_name,...(u.aliases||[])].filter(Boolean).join(" · "))}"></option>`).join("");
+  return svUnis;
+}
+// ตรงกับรายการเมื่อเจอที่เดียวเท่านั้น (ชื่อเต็ม/ชื่อย่อ/ชื่อเรียกอื่น)
+function svMatchUni(text){
+  const n = normTh(text); if(!n || !svUnis) return null;
+  const hits = svUnis.filter(u=> [u.name,u.short_name,...(u.aliases||[])].some(x=> x && normTh(x)===n));
+  return hits.length===1 ? hits[0] : null;
+}
+function svUniMode(){
+  const r = svRounds.find(x=>x.id===svFormRid);
+  return !!r && r.grade==="ม.6" && $("svStatus").value==="มหาวิทยาลัย";
+}
+function svUniCheck(snap){
+  const on = svUniMode();
+  $("svInst").toggleAttribute("list", false);
+  if(on) $("svInst").setAttribute("list","svUniList");
+  $("svUniHint").classList.toggle("hidden", !on);
+  const t = $("svInst").value.trim();
+  const u = on? svMatchUni(t) : null;
+  if(u && snap) $("svInst").value = u.name;
+  $("svUniOtherWrap").classList.toggle("hidden", !(on && t && !u));
+  if(!(on && t && !u)) $("svUniOther").checked = false;
+  $("svUniHint").textContent = !on? "" : !t? "พิมพ์ชื่อสั้น ๆ เช่น บูรพา แล้วเลือกจากรายการ" : u? "✓ ตรงกับ: "+u.name : "ไม่พบในรายการ ลองพิมพ์ชื่อสั้น ๆ แล้วเลือกจากรายการ ถ้าไม่มีจริง ๆ ให้ติ๊ก \"ไม่มีในรายการ\"";
+}
+$("svInst").addEventListener("input", ()=> svUniCheck(false));
+$("svInst").addEventListener("change", ()=> svUniCheck(true));
 function openSvForm(rid){
   svFormRid = rid; msg("svFormMsg",""); svPhotoFile = null;
   const r = svRounds.find(x=>x.id===rid); const ans = svMine[rid];
@@ -2133,6 +2184,7 @@ function openSvForm(rid){
   $("svPhotoExisting").textContent = ans?.photo_path ? "มีรูปที่แนบไว้แล้ว (เลือกไฟล์ใหม่เพื่อเปลี่ยน)" : "";
   updateSvFields();
   $("svFormModal").classList.add("show");
+  loadSvUnis().then(()=>{ if(svFormRid===rid) svUniCheck(true); });
 }
 // บีบอัดรูปฝั่ง browser ก่อนอัปโหลด: resize ด้านยาวสุดไม่เกิน maxDim แล้ว export เป็น JPEG
 // ช่วยประหยัดพื้นที่ storage ได้มาก (รูปมือถือ 3-8MB → เหลือ ~150-400KB) โดยยังคมพอสำหรับทำสื่อ
@@ -2185,6 +2237,7 @@ function updateSvFields(){
   $("svProgLabel").textContent = m6? "คณะ/สาขา":"แผนการเรียน/สาขา";
   $("svOtherLabel").textContent = st==="ทำงาน"? "สถานที่ทำงาน/อาชีพ":"ระบุรายละเอียด";
   if(st==="ต่อ ม.4 โรงเรียนเดิม" && !$("svInst").value) $("svInst").value = "โรงเรียนพูลเจริญวิทยาคม";
+  svUniCheck(true);
 }
 $("btnSvFormSave").onclick = async ()=>{
   const st = $("svStatus").value;
@@ -2198,6 +2251,15 @@ $("btnSvFormSave").onclick = async ()=>{
     photo_consent: (svRounds.find(x=>x.id===svFormRid)?.grade==="ม.6" && st==="มหาวิทยาลัย" && $("svConsent").checked),
     submitted_at: new Date().toISOString()
   };
+  if(svUniMode()){
+    await loadSvUnis();
+    const typed = $("svInst").value.trim();
+    const u = svMatchUni(typed);
+    if(!typed) return msg("svFormMsg","กรุณาเลือกมหาวิทยาลัยค่ะ","err");
+    if(u){ row.institution = u.name; row.university_id = u.id; }
+    else if($("svUniOther").checked){ row.institution = typed; row.university_id = null; }
+    else return msg("svFormMsg","ยังไม่พบชื่อนี้ในรายการ เลือกจากรายการ หรือติ๊ก \"ไม่มีในรายการ\" ค่ะ","err");
+  }
   $("btnSvFormSave").disabled = true;
   if(svPhotoFile){
     if(svPhotoFile.size > 10*1024*1024){
@@ -2229,9 +2291,47 @@ function openSvRoster(rid){
   renderSvRoster();
   $("svRosterModal").classList.add("show");
 }
+/* ── ครู: จัดชื่อมหาวิทยาลัยที่พิมพ์เอง ── */
+$("btnSvUniFixClose").onclick = ()=> $("svUniFixModal").classList.remove("show");
+$("btnSvUniFix").onclick = async ()=>{ await loadSvUnis(); renderSvUniFix(); $("svUniFixModal").classList.add("show"); };
+function renderSvUniFix(){
+  const groups = {};
+  svAllResp.filter(x=> x.status==="มหาวิทยาลัย" && !x.university_id && x.institution).forEach(x=>{
+    const k = x.institution.trim(); groups[k] = (groups[k]||0)+1;
+  });
+  const keys = Object.keys(groups).sort((a,b)=> groups[b]-groups[a] || a.localeCompare(b,"th"));
+  const opts = `<option value="">— เลือกมหาวิทยาลัย —</option>` + svUnis.map(u=>`<option value="${u.id}">${esc(u.name)}</option>`).join("") + `<option value="__new">➕ เพิ่มเป็นมหาวิทยาลัยใหม่ (ใช้ชื่อนี้)</option>`;
+  $("svUniFixList").innerHTML = keys.length? keys.map((k,i)=>`
+    <div class="field" style="border-bottom:1px solid var(--line,#e6e0cf);padding:8px 0">
+      <div><b>${esc(k)}</b> <span class="hint">· ${groups[k]} คน</span></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px">
+        <select data-fixsel="${i}" style="flex:1;min-width:220px">${opts}</select>
+        <button class="btn primary sm" data-fixbtn="${i}">จัดให้</button>
+      </div>
+      ${/[,/&]|และ/.test(k)? '<p class="hint">ดูเหมือนพิมพ์หลายแห่งในช่องเดียว ให้นักเรียนแก้ในฟอร์มจะถูกต้องกว่าค่ะ</p>':""}
+    </div>`).join("") : `<p style="text-align:center;color:var(--ink-soft)">ชื่อตรงรายการครบทุกคนแล้ว 🎉</p>`;
+  $("svUniFixList").querySelectorAll("[data-fixbtn]").forEach(b=> b.onclick = async ()=>{
+    const i = +b.dataset.fixbtn, text = keys[i], sel = $("svUniFixList").querySelector(`[data-fixsel="${i}"]`).value;
+    if(!sel) return toast("เลือกมหาวิทยาลัยก่อนค่ะ");
+    b.disabled = true;
+    let uid = sel;
+    if(sel==="__new"){
+      const maxSort = Math.max(0, ...svUnis.map(u=>u.sort_order||0));
+      const {data, error} = await sb.from("iv_universities").insert({name:text, short_name:text, aliases:[], sort_order:maxSort+1, is_active:true}).select("id").single();
+      if(error){ b.disabled=false; return toast("เพิ่มไม่สำเร็จ: "+error.message); }
+      uid = data.id; svUnis = null; await loadSvUnis();
+    }
+    const {data:n, error} = await sb.rpc("survey_map_university", {p_text:text, p_university_id:uid});
+    b.disabled = false;
+    if(error) return toast("จัดไม่สำเร็จ: "+error.message);
+    toast("จัดชื่อให้ "+n+" คนแล้ว ✅");
+    await loadSurvey(); renderSvUniFix(); if(svRid) renderSvRoster();
+  });
+}
 function svTargets(r){ return svStudents.filter(s=> gradeOf(s.class_room)===r.grade); }
 function renderSvRoster(){
   const r = svRounds.find(x=>x.id===svRid); if(!r) return;
+  $("btnSvUniFix").classList.toggle("hidden", r.grade!=="ม.6");
   const respMap = {}; svAllResp.filter(x=>x.round_id===svRid).forEach(x=> respMap[x.student_id]=x);
   let list = svTargets(r);
   const rooms = ["all", ...[...new Set(list.map(s=>s.class_room).filter(Boolean))].sort(roomCompare)];
