@@ -542,7 +542,9 @@ function renderCalendar(){
       evs.forEach(function(e,k){
         dots+='<i class="cat-'+e.cat+'"></i>';
         if(k>=MAX_IN_CELL)return;
-        inner+='<span class="ev cat-'+e.cat+'">'+esc(e.title)+'</span>';
+        /* สอบระดับชาติ: ขึ้นชื่อทุกวัน; หมวดอื่น: ขึ้นชื่อวันแรกกับวันสุดท้าย วันกลางเป็นแถบสีเปล่า */
+        var head=e.cat==='national'||e.start===d||e.end===d;
+        inner+=head?'<span class="ev cat-'+e.cat+'">'+esc(e.title)+'</span>':'<span class="ev cont cat-'+e.cat+'" title="'+esc(e.title)+'"></span>';
       });
       if(evs.length>MAX_IN_CELL)inner+='<span class="more">+'+(evs.length-MAX_IN_CELL)+' รายการ</span>';
       if(dots)inner+='<span class="dots">'+dots+'</span>';
