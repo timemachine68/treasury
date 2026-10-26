@@ -701,6 +701,13 @@ textarea.csvbox{font-family:monospace;font-size:.82rem;min-height:120px}
       <img id="svPhotoPreview" class="hidden" style="max-width:120px;border-radius:8px;margin-top:8px;display:block">
       <p class="field hint" id="svPhotoExisting"></p>
     </div>
+    <div class="field hidden" id="svConsentWrap">
+      <label style="display:flex;gap:8px;align-items:flex-start;font-weight:500;cursor:pointer">
+        <input type="checkbox" id="svConsent" style="margin-top:4px">
+        <span>🎉 ยินยอมให้โรงเรียนนำชื่อ รูป มหาวิทยาลัย และคณะ ไปทำภาพแสดงความยินดี และเผยแพร่ในช่องทางของโรงเรียน</span>
+      </label>
+      <p class="field hint">ไม่ติ๊กก็ไม่เป็นไรค่ะ ไม่มีผลต่อการตอบ และกลับมาแก้ได้ภายหลัง</p>
+    </div>
     <div class="foot">
       <button class="btn ghost" id="btnSvFormCancel">ยกเลิก</button>
       <button class="btn primary" id="btnSvFormSave">บันทึกคำตอบ</button>
@@ -2122,6 +2129,7 @@ function openSvForm(rid){
   $("svPhotoWrap").classList.toggle("hidden", !r.allow_photo);
   $("svPhoto").value = "";
   $("svPhotoPreview").classList.add("hidden"); $("svPhotoPreview").src = "";
+  $("svConsent").checked = ans?.photo_consent === true;
   $("svPhotoExisting").textContent = ans?.photo_path ? "มีรูปที่แนบไว้แล้ว (เลือกไฟล์ใหม่เพื่อเปลี่ยน)" : "";
   updateSvFields();
   $("svFormModal").classList.add("show");
@@ -2171,6 +2179,7 @@ function updateSvFields(){
   $("svInstWrap").classList.toggle("hidden", !inst);
   $("svProgWrap").classList.toggle("hidden", !inst);
   $("svTcasWrap").classList.toggle("hidden", !(m6 && st==="มหาวิทยาลัย"));
+  $("svConsentWrap").classList.toggle("hidden", !(m6 && st==="มหาวิทยาลัย"));
   $("svOtherWrap").classList.toggle("hidden", !det);
   $("svInstLabel").textContent = m6? "ชื่อมหาวิทยาลัย/สถาบัน":"ชื่อสถานศึกษา";
   $("svProgLabel").textContent = m6? "คณะ/สาขา":"แผนการเรียน/สาขา";
@@ -2186,6 +2195,7 @@ $("btnSvFormSave").onclick = async ()=>{
     program: NEED_INST.includes(st)? ($("svProg").value.trim()||null) : null,
     tcas_round: (st==="มหาวิทยาลัย")? $("svTcas").value : null,
     other_detail: NEED_DETAIL.includes(st)? ($("svOther").value.trim()||null) : null,
+    photo_consent: (svRounds.find(x=>x.id===svFormRid)?.grade==="ม.6" && st==="มหาวิทยาลัย" && $("svConsent").checked),
     submitted_at: new Date().toISOString()
   };
   $("btnSvFormSave").disabled = true;
@@ -2241,10 +2251,12 @@ function renderSvRoster(){
     return `<tr><td><b>${esc(s.username)}</b></td><td>${esc(s.display_name)}</td><td>${esc(s.class_room||"-")}</td>
       <td>${a? `<span class="status sent">${esc(a.status)}</span>`:'<span class="status missing">ยังไม่ตอบ</span>'}</td>
       <td>${esc(detail)||"-"}</td><td>${a? thDateTime(a.submitted_at):"-"}</td>
-      <td>${a?.photo_path? `<button class="btn ghost sm" data-svphoto="${esc(a.photo_path)}">📷 ดูรูป</button>`:"-"}</td></tr>`;
+      <td>${a?.photo_path && canViewSvPhotos()? `<button class="btn ghost sm" data-svphoto="${esc(a.photo_path)}">📷 ดูรูป</button>`:"-"}</td></tr>`;
   }).join("") || `<tr><td colspan="7" style="text-align:center;color:var(--ink-soft)">ไม่มีนักเรียน${r.grade}ในระบบ</td></tr>`;
   $("svRows").querySelectorAll("[data-svphoto]").forEach(btn=> btn.onclick = ()=> openSvPhoto(btn.dataset.svphoto, btn));
 }
+// รูปเปิดดูได้เฉพาะ admin และครูแนะแนว (ตรงกับสิทธิ์ใน storage)
+function canViewSvPhotos(){ return profile && (profile.role==="admin" || (profile.role==="teacher" && profile.is_guidance===true)); }
 async function openSvPhoto(path, btn){
   btn.disabled = true;
   const {data, error} = await sb.storage.from("survey-photos").createSignedUrl(path, 3600);
