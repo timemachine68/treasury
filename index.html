@@ -605,6 +605,19 @@ textarea.csvbox{font-family:monospace;font-size:.82rem;min-height:120px}
   </div>
 </div>
 
+<!-- ═══════════ โมดัล: ข้อความโพสต์ Facebook ═══════════ -->
+<div class="modal-back" id="fbModal">
+  <div class="modal">
+    <h2>📘 ข้อความสำหรับโพสต์ Facebook</h2>
+    <div class="field"><label for="fbText">แก้ไขข้อความได้ก่อนคัดลอก</label><textarea id="fbText" style="min-height:260px"></textarea></div>
+    <div id="fbHint" style="font-size:.82rem;color:var(--ink-soft);margin-top:-4px"></div>
+    <div class="foot">
+      <button class="btn ghost" id="btnFbClose">ปิด</button>
+      <button class="btn primary" id="btnFbCopy">คัดลอกข้อความ</button>
+    </div>
+  </div>
+</div>
+
 <!-- ═══════════ โมดัล: นักเรียนส่งงาน ═══════════ -->
 <div class="modal-back" id="subModal">
   <div class="modal" style="max-width:460px">
@@ -1907,7 +1920,7 @@ function annCard(a, manage){
     <h3>${esc(a.title)}</h3>
     ${a.content?`<p class="desc">${esc(a.content)}</p>`:""}
     <div class="actions">${annAttachBtn(a)}</div>
-    ${manage?`<div class="actions">${mine?`<button class="btn ghost sm" data-annedit="${a.id}">แก้ไข</button><button class="btn danger sm" data-anndel="${a.id}">ลบ</button>`:""}</div>`:""}
+    ${manage?`<div class="actions"><button class="btn ghost sm" data-annfb="${a.id}">📘 ข้อความโพสต์ Facebook</button>${mine?`<button class="btn ghost sm" data-annedit="${a.id}">แก้ไข</button><button class="btn danger sm" data-anndel="${a.id}">ลบ</button>`:""}</div>`:""}
     <div class="meta"><span>👩‍🏫 ${esc(a.creator_name||"-")}</span><span>${thDate(a.created_at)}</span></div>
   </article>`;
 }
@@ -1918,6 +1931,7 @@ function bindAnnCards(manage){
   });
   $("annGrid").querySelectorAll("[data-annatt]").forEach(b=> b.onclick=(e)=>{ e.stopPropagation(); openAnnAttach(b.dataset.annatt,b); });
   if(manage){
+    $("annGrid").querySelectorAll("[data-annfb]").forEach(b=> b.onclick=(e)=>{ e.stopPropagation(); openFbModal(b.dataset.annfb); });
     $("annGrid").querySelectorAll("[data-annedit]").forEach(b=> b.onclick=(e)=>{ e.stopPropagation(); openAnnModal(b.dataset.annedit); });
     $("annGrid").querySelectorAll("[data-anndel]").forEach(b=> b.onclick=(e)=>{ e.stopPropagation(); delAnn(b.dataset.anndel); });
   }
@@ -1937,6 +1951,40 @@ async function openAnnAttach(aid, btn){
   if(error) return toast("เปิดไฟล์แนบไม่สำเร็จ: "+error.message);
   window.open(data.signedUrl, "_blank");
 }
+
+/* ── ข้อความโพสต์ Facebook (ครูคัดลอกไปวางในเพจเอง) ── */
+function fbCaption(a){
+  const FB_MAX = 1100;                         // เกินนี้ Facebook จะพับ "ดูเพิ่มเติม" ตัดที่ท้ายบรรทัดให้อ่านรู้เรื่อง
+  const url = (a.external_url||"").trim();
+  const ok = /^https?:\/\//i.test(url);
+  let body = String(a.content||"").replace(/\r/g,"").replace(/\n{3,}/g,"\n\n").trim();
+  if(body.length > FB_MAX){
+    body = body.slice(0, FB_MAX);
+    const cut = body.lastIndexOf("\n");
+    if(cut > FB_MAX*0.5) body = body.slice(0, cut);
+    body = body.trim() + "\n…(อ่านรายละเอียดครบที่ห้องแนะแนว)";
+  }
+  const out = ["📢 "+String(a.title||"").trim()];
+  if(body) out.push(body);
+  out.push(ok ? "🔗 ดูรายละเอียด/สมัครที่: "+url : "📍 สอบถามเพิ่มเติมที่ห้องแนะแนว");
+  out.push("— งานแนะแนว โรงเรียนพูลเจริญวิทยาคม");
+  return out.join("\n\n");
+}
+function openFbModal(id){
+  const a = announcements.find(x=>x.id===id); if(!a) return;
+  $("fbText").value = fbCaption(a);
+  const ok = /^https?:\/\//i.test((a.external_url||"").trim());
+  $("fbHint").textContent = (ok ? "" : "ข่าวนี้ไม่มีลิงก์ภายนอก (ลิงก์คลังต้อง login จึงไม่ใส่ให้) ")
+    + "ตรวจก่อนโพสต์: Facebook เป็นพื้นที่สาธารณะ ห้ามมีชื่อ คะแนน หรือผลงานของนักเรียนรายคน";
+  $("fbModal").classList.add("show");
+}
+$("btnFbClose").onclick = ()=> $("fbModal").classList.remove("show");
+$("btnFbCopy").onclick = async ()=>{
+  const t = $("fbText").value;
+  try{ await navigator.clipboard.writeText(t); }
+  catch(e){ $("fbText").select(); try{ document.execCommand("copy"); }catch(_){ return toast("คัดลอกไม่สำเร็จ ลองลากเลือกข้อความแล้วคัดลอกเอง"); } }
+  toast("คัดลอกแล้ว ไปวางในเพจ Facebook ได้เลย");
+};
 
 /* ── จัดการข่าว (admin/ครูที่มีสิทธิ์) ── */
 $("btnAddAnn").onclick = ()=> openAnnModal(null);
