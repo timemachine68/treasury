@@ -491,6 +491,7 @@ textarea.csvbox{font-family:monospace;font-size:.82rem;min-height:120px}
             <tbody id="ovRows"></tbody>
           </table>
         </div>
+        <div id="ovMore" style="text-align:center;margin-top:12px"></div>
       </div>
       <div id="ovLoading" class="loading hidden">กำลังโหลด…</div>
     </div>
@@ -924,7 +925,7 @@ async function fetchAllStudents(cols){
   let all = [], from = 0, pageSize = 1000;
   while(true){
     const {data, error} = await sb.from("profiles").select(cols)
-      .eq("role","student").order("class_room").range(from, from+pageSize-1);
+      .eq("role","student").order("class_room").order("id").range(from, from+pageSize-1);
     if(error){ console.error("fetchAllStudents error:", error.message); break; }
     all = all.concat(data||[]);
     if(!data || data.length < pageSize) break;
@@ -940,7 +941,7 @@ async function fetchAllTgatAttempts(){
   while(true){
     const {data, error} = await sb.from("tgat_prep_attempts")
       .select("student_id,subjects,raw_score,max_score,percentage,correct_count,question_count,completed_at")
-      .order("completed_at", {ascending:false}).range(from, from+pageSize-1);
+      .order("completed_at", {ascending:false}).order("id").range(from, from+pageSize-1);
     if(error){ console.error("fetchAllTgatAttempts error:", error.message); break; }
     all = all.concat(data||[]);
     if(!data || data.length < pageSize) break;
@@ -2891,6 +2892,9 @@ async function delTag(id){
 
 /* ═══════════ ภาพรวมนักเรียน 360° ═══════════ */
 let ovStudents=[], ovAssignments=[], ovSubmissions=[], ovRounds=[], ovResponses=[], ovAssess=[], ovTags=[], ovTgat=[], ovF={room:"all",q:""}, ovSid=null;
+// ตารางภาพรวมแสดงทีละ OV_PAGE แถว (กด "แสดงเพิ่ม") — วาด 2,000+ แถวพร้อมกันทำให้แท็บเล็ตเก่าค้าง
+const OV_PAGE = 100;
+let ovShow = OV_PAGE, ovByStudent = null, ovQTimer = null;
 // ovTags รวมทั้ง RIASEC tags และ award records (type="award")
 
 // เชื่อมข้อมูลจากระบบย่อยอื่นๆ ("ระบบของเรา") เข้ามารวมในภาพรวม 360°
@@ -2934,6 +2938,8 @@ async function loadOverview(){
   ]);
   ovStudents=stu||[]; ovAssignments=asg||[]; ovSubmissions=sub||[]; ovRounds=rnd||[]; ovResponses=resp||[]; ovAssess=asm||[]; ovTags=tg||[]; ovTgat=tgat||[];
   ovQuota=qa||[]; ovQuotaLookup=ql||[]; ovScholarship=sa||[]; ovScholarshipLookup=sl||[]; ovWorkPermit=wp||[]; ovChangPhueak=cp||[]; ovIv=iv||[]; ovIvCat=ivc||[]; ovVulnerable=vp||[]; ovTcasAwards=tca||[];
+  ovBuildIndex_();
+  ovShow = OV_PAGE;
   renderOverview();
   $("ovLoading").classList.add("hidden");
 }
@@ -2952,28 +2958,49 @@ function ovLatestRoundFor_(grade){
   return rounds[0] || null;
 }
 
-$("ovQ").addEventListener("input", ()=>{ ovF.q=$("ovQ").value.trim().toLowerCase(); renderOverview(); });
+// จัดกลุ่มข้อมูลตามนักเรียนครั้งเดียวหลังโหลด (แทนการ filter ทั้งตารางซ้ำทุกแถว)
+function ovGroupBy_(rows, key){
+  const m = new Map();
+  for(const r of rows){ const k=r[key]; if(!k) continue; if(!m.has(k)) m.set(k, []); m.get(k).push(r); }
+  return m;
+}
+function ovBuildIndex_(){
+  const byNew = (f)=> (x,y)=>(y[f]||"").localeCompare(x[f]||"");
+  const sch = ovGroupBy_(ovScholarship, "profile_id"); sch.forEach(l=> l.sort(byNew("submitted_at")));
+  const wp  = ovGroupBy_(ovWorkPermit, "student_id");  wp.forEach(l=> l.sort(byNew("created_at")));
+  ovByStudent = { awards: ovGroupBy_(ovTcasAwards, "profile_id"), scholarship: sch, workPermit: wp };
+}
+
+// หน่วง 300 ms หลังพิมพ์ค่อยค้นหา (ไม่วาดตารางใหม่ทุกตัวอักษร)
+$("ovQ").addEventListener("input", ()=>{
+  clearTimeout(ovQTimer);
+  ovQTimer = setTimeout(()=>{ ovF.q=$("ovQ").value.trim().toLowerCase(); ovShow=OV_PAGE; renderOverview(); }, 300);
+});
 
 function renderOverview(){
   const rooms = ["all", ...[...new Set(ovStudents.map(s=>s.class_room).filter(Boolean))].sort(roomCompare)];
   $("ovRooms").innerHTML = rooms.map(r=>`<button class="chip ${ovF.room===r?"active":""}" data-ovr="${esc(r)}">${r==="all"?"ทุกห้อง":esc(r)}</button>`).join("");
-  $("ovRooms").querySelectorAll(".chip").forEach(b=> b.onclick=()=>{ ovF.room=b.dataset.ovr; renderOverview(); });
+  $("ovRooms").querySelectorAll(".chip").forEach(b=> b.onclick=()=>{ ovF.room=b.dataset.ovr; ovShow=OV_PAGE; renderOverview(); });
+  if(!ovByStudent) ovBuildIndex_();
 
   let list = ovStudents;
   if(ovF.room!=="all") list = list.filter(s=>s.class_room===ovF.room);
   if(ovF.q) list = list.filter(s=> ((s.username||"")+" "+(s.display_name||"")+" "+(s.class_room||"")).toLowerCase().includes(ovF.q));
   list = [...list].sort((a,b)=> roomCompare(a.class_room, b.class_room) || (a.username||"").localeCompare(b.username||""));
 
-  $("ovRows").innerHTML = list.map(s=>{
+  const total = list.length;
+  const shown = list.slice(0, ovShow);
+  const EMPTY = [];
+  $("ovRows").innerHTML = shown.map(s=>{
     // ผลงานนักเรียน (เฉพาะที่ครูแนะแนวยืนยันแล้ว)
-    const aw = ovTcasAwards.filter(x=>x.profile_id===s.id).length;
+    const aw = (ovByStudent.awards.get(s.id)||EMPTY).length;
     const awLabel = aw ? `🏅 ${aw} รายการ` : "-";
     // ทุนการศึกษา
-    const sch = ovScholarship.filter(x=>x.profile_id===s.id).sort((x,y)=>(y.submitted_at||"").localeCompare(x.submitted_at||""));
+    const sch = ovByStudent.scholarship.get(s.id)||EMPTY;
     const schGot = sch.some(x=>x.status==="approved");
     const schLabel = !sch.length ? "-" : schGot ? `🎓 ${OV_SCHOLARSHIP_STATUS.approved}` : `${esc(OV_SCHOLARSHIP_STATUS[sch[0].status]||sch[0].status)}${sch.length>1?` (${sch.length} ทุน)`:""}`;
     // ขออนุญาตทำงาน/ฝึกงาน (ล่าสุด)
-    const wpl = ovWorkPermit.filter(x=>x.student_id===s.id).sort((x,y)=>(y.created_at||"").localeCompare(x.created_at||""));
+    const wpl = ovByStudent.workPermit.get(s.id)||EMPTY;
     const wpLabel = !wpl.length ? "-" : `${esc(OV_WORKPERMIT_TYPE[wpl[0].request_type]||"")} · ${esc(OV_WORKPERMIT_STATUS[wpl[0].status]||wpl[0].status)}${wpl.length>1?` (${wpl.length} คำขอ)`:""}`;
     return `<tr>
       <td><b>${esc(s.username)}</b></td>
@@ -2986,6 +3013,19 @@ function renderOverview(){
     </tr>`;
   }).join("") || `<tr><td colspan="7" style="text-align:center;color:var(--ink-soft)">ไม่พบนักเรียน</td></tr>`;
   $("ovRows").querySelectorAll("[data-ovp]").forEach(b=> b.onclick=()=>openOvModal(b.dataset.ovp));
+
+  // แถบ "แสดงเพิ่ม"
+  const more = $("ovMore");
+  if(total > shown.length){
+    const next = Math.min(OV_PAGE, total - shown.length);
+    more.innerHTML = `<div class="field hint" style="margin-bottom:6px">แสดง ${shown.length.toLocaleString("th-TH")} จาก ${total.toLocaleString("th-TH")} คน</div>`
+      + `<button class="btn primary" id="btnOvMore">แสดงเพิ่มอีก ${next} คน</button>`
+      + ` <button class="btn sm" id="btnOvAll" style="margin-left:6px">แสดงทั้งหมด</button>`;
+    $("btnOvMore").onclick = ()=>{ ovShow += OV_PAGE; renderOverview(); };
+    $("btnOvAll").onclick  = ()=>{ ovShow = total; renderOverview(); };
+  } else {
+    more.innerHTML = total ? `<div class="field hint">แสดงครบ ${total.toLocaleString("th-TH")} คน</div>` : "";
+  }
 }
 
 $("btnOvClose").onclick = ()=> $("ovModal").classList.remove("show");
