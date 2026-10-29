@@ -1397,6 +1397,8 @@ async function buildLetterBlob(r, stu, f){
     SIGNER: f.signer || SIGNER_DEFAULT
   };
   for(const k in vals) xml = xml.split("{{"+k+"}}").join(xmlEsc(vals[k]));
+  // ใส่ตัวคั่นความกว้างศูนย์ (U+200B) ระหว่างคำไทยทุกจุดในหนังสือ ให้ Word ตัดบรรทัดตามคำ ข้อความเต็มบรรทัด ไม่เหลือที่ว่างด้านขวา (จัดชิดซ้ายตามต้นฉบับ)
+  xml = xml.replace(/(<w:t(?: [^>]*)?>)([^<]*)(<\/w:t>)/g, (m,a,t,c)=> a + zw(t) + c);
   zip.file("word/document.xml", xml);
   return zip.generateAsync({type:"blob", mimeType:"application/vnd.openxmlformats-officedocument.wordprocessingml.document", compression:"DEFLATE"});
 }
