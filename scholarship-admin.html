@@ -206,12 +206,22 @@
       <label class="fld"><span class="lbl">รายละเอียด</span>
         <textarea id="eDesc" placeholder="อธิบายวัตถุประสงค์และคุณสมบัติผู้สมัคร"></textarea></label>
       <div class="grid3">
-        <label class="fld"><span class="lbl">จำนวนเงินต่อทุน (บาท)</span>
+        <label class="fld" id="amtOneWrap"><span class="lbl">จำนวนเงินต่อทุน (บาท)</span>
           <input id="eAmount" type="number" min="0" step="100" placeholder="5000"></label>
         <label class="fld"><span class="lbl">จำนวนทุน</span>
           <input id="eQuota" type="number" min="1" step="1" value="1"></label>
         <label class="fld"><span class="lbl">ปิดรับสมัคร</span>
           <input id="eCloses" type="date"></label>
+      </div>
+      <label style="display:flex;gap:8px;align-items:center;margin:2px 0 10px;cursor:pointer">
+        <input type="checkbox" id="eSplit" style="width:auto;margin:0">
+        <span>จำนวนเงินของ ม.ต้น และ ม.ปลาย ไม่เท่ากัน</span>
+      </label>
+      <div id="splitBox" class="grid2 hidden">
+        <label class="fld"><span class="lbl">ม.ต้น (ม.1–3) ได้ทุนละ (บาท)</span>
+          <input id="eAmtLo" type="number" min="0" step="100" placeholder="เช่น 3000"></label>
+        <label class="fld"><span class="lbl">ม.ปลาย (ม.4–6) ได้ทุนละ (บาท)</span>
+          <input id="eAmtUp" type="number" min="0" step="100" placeholder="เช่น 5000"></label>
       </div>
       <div id="statusBox" class="hidden">
         <label class="fld"><span class="lbl">สถานะของทุน</span>
@@ -334,10 +344,35 @@ async function afterLogin(){
 async function logout(){await sb.auth.signOut();ME=null;$("#whoami").classList.add("hidden");show("login");}
 
 /* ---- list ---- */
+// ข้อความจำนวนเงิน: ถ้าแยกระดับ แสดง ม.ต้น / ม.ปลาย
+function moneyText(s){
+  const f=n=>Number(n).toLocaleString("th-TH");
+  const has=v=>v!==null&&v!==undefined&&v!=="";
+  if(has(s.amount_lower)||has(s.amount_upper)){
+    const lo=has(s.amount_lower)?s.amount_lower:s.amount_per_grant;
+    const up=has(s.amount_upper)?s.amount_upper:s.amount_per_grant;
+    return `ม.ต้น ${has(lo)?f(lo):"—"} · ม.ปลาย ${has(up)?f(up):"—"} บาท`;
+  }
+  return (s.amount_per_grant?f(s.amount_per_grant):"—")+" บาท";
+}
+function toggleSplit(){
+  const on=$("#eSplit").checked;
+  $("#splitBox").classList.toggle("hidden",!on);
+  $("#amtOneWrap").classList.toggle("hidden",on);
+}
+function setAmounts(s){
+  const has=v=>v!==null&&v!==undefined&&v!=="";
+  const split=!!s&&(has(s.amount_lower)||has(s.amount_upper));
+  $("#eSplit").checked=split;
+  $("#eAmount").value=s&&!split?(s.amount_per_grant??""):"";
+  $("#eAmtLo").value=split?(has(s.amount_lower)?s.amount_lower:(s.amount_per_grant??"")):"";
+  $("#eAmtUp").value=split?(has(s.amount_upper)?s.amount_upper:(s.amount_per_grant??"")):"";
+  toggleSplit();
+}
 async function loadList(){
   const box=$("#schList"); box.innerHTML='<div class="spin"></div>';
   const {data,error}=await sb.from("scholarships")
-    .select("id,name,provider,status,quota,amount_per_grant,academic_year,closes_at,scholarship_criteria(count),applications(count)")
+    .select("id,name,provider,status,quota,amount_per_grant,amount_lower,amount_upper,academic_year,closes_at,scholarship_criteria(count),applications(count)")
     .order("created_at",{ascending:false});
   if(error){box.innerHTML='<div class="empty">โหลดข้อมูลไม่สำเร็จ ลองเปิดหน้านี้ใหม่อีกครั้ง</div>';return;}
   LIST=data||[];
@@ -350,12 +385,12 @@ async function loadList(){
   LIST.forEach(s=>{
     const nCrit=s.scholarship_criteria?.[0]?.count ?? 0;
     const nApp=s.applications?.[0]?.count ?? 0;
-    const money=s.amount_per_grant?Number(s.amount_per_grant).toLocaleString("th-TH"):"—";
+    const money=moneyText(s);
     const expired=s.status==="open" && s.closes_at && new Date(s.closes_at)<new Date();
     const el=document.createElement("div");el.className="srow";
     el.innerHTML=`<div class="grow">
         <h3>${esc(s.name)}</h3>
-        <div class="meta">ปีการศึกษา ${esc(s.academic_year)} · ${money} บาท × ${s.quota} ทุน · ${nCrit} เกณฑ์ · ${nApp} ใบสมัคร</div>
+        <div class="meta">ปีการศึกษา ${esc(s.academic_year)} · ${money} × ${s.quota} ทุน · ${nCrit} เกณฑ์ · ${nApp} ใบสมัคร</div>
         <div class="meta">ปิดรับสมัคร: ${fmtDate(s.closes_at)} ${expired?'<span class="tag-warn">เลยกำหนดแล้ว</span>':''}</div>
       </div>
       <div class="acts">
@@ -387,11 +422,12 @@ function blankCriterion(){
   return{id:null,origWeight:null,criterion_key:p.key,label:p.label,weight:0,higher_is_better:p.higher,
     rules:[{max:"",points:""}]};
 }
+$("#eSplit").addEventListener("change",toggleSplit);
 function openNew(){
   EDITING=null;APPS={total:0,approved:0};LOCK_CRIT=false;CRITERIA=[];CRITERIA=[blankCriterion()];
   $("#edMode").textContent="สร้างทุนใหม่";
   $("#eName").value="";$("#eProvider").value="";$("#eYear").value=String(currentAcademicYear());
-  $("#eDesc").value="";$("#eAmount").value="";$("#eQuota").value="1";$("#eCloses").value="";
+  $("#eDesc").value="";setAmounts(null);$("#eQuota").value="1";$("#eCloses").value="";
   msg($("#editMsg"),"","");msg($("#listMsg"),"","");
   setupEditor();renderCriteria();show("edit");
 }
@@ -411,7 +447,7 @@ async function openEdit(id){
   LOCK_CRIT=LOCKED_STATUS.includes(s.status)||APPS.approved>0;
   $("#edMode").textContent="แก้ไขทุน · "+(STATUS_LABEL[s.status]||s.status);
   $("#eName").value=s.name||"";$("#eProvider").value=s.provider||"";$("#eYear").value=s.academic_year||String(currentAcademicYear());
-  $("#eDesc").value=s.description||"";$("#eAmount").value=s.amount_per_grant??"";$("#eQuota").value=s.quota??1;
+  $("#eDesc").value=s.description||"";setAmounts(s);$("#eQuota").value=s.quota??1;
   $("#eCloses").value=toLocalDate(s.closes_at);
   CRITERIA=(rc.data||[]).map(c=>({id:c.id,origWeight:Number(c.weight),criterion_key:c.criterion_key,label:c.label,
     weight:Math.round(c.weight*10000)/100,higher_is_better:c.higher_is_better,
@@ -646,12 +682,19 @@ async function save(kind){
   if(status==="open"&&!$("#eCloses").value&&
      !confirm("ยังไม่ได้ตั้งวันปิดรับสมัคร ทุนจะเปิดรับไม่มีกำหนด ยืนยันหรือไม่?"))return;
 
-  const amt=$("#eAmount").value;
+  const split=$("#eSplit").checked;
+  const amt=$("#eAmount").value, lo=$("#eAmtLo").value, up=$("#eAmtUp").value;
+  if(split){
+    if(lo===""||up===""){msg($("#editMsg"),"กรุณากรอกจำนวนเงินให้ครบทั้ง ม.ต้น และ ม.ปลาย (หรือเอาเครื่องหมายถูกออกถ้าเท่ากัน)","err");window.scrollTo(0,0);return;}
+    if(Number(lo)<0||Number(up)<0){msg($("#editMsg"),"จำนวนเงินต้องไม่ติดลบ","err");window.scrollTo(0,0);return;}
+  }
   const fields={
     name, provider:$("#eProvider").value.trim()||null,
     description:$("#eDesc").value.trim()||null,
     academic_year:year,
-    amount_per_grant:amt===""?null:Number(amt),
+    amount_per_grant:split?null:(amt===""?null:Number(amt)),
+    amount_lower:split?Number(lo):null,
+    amount_upper:split?Number(up):null,
     quota,
     closes_at:$("#eCloses").value?new Date($("#eCloses").value+"T23:59:59").toISOString():null,
     status,
