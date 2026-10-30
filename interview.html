@@ -162,6 +162,13 @@ td{padding:8px 10px;border-bottom:1px solid var(--line)}
 .answer-review .mine{background:var(--board);border-radius:10px;padding:10px 12px;font-size:.9rem;margin-bottom:8px;white-space:pre-wrap}
 .answer-review .guide{background:#FFF9E3;border:1px dashed var(--note);border-radius:10px;padding:10px 12px;font-size:.85rem}
 .answer-review .guide b{color:var(--note-deep)}
+.auto-hint{border-radius:10px;padding:9px 12px;font-size:.84rem;margin-bottom:8px;background:var(--board);border-left:4px solid var(--line)}
+.auto-hint.good{border-left-color:#4C9A6A}.auto-hint.mid{border-left-color:var(--note)}.auto-hint.low{border-left-color:#E07A5F}
+.auto-hint .miss{margin-top:3px;color:var(--ink-soft)}
+.auto-hint small{display:block;margin-top:3px;color:var(--ink-soft);font-size:.72rem}
+.canned{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 8px}
+.canned .chip{font-size:.78rem;padding:5px 11px}
+.room-head{display:flex;align-items:center;gap:8px;margin:14px 0 6px;font-weight:700}
 .rubric-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 0;border-bottom:1px dashed var(--line)}
 .rubric-row .info{flex:1;min-width:180px}
 .rubric-row .info b{display:block;font-size:.92rem}
@@ -265,6 +272,8 @@ audio{width:100%;margin-top:6px}
       <select id="qDiff"><option value="easy">ง่าย</option><option value="medium" selected>ปานกลาง</option><option value="hard">ยาก</option></select></div>
     <div class="field"><label>เวลาแนะนำ (วินาที)</label><input id="qSec" type="number" value="120" min="30" max="600"></div>
   </div>
+  <div class="field"><label>คำสำคัญ (คั่นด้วยจุลภาค , ไม่เกิน 20 คำ)</label><input id="qKeywords" placeholder="เช่น เป้าหมาย, ตัวอย่าง, ผลลัพธ์">
+    <div class="hint">ใช้ให้ระบบเช็กเบื้องต้นว่าคำตอบแตะประเด็นสำคัญหรือยัง (3–6 คำกำลังดี) ไม่ใช่คะแนนจริง</div></div>
   <div class="row2">
     <div class="field"><label>ภาษา</label><select id="qLang"><option value="th">ไทย</option><option value="en">อังกฤษ</option></select></div>
     <div class="field"><label>สถานะ</label><select id="qActive"><option value="true">ใช้งาน</option><option value="false">ปิดไว้</option></select></div>
@@ -445,7 +454,7 @@ function buildTabs(){
     t.push({id:"share", label:"🗣 แชร์คำถาม", c:"#E07A5F"});
     t.push({id:"prep", label:"✅ เตรียมตัว", c:"#7FB069"});
   }else{
-    t.push({id:"review", label:"📥 งานตรวจ", c:"#F2B84B"});
+    t.push({id:"review", label:"📥 รอตรวจ", c:"#F2B84B"});
     t.push({id:"inbox", label:"📨 คำถามจากนักเรียน", c:"#E07A5F"});
     t.push({id:"progress", label:"📈 พัฒนาการ", c:"#4E9BB9"});
     t.push({id:"bank", label:"🗂 คลังคำถาม", c:"#8E7CC3"});
@@ -454,7 +463,7 @@ function buildTabs(){
   $("tabs").innerHTML = t.map(x=>`<button class="ftab" data-t="${x.id}" style="--tabc:${x.c}"><span class="dot"></span>${x.label}</button>`).join("");
   $("tabs").querySelectorAll(".ftab").forEach(b=> b.onclick = ()=> go(b.dataset.t));
   go("home");
-  if(isStaff()) refreshInboxBadge();
+  if(isStaff()){ refreshInboxBadge(); refreshReviewBadge(); }
 }
 async function refreshInboxBadge(){
   const {count} = await sb.from("iv_question_submissions").select("id",{count:"exact",head:true}).eq("status","pending");
@@ -462,7 +471,7 @@ async function refreshInboxBadge(){
   if(b) b.innerHTML = `<span class="dot"></span>📨 คำถามจากนักเรียน${count? ` (${count})`:""}`;
 }
 function go(tab){
-  if(pr && pr.active && tab!=="practice"){ if(!confirm("กำลังซ้อมอยู่ ออกจากห้องซ้อมใช่ไหม? คำตอบที่ตอบแล้วจะถูกเก็บไว้")) return; stopTimer(); stopRecorder(true); pr=null; }
+  if(pr && pr.active && tab!=="practice"){ if(!confirm("กำลังซ้อมอยู่ ออกจากห้องซ้อมใช่ไหม? คำตอบที่ตอบแล้วจะถูกเก็บไว้ กลับมาซ้อมต่อได้ที่หน้า ผลของฉัน")) return; saveDraftAnswer(); stopTimer(); stopRecorder(true); pr=null; }
   curTab = tab;
   $("tabs").querySelectorAll(".ftab").forEach(b=> b.classList.toggle("active", b.dataset.t===tab));
   ({home:renderHome, practice:renderPractice, myresults:renderMyResults, review:renderReview, bank:renderBank, prep:renderPrep, progress:renderProgress, share:renderShare, inbox:renderInbox})[tab]();
@@ -663,14 +672,74 @@ $("btnStartSet").onclick = async ()=>{
   }
   $("btnStartSet").disabled = true;
   const {data:s, error} = await sb.from("iv_sessions").insert({student_id:profile.id, kind:"solo", category_id:setupCat.id,
-    university_id: uni? uni.id : null, target_university: uni? uni.name : tUni, target_faculty: tFac}).select().single();
+    university_id: uni? uni.id : null, target_university: uni? uni.name : tUni, target_faculty: tFac,
+    plan_question_ids: picked.map(q=>q.id)}).select().single();
   $("btnStartSet").disabled = false;
   if(error) return toast("เริ่มไม่สำเร็จ: "+error.message);
   closeModal("setupModal");
   pr = {active:true, session:s, cat:setupCat, mode:(mode==="audio" && navigator.mediaDevices && window.MediaRecorder)?"audio":"text",
-        list:picked, idx:0, answers:[], startAt:0, timerId:null, rec:null, chunks:[], blob:null, stream:null};
+        list:picked, idx:0, answers:[], startAt:0, timerId:null, rec:null, chunks:[], blob:null, stream:null,
+        curAnsId:null, prefill:"", saveChain:Promise.resolve()};
   renderPracticeRoom();
 }
+
+/* ═══════════ ซ้อมต่อจากที่ค้างไว้ ═══════════ */
+// เซ็ตที่เริ่มหลังอัปเดตนี้จะมี plan_question_ids (ลำดับคำถามที่สุ่มไว้) จึงกลับมาซ้อมต่อได้
+// เซ็ตเก่าที่ไม่มีรายการนี้ยังส่งครู/ลบได้ตามเดิม แต่ซ้อมต่อไม่ได้
+async function resumeSession(id){
+  if(pr && pr.active) return toast("กำลังซ้อมอยู่แล้ว");
+  const [{data:s, error:e1},{data:ans, error:e2},{data:sc}] = await Promise.all([
+    sb.from("iv_sessions").select("*").eq("id",id).eq("student_id",profile.id).maybeSingle(),
+    sb.from("iv_answers").select("*").eq("session_id",id).order("order_no"),
+    sb.from("iv_scores").select("criteria_id,score").eq("session_id",id).eq("scorer_role","self")
+  ]);
+  if(e1||e2||!s) return toast("เปิดเซ็ตนี้ไม่สำเร็จ ลองใหม่อีกครั้งนะคะ");
+  if(s.status!=="draft") return toast("เซ็ตนี้ส่งครูไปแล้ว ซ้อมต่อไม่ได้");
+  const ids = s.plan_question_ids||[];
+  if(!ids.length) return toast("เซ็ตนี้เป็นแบบเก่า ซ้อมต่อไม่ได้ — ส่งครูหรือลบทิ้งแล้วเริ่มเซ็ตใหม่ได้เลย");
+  const list = ids.map(qid=>questions.find(q=>q.id===qid));
+  if(list.some(x=>!x)) return toast("มีคำถามบางข้อถูกเอาออกจากคลังแล้ว ซ้อมต่อไม่ได้ — ส่งครูหรือลบเซ็ตนี้แทนนะคะ");
+  const cat = cats.find(c=>c.id===s.category_id);
+  if(!cat) return toast("ไม่พบหมวดของเซ็ตนี้");
+  const doneRows = (ans||[]).filter(a=>a.seconds_used!=null);
+  const doneNo = new Set(doneRows.map(a=>a.order_no));
+  let idx = 0; while(idx<list.length && doneNo.has(idx+1)) idx++;
+  const hadAudio = doneRows.some(a=>a.media_kind==="audio") && navigator.mediaDevices && window.MediaRecorder;
+  pr = {active:true, session:s, cat, mode: hadAudio? "audio":"text", list, idx, answers:doneRows,
+        startAt:0, timerId:null, rec:null, chunks:[], blob:null, stream:null,
+        curAnsId:null, prefill:"", saveChain:Promise.resolve()};
+  if(idx>=list.length){
+    const init = Object.fromEntries((sc||[]).map(x=>[x.criteria_id,x.score]));
+    return renderSelfAssess(init);
+  }
+  const part = (ans||[]).find(a=>a.order_no===idx+1 && a.seconds_used==null);
+  if(part){ pr.curAnsId = part.id; pr.prefill = part.answer_text||""; }
+  toast(idx? `ซ้อมต่อจากข้อ ${idx+1} ค่ะ` : "ซ้อมต่อค่ะ");
+  renderPracticeRoom();
+}
+
+// บันทึกคำตอบที่พิมพ์ค้างไว้ (ไม่รอกด "ข้อถัดไป") — แถวที่ seconds_used เป็น null = ยังตอบไม่จบข้อ
+function setSaveState(t){ const e=$("saveState"); if(e) e.textContent=t; }
+function saveDraftAnswer(){
+  if(!pr || !pr.active || pr.mode!=="text" || !$("ansText")) return Promise.resolve();
+  const q = pr.list[pr.idx], text = $("ansText").value.trim(), no = pr.idx+1, sess = pr.session.id;
+  if(!text && !pr.curAnsId) return Promise.resolve();
+  const p = pr;
+  p.saveChain = p.saveChain.then(async ()=>{
+    if(p.curAnsId){
+      const {error} = await sb.from("iv_answers").update({answer_text:text||null}).eq("id",p.curAnsId);
+      setSaveState(error? "⚠️ บันทึกอัตโนมัติไม่สำเร็จ (จะลองใหม่ตอนกดข้อถัดไป)" : "✓ บันทึกอัตโนมัติแล้ว");
+    }else{
+      const {data,error} = await sb.from("iv_answers").insert({session_id:sess, question_id:q.id, question_text:q.question_text,
+        guide_answer:q.guide_answer, order_no:no, seconds_used:null, media_kind:"none", answer_text:text||null}).select("id").single();
+      if(!error) p.curAnsId = data.id;
+      setSaveState(error? "⚠️ บันทึกอัตโนมัติไม่สำเร็จ (จะลองใหม่ตอนกดข้อถัดไป)" : "✓ บันทึกอัตโนมัติแล้ว");
+    }
+  }).catch(()=>{});
+  return p.saveChain;
+}
+document.addEventListener("visibilitychange", ()=>{ if(document.hidden) saveDraftAnswer(); });
+window.addEventListener("pagehide", ()=>{ saveDraftAnswer(); });
 
 /* ═══════════ ห้องซ้อม ═══════════ */
 function renderPracticeRoom(){
@@ -682,7 +751,8 @@ function renderPracticeRoom(){
       <div class="qtext">${esc(q.question_text)}</div>
       <div class="timer" id="timer">⏱ <span id="timerVal">${fmtSec(q.suggested_seconds)}</span></div>
       ${pr.mode==="text"
-        ? `<div class="field"><textarea id="ansText" style="min-height:130px" placeholder="พิมพ์คำตอบเหมือนที่จะพูดจริง…"></textarea></div>`
+        ? `<div class="field"><textarea id="ansText" style="min-height:130px" placeholder="พิมพ์คำตอบเหมือนที่จะพูดจริง…"></textarea>
+            <div class="hint" id="saveState" style="margin-top:4px">ระบบบันทึกให้เองระหว่างพิมพ์ ปิดหน้าไปแล้วกลับมาซ้อมต่อได้</div></div>`
         : `<div class="rec-zone">
             <button class="rec-btn" id="btnRec">🎙️</button>
             <div class="rec-hint" id="recHint">กดเพื่อเริ่มอัดเสียง แล้วตอบเหมือนพูดกับกรรมการจริง</div>
@@ -694,6 +764,11 @@ function renderPracticeRoom(){
       </div>
     </div></div>`;
   pr.startAt = Date.now(); pr.blob = null; pr.chunks = [];
+  if(pr.mode==="text"){
+    const ta = $("ansText"); ta.value = pr.prefill||""; pr.prefill = "";
+    let t = null;
+    ta.oninput = ()=>{ setSaveState("กำลังพิมพ์…"); clearTimeout(t); t = setTimeout(saveDraftAnswer, 1500); };
+  }
   startTimer(q.suggested_seconds);
   if(pr.mode==="audio") $("btnRec").onclick = toggleRec;
   $("btnNext").onclick = ()=> nextQuestion(false);
@@ -741,6 +816,7 @@ async function nextQuestion(skipped){
   stopTimer();
   if(pr.rec && pr.rec.state==="recording"){ pr.rec.stop(); await new Promise(r=>setTimeout(r,400)); }
   const btn = $("btnNext"); btn.disabled = true; btn.textContent = "กำลังบันทึก…";
+  await pr.saveChain;   // รอให้ autosave ที่ค้างอยู่เสร็จก่อน จะได้ไม่เกิดแถวซ้ำ
   const row = {session_id:pr.session.id, question_id:q.id, question_text:q.question_text, guide_answer:q.guide_answer,
                order_no:pr.idx+1, seconds_used:secondsUsed, media_kind:"none", answer_text:null, media_path:null};
   if(!skipped){
@@ -753,8 +829,15 @@ async function nextQuestion(skipped){
       else { row.media_path = path; row.media_kind = "audio"; }
     }
   }
-  const {error} = await sb.from("iv_answers").insert(row);
+  let error;
+  if(pr.curAnsId){   // มีแถวที่ autosave ไว้แล้ว → อัปเดตแถวเดิม
+    ({error} = await sb.from("iv_answers").update({seconds_used:row.seconds_used, media_kind:row.media_kind,
+      answer_text:row.answer_text, media_path:row.media_path}).eq("id", pr.curAnsId));
+  }else{
+    ({error} = await sb.from("iv_answers").insert(row));
+  }
   if(error){ btn.disabled=false; btn.textContent="ลองอีกครั้ง"; return toast("บันทึกไม่สำเร็จ: "+error.message); }
+  pr.curAnsId = null;
   pr.answers.push(row);
   pr.idx++;
   if(pr.idx < pr.list.length) renderPracticeRoom();
@@ -762,17 +845,43 @@ async function nextQuestion(skipped){
 }
 
 /* ═══════════ สรุป + ประเมินตนเอง ═══════════ */
-function renderSelfAssess(){
+/* ─── ตัวช่วยเช็กคำตอบเบื้องต้น (ตรวจคำสำคัญ + ความยาว) — เป็นแค่คำแนะนำ ไม่ใช่คะแนนจริง ไม่เก็บลงฐานข้อมูล ─── */
+function autoCheck(q, text){
+  const kws = (q && q.keywords) || [];
+  const t = (text||"").trim();
+  if(!kws.length || !t) return null;
+  const low = t.toLowerCase();
+  const hit = kws.filter(k=> low.includes(String(k).toLowerCase()));
+  const miss = kws.filter(k=> !hit.includes(k));
+  const ratio = hit.length / kws.length;
+  const len = t.replace(/\s/g,"").length;
+  let label, cls;
+  if(len < 40){ label = "คำตอบสั้นไป ลองเล่าให้ละเอียดขึ้น"; cls = "low"; }
+  else if(ratio >= .6){ label = "แตะประเด็นสำคัญได้ดี"; cls = "good"; }
+  else if(ratio >= .3){ label = "แตะบางประเด็นแล้ว"; cls = "mid"; }
+  else { label = "ยังไม่ค่อยแตะประเด็นสำคัญ"; cls = "low"; }
+  return {hit, miss, total:kws.length, label, cls};
+}
+function autoCheckHtml(q, text){
+  const r = autoCheck(q, text);
+  if(!r) return "";
+  return `<div class="auto-hint ${r.cls}"><b>🤖 ตัวช่วยเช็กเบื้องต้น:</b> ${r.label} (พูดถึง ${r.hit.length}/${r.total} คำสำคัญ)
+    ${r.miss.length? `<div class="miss">ยังไม่ได้พูดถึง: ${r.miss.map(esc).join(" · ")}</div>`:""}
+    <small>เป็นแค่ตัวช่วยจับคำ ไม่ใช่คะแนนจริง — คำตอบดีอาจใช้คำอื่นก็ได้</small></div>`;
+}
+
+function renderSelfAssess(initScores){
   pr.active = false;
-  const selfScores = {};
+  const selfScores = {...(initScores||{})};
   $("body").innerHTML = `<div class="practice-stage">
     <div class="panel" style="background:var(--pine-tint)"><h2>🎉 ตอบครบแล้ว! เทียบคำตอบกับแนวทาง แล้วประเมินตัวเองกันหน่อย</h2></div>
     ${pr.answers.map((a,i)=>`<div class="answer-review">
       <div class="q">ข้อ ${i+1}. ${esc(a.question_text)}${qTypeBadges(questions.find(x=>x.id===a.question_id))} <small style="color:var(--ink-soft)">(ใช้เวลา ${fmtSec(a.seconds_used||0)})</small></div>
       <div class="mine">${a.media_kind==="audio"? "🎙️ ตอบด้วยเสียง (ฟังย้อนหลังได้ที่หน้า ผลของฉัน)" : esc(a.answer_text||"— ข้ามข้อนี้ —")}</div>
+      ${autoCheckHtml(questions.find(x=>x.id===a.question_id), a.answer_text)}
       ${a.guide_answer? `<div class="guide"><b>💡 แนวทางการตอบ:</b> ${esc(a.guide_answer)}</div>`:""}
     </div>`).join("")}
-    <div class="panel"><h2>ประเมินตนเอง</h2>
+    <div class="panel"><h2>ประเมินตนเอง <small id="scoreProg" style="font-weight:400;color:var(--ink-soft)"></small></h2>
       <div class="score-legend">1 = ${SCORE_LABEL[1]} · 2 = ${SCORE_LABEL[2]} · 3 = ${SCORE_LABEL[3]} · 4 = ${SCORE_LABEL[4]}</div>
       ${rubric.map(r=>`<div class="rubric-row" data-crit="${r.id}">
         <div class="info"><b>${esc(r.title)}</b><small>${esc(r.description||"")}</small></div>
@@ -782,12 +891,21 @@ function renderSelfAssess(){
         <button class="btn ghost" id="btnKeepDraft">เก็บไว้ก่อน ยังไม่ส่ง</button>
         <button class="btn primary" id="btnSubmit">📨 ส่งให้ครูตรวจ</button>
       </div></div></div>`;
+  const updProg = ()=>{ const e=$("scoreProg"); if(e) e.textContent = `· ประเมินแล้ว ${Object.keys(selfScores).length}/${rubric.length} ด้าน (บันทึกให้เองทุกครั้งที่กด)`; };
   document.querySelectorAll(".rubric-row").forEach(row=>{
+    const cur = selfScores[row.dataset.crit];
+    if(cur) row.querySelector(`.score-pick button[data-n="${cur}"]`)?.classList.add("sel");
     row.querySelectorAll(".score-pick button").forEach(b=>{
-      b.onclick = ()=>{ row.querySelectorAll("button").forEach(x=>x.classList.remove("sel")); b.classList.add("sel");
-        selfScores[row.dataset.crit] = +b.dataset.n; };
+      b.onclick = async ()=>{ row.querySelectorAll("button").forEach(x=>x.classList.remove("sel")); b.classList.add("sel");
+        selfScores[row.dataset.crit] = +b.dataset.n; updProg();
+        // บันทึกทันทีทีละด้าน — ออกจากหน้ากลางคันก็ไม่เสียคะแนนที่กดไปแล้ว
+        const {error} = await sb.from("iv_scores").upsert({session_id:pr.session.id, criteria_id:row.dataset.crit,
+          scorer_role:"self", scorer_id:profile.id, score:+b.dataset.n}, {onConflict:"session_id,criteria_id,scorer_role"});
+        if(error) toast("บันทึกคะแนนอัตโนมัติไม่สำเร็จ จะลองอีกครั้งตอนกดปุ่มด้านล่าง");
+      };
     });
   });
+  updProg();
   async function saveScoresAndFinish(submit){
     const rows = Object.entries(selfScores).map(([cid,score])=>({
       session_id:pr.session.id, criteria_id:cid, scorer_role:"self", scorer_id:profile.id, score}));
@@ -810,7 +928,7 @@ function renderSelfAssess(){
 /* ═══════════ ผลของฉัน (นักเรียน) ═══════════ */
 async function renderMyResults(){
   $("body").innerHTML = `<div class="loading">กำลังโหลด…</div>`;
-  const {data:ss, error} = await sb.from("iv_sessions").select("*, iv_scores(criteria_id,scorer_role,score), iv_categories(name,emoji,color)")
+  const {data:ss, error} = await sb.from("iv_sessions").select("*, iv_scores(criteria_id,scorer_role,score), iv_categories(name,emoji,color), iv_answers(order_no,seconds_used)")
     .eq("student_id",profile.id).order("created_at",{ascending:false});
   if(error) return $("body").innerHTML = `<div class="empty">โหลดไม่สำเร็จ: ${esc(error.message)}</div>`;
   if(!ss?.length) return $("body").innerHTML = `<div class="empty"><div class="big">🎤</div>ยังไม่เคยซ้อมเลย — ไปที่แท็บ "ฝึกซ้อม" เพื่อเริ่มเซ็ตแรกกัน!</div>`;
@@ -823,18 +941,37 @@ async function renderMyResults(){
     ${ss.map(s=>`<tr>
       <td>${fmtDate(s.created_at)}</td>
       <td>${esc(s.iv_categories?.emoji||"")} ${esc(s.iv_categories?.name||"-")}${targetLine(s)}</td>
-      <td><span class="pill ${s.status}">${STATUS_LABEL[s.status]}</span></td>
+      <td><span class="pill ${s.status}">${STATUS_LABEL[s.status]}</span>${draftProgress(s)}</td>
       <td>${avg(s,"self")??"-"}</td>
       <td>${avg(s,"teacher")? `<b style="color:var(--pine-deep)">${avg(s,"teacher")}</b>`:"-"}</td>
       <td style="display:flex;gap:6px">
         <button class="btn ghost sm" onclick="openSessionDetail('${s.id}', false)">ดูรายละเอียด</button>
+        ${s.status==="draft" && s.plan_question_ids?.length? `<button class="btn primary sm" onclick="resumeSession('${s.id}')">▶ ซ้อมต่อ</button>`:""}
         ${s.status==="draft"? `<button class="btn note sm" onclick="submitDraft('${s.id}')">ส่งครู</button>
         <button class="btn danger sm" onclick="delSession('${s.id}')">ลบ</button>`:""}
       </td></tr>`).join("")}
   </table></div>`;
   if($("myChart")) renderChartInto("myChart", chartData);
 }
+// แสดงความคืบหน้าของฉบับร่าง (นักเรียนเห็นเฉพาะของตัวเอง — RLS จำกัดไว้แล้ว)
+function draftProgress(s){
+  if(s.status!=="draft") return "";
+  const done = (s.iv_answers||[]).filter(a=>a.seconds_used!=null).length;
+  const n = s.plan_question_ids?.length || 0;
+  const selfN = (s.iv_scores||[]).filter(v=>v.scorer_role==="self").length;
+  let txt;
+  if(n && done<n) txt = `ตอบแล้ว ${done}/${n} ข้อ`;
+  else if(n || done) txt = rubric.length && selfN<rubric.length? `ตอบครบ · ประเมินตนเอง ${selfN}/${rubric.length} ด้าน` : "พร้อมส่งครู";
+  else txt = "ยังไม่ได้ตอบ";
+  return `<div style="font-size:.74rem;color:var(--ink-soft);margin-top:3px">${txt}</div>`;
+}
 async function submitDraft(id){
+  const [{data:s},{data:ans}] = await Promise.all([
+    sb.from("iv_sessions").select("plan_question_ids").eq("id",id).maybeSingle(),
+    sb.from("iv_answers").select("seconds_used").eq("session_id",id)]);
+  const done = (ans||[]).filter(a=>a.seconds_used!=null).length, n = s?.plan_question_ids?.length||0;
+  if(!done && !(ans||[]).length) return toast("เซ็ตนี้ยังไม่มีคำตอบ ซ้อมต่อให้ตอบก่อนแล้วค่อยส่งนะคะ");
+  if(n && done<n && !confirm(`ตอบแล้ว ${done}/${n} ข้อ ส่งให้ครูตรวจตอนนี้เลยไหม?`)) return;
   const {error} = await sb.from("iv_sessions").update({status:"submitted", submitted_at:new Date().toISOString()}).eq("id", id);
   if(error) return toast("ส่งไม่สำเร็จ: "+error.message);
   toast("ส่งให้ครูตรวจเรียบร้อย 📨"); renderMyResults();
@@ -884,6 +1021,7 @@ async function openSessionDetail(id, teacherMode, backTab){
       <div class="q">ข้อ ${i+1}. ${esc(a.question_text)}${qTypeBadges(questions.find(x=>x.id===a.question_id))} <small style="color:var(--ink-soft)">(${fmtSec(a.seconds_used||0)})</small></div>
       ${a.media_kind==="audio" && urls[a.id]? `<audio controls src="${esc(urls[a.id])}"></audio>`
         : `<div class="mine">${esc(a.answer_text||"— ไม่ได้ตอบ/ข้าม —")}</div>`}
+      ${teacherMode? autoCheckHtml(questions.find(x=>x.id===a.question_id), a.answer_text) : ""}
       ${a.guide_answer? `<div class="guide"><b>💡 แนวทางการตอบ:</b> ${esc(a.guide_answer)}</div>`:""}
     </div>`).join("")}
     <div class="panel"><h2>คะแนนตามเกณฑ์</h2>
@@ -900,8 +1038,13 @@ async function openSessionDetail(id, teacherMode, backTab){
       </table></div>
       ${canEditScores? `
         <div class="field" style="margin-top:14px"><label>ความคิดเห็น/คำแนะนำถึงนักเรียน</label>
+          <div class="hint" style="margin:0 0 4px">กดเลือกประโยคสำเร็จรูปเพื่อเติมลงในช่อง แล้วแก้ข้อความต่อได้</div>
+          ${["ชม","แนะนำ"].map(g=>`<div class="canned">${CANNED.filter(c=>c.g===g).map((c,i)=>
+            `<button type="button" class="chip" data-canned="${esc(c.t)}">${g==="ชม"?"👍":"💡"} ${esc(c.s)}</button>`).join("")}</div>`).join("")}
           <textarea id="tComment">${esc(s.teacher_comment||"")}</textarea></div>
-        <div style="display:flex;justify-content:flex-end"><button class="btn primary" id="btnSaveReview">✔ บันทึกผลตรวจ</button></div>`
+        <div style="display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap">
+          <button class="btn ghost" id="btnSaveReview">✔ บันทึกผลตรวจ</button>
+          <button class="btn primary" id="btnSaveNext">✔ บันทึกแล้วตรวจคนถัดไป ➜</button></div>`
       : (s.teacher_comment? `<div class="guide" style="margin-top:12px"><b>💬 จากครู:</b> ${esc(s.teacher_comment)}</div>`:"")}
     </div>`;
   if(teacherMode){
@@ -913,43 +1056,114 @@ async function openSessionDetail(id, teacherMode, backTab){
         p.querySelectorAll("button").forEach(x=>x.classList.remove("sel")); b.classList.add("sel");
         teacherScores[p.dataset.crit] = +b.dataset.n; }; });
     });
-    $("btnSaveReview").onclick = async ()=>{
+    document.querySelectorAll("[data-canned]").forEach(b=> b.onclick = ()=>{
+      const ta = $("tComment"), add = b.dataset.canned, cur = ta.value.trim();
+      if(cur.includes(add)) return;                       // กดซ้ำไม่เติมซ้ำ
+      ta.value = cur? cur.replace(/[\s]+$/,"") + (/[.!?。]$/.test(cur)? " ":" · ") + add : add;
+      ta.focus();
+    });
+    const saveReview = async (goNext)=>{
       if(Object.keys(teacherScores).length < rubric.length) return toast("ให้คะแนนให้ครบทุกเกณฑ์ก่อนนะคะ");
-      $("btnSaveReview").disabled = true;
+      $("btnSaveReview").disabled = true; $("btnSaveNext").disabled = true;
       // บันทึกคะแนน + สถานะ + ความเห็นในคำสั่งเดียว (ถ้าเน็ตหลุดจะไม่บันทึกครึ่ง ๆ กลาง ๆ)
       const {error} = await sb.rpc("iv_save_review", {p_session_id:id, p_scores:teacherScores, p_comment:$("tComment").value});
-      $("btnSaveReview").disabled = false;
+      $("btnSaveReview").disabled = false; $("btnSaveNext").disabled = false;
       if(error) return toast("บันทึกไม่สำเร็จ: "+error.message);
-      toast("บันทึกผลตรวจเรียบร้อย ✅"); go("review");
+      toast("บันทึกผลตรวจเรียบร้อย ✅");
+      if(!goNext) return go("review");
+      const nextId = await nextPendingId(id, s.profiles?.class_room);
+      if(nextId) openSessionDetail(nextId, true, "review");
+      else { toast("ตรวจครบทุกเซ็ตที่รออยู่แล้ว 🎉"); go("review"); }
     };
+    $("btnSaveReview").onclick = ()=> saveReview(false);
+    $("btnSaveNext").onclick = ()=> saveReview(true);
   }
 }
 
-/* ═══════════ งานตรวจ (ครู) ═══════════ */
-let reviewFilter = "submitted";
+/* ═══════════ รอตรวจ (ครู) — แยกตามห้อง ═══════════ */
+// ประโยคความเห็นสำเร็จรูป: s = ป้ายสั้นบนปุ่ม, t = ข้อความที่เติมลงช่องความเห็น
+const CANNED = [
+  {g:"ชม", s:"ตอบชัดเจน มีตัวอย่าง", t:"ตอบได้ชัดเจน มีตัวอย่างประกอบดีมาก"},
+  {g:"ชม", s:"เป้าหมายชัด", t:"แสดงความตั้งใจและเป้าหมายได้ชัดเจน"},
+  {g:"ชม", s:"มั่นใจ พูดต่อเนื่อง", t:"น้ำเสียงมั่นใจ พูดต่อเนื่อง ฟังง่าย"},
+  {g:"ชม", s:"เล่าเป็นรูปธรรม", t:"เล่าประสบการณ์ได้เป็นรูปธรรม น่าเชื่อถือ"},
+  {g:"แนะนำ", s:"เพิ่มตัวอย่างจริง", t:"ลองเพิ่มตัวอย่างจากประสบการณ์จริงของตัวเองอีก 1 เรื่อง"},
+  {g:"แนะนำ", s:"ตอบให้ตรงคำถามก่อน", t:"ตอบให้ตรงคำถามก่อน แล้วค่อยขยายความ"},
+  {g:"แนะนำ", s:"เชื่อมกับคณะที่เลือก", t:"ลองเชื่อมคำตอบกับคณะ/สาขาที่อยากเข้าให้ชัดขึ้น"},
+  {g:"แนะนำ", s:"พูดช้าลงนิดหนึ่ง", t:"พูดช้าลงอีกนิดและหายใจระหว่างประโยค จะฟังเข้าใจง่ายขึ้น"},
+  {g:"แนะนำ", s:"สรุปปิดท้าย", t:"ควรสรุปปิดท้ายให้ชัดใน 1 ประโยค"},
+  {g:"แนะนำ", s:"ตอบสั้นไป", t:"คำตอบยังสั้นไป ลองเล่าให้ละเอียดขึ้นอีกหน่อย"},
+  {g:"แนะนำ", s:"ซ้อมเพิ่มแล้วส่งใหม่", t:"ซ้อมเพิ่มอีก 1-2 เซ็ตแล้วส่งมาให้ครูดูใหม่ได้เลย"}
+];
+const roomCmp = (a,b)=> String(a).localeCompare(String(b),"th",{numeric:true});   // ม.4/2 มาก่อน ม.4/10
+const ROOM_NONE = "ไม่ระบุห้อง";
+let reviewFilter = "submitted", reviewRoom = "all";
+
+async function fetchSubmittedSessions(){
+  return fetchAllRows(()=> sb.from("iv_sessions")
+    .select("id,submitted_at,profiles!iv_sessions_student_id_fkey(class_room)")
+    .eq("status","submitted").order("submitted_at",{ascending:true}).order("id"));
+}
+// หาเซ็ตรอตรวจอันถัดไป: ห้องเดียวกันก่อน ถ้าหมดแล้วค่อยไปห้องอื่น
+async function nextPendingId(excludeId, room){
+  const {data} = await fetchSubmittedSessions();
+  const rest = (data||[]).filter(x=>x.id!==excludeId);
+  const same = rest.find(x=> (x.profiles?.class_room||ROOM_NONE)===(room||ROOM_NONE));
+  return (same||rest[0])?.id || null;
+}
+async function refreshReviewBadge(){
+  const {data} = await fetchSubmittedSessions();
+  const n = (data||[]).length;
+  const b = $("tabs").querySelector('[data-t="review"]');
+  if(b) b.innerHTML = `<span class="dot"></span>📥 รอตรวจ${n? ` (${n})`:""}`;
+}
 async function renderReview(){
   $("body").innerHTML = `<div class="loading">กำลังโหลด…</div>`;
   const {data:ss, error} = await fetchAllRows(()=> sb.from("iv_sessions")
     .select("*, iv_categories(name,emoji), profiles!iv_sessions_student_id_fkey(display_name,class_room)")
     .neq("status","draft").order("submitted_at",{ascending:true}).order("id"));
   if(error) return $("body").innerHTML = `<div class="empty">โหลดไม่สำเร็จ: ${esc(error.message)}</div>`;
-  const list = (ss||[]).filter(s=> reviewFilter==="all" ? true : s.status===reviewFilter);
+  const all = ss||[];
+  const roomOf = s => s.profiles?.class_room || ROOM_NONE;
+  const byStatus = all.filter(s=> reviewFilter==="all" ? true : s.status===reviewFilter);
+  // ชิปห้อง: นับจำนวนตามสถานะที่เลือกอยู่
+  const roomCount = {};
+  for(const s of byStatus){ const r = roomOf(s); roomCount[r] = (roomCount[r]||0)+1; }
+  if(reviewRoom!=="all" && !roomCount[reviewRoom]) reviewRoom = "all";   // ห้องที่เลือกไว้ไม่มีงานแล้ว → กลับไปดูทุกห้อง
+  const list = byStatus.filter(s=> reviewRoom==="all" || roomOf(s)===reviewRoom);
+  const groups = {};
+  for(const s of list){ (groups[roomOf(s)] = groups[roomOf(s)]||[]).push(s); }
+  const pendingAll = all.filter(s=>s.status==="submitted").length;
+  const bTab = $("tabs").querySelector('[data-t="review"]');
+  if(bTab) bTab.innerHTML = `<span class="dot"></span>📥 รอตรวจ${pendingAll? ` (${pendingAll})`:""}`;
   $("body").innerHTML = `
     <div class="toolbar"><div class="chips">
       ${[["submitted","📥 รอตรวจ"],["reviewed","✅ ตรวจแล้ว"],["all","ทั้งหมด"]].map(([v,l])=>
         `<button class="chip ${reviewFilter===v?"active":""}" data-f="${v}">${l}</button>`).join("")}
     </div></div>
-    ${!list.length? `<div class="empty"><div class="big">🍃</div>ไม่มีรายการในหมวดนี้</div>` : `<div class="tbl-wrap"><table>
-      <tr><th>ส่งเมื่อ</th><th>นักเรียน</th><th>ห้อง</th><th>หมวด</th><th>สถานะ</th><th></th></tr>
-      ${list.map(s=>`<tr>
+    <div class="chips" style="margin:-4px 0 10px">
+      <button class="chip ${reviewRoom==="all"?"active":""}" data-room="all">ทุกห้อง (${byStatus.length})</button>
+      ${Object.keys(roomCount).sort(roomCmp).map(r=>
+        `<button class="chip ${reviewRoom===r?"active":""}" data-room="${esc(r)}">${esc(r)} (${roomCount[r]})</button>`).join("")}
+    </div>
+    ${reviewFilter!=="reviewed" && list.some(s=>s.status==="submitted")
+      ? `<div style="margin-bottom:10px"><button class="btn primary" id="btnStartReview">▶ เริ่มตรวจเซ็ตแรก${reviewRoom!=="all"? " ของห้อง "+esc(reviewRoom):""}</button></div>`:""}
+    ${!list.length? `<div class="empty"><div class="big">🍃</div>ไม่มีรายการในหมวดนี้</div>` :
+      Object.keys(groups).sort(roomCmp).map(room=>`
+      <div class="room-head">ห้อง ${esc(room)} <span class="pill ${groups[room].some(s=>s.status==="submitted")?"submitted":"reviewed"}">${groups[room].length} เซ็ต</span></div>
+      <div class="tbl-wrap"><table>
+      <tr><th>ส่งเมื่อ</th><th>นักเรียน</th><th>หมวด</th><th>สถานะ</th><th></th></tr>
+      ${groups[room].map(s=>`<tr>
         <td>${s.submitted_at? fmtDate(s.submitted_at):"-"}</td>
         <td><b>${esc(s.profiles?.display_name||"-")}</b></td>
-        <td>${esc(s.profiles?.class_room||"-")}</td>
         <td>${esc(s.iv_categories?.emoji||"")} ${esc(s.iv_categories?.name||"-")}${targetLine(s)}</td>
         <td><span class="pill ${s.status}">${STATUS_LABEL[s.status]}</span></td>
         <td><button class="btn ${s.status==="submitted"?"primary":"ghost"} sm" onclick="openSessionDetail('${s.id}', true)">${s.status==="submitted"?"ตรวจ":"เปิดดู"}</button></td>
-      </tr>`).join("")}</table></div>`}`;
+      </tr>`).join("")}</table></div>`).join("")}`;
   document.querySelectorAll("[data-f]").forEach(b=> b.onclick = ()=>{ reviewFilter=b.dataset.f; renderReview(); });
+  document.querySelectorAll("[data-room]").forEach(b=> b.onclick = ()=>{ reviewRoom=b.dataset.room; renderReview(); });
+  const st = $("btnStartReview");
+  if(st) st.onclick = ()=>{ const first = list.find(s=>s.status==="submitted"); if(first) openSessionDetail(first.id, true, "review"); };
 }
 
 /* ═══════════ คลังคำถาม (ครู/แอดมิน) ═══════════ */
@@ -957,7 +1171,8 @@ let bankCat = "all", bankType = "all", editingQ = null;
 async function renderBank(){
   const activeCats = cats;
   const typeOk = (q,v) => v==="all" || (v==="base" && !q.university_id && !q.is_ai)
-    || (v==="ai" && q.is_ai) || (v==="uni" && !!q.university_id) || (v==="shared" && !!q.is_student_shared);
+    || (v==="ai" && q.is_ai) || (v==="uni" && !!q.university_id) || (v==="shared" && !!q.is_student_shared)
+    || (v==="nokw" && !(q.keywords||[]).length);
   const uniName = id => { const u = unis.find(x=>x.id===id); return u? (u.short_name||u.name) : ""; };
   const list = questions.filter(q=> (bankCat==="all"? true : q.category_id===bankCat) && typeOk(q,bankType))
     .sort((a,b)=> (a.category_id>b.category_id?1:-1) || uniName(a.university_id).localeCompare(uniName(b.university_id),"th")
@@ -971,16 +1186,17 @@ async function renderBank(){
       <button class="btn primary" id="btnAddQ">＋ เพิ่มคำถาม</button>
     </div>
     <div class="chips" style="margin:-4px 0 12px">
-      ${[["all","ทุกประเภท"],["base","คำถามตามหมวด"],["uni","🏛 เฉพาะมหาวิทยาลัย"],["ai","🤖 เกี่ยวกับ AI"],["shared","🗣 รุ่นพี่แชร์"]].map(([v,l])=>
+      ${[["all","ทุกประเภท"],["base","คำถามตามหมวด"],["uni","🏛 เฉพาะมหาวิทยาลัย"],["ai","🤖 เกี่ยวกับ AI"],["shared","🗣 รุ่นพี่แชร์"],["nokw","🏷 ยังไม่มีคำสำคัญ"]].map(([v,l])=>
         `<button class="chip ${bankType===v?"active":""}" data-bt="${v}">${l} (${questions.filter(q=> (bankCat==="all"||q.category_id===bankCat) && typeOk(q,v)).length})</button>`).join("")}
     </div>
     <div class="tbl-wrap"><table>
-      <tr><th>คำถาม</th><th>หมวด</th><th>ระดับ</th><th>เวลา</th><th>สถานะ</th><th></th></tr>
+      <tr><th>คำถาม</th><th>หมวด</th><th>ระดับ</th><th>เวลา</th><th>คำสำคัญ</th><th>สถานะ</th><th></th></tr>
       ${list.map(q=>{ const c = cats.find(x=>x.id===q.category_id);
         return `<tr style="${q.is_active?"":"opacity:.5"}">
         <td style="white-space:normal;min-width:260px">${esc(q.question_text)}${qTypeBadges(q)}</td>
         <td style="white-space:nowrap">${esc(c?.emoji||"")} ${esc((c?.name||"").split(" ·")[0])}</td>
         <td>${DIFF_LABEL[q.difficulty]}</td><td>${fmtSec(q.suggested_seconds)}</td>
+        <td style="white-space:normal;max-width:180px;font-size:.78rem;color:var(--ink-soft)">${(q.keywords||[]).length? esc(q.keywords.join(", ")) : '<span style="color:#E07A5F">ยังไม่มี</span>'}</td>
         <td>${q.is_active? '<span class="badge type">ใช้งาน</span>':'<span class="badge link">ปิด</span>'}</td>
         <td style="white-space:nowrap"><button class="btn ghost sm" data-eq="${q.id}">แก้ไข</button>
             <button class="btn danger sm" data-dq="${q.id}">ลบ</button></td></tr>`;}).join("")}
@@ -1001,6 +1217,7 @@ function openQModal(qid){
   $("qAi").value = String(editingQ ? !!editingQ.is_ai : bankType==="ai");
   $("qText").value = editingQ?.question_text||""; $("qGuide").value = editingQ?.guide_answer||"";
   $("qDiff").value = editingQ?.difficulty||"medium"; $("qSec").value = editingQ?.suggested_seconds||120;
+  $("qKeywords").value = (editingQ?.keywords||[]).join(", ");
   $("qLang").value = editingQ?.lang||"th"; $("qActive").value = String(editingQ?.is_active ?? true);
   $("qMsg").className = "msg";
   $("qModal").classList.add("show");
@@ -1008,7 +1225,9 @@ function openQModal(qid){
 $("btnQSave").onclick = async ()=>{
   const row = {category_id:$("qCat").value, question_text:$("qText").value.trim(), guide_answer:$("qGuide").value.trim()||null,
     difficulty:$("qDiff").value, suggested_seconds:+$("qSec").value||120, lang:$("qLang").value, is_active:$("qActive").value==="true",
-    university_id:$("qUni").value||null, is_ai:$("qAi").value==="true"};
+    university_id:$("qUni").value||null, is_ai:$("qAi").value==="true",
+    // คำสำคัญ: ตัดช่องว่าง ตัดคำซ้ำ/คำว่าง (รับทั้ง , และ ，) จำกัด 20 คำ คำละไม่เกิน 40 ตัวอักษร
+    keywords:[...new Set($("qKeywords").value.split(/[,，]/).map(x=>x.trim().slice(0,40)).filter(Boolean))].slice(0,20)};
   if(row.university_id && row.is_ai) return msg("qMsg","คำถามหนึ่งข้อเลือกได้แบบเดียว: เฉพาะมหาวิทยาลัย หรือ คำถาม AI","err");
   if(!row.question_text) return msg("qMsg","กรอกคำถามก่อนนะคะ","err");
   $("btnQSave").disabled = true;
