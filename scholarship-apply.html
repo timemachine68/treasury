@@ -324,6 +324,19 @@ async function afterLogin(){
   loadScholarships();
 }
 
+// จำนวนเงินทุนตามระดับชั้นของนักเรียน (ม.ต้น = ม.1-3, ม.ปลาย = ม.4-6) — ถ้าไม่ทราบชั้น แสดงทั้งสองระดับ
+function moneyFor(s){
+  const f=n=>Number(n).toLocaleString("th-TH");
+  const has=v=>v!==null&&v!==undefined&&v!=="";
+  const base=has(s.amount_per_grant)?s.amount_per_grant:null;
+  const lo=has(s.amount_lower)?s.amount_lower:base, up=has(s.amount_upper)?s.amount_upper:base;
+  const split=has(s.amount_lower)||has(s.amount_upper);
+  if(!split)return (base?f(base):"—")+" บาท";
+  const lv=String(ME&&ME.class_room||"").split("/")[0].trim();
+  if(["ม.1","ม.2","ม.3"].includes(lv))return (lo?f(lo):"—")+" บาท";
+  if(["ม.4","ม.5","ม.6"].includes(lv))return (up?f(up):"—")+" บาท";
+  return `ม.ต้น ${lo?f(lo):"—"} / ม.ปลาย ${up?f(up):"—"} บาท`;
+}
 async function logout(){ await sb.auth.signOut(); ME=null; $("#whoami").classList.add("hidden"); show("login"); }
 
 /* ---------- SCHOLARSHIP LIST + MY APPLICATIONS ---------- */
@@ -339,7 +352,7 @@ async function loadScholarships(){
   renderMyApps(apps||[]);
 
   const { data:schs, error } = await sb.from("scholarships")
-    .select("id,name,provider,description,amount_per_grant,quota,closes_at,status,academic_year")
+    .select("id,name,provider,description,amount_per_grant,amount_lower,amount_upper,quota,closes_at,status,academic_year")
     .eq("status","open").order("closes_at",{ascending:true});
 
   if(error){ list.innerHTML = `<div class="empty">โหลดข้อมูลไม่สำเร็จ</div>`; return; }
@@ -355,14 +368,14 @@ async function loadScholarships(){
     const applied = appMap[s.id];
     const el = document.createElement("div");
     el.className = "sch";
-    const money = s.amount_per_grant ? Number(s.amount_per_grant).toLocaleString("th-TH") : "—";
+    const money = moneyFor(s);
     const dl = s.closes_at ? new Date(s.closes_at).toLocaleDateString("th-TH",{day:"numeric",month:"long",year:"numeric"}) : "ไม่กำหนด";
     el.innerHTML = `
       <h3>${esc(s.name)}</h3>
       <p class="prov">${esc(s.provider||"")}</p>
       <p class="desc">${esc(s.description||"")}</p>
       <div class="facts">
-        <span class="fact">ทุนละ <b>${money}</b> บาท</span>
+        <span class="fact">ทุนละ <b>${money}</b></span>
         <span class="fact">จำนวน <b>${s.quota}</b> ทุน</span>
       </div>
       <p class="deadline">ปิดรับ ${dl}</p>
