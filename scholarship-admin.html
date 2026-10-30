@@ -124,6 +124,24 @@
     padding:16px 0 0;margin-top:8px}
   .toolbar-inner{display:flex;gap:10px}
 
+  .notice{padding:12px 15px;border-radius:12px;font-size:.87rem;margin-bottom:12px;line-height:1.55}
+  .notice.info{background:var(--sky-tint);border:1px solid #c3d8e5;color:#254c66}
+  .notice.warn{background:var(--amber-tint);border:1px solid #e6d9a8;color:var(--amber)}
+  .notice.lock{background:var(--gold-tint);border:1px solid #ead9aa;color:#6f5319}
+  .srow .acts{display:flex;flex-direction:column;align-items:flex-end;gap:7px;flex:none}
+  .rowbtn{background:#fff;border:1.5px solid var(--line);color:var(--leaf);border-radius:9px;padding:6px 12px;
+    font:inherit;font-size:.8rem;font-weight:700;cursor:pointer;white-space:nowrap;min-height:34px}
+  .rowbtn:hover{border-color:var(--leaf)}
+  .tag-warn{font-size:.72rem;font-weight:700;padding:2px 9px;border-radius:20px;background:var(--amber-tint);color:var(--amber);white-space:nowrap}
+  .crit.locked{opacity:.85}
+  input:disabled,select:disabled,textarea:disabled{opacity:.7;cursor:not-allowed}
+  .toolbar-inner{flex-wrap:wrap}
+  .modal-bg{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(28,43,38,.45);
+    display:flex;align-items:center;justify-content:center;padding:18px;z-index:50}
+  .modal{background:#fff;border-radius:18px;padding:24px;max-width:480px;width:100%;
+    box-shadow:var(--shadow);max-height:90vh;overflow:auto}
+  .modal h3{margin:0 0 6px;font-size:1.15rem}
+
   h1,h2,h3,h2.sec,.eyebrow,.brand h1,.totalbox .n{font-family:"Mitr",sans-serif !important;font-weight:500}
 </style>
 </head>
@@ -163,6 +181,7 @@
         <div><span class="eyebrow">ทุนทั้งหมด</span><h2 class="sec" style="margin-bottom:0">จัดการทุนการศึกษา</h2></div>
         <button class="btn sm" id="newBtn">+ สร้างทุนใหม่</button>
       </div>
+      <div id="listMsg" class="msg"></div>
       <div id="schList"><div class="spin"></div></div>
     </div>
   </section>
@@ -171,6 +190,7 @@
   <section id="editView" class="hidden">
     <button class="back" id="backBtn">‹ กลับไปรายการทุน</button>
     <div id="editMsg" class="msg"></div>
+    <div id="editInfo"></div>
 
     <div class="card pad-lg">
       <span class="eyebrow" id="edMode">สร้างทุนใหม่</span>
@@ -181,7 +201,7 @@
         <label class="fld"><span class="lbl">ผู้ให้ทุน / แหล่งทุน</span>
           <input id="eProvider" placeholder="เช่น สมาคมผู้ปกครองและครู"></label>
         <label class="fld"><span class="lbl">ปีการศึกษา</span>
-          <input id="eYear" placeholder="เช่น 2569"></label>
+          <input id="eYear" inputmode="numeric" maxlength="4" placeholder="เช่น 2569"></label>
       </div>
       <label class="fld"><span class="lbl">รายละเอียด</span>
         <textarea id="eDesc" placeholder="อธิบายวัตถุประสงค์และคุณสมบัติผู้สมัคร"></textarea></label>
@@ -192,6 +212,11 @@
           <input id="eQuota" type="number" min="1" step="1" value="1"></label>
         <label class="fld"><span class="lbl">ปิดรับสมัคร</span>
           <input id="eCloses" type="date"></label>
+      </div>
+      <div id="statusBox" class="hidden">
+        <label class="fld"><span class="lbl">สถานะของทุน</span>
+          <select id="eStatus"></select></label>
+        <div id="eStatusHint" class="muted" style="margin:-6px 0 4px"></div>
       </div>
     </div>
 
@@ -212,10 +237,35 @@
       <div class="toolbar-inner">
         <button class="btn ghost" id="saveDraftBtn">บันทึกเป็นฉบับร่าง</button>
         <button class="btn" id="publishBtn" style="flex:1">เผยแพร่ให้นักเรียนสมัคร</button>
+      </div>
+      <div class="toolbar-inner" style="margin-top:10px">
+        <button class="btn ghost hidden" id="roundBtn">+ เปิดรับสมัครรอบใหม่จากทุนนี้</button>
         <button class="btn danger hidden" id="deleteBtn">ลบทุน</button>
       </div>
     </div>
   </section>
+</div>
+
+<!-- เปิดรับสมัครรอบใหม่ (ปิดได้เฉพาะปุ่มยกเลิก ไม่ปิดเมื่อคลิกพื้นหลัง กันข้อมูลที่กรอกหาย) -->
+<div id="roundModal" class="modal-bg hidden">
+  <div class="modal">
+    <span class="eyebrow">เปิดรับสมัครรอบใหม่</span>
+    <h3>สร้างทุนรอบใหม่จากทุนเดิม</h3>
+    <p class="muted" id="roundSrc" style="margin:0 0 14px"></p>
+    <div id="roundMsg" class="msg"></div>
+    <label class="fld"><span class="lbl">ชื่อทุนรอบใหม่</span><input id="rName"></label>
+    <label class="fld"><span class="lbl">ปีการศึกษา</span>
+      <input id="rYear" inputmode="numeric" maxlength="4" placeholder="เช่น 2570"></label>
+    <div class="notice info">
+      ระบบจะคัดลอกรายละเอียดและเกณฑ์ทั้งหมดไปเป็น <b>ทุนใหม่ (ฉบับร่าง)</b> · ใบสมัคร คะแนน และผลของรอบเดิมไม่ถูกแตะต้อง<br>
+      เปิดซ้ำในปีเดียวกัน → ต่อท้ายชื่อว่า "(รอบ 2)" · ขึ้นปีการศึกษาใหม่ → เปลี่ยนปีการศึกษา<br>
+      สร้างแล้วตั้งวันปิดรับสมัครและตรวจเกณฑ์ แล้วกด "เผยแพร่ให้นักเรียนสมัคร"
+    </div>
+    <div style="display:flex;gap:10px">
+      <button class="btn ghost" id="roundCancel">ยกเลิก</button>
+      <button class="btn" id="roundOk" style="flex:1">สร้างรอบใหม่</button>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -239,7 +289,15 @@ const PRESET_CRITERIA=[
 ];
 const STATUS_LABEL={draft:"ฉบับร่าง",open:"เปิดรับสมัคร",screening:"กำลังคัดกรอง",announced:"ประกาศผลแล้ว",closed:"ปิดแล้ว"};
 
-let ME=null, EDITING=null, CRITERIA=[];
+let ME=null, EDITING=null, CRITERIA=[], APPS={total:0,approved:0}, LOCK_CRIT=false, LIST=[], ROUND_SRC=null;
+const LOCKED_STATUS=["screening","announced","closed"];
+const STATUS_HINT={
+  draft:"ฉบับร่าง — นักเรียนยังมองไม่เห็นทุนนี้",
+  open:"เปิดรับสมัคร — นักเรียนสมัครได้จนถึงวันปิดรับสมัคร",
+  screening:"กำลังคัดกรอง — ไม่รับสมัครเพิ่ม ครูตรวจใบสมัคร (แก้เกณฑ์ไม่ได้)",
+  announced:"ประกาศผลแล้ว (แก้เกณฑ์ไม่ได้)",
+  closed:"ปิดแล้ว — จบกระบวนการ เปิดกลับมาอีกไม่ได้ (ถ้าจะรับสมัครอีก ให้เปิดรอบใหม่)"
+};
 
 function currentAcademicYear(){
   const d=new Date();
@@ -281,59 +339,139 @@ async function loadList(){
   const {data,error}=await sb.from("scholarships")
     .select("id,name,provider,status,quota,amount_per_grant,academic_year,closes_at,scholarship_criteria(count),applications(count)")
     .order("created_at",{ascending:false});
-  if(error){box.innerHTML='<div class="empty">โหลดข้อมูลไม่สำเร็จ</div>';return;}
-  if(!data.length){
+  if(error){box.innerHTML='<div class="empty">โหลดข้อมูลไม่สำเร็จ ลองเปิดหน้านี้ใหม่อีกครั้ง</div>';return;}
+  LIST=data||[];
+  if(!LIST.length){
     box.innerHTML=`<div class="empty">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 10L12 5 2 10l10 5 10-5z"/><path d="M6 12v5c0 1 2.7 2.5 6 2.5s6-1.5 6-2.5v-5"/></svg>
       <p>ยังไม่มีทุน · เริ่มจากปุ่ม "สร้างทุนใหม่"</p></div>`;return;
   }
   box.innerHTML="";
-  data.forEach(s=>{
+  LIST.forEach(s=>{
     const nCrit=s.scholarship_criteria?.[0]?.count ?? 0;
     const nApp=s.applications?.[0]?.count ?? 0;
     const money=s.amount_per_grant?Number(s.amount_per_grant).toLocaleString("th-TH"):"—";
+    const expired=s.status==="open" && s.closes_at && new Date(s.closes_at)<new Date();
     const el=document.createElement("div");el.className="srow";
     el.innerHTML=`<div class="grow">
         <h3>${esc(s.name)}</h3>
-        <div class="meta">${money} บาท × ${s.quota} ทุน · ${nCrit} เกณฑ์ · ${nApp} ใบสมัคร</div>
+        <div class="meta">ปีการศึกษา ${esc(s.academic_year)} · ${money} บาท × ${s.quota} ทุน · ${nCrit} เกณฑ์ · ${nApp} ใบสมัคร</div>
+        <div class="meta">ปิดรับสมัคร: ${fmtDate(s.closes_at)} ${expired?'<span class="tag-warn">เลยกำหนดแล้ว</span>':''}</div>
       </div>
-      <span class="status-tag st-${s.status}">${STATUS_LABEL[s.status]||s.status}</span>`;
+      <div class="acts">
+        <span class="status-tag st-${s.status}">${STATUS_LABEL[s.status]||s.status}</span>
+        <button class="rowbtn" data-round="${s.id}" title="คัดลอกทุนนี้ไปเป็นรอบใหม่">+ รอบใหม่</button>
+      </div>`;
     el.onclick=()=>openEdit(s.id);
+    el.querySelector("[data-round]").onclick=e=>{e.stopPropagation();openRound(s.id);};
     box.appendChild(el);
   });
 }
 
+function fmtDate(iso){
+  return iso?new Date(iso).toLocaleDateString("th-TH",{day:"numeric",month:"short",year:"numeric"}):"ไม่กำหนด";
+}
+function toLocalDate(iso){
+  if(!iso)return "";
+  const d=new Date(iso),p=n=>String(n).padStart(2,"0");
+  return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate());
+}
+function note(t,kind){return `<div class="notice ${kind}">${t}</div>`;}
+
 /* ---- editor ---- */
-function blankCriterion(){return{criterion_key:"gpa",label:"เกรดเฉลี่ยสะสม",weight:0,higher_is_better:true,
-  rules:[{max:"",points:""}]};}
+// เกณฑ์ใหม่: เลือกชนิดที่ยังไม่ถูกใช้ก่อน (เริ่มที่เกรดเฉลี่ย) กันเผลอเลือกชนิดซ้ำกัน
+function blankCriterion(){
+  const used=new Set(CRITERIA.map(c=>c.criterion_key));
+  const order=PRESET_CRITERIA.slice(4).concat(PRESET_CRITERIA.slice(0,4));
+  const p=order.find(x=>!used.has(x.key))||order[0];
+  return{id:null,origWeight:null,criterion_key:p.key,label:p.label,weight:0,higher_is_better:p.higher,
+    rules:[{max:"",points:""}]};
+}
 function openNew(){
-  EDITING=null;CRITERIA=[blankCriterion()];
+  EDITING=null;APPS={total:0,approved:0};LOCK_CRIT=false;CRITERIA=[];CRITERIA=[blankCriterion()];
   $("#edMode").textContent="สร้างทุนใหม่";
   $("#eName").value="";$("#eProvider").value="";$("#eYear").value=String(currentAcademicYear());
   $("#eDesc").value="";$("#eAmount").value="";$("#eQuota").value="1";$("#eCloses").value="";
-  $("#deleteBtn").classList.add("hidden");
-  msg($("#editMsg"),"","");
-  renderCriteria();show("edit");
+  msg($("#editMsg"),"","");msg($("#listMsg"),"","");
+  setupEditor();renderCriteria();show("edit");
 }
 async function openEdit(id){
-  msg($("#editMsg"),"","");
-  const {data:s}=await sb.from("scholarships").select("*").eq("id",id).single();
-  const {data:cs}=await sb.from("scholarship_criteria").select("*").eq("scholarship_id",id).order("display_order");
+  msg($("#editMsg"),"","");msg($("#listMsg"),"","");
+  const [rs,rc,rt,ra]=await Promise.all([
+    sb.from("scholarships").select("*").eq("id",id).single(),
+    sb.from("scholarship_criteria").select("*").eq("scholarship_id",id).order("display_order"),
+    sb.from("applications").select("id",{count:"exact",head:true}).eq("scholarship_id",id),
+    sb.from("applications").select("id",{count:"exact",head:true}).eq("scholarship_id",id).eq("status","approved"),
+  ]);
+  const s=rs.data;
+  if(rs.error||!s){msg($("#listMsg"),"เปิดทุนนี้ไม่สำเร็จ ลองใหม่อีกครั้ง","err");return;}
   EDITING=s;
+  APPS={total:rt.count||0,approved:ra.count||0};
+  // เกณฑ์ถูกล็อก: ทุนอยู่ในขั้นคัดกรอง/ประกาศผล/ปิดแล้ว หรือมีผู้ได้รับทุนแล้ว (ตรงกับกฎในฐานข้อมูล)
+  LOCK_CRIT=LOCKED_STATUS.includes(s.status)||APPS.approved>0;
   $("#edMode").textContent="แก้ไขทุน · "+(STATUS_LABEL[s.status]||s.status);
   $("#eName").value=s.name||"";$("#eProvider").value=s.provider||"";$("#eYear").value=s.academic_year||String(currentAcademicYear());
   $("#eDesc").value=s.description||"";$("#eAmount").value=s.amount_per_grant??"";$("#eQuota").value=s.quota??1;
-  $("#eCloses").value=s.closes_at?s.closes_at.slice(0,10):"";
-  CRITERIA=(cs||[]).map(c=>({criterion_key:c.criterion_key,label:c.label,weight:Math.round(c.weight*100),
-    higher_is_better:c.higher_is_better,
+  $("#eCloses").value=toLocalDate(s.closes_at);
+  CRITERIA=(rc.data||[]).map(c=>({id:c.id,origWeight:Number(c.weight),criterion_key:c.criterion_key,label:c.label,
+    weight:Math.round(c.weight*10000)/100,higher_is_better:c.higher_is_better,
     rules:normalizeRules(c.scoring_rules)}));
-  if(!CRITERIA.length)CRITERIA=[blankCriterion()];
-  $("#deleteBtn").classList.remove("hidden");
-  renderCriteria();show("edit");
+  if(!CRITERIA.length&&!LOCK_CRIT)CRITERIA=[blankCriterion()];
+  setupEditor();renderCriteria();show("edit");
 }
 function normalizeRules(sr){
   if(!Array.isArray(sr)||!sr.length)return[{max:"",points:""}];
   return sr.map(r=>({max:(r.max??"")===""?"":r.max, points:r.points??""}));
+}
+
+// จัดปุ่ม/ข้อความของหน้าแก้ไขตามสถานะทุน
+function isSimpleMode(){return !EDITING||EDITING.status==="draft";}
+function setupEditor(){
+  const simple=isSimpleMode();
+  $("#saveDraftBtn").classList.toggle("hidden",!simple);
+  $("#publishBtn").textContent=simple?"เผยแพร่ให้นักเรียนสมัคร":"บันทึกการแก้ไข";
+  $("#statusBox").classList.toggle("hidden",simple);
+  $("#roundBtn").classList.toggle("hidden",!EDITING);
+  $("#deleteBtn").classList.toggle("hidden",!EDITING||APPS.total>0);
+
+  if(!simple){
+    const sel=$("#eStatus");sel.innerHTML="";
+    const keys=["draft","open","screening","announced","closed"].filter(k=>k!=="draft"||APPS.total===0||EDITING.status==="draft");
+    keys.forEach(k=>{const o=document.createElement("option");o.value=k;o.textContent=STATUS_LABEL[k];sel.appendChild(o);});
+    sel.value=EDITING.status;
+    sel.disabled=EDITING.status==="closed";   // ทุนที่ปิดแล้วเปิดกลับไม่ได้ (ฐานข้อมูลก็กันไว้)
+    const hint=()=>{$("#eStatusHint").textContent=STATUS_HINT[sel.value]||"";};
+    sel.onchange=hint;hint();
+  }
+
+  const parts=[];
+  if(EDITING){
+    if(APPS.total>0)parts.push(note(`ทุนนี้มีใบสมัคร <b>${APPS.total}</b> ใบ${APPS.approved?` · ได้รับทุนแล้ว <b>${APPS.approved}</b> คน`:""}`,"info"));
+    if(APPS.approved>EDITING.quota)parts.push(note(`จำนวนทุนตั้งไว้ ${EDITING.quota} ทุน แต่มีผู้ได้รับทุนแล้ว ${APPS.approved} คน — ควรตรวจสอบให้ตรงกัน`,"warn"));
+    if(LOCK_CRIT){
+      const why=APPS.approved>0
+        ?`มีผู้ได้รับทุนแล้ว ${APPS.approved} คน`
+        :`ทุนอยู่ในขั้น "${STATUS_LABEL[EDITING.status]}"`;
+      parts.push(note(`🔒 ${why} จึง<b>แก้เกณฑ์ไม่ได้</b> เพื่อไม่ให้กระทบคะแนนที่ตัดสินไปแล้ว · แก้ชื่อ รายละเอียด จำนวนเงิน วันปิดรับสมัคร และสถานะได้ตามปกติ<br>ถ้าต้องการเกณฑ์ใหม่ ให้กด <b>"เปิดรับสมัครรอบใหม่จากทุนนี้"</b>`,"lock"));
+    }else if(APPS.total>0&&EDITING.status==="open"){
+      parts.push(note("ถ้าแก้เกณฑ์ ระบบจะคำนวณคะแนนของใบสมัครที่ยังไม่ตัดสินให้ใหม่อัตโนมัติ (คะแนนที่ครูปรับเองไม่หาย)","info"));
+    }
+    if(EDITING.status==="open"&&EDITING.closes_at&&new Date(EDITING.closes_at)<new Date()){
+      parts.push(note("วันปิดรับสมัครผ่านไปแล้ว นักเรียนจึงสมัครไม่ได้ — ถ้าจะรับสมัครต่อ ให้ตั้งวันปิดรับสมัครใหม่","warn"));
+    }
+  }
+  $("#editInfo").innerHTML=parts.join("");
+}
+
+// ล็อกส่วนเกณฑ์ (อ่านอย่างเดียว) เมื่อแก้ไม่ได้
+function applyLock(){
+  const box=$("#critList");
+  box.querySelectorAll(".crit").forEach(x=>x.classList.toggle("locked",LOCK_CRIT));
+  if(LOCK_CRIT){
+    box.querySelectorAll("input,select").forEach(x=>x.disabled=true);
+    box.querySelectorAll(".mini,.addrule").forEach(x=>x.classList.add("hidden"));
+  }
+  $("#addCritBtn").classList.toggle("hidden",LOCK_CRIT);
 }
 
 function renderCriteria(){
@@ -349,7 +487,7 @@ function renderCriteria(){
             <label class="fld" style="margin:0"><span class="lbl">เกณฑ์</span>
               <select data-i="${i}" class="csel"></select></label>
             <label class="fld" style="margin:0"><span class="lbl">น้ำหนัก (%)</span>
-              <input type="number" min="0" max="100" step="1" class="cw" data-i="${i}" value="${c.weight}"></label>
+              <input type="number" min="0" max="100" step="0.01" class="cw" data-i="${i}" value="${c.weight}"></label>
           </div>
           <label class="fld" style="margin:0 0 4px"><span class="lbl">ชื่อที่แสดง</span>
             <input class="cl" data-i="${i}" value="${esc(c.label)}"></label>
@@ -367,13 +505,14 @@ function renderCriteria(){
       const o=document.createElement("option");o.value=p.key;o.textContent=`${p.label} · ${p.src}`;
       if(p.key===c.criterion_key)o.selected=true;sel.appendChild(o);
     });
-    const om=document.createElement("option");om.value="manual_"+i;om.textContent="ให้คะแนนเอง (ครูกรอกภายหลัง)";
+    const om=document.createElement("option");om.value="manual";om.textContent="ให้คะแนนเอง (ครูกรอกภายหลัง)";
     if(isManual)om.selected=true;sel.appendChild(om);
 
     if(!isManual)renderRules(el.querySelector(`[data-rules="${i}"]`),c,i);
   });
   wireCriteria();
   updateWeight();
+  applyLock();
 }
 
 function renderRules(container,c,i){
@@ -397,9 +536,16 @@ function renderRules(container,c,i){
 function wireCriteria(){
   document.querySelectorAll(".csel").forEach(s=>s.onchange=e=>{
     const i=+e.target.dataset.i,v=e.target.value;
-    CRITERIA[i].criterion_key=v;
-    const preset=PRESET_CRITERIA.find(p=>p.key===v);
-    if(preset){CRITERIA[i].label=preset.label;CRITERIA[i].higher_is_better=preset.higher;}
+    if(v==="manual"){
+      // เปลี่ยนจากเกณฑ์อัตโนมัติเป็นให้คะแนนเอง (ถ้าเป็นแบบให้คะแนนเองอยู่แล้ว คงรหัสเดิมไว้)
+      if(!CRITERIA[i].criterion_key.startsWith("manual")){
+        CRITERIA[i].criterion_key="manual_new";CRITERIA[i].label="คะแนนที่ครูให้เอง";CRITERIA[i].higher_is_better=true;
+      }
+    }else{
+      CRITERIA[i].criterion_key=v;
+      const preset=PRESET_CRITERIA.find(p=>p.key===v);
+      if(preset){CRITERIA[i].label=preset.label;CRITERIA[i].higher_is_better=preset.higher;}
+    }
     renderCriteria();
   });
   document.querySelectorAll(".cw").forEach(inp=>inp.oninput=e=>{CRITERIA[+e.target.dataset.i].weight=+e.target.value||0;updateWeight();});
@@ -407,7 +553,8 @@ function wireCriteria(){
   document.querySelectorAll(".rmax").forEach(inp=>inp.oninput=e=>{CRITERIA[+e.target.dataset.i].rules[+e.target.dataset.j].max=e.target.value;});
   document.querySelectorAll(".rpts").forEach(inp=>inp.oninput=e=>{CRITERIA[+e.target.dataset.i].rules[+e.target.dataset.j].points=e.target.value;});
   document.querySelectorAll("[data-del]").forEach(b=>b.onclick=e=>{
-    const i=+e.currentTarget.dataset.del;if(CRITERIA.length<=1){return;}CRITERIA.splice(i,1);renderCriteria();});
+    const i=+e.currentTarget.dataset.del;if(CRITERIA.length<=1){return;}
+    if(CRITERIA[i].id&&!confirm(`ลบเกณฑ์ "${CRITERIA[i].label}" ออกจากทุนนี้? คะแนนของเกณฑ์นี้ในใบสมัครที่มีอยู่จะถูกลบด้วย`))return;CRITERIA.splice(i,1);renderCriteria();});
   document.querySelectorAll("[data-addrule]").forEach(b=>b.onclick=e=>{
     e.preventDefault();CRITERIA[+e.currentTarget.dataset.addrule].rules.push({max:"",points:""});renderCriteria();});
   document.querySelectorAll("[data-delrule]").forEach(b=>b.onclick=e=>{
@@ -416,7 +563,7 @@ function wireCriteria(){
 }
 
 function updateWeight(){
-  const tot=CRITERIA.reduce((a,c)=>a+(+c.weight||0),0);
+  const tot=Math.round(CRITERIA.reduce((a,c)=>a+(+c.weight||0),0)*100)/100;
   const el=$("#weightTotal");
   el.textContent=`น้ำหนักรวม: ${tot}%`+(tot===100?" ✓":` (ควรเป็น 100%)`);
   el.className="weight-total "+(tot===100?"good":"bad");
@@ -435,62 +582,141 @@ function buildRules(c){
   });
 }
 
-async function save(publish){
-  const name=$("#eName").value.trim();
-  if(!name){msg($("#editMsg"),"กรุณากรอกชื่อทุน","err");return;}
-  const tot=CRITERIA.reduce((a,c)=>a+(+c.weight||0),0);
-  if(publish && tot!==100){msg($("#editMsg"),`น้ำหนักรวมต้องเป็น 100% ก่อนเผยแพร่ (ตอนนี้ ${tot}%)`,"err");return;}
-  if(publish && !CRITERIA.length){msg($("#editMsg"),"ต้องมีอย่างน้อย 1 เกณฑ์","err");return;}
+// สร้างรายการเกณฑ์ส่งฐานข้อมูล (id เดิมต้องส่งกลับไปด้วย เพื่อให้แก้ในแถวเดิม คะแนนเดิมไม่หาย)
+function criteriaPayload(){
+  const usedManual=new Set(CRITERIA.filter(c=>/^manual_\d+$/.test(c.criterion_key)).map(c=>c.criterion_key));
+  let n=0;
+  const nextManual=()=>{do{n++;}while(usedManual.has("manual_"+n));usedManual.add("manual_"+n);return "manual_"+n;};
+  return CRITERIA.map((c,i)=>{
+    const manual=c.criterion_key.startsWith("manual");
+    const key=manual?(/^manual_\d+$/.test(c.criterion_key)?c.criterion_key:nextManual()):c.criterion_key;
+    // ไม่แตะน้ำหนักเดิมถ้าครูไม่ได้แก้ (กันเศษทศนิยมเพี้ยนจากการปัดเป็นเปอร์เซ็นต์)
+    const unchanged=c.origWeight!=null&&Math.abs(c.origWeight*100-(+c.weight||0))<0.005;
+    const w=unchanged?c.origWeight:Math.round((+c.weight||0)*100)/10000;
+    return{id:c.id||null,criterion_key:key,label:(c.label||"").trim()||key,weight:w,
+      scoring_rules:manual?[]:buildRules(c),higher_is_better:c.higher_is_better,display_order:i};
+  });
+}
+// ตรวจเกณฑ์ก่อนส่ง คืนข้อความผิดพลาด (ภาษาไทยง่าย ๆ) หรือ null ถ้าผ่าน
+function checkCriteria(status){
+  const keys=CRITERIA.filter(c=>!c.criterion_key.startsWith("manual")).map(c=>c.criterion_key);
+  if(new Set(keys).size!==keys.length)return "มีเกณฑ์ชนิดเดียวกันซ้ำกัน กรุณาเลือกแต่ละเกณฑ์ให้ไม่ซ้ำ";
+  for(const c of CRITERIA){
+    if(c.criterion_key.startsWith("manual"))continue;
+    const rs=c.rules.filter(r=>r.points!=="");
+    if(status==="open"&&!rs.length)return `เกณฑ์ "${c.label}" ยังไม่ได้กำหนดช่วงคะแนน`;
+    for(let j=0;j<rs.length;j++){
+      const p=Number(rs[j].points);
+      if(!(p>=0&&p<=100))return `เกณฑ์ "${c.label}": คะแนนต้องอยู่ระหว่าง 0–100`;
+      const isLast=j===rs.length-1;
+      if(!isLast&&(rs[j].max===""||rs[j].max===null))return `เกณฑ์ "${c.label}": ช่วงที่ไม่ใช่ช่วงสุดท้ายต้องใส่ค่า "ไม่เกิน"`;
+      if(j>0&&!isLast&&Number(rs[j].max)<=Number(rs[j-1].max))return `เกณฑ์ "${c.label}": ค่าของแต่ละช่วงต้องเรียงจากน้อยไปมาก`;
+    }
+  }
+  const tot=Math.round(CRITERIA.reduce((a,c)=>a+(+c.weight||0),0)*100)/100;
+  if(status==="open"){
+    if(!CRITERIA.length)return "ต้องมีเกณฑ์อย่างน้อย 1 ข้อก่อนเปิดรับสมัคร";
+    if(tot!==100)return `น้ำหนักรวมต้องเป็น 100% ก่อนเปิดรับสมัคร (ตอนนี้ ${tot}%)`;
+  }
+  return null;
+}
 
-  const payload={
+// kind: "draft" = บันทึกฉบับร่าง · "publish" = เผยแพร่ (ทุนใหม่/ฉบับร่าง) · "edit" = บันทึกการแก้ไข (ทุนที่เปิดใช้งานแล้ว)
+async function save(kind){
+  const er=t=>msg($("#editMsg"),t,"err");
+  const name=$("#eName").value.trim();
+  if(!name){er("กรุณากรอกชื่อทุน");return;}
+  const year=$("#eYear").value.trim();
+  if(!/^\d{4}$/.test(year)){er("ปีการศึกษาต้องเป็นตัวเลข 4 หลัก เช่น 2569");return;}
+  const quota=Number($("#eQuota").value);
+  if(!(quota>=1)){er("จำนวนทุนต้องไม่น้อยกว่า 1");return;}
+
+  const simple=isSimpleMode();
+  const status=simple?(kind==="publish"?"open":"draft"):$("#eStatus").value;
+
+  if(!LOCK_CRIT){const e=checkCriteria(status);if(e){er(e);return;}}
+
+  // ยืนยันก่อนเปลี่ยนสถานะที่กระทบนักเรียนจริง
+  if(EDITING&&status!==EDITING.status){
+    if(status==="closed"&&!confirm("ปิดทุนแล้วจะเปิดกลับมาอีกไม่ได้ ยืนยันหรือไม่?\n(ถ้าจะรับสมัครอีก ให้ใช้ปุ่ม \"เปิดรับสมัครรอบใหม่\")"))return;
+    if(status==="open"&&LOCKED_STATUS.includes(EDITING.status)&&
+       !confirm(`ทุนนี้อยู่ในขั้น "${STATUS_LABEL[EDITING.status]}" แล้ว ต้องการเปิดให้นักเรียนสมัครเพิ่มอีกครั้งใช่หรือไม่?\n\nถ้าต้องการรับสมัครรอบใหม่แยกจากรอบเดิม ให้กดยกเลิก แล้วใช้ปุ่ม "เปิดรับสมัครรอบใหม่" แทน`))return;
+    if(status==="announced"&&!confirm("เมื่อประกาศผลแล้วจะแก้เกณฑ์ไม่ได้ ยืนยันหรือไม่?"))return;
+  }
+  if(status==="open"&&!$("#eCloses").value&&
+     !confirm("ยังไม่ได้ตั้งวันปิดรับสมัคร ทุนจะเปิดรับไม่มีกำหนด ยืนยันหรือไม่?"))return;
+
+  const amt=$("#eAmount").value;
+  const fields={
     name, provider:$("#eProvider").value.trim()||null,
     description:$("#eDesc").value.trim()||null,
-    academic_year:$("#eYear").value.trim()||String(currentAcademicYear()),
-    amount_per_grant:$("#eAmount").value?Number($("#eAmount").value):null,
-    quota:Number($("#eQuota").value)||1,
+    academic_year:year,
+    amount_per_grant:amt===""?null:Number(amt),
+    quota,
     closes_at:$("#eCloses").value?new Date($("#eCloses").value+"T23:59:59").toISOString():null,
-    // "บันทึกเป็นฉบับร่าง" ตอนแก้ไขทุนที่มีอยู่แล้วต้องไม่ดึงสถานะกลับไปเป็น draft
-    // (เคยทำแบบนั้นมาก่อน ผลคือทุนที่ประกาศผลไปแล้วหายจากหน้านักเรียนทันทีถ้าครูกดผิดปุ่ม)
-    // ปุ่ม "เผยแพร่" ยังบังคับเปิดรับสมัครได้เหมือนเดิม แม้กำลังแก้ทุนที่มีอยู่แล้ว
-    status: publish ? "open" : (EDITING? EDITING.status : "draft"),
+    status,
   };
+  const crit=LOCK_CRIT?null:criteriaPayload();
 
-  const btn=publish?$("#publishBtn"):$("#saveDraftBtn");
+  const btn=kind==="draft"?$("#saveDraftBtn"):$("#publishBtn");
   btn.disabled=true;const old=btn.textContent;btn.textContent="กำลังบันทึก…";
   try{
-    let schId=EDITING?.id;
-    if(EDITING){
-      const {error}=await sb.from("scholarships").update(payload).eq("id",EDITING.id);
-      if(error)throw error;
-    }else{
-      payload.created_by=ME.id;
-      const {data,error}=await sb.from("scholarships").insert(payload).select("id").single();
-      if(error)throw error;schId=data.id;
-    }
-    // rewrite criteria
-    await sb.from("scholarship_criteria").delete().eq("scholarship_id",schId);
-    const rows=CRITERIA.map((c,i)=>({
-      scholarship_id:schId,
-      criterion_key:c.criterion_key.startsWith("manual")?`manual_${i+1}`:c.criterion_key,
-      label:c.label||c.criterion_key,
-      weight:(+c.weight||0)/100,
-      scoring_rules:c.criterion_key.startsWith("manual")?[]:buildRules(c),
-      higher_is_better:c.higher_is_better,
-      display_order:i,
-    }));
-    if(rows.length){const {error}=await sb.from("scholarship_criteria").insert(rows);if(error)throw error;}
-    show("list");await loadList();
+    // ฟังก์ชันเดียวบันทึกทั้งทุนและเกณฑ์ในธุรกรรมเดียว (ผิดพลาดแล้วไม่มีอะไรถูกบันทึกครึ่งเดียว)
+    const {data,error}=await sb.rpc("scholarship_save",{p_id:EDITING?EDITING.id:null,p_fields:fields,p_criteria:crit});
+    if(error)throw error;
+    show("list");
+    let t="บันทึกทุนเรียบร้อยแล้ว";
+    if(data?.criteria_changed&&data?.recomputed>0)t+=` · คำนวณคะแนนใหม่ให้ใบสมัคร ${data.recomputed} ใบแล้ว`;
+    msg($("#listMsg"),t,"ok");
+    await loadList();
   }catch(e){
-    msg($("#editMsg"),"บันทึกไม่สำเร็จ: "+(e.message||"เกิดข้อผิดพลาด"),"err");
+    msg($("#editMsg"),"บันทึกไม่สำเร็จ: "+(e.message||"เกิดข้อผิดพลาด ลองใหม่อีกครั้ง"),"err");
+    window.scrollTo(0,0);
   }finally{btn.disabled=false;btn.textContent=old;}
 }
 
 async function del(){
   if(!EDITING)return;
-  if(!confirm("ยืนยันลบทุนนี้? การสมัครและคะแนนทั้งหมดของทุนนี้จะถูกลบด้วย"))return;
+  if(APPS.total>0){
+    msg($("#editMsg"),`ทุนนี้มีใบสมัคร ${APPS.total} ใบ ลบไม่ได้ (จะทำให้ข้อมูลของนักเรียนหายด้วย) — ถ้าไม่ใช้ทุนนี้แล้ว ให้เปลี่ยนสถานะเป็น "ปิดแล้ว"`,"err");return;
+  }
+  if(!confirm("ยืนยันลบทุนนี้? (ทุนนี้ยังไม่มีใบสมัคร)"))return;
   const {error}=await sb.from("scholarships").delete().eq("id",EDITING.id);
   if(error){msg($("#editMsg"),"ลบไม่สำเร็จ: "+error.message,"err");return;}
-  show("list");loadList();
+  show("list");msg($("#listMsg"),"ลบทุนแล้ว","ok");loadList();
+}
+
+/* ---- เปิดรับสมัครรอบใหม่ ---- */
+const stripRound=n=>String(n||"").replace(/\s*\(รอบ\s*\d+\)\s*$/,"").trim();
+function openRound(id){
+  const s=LIST.find(x=>x.id===id)||(EDITING&&EDITING.id===id?EDITING:null);
+  if(!s)return;
+  ROUND_SRC=s;
+  const base=stripRound(s.name);
+  const year=String(Math.max(currentAcademicYear(),Number(s.academic_year)||0));
+  const same=LIST.filter(x=>String(x.academic_year)===year&&stripRound(x.name).toLowerCase()===base.toLowerCase());
+  $("#rName").value=same.length?`${base} (รอบ ${same.length+1})`:base;
+  $("#rYear").value=year;
+  $("#roundSrc").textContent=`คัดลอกจาก: ${s.name} (ปีการศึกษา ${s.academic_year})`;
+  msg($("#roundMsg"),"","");
+  $("#roundModal").classList.remove("hidden");
+}
+function closeRound(){$("#roundModal").classList.add("hidden");ROUND_SRC=null;}
+async function createRound(){
+  if(!ROUND_SRC)return;
+  const name=$("#rName").value.trim(),year=$("#rYear").value.trim();
+  if(!name){msg($("#roundMsg"),"กรุณากรอกชื่อทุนรอบใหม่","err");return;}
+  if(!/^\d{4}$/.test(year)){msg($("#roundMsg"),"ปีการศึกษาต้องเป็นตัวเลข 4 หลัก เช่น 2570","err");return;}
+  const b=$("#roundOk");b.disabled=true;const old=b.textContent;b.textContent="กำลังสร้าง…";
+  try{
+    const {data,error}=await sb.rpc("scholarship_new_round",{p_source:ROUND_SRC.id,p_name:name,p_academic_year:year});
+    if(error)throw error;
+    closeRound();
+    await openEdit(data);
+    msg($("#editMsg"),"สร้างทุนรอบใหม่แล้ว (ฉบับร่าง) · ตั้งวันปิดรับสมัคร ตรวจเกณฑ์ แล้วกด \"เผยแพร่ให้นักเรียนสมัคร\"","ok");
+  }catch(e){
+    msg($("#roundMsg"),e.message||"สร้างรอบใหม่ไม่สำเร็จ ลองใหม่อีกครั้ง","err");
+  }finally{b.disabled=false;b.textContent=old;}
 }
 
 function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
@@ -501,9 +727,12 @@ $("#logoutBtn").onclick=logout;
 $("#newBtn").onclick=openNew;
 $("#backBtn").onclick=()=>{show("list");loadList();};
 $("#addCritBtn").onclick=()=>{CRITERIA.push(blankCriterion());renderCriteria();};
-$("#saveDraftBtn").onclick=()=>save(false);
-$("#publishBtn").onclick=()=>save(true);
+$("#saveDraftBtn").onclick=()=>save("draft");
+$("#publishBtn").onclick=()=>save(isSimpleMode()?"publish":"edit");
 $("#deleteBtn").onclick=del;
+$("#roundBtn").onclick=()=>{if(EDITING)openRound(EDITING.id);};
+$("#roundCancel").onclick=closeRound;
+$("#roundOk").onclick=createRound;
 
 (async()=>{const {data:{session}}=await sb.auth.getSession();if(session)afterLogin();})();
 </script>
