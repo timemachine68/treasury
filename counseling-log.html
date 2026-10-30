@@ -60,6 +60,16 @@
   .privacy-note{font-size:12px;color:var(--muted);margin-top:16px;}
   .empty{color:var(--muted);font-size:13.5px;padding:20px 0;text-align:center;}
 
+  .other-detail{margin-top:8px;}
+  input[type=file]{width:100%;padding:8px 0;font-size:13.5px;font-family:'Sarabun',sans-serif;}
+  .photo-preview{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;}
+  .photo-thumb{position:relative;width:88px;height:88px;border-radius:8px;overflow:hidden;border:1px solid var(--border);}
+  .photo-thumb img{width:100%;height:100%;object-fit:cover;display:block;}
+  .photo-thumb .rm{position:absolute;top:3px;right:3px;width:20px;height:20px;border-radius:50%;border:none;background:rgba(16,26,48,.75);color:#fff;font-size:13px;line-height:1;cursor:pointer;}
+  .photo-thumb .uploading{position:absolute;inset:0;background:rgba(255,255,255,.75);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--muted);}
+  .photo-note{font-size:12px;color:var(--muted);margin-top:4px;}
+  .photo-tag{font-size:11.5px;color:var(--muted);}
+
   .btn-secondary{margin-top:10px;width:100%;padding:11px;border:1px solid var(--border);border-radius:8px;background:#fff;color:var(--text);font-family:'Kanit',sans-serif;font-size:14.5px;cursor:pointer;}
   .btn-danger{margin-top:14px;width:100%;padding:10px;border:1px solid #f0c8c2;border-radius:8px;background:#fff;color:var(--danger);font-family:'Kanit',sans-serif;font-size:14px;cursor:pointer;}
   .btn-link{background:none;border:none;color:var(--navy);cursor:pointer;font-size:13px;text-decoration:underline;padding:0;font-family:'Sarabun',sans-serif;}
@@ -91,7 +101,7 @@
 <body>
 
 <header>
-  <div class="brand"><a href="index.html" title="กลับหน้าหลัก" style="color:#fff;text-decoration:none;margin-right:10px">🏠</a>แนะให้แนว · บันทึกการให้คำปรึกษา</div>
+  <div class="brand">แนะให้แนว · บันทึกการให้คำปรึกษา</div>
   <div class="who" id="who-label">กำลังโหลด...</div>
 </header>
 
@@ -122,9 +132,14 @@
         <label><input type="radio" name="f-cat" value="อาชีพ/ศึกษาต่อ"> อาชีพ/ศึกษาต่อ</label>
         <label><input type="radio" name="f-cat" value="อื่นๆ"> อื่นๆ</label>
       </div>
+      <input type="text" id="f-other-detail" class="other-detail" style="display:none;" placeholder="ระบุหัวข้อที่นักเรียนมาปรึกษา" maxlength="200">
 
       <label>บันทึกการพูดคุย</label>
       <textarea id="f-note" placeholder="สรุปประเด็นที่พูดคุยและแนวทางช่วยเหลือ"></textarea>
+
+      <label>แนบรูปภาพ (ไม่เกิน 2 รูป)</label>
+      <input type="file" id="f-photo-input" accept="image/*" multiple>
+      <div class="photo-preview" id="f-photo-preview"></div>
 
       <label>สถานะติดตาม</label>
       <select id="f-status">
@@ -200,9 +215,14 @@
         <label><input type="radio" name="e-cat" value="อาชีพ/ศึกษาต่อ"> อาชีพ/ศึกษาต่อ</label>
         <label><input type="radio" name="e-cat" value="อื่นๆ"> อื่นๆ</label>
       </div>
+      <input type="text" id="e-other-detail" class="other-detail" style="display:none;" placeholder="ระบุหัวข้อที่นักเรียนมาปรึกษา" maxlength="200">
 
       <label>บันทึกการพูดคุย</label>
       <textarea id="e-note"></textarea>
+
+      <label>รูปภาพ (ไม่เกิน 2 รูป)</label>
+      <input type="file" id="e-photo-input" accept="image/*" multiple>
+      <div class="photo-preview" id="e-photo-preview"></div>
 
       <label>สถานะติดตาม</label>
       <select id="e-status">
@@ -236,10 +256,66 @@ let mineNeedsRefresh = true;
 let myLogs = {};
 let editingId = null;
 
+let fPhotoFiles = [];       // File[] รอบันทึกใหม่ (ยังไม่อัปโหลด)
+let ePhotoFiles = [];       // File[] ที่เพิ่มใหม่ตอนแก้ไข (ยังไม่อัปโหลด)
+let eExistingPhotos = [];   // [{path, url}] รูปเดิมที่ยังไม่ถูกลบ
+let eRemovedPaths = [];     // path ของรูปเดิมที่สั่งนำออก
+
 function esc(str){
   const div = document.createElement('div');
   div.textContent = str ?? '';
   return div.innerHTML;
+}
+
+// ย่อรูปฝั่งเบราว์เซอร์ก่อนอัปโหลด (ด้านยาวสุดไม่เกิน maxDim, JPEG)
+function resizeImageFile(file, maxDim = 1280, quality = 0.82){
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('อ่านไฟล์รูปไม่สำเร็จ'));
+    reader.onload = e => {
+      const img = new Image();
+      img.onerror = () => reject(new Error('ไฟล์นี้ไม่ใช่รูปภาพที่เปิดได้'));
+      img.onload = () => {
+        let { width, height } = img;
+        if (width > maxDim || height > maxDim){
+          if (width > height){ height = Math.round(height * maxDim / width); width = maxDim; }
+          else { width = Math.round(width * maxDim / height); height = maxDim; }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width; canvas.height = height;
+        canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+        canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('ย่อรูปไม่สำเร็จ')), 'image/jpeg', quality);
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function syncOtherDetailVisibility(prefix, keepValue){
+  const selected = document.querySelector(`#${prefix}-categories input:checked`);
+  const box = document.getElementById(`${prefix}-other-detail`);
+  const show = !!selected && selected.value === 'อื่นๆ';
+  box.style.display = show ? 'block' : 'none';
+  if (!show && !keepValue) box.value = '';
+}
+
+function renderPhotoPreview(prefix){
+  const wrap = document.getElementById(`${prefix}-photo-preview`);
+  wrap.innerHTML = '';
+  const addThumb = (src, onRemove) => {
+    const div = document.createElement('div'); div.className = 'photo-thumb';
+    const img = document.createElement('img'); img.src = src;
+    const rm = document.createElement('button'); rm.className = 'rm'; rm.type = 'button'; rm.textContent = '×';
+    rm.addEventListener('click', onRemove);
+    div.appendChild(img); div.appendChild(rm); wrap.appendChild(div);
+  };
+  if (prefix === 'f'){
+    fPhotoFiles.forEach((file, i) => addThumb(URL.createObjectURL(file), () => { fPhotoFiles.splice(i, 1); renderPhotoPreview('f'); }));
+  } else {
+    eExistingPhotos.forEach((p, i) => addThumb(p.url, () => { eRemovedPaths.push(p.path); eExistingPhotos.splice(i, 1); renderPhotoPreview('e'); }));
+    ePhotoFiles.forEach((file, i) => addThumb(URL.createObjectURL(file), () => { ePhotoFiles.splice(i, 1); renderPhotoPreview('e'); }));
+  }
 }
 
 async function init(){
@@ -260,26 +336,43 @@ async function init(){
   bindTabs();
   bindSave();
   bindEdit();
+  bindOtherDetailToggle();
+  bindPhotoInputs();
   initYearSelect();
   bindReport();
 }
 
+function bindOtherDetailToggle(){
+  document.getElementById('f-categories').addEventListener('change', () => syncOtherDetailVisibility('f'));
+  document.getElementById('e-categories').addEventListener('change', () => syncOtherDetailVisibility('e'));
+}
+
+function bindPhotoInputs(){
+  document.getElementById('f-photo-input').addEventListener('change', e => {
+    const files = Array.from(e.target.files || []);
+    const room = 2 - fPhotoFiles.length;
+    if (files.length > room) alert(`แนบได้ไม่เกิน 2 รูป (เลือกเพิ่มได้อีก ${Math.max(room, 0)} รูป)`);
+    fPhotoFiles.push(...files.slice(0, Math.max(room, 0)));
+    e.target.value = '';
+    renderPhotoPreview('f');
+  });
+
+  document.getElementById('e-photo-input').addEventListener('change', e => {
+    const files = Array.from(e.target.files || []);
+    const room = 2 - (eExistingPhotos.length + ePhotoFiles.length);
+    if (files.length > room) alert(`แนบได้ไม่เกิน 2 รูป (เลือกเพิ่มได้อีก ${Math.max(room, 0)} รูป)`);
+    ePhotoFiles.push(...files.slice(0, Math.max(room, 0)));
+    e.target.value = '';
+    renderPhotoPreview('e');
+  });
+}
+
 async function loadStudents(){
-  // ต้องแบ่งหน้าดึง เพราะ Supabase/PostgREST จำกัดผลลัพธ์ไว้ที่ 1000 แถวต่อการ query ครั้งเดียว
-  // เป็นค่าเริ่มต้น — นักเรียนทั้งโรงเรียนมีมากกว่า 1000 คน ถ้าดึงครั้งเดียวจะขาดหายไปครึ่งหนึ่ง
-  let data = [], from = 0, pageSize = 1000, error = null;
-  while(true){
-    const res = await sb.from('profiles')
-      .select('id, display_name, class_room')
-      .eq('role', 'student')
-      .order('class_room', { ascending: true })
-      .order('display_name', { ascending: true })
-      .range(from, from + pageSize - 1);
-    if (res.error){ error = res.error; break; }
-    data = data.concat(res.data || []);
-    if (!res.data || res.data.length < pageSize) break;
-    from += pageSize;
-  }
+  const { data, error } = await sb.from('profiles')
+    .select('id, display_name, class_room')
+    .eq('role', 'student')
+    .order('class_room', { ascending: true })
+    .order('display_name', { ascending: true });
   const sel = document.getElementById('f-student');
   if (error){
     const opt = document.createElement('option');
@@ -318,6 +411,7 @@ function bindSave(){
     const studentId = document.getElementById('f-student').value;
     const sessionDate = document.getElementById('f-date').value;
     const categories = Array.from(document.querySelectorAll('#f-categories input:checked')).map(c => c.value);
+    const otherDetail = document.getElementById('f-other-detail').value.trim();
     const note = document.getElementById('f-note').value.trim();
     const status = document.getElementById('f-status').value;
 
@@ -330,30 +424,61 @@ function bindSave(){
     if (categories.length === 0){
       msgEl.classList.add('err'); msgEl.textContent = 'กรุณาเลือกหมวดปัญหา'; return;
     }
+    if (categories.includes('อื่นๆ') && !otherDetail){
+      msgEl.classList.add('err'); msgEl.textContent = 'กรุณาระบุหัวข้อที่นักเรียนมาปรึกษา'; return;
+    }
 
     const btn = document.getElementById('btn-save');
     btn.disabled = true; btn.textContent = 'กำลังบันทึก...';
 
-    const { error } = await sb.from('counseling_logs').insert({
+    const { data: inserted, error } = await sb.from('counseling_logs').insert({
       student_id: studentId,
       counselor_id: currentUser.id,
       session_date: sessionDate,
       categories,
+      other_detail: categories.includes('อื่นๆ') ? otherDetail : null,
       note,
       status
-    });
-
-    btn.disabled = false; btn.textContent = 'บันทึก';
+    }).select('id').single();
 
     if (error){
+      btn.disabled = false; btn.textContent = 'บันทึก';
       msgEl.classList.add('err'); msgEl.textContent = 'บันทึกไม่สำเร็จ: ' + error.message;
       return;
     }
 
-    msgEl.classList.add('ok'); msgEl.textContent = 'บันทึกเรียบร้อย';
+    // อัปโหลดรูป (ถ้ามี) หลังบันทึกสำเร็จ — ย่อขนาดก่อนทุกรูป
+    let photoWarning = '';
+    if (fPhotoFiles.length > 0){
+      btn.textContent = 'กำลังอัปโหลดรูป...';
+      const photoPaths = [];
+      for (let i = 0; i < fPhotoFiles.length; i++){
+        try{
+          const blob = await resizeImageFile(fPhotoFiles[i]);
+          const path = `${currentUser.id}/${inserted.id}/${i + 1}.jpg`;
+          const { error: upErr } = await sb.storage.from('counseling-photos')
+            .upload(path, blob, { contentType: 'image/jpeg', upsert: true });
+          if (upErr) throw upErr;
+          photoPaths.push(path);
+        } catch(err){
+          photoWarning = ' (แนบรูปบางรูปไม่สำเร็จ: ' + err.message + ')';
+        }
+      }
+      if (photoPaths.length > 0){
+        await sb.from('counseling_logs').update({ photo_paths: photoPaths }).eq('id', inserted.id);
+      }
+    }
+
+    btn.disabled = false; btn.textContent = 'บันทึก';
+    msgEl.classList.add('ok'); msgEl.textContent = 'บันทึกเรียบร้อย' + photoWarning;
+
     document.getElementById('f-note').value = '';
     document.querySelectorAll('#f-categories input:checked').forEach(c => c.checked = false);
+    document.getElementById('f-other-detail').value = '';
+    document.getElementById('f-other-detail').style.display = 'none';
     document.getElementById('f-status').value = 'ติดตามต่อ';
+    fPhotoFiles = [];
+    renderPhotoPreview('f');
     mineNeedsRefresh = true;
   });
 }
@@ -364,7 +489,7 @@ async function loadMine(){
   tbody.innerHTML = '';
 
   const { data, error } = await sb.from('counseling_logs')
-    .select('id, session_date, categories, status, note, student_id, profiles!student_id(display_name, class_room)')
+    .select('id, session_date, categories, other_detail, status, note, photo_paths, student_id, profiles!student_id(display_name, class_room)')
     .eq('counselor_id', currentUser.id)
     .is('deleted_at', null)
     .order('session_date', { ascending: false })
@@ -387,10 +512,15 @@ async function loadMine(){
     myLogs[row.id] = row;
     const tr = document.createElement('tr');
     const studentLabel = row.profiles ? `${esc(row.profiles.display_name)} (${esc(row.profiles.class_room) || '-'})` : '-';
+    const catDisplay = (row.categories || [])
+      .map(c => (c === 'อื่นๆ' && row.other_detail) ? `อื่นๆ: ${row.other_detail}` : c)
+      .join(', ');
+    const photoTag = (row.photo_paths && row.photo_paths.length)
+      ? ` <span class="photo-tag">📷${row.photo_paths.length}</span>` : '';
     tr.innerHTML = `
       <td>${esc(row.session_date)}</td>
       <td>${studentLabel}</td>
-      <td>${esc((row.categories || []).join(', '))}</td>
+      <td>${esc(catDisplay)}${photoTag}</td>
       <td><span class="status-pill status-${esc(row.status)}">${esc(row.status)}</span></td>
       <td><button class="btn-link" data-edit="${esc(row.id)}">แก้ไข</button></td>
     `;
@@ -403,17 +533,12 @@ async function loadMine(){
 }
 
 async function loadOverview(){
-  // ดึงสรุปรวมทั้งหมดในครั้งเดียว (ฟังก์ชันเช็กสิทธิ์ครู/แอดมินในฐานข้อมูลเอง และไม่ส่งรายชื่อนักเรียนมา)
-  const { data: ov, error: ovErr } = await sb.rpc('counseling_overview');
-  if (ovErr) {
-    document.getElementById('ov-categories').innerHTML = '<div class="msg err">โหลดสรุปภาพรวมไม่สำเร็จ ลองรีเฟรชหน้าอีกครั้ง</div>';
-    return;
-  }
-  const totals = ov?.totals, cats = ov?.categories, rooms = ov?.rooms;
+  const { data: totals } = await sb.from('counseling_overview_totals').select('*').single();
   document.getElementById('ov-total').textContent = totals?.total_all_time ?? '0';
   document.getElementById('ov-month').textContent = totals?.total_this_month ?? '0';
   document.getElementById('ov-open').textContent = totals?.total_open ?? '0';
 
+  const { data: cats } = await sb.from('counseling_overview_categories').select('*');
   const catEl = document.getElementById('ov-categories');
   catEl.innerHTML = '';
   const maxCat = Math.max(1, ...(cats || []).map(c => c.total));
@@ -427,6 +552,7 @@ async function loadOverview(){
       </div>`;
   });
 
+  const { data: rooms } = await sb.from('counseling_overview_by_room').select('*');
   const roomEl = document.getElementById('ov-rooms');
   roomEl.innerHTML = '';
   const maxRoom = Math.max(1, ...(rooms || []).map(r => r.total));
@@ -442,7 +568,7 @@ async function loadOverview(){
 }
 
 // ============ แก้ไข / นำออก ============
-function openEdit(id){
+async function openEdit(id){
   const row = myLogs[id];
   if (!row) return;
   editingId = id;
@@ -456,10 +582,28 @@ function openEdit(id){
   document.querySelectorAll('#e-categories input').forEach(c => {
     c.checked = (row.categories || []).includes(c.value);
   });
+  syncOtherDetailVisibility('e', true);
+  document.getElementById('e-other-detail').value = row.other_detail || '';
+
   const msg = document.getElementById('edit-msg');
   msg.className = 'msg'; msg.textContent = '';
 
+  ePhotoFiles = [];
+  eRemovedPaths = [];
+  eExistingPhotos = [];
+  renderPhotoPreview('e');
+
   document.getElementById('edit-modal').classList.add('open');
+
+  if (row.photo_paths && row.photo_paths.length > 0){
+    for (const path of row.photo_paths){
+      const { data, error } = await sb.storage.from('counseling-photos').createSignedUrl(path, 3600);
+      if (!error && data?.signedUrl){
+        eExistingPhotos.push({ path, url: data.signedUrl });
+      }
+    }
+    if (editingId === id) renderPhotoPreview('e'); // กันกรณีปิด modal ไปแล้วก่อนโหลดเสร็จ
+  }
 }
 
 function closeEdit(){
@@ -469,35 +613,74 @@ function closeEdit(){
 
 function bindEdit(){
   document.getElementById('btn-edit-cancel').addEventListener('click', closeEdit);
-  // ไม่ปิดเมื่อคลิกพื้นหลัง — กันบันทึกที่กำลังแก้หาย ปิดได้ด้วยปุ่มยกเลิกเท่านั้น
+  document.getElementById('edit-modal').addEventListener('click', e => {
+    if (e.target.id === 'edit-modal') closeEdit();
+  });
 
   document.getElementById('btn-edit-save').addEventListener('click', async () => {
     const msg = document.getElementById('edit-msg');
     msg.className = 'msg'; msg.textContent = '';
 
     const categories = Array.from(document.querySelectorAll('#e-categories input:checked')).map(c => c.value);
+    const otherDetail = document.getElementById('e-other-detail').value.trim();
     if (categories.length === 0){
       msg.classList.add('err'); msg.textContent = 'กรุณาเลือกหมวดปัญหา'; return;
+    }
+    if (categories.includes('อื่นๆ') && !otherDetail){
+      msg.classList.add('err'); msg.textContent = 'กรุณาระบุหัวข้อที่นักเรียนมาปรึกษา'; return;
     }
 
     const btn = document.getElementById('btn-edit-save');
     btn.disabled = true; btn.textContent = 'กำลังบันทึก...';
 
+    // อัปโหลดรูปใหม่ (ถ้ามี) ไปยังเลขลำดับที่ยังว่าง ไม่ชนกับรูปเดิมที่เก็บไว้
+    const usedNums = eExistingPhotos.map(p => parseInt(p.path.split('/').pop(), 10)).filter(n => !isNaN(n));
+    const finalPaths = eExistingPhotos.map(p => p.path);
+    let nextNum = 1;
+    let photoWarning = '';
+    for (const file of ePhotoFiles){
+      while (usedNums.includes(nextNum)) nextNum++;
+      try{
+        const blob = await resizeImageFile(file);
+        const path = `${currentUser.id}/${editingId}/${nextNum}.jpg`;
+        const { error: upErr } = await sb.storage.from('counseling-photos')
+          .upload(path, blob, { contentType: 'image/jpeg', upsert: true });
+        if (upErr) throw upErr;
+        usedNums.push(nextNum);
+        finalPaths.push(path);
+      } catch(err){
+        photoWarning = ' (แนบรูปบางรูปไม่สำเร็จ: ' + err.message + ')';
+      }
+      nextNum++;
+    }
+
     const { error } = await sb.from('counseling_logs').update({
       session_date: document.getElementById('e-date').value,
       categories,
+      other_detail: categories.includes('อื่นๆ') ? otherDetail : null,
       note: document.getElementById('e-note').value.trim(),
-      status: document.getElementById('e-status').value
+      status: document.getElementById('e-status').value,
+      photo_paths: finalPaths
     }).eq('id', editingId);
 
     btn.disabled = false; btn.textContent = 'บันทึกการแก้ไข';
 
     if (error){
-      msg.classList.add('err'); msg.textContent = 'แก้ไขไม่สำเร็จ: ' + error.message; return;
+      msg.classList.add('err'); msg.textContent = 'แก้ไขไม่สำเร็จ: ' + error.message + photoWarning; return;
     }
-    closeEdit();
+
+    if (eRemovedPaths.length > 0){
+      await sb.storage.from('counseling-photos').remove(eRemovedPaths);
+    }
+
     mineNeedsRefresh = true;
     loadMine();
+
+    if (photoWarning){
+      msg.classList.add('err'); msg.textContent = 'บันทึกข้อมูลสำเร็จ แต่' + photoWarning.trim();
+      return;
+    }
+    closeEdit();
   });
 
   document.getElementById('btn-edit-remove').addEventListener('click', async () => {
