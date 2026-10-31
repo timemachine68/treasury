@@ -205,6 +205,8 @@ textarea.csvbox{font-family:monospace;font-size:.82rem;min-height:120px}
   #printArea{display:block!important;padding:10mm;font-family:'Sarabun',sans-serif}
   #printArea .noprint{display:none!important}
 }
+.site-foot{text-align:center;font-size:.78rem;color:var(--ink-soft,#5B6B72);padding:22px 16px 28px;margin-top:24px;border-top:1px dashed var(--line,#DCE4E1)}
+.site-foot b{font-weight:600;color:var(--pine-deep,#0A4F44)}
 </style>
 </head>
 <body>
@@ -558,11 +560,13 @@ textarea.csvbox{font-family:monospace;font-size:.82rem;min-height:120px}
     </div>
     <div class="field"><label>รูปแบบการส่งงานของนักเรียน *</label>
       <div class="seg">
+        <button type="button" id="wReqCanva" class="active">🎨 ลิงก์ Canva</button>
+        <button type="button" id="wReqDrive">📤 ไฟล์ PDF/รูป</button>
+        <button type="button" id="wReqLink">🔗 ลิงก์อื่น</button>
         <button type="button" id="wReqText">📝 พิมพ์ข้อความ</button>
-        <button type="button" id="wReqFile" class="active">📎 ไฟล์</button>
-        <button type="button" id="wReqLink">🔗 ลิงก์</button>
+        <button type="button" id="wReqFile" class="hidden">📎 ไฟล์</button>
       </div>
-      <div class="hint">เลือกรูปแบบเดียวที่ให้นักเรียนส่งได้สำหรับงานนี้</div>
+      <div class="hint" id="wReqHint">เลือกรูปแบบเดียวที่ให้นักเรียนส่งได้สำหรับงานนี้</div>
     </div>
     <div class="field"><label>ใบงานแนบ (ไม่บังคับ)</label>
       <div class="seg">
@@ -632,7 +636,10 @@ textarea.csvbox{font-family:monospace;font-size:.82rem;min-height:120px}
     </div>
     <div class="field hidden" id="sTextWrap"><label for="sText">คำตอบของฉัน *</label><textarea id="sText" placeholder="พิมพ์คำตอบที่นี่…" style="min-height:130px"></textarea></div>
     <div class="field" id="sFileWrap"><input type="file" id="sFile"></div>
-    <div class="field hidden" id="sLinkWrap"><input id="sUrl" placeholder="https://… เช่นลิงก์ Canva"></div>
+    <div class="field hidden" id="sLinkWrap"><input id="sUrl" placeholder="https://… เช่นลิงก์ Canva">
+      <div class="hint" id="sLinkHint"></div></div>
+    <div class="field hidden" id="sDriveWrap"><input type="file" id="sDriveFile" accept="application/pdf,image/jpeg,image/png,.pdf,.jpg,.jpeg,.png">
+      <div class="hint">ส่งได้เฉพาะไฟล์ PDF, JPG หรือ PNG ขนาดไม่เกิน 10 MB ค่ะ (รูปจะถูกย่อให้เล็กลงอัตโนมัติ)</div></div>
     <div class="field"><label for="sNote">ข้อความถึงครู (ไม่บังคับ)</label><input id="sNote"></div>
     <div class="foot">
       <button class="btn ghost" id="btnSubCancel">ยกเลิก</button>
@@ -910,12 +917,17 @@ textarea.csvbox{font-family:monospace;font-size:.82rem;min-height:120px}
 
 <div id="toast" role="status"></div>
 
+<footer class="site-foot">ระบบ <b>แนะให้แนว</b> · พัฒนาโดยครูภานุวัฒน์ ทัดเนียม โรงเรียนพูลเจริญวิทยาคม · © 2569</footer>
+
 <script>
 /* ═══════════ ตั้งค่า Supabase ═══════════ */
 const SUPABASE_URL = "https://ikkhjslmtjwrxzxvtokb.supabase.co";
 const ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlra2hqc2xtdGp3cnh6eHZ0b2tiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM3NDMzNjksImV4cCI6MjA5OTMxOTM2OX0.3OR_9mEv82Ns1LLjx5nnRwJYzrtKFtWCWd1bPuQfNKU";
 const EMAIL_DOMAIN = "guidance-pcw.local";
 const FN_URL = SUPABASE_URL + "/functions/v1/manage-users";
+// ที่อยู่ Web app ของ Apps Script ที่รับไฟล์งานนักเรียนเข้า Google Drive (วางหลังติดตั้งตาม tools/drive-submission/README.md)
+// ถ้าเว้นว่าง = ยังเลือก "ไฟล์ PDF/รูป" เป็นวิธีส่งงานไม่ได้ (ตัวเลือกอื่นใช้ได้ปกติ)
+const DRIVE_URL = "";
 const sb = supabase.createClient(SUPABASE_URL, ANON_KEY);
 
 // ดึง profiles ที่ role='student' ให้ครบทุกแถว (Supabase/PostgREST จำกัดผลลัพธ์ไว้ที่ 1000 แถวต่อ
@@ -1500,10 +1512,53 @@ $("btnPwSave").onclick = async ()=>{
 /* ═══════════ เฟส 2: งานมอบหมาย ═══════════ */
 let assignments=[], mySubs={}, allSubs=[], allStudents=[], rosterAid=null, rosterRoom="all";
 let editingWorkId=null, wAttach="none", wSubmitType="file", sMode="file";
-const SUBMIT_TYPE_LABEL = {text:"📝 พิมพ์ข้อความ", file:"📎 ส่งเป็นไฟล์", link:"🔗 ส่งเป็นลิงก์", any:"📎🔗 ไฟล์หรือลิงก์"};
+const SUBMIT_TYPE_LABEL = {text:"📝 พิมพ์ข้อความ", file:"📎 ส่งเป็นไฟล์", link:"🔗 ส่งเป็นลิงก์", any:"📎🔗 ไฟล์หรือลิงก์", canva:"🎨 ลิงก์ Canva", drive:"📤 ไฟล์ PDF/รูป"};
+const CANVA_RE = /^https:\/\/((www\.)?canva\.com\/design\/|canva\.link\/)[A-Za-z0-9_-]+/i;
+const DRIVE_EXT_MIME = {pdf:"application/pdf", jpg:"image/jpeg", jpeg:"image/jpeg", png:"image/png"};
+
+// เรียก Apps Script (ฝากไฟล์ Drive) ด้วย token ล็อกอินของผู้ใช้ — สิทธิ์ถูกตัดสินที่ฐานข้อมูล
+async function driveCall(payload){
+  if(!DRIVE_URL) throw new Error("ยังไม่ได้ตั้งค่าที่เก็บไฟล์ Drive ค่ะ แจ้งครูผู้ดูแลระบบให้ตั้งค่าก่อนนะคะ");
+  let lastMsg = "ส่งไม่สำเร็จ ลองใหม่อีกครั้งค่ะ";
+  for(let i=0;i<3;i++){
+    let retry = false;
+    try{
+      const {data:{session:s}} = await sb.auth.getSession();
+      if(!s){ const err = new Error("เซสชันหมดอายุแล้วค่ะ กรุณาโหลดหน้านี้ใหม่แล้วเข้าสู่ระบบอีกครั้ง"); err.fatal = true; throw err; }
+      const res = await fetch(DRIVE_URL, {method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"},
+        body: JSON.stringify({...payload, token: s.access_token})});
+      const j = await res.json();
+      if(j.ok) return j;
+      lastMsg = j.error || lastMsg;
+      retry = !!j.busy;          // ระบบฝั่ง Drive ยุ่งชั่วคราว (เช่นทั้งห้องส่งพร้อมกัน) → ลองใหม่เอง
+    }catch(e){
+      if(e.fatal) throw e;
+      lastMsg = "เชื่อมต่อไม่สำเร็จ ตรวจอินเทอร์เน็ตแล้วลองใหม่ค่ะ"; retry = true;
+    }
+    if(!retry) throw new Error(lastMsg);
+    await new Promise(r=> setTimeout(r, 1500*(i+1)));
+  }
+  throw new Error(lastMsg);
+}
+function fileToBase64(file){
+  return new Promise((resolve,reject)=>{
+    const r = new FileReader();
+    r.onload = ()=> resolve(String(r.result).split(",")[1]||"");
+    r.onerror = ()=> reject(new Error("อ่านไฟล์ไม่สำเร็จ ลองเลือกไฟล์ใหม่ค่ะ"));
+    r.readAsDataURL(file);
+  });
+}
+function b64ToBlob(b64, mime){
+  const bin = atob(b64); const arr = new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++) arr[i] = bin.charCodeAt(i);
+  return new Blob([arr], {type:mime});
+}
 
 function thDateTime(s){ try{ return new Date(s).toLocaleString("th-TH",{day:"numeric",month:"short",year:"2-digit",hour:"2-digit",minute:"2-digit"}); }catch{ return ""; } }
 function isLate(sub, a){ return !!(sub && a.due_at && new Date(sub.submitted_at) > new Date(a.due_at)); }
+
+// ดูงานที่นักเรียนส่งได้เฉพาะครูแนะแนว + แอดมิน (บัญชีกลุ่มสาระเห็นแค่รายการงาน — ฐานข้อมูลบังคับด้วย)
+function canSeeSubs(){ return !!profile && (profile.role==="admin" || (profile.role==="teacher" && profile.is_guidance===true)); }
 
 async function loadWork(){
   const staff = ["teacher","admin"].includes(profile.role);
@@ -1512,9 +1567,13 @@ async function loadWork(){
   const {data:aData, error} = await sb.from("assignments").select("*").order("created_at",{ascending:false});
   if(error){ $("workLoading").classList.add("hidden"); return toast("โหลดงานไม่สำเร็จ: "+error.message); }
   assignments = aData||[];
-  if(staff){
+  if(staff && !canSeeSubs()){
+    // ครูกลุ่มสาระ: ไม่ดึงงานที่นักเรียนส่ง (เอารายชื่อห้องไว้เลือกห้องตอนมอบหมายงานเท่านั้น)
+    const {data:stu} = await fetchAllStudents("id,username,display_name,class_room");
+    allSubs = []; allStudents = stu||[];
+  }else if(staff){
     const [{data:sData},{data:stu}] = await Promise.all([
-      fetchAllRows(()=> sb.from("submissions").select("id,assignment_id,student_id,submitted_at,file_path,file_name,external_url,text_answer,note").order("submitted_at").order("id")),
+      fetchAllRows(()=> sb.from("submissions").select("id,assignment_id,student_id,submitted_at,file_path,file_name,external_url,text_answer,note,drive_file_id,drive_mime").order("submitted_at").order("id")),
       fetchAllStudents("id,username,display_name,class_room")
     ]);
     allSubs = sData||[]; allStudents = stu||[];
@@ -1567,6 +1626,7 @@ function studentCard(a){
 }
 
 function teacherCard(a){
+  const seeSubs = canSeeSubs();
   const targets = allStudents.filter(s=> (a.class_rooms||[]).includes(s.class_room));
   const subs = allSubs.filter(s=> s.assignment_id===a.id);
   const lateN = subs.filter(s=> isLate(s,a)).length;
@@ -1577,10 +1637,10 @@ function teacherCard(a){
     <h3>${esc(a.title)}</h3>
     ${a.description?`<p class="desc">${esc(a.description)}</p>`:""}
     ${dueLabel(a)}
-    <div class="progressbar" title="${subs.length}/${targets.length}"><div style="width:${pct}%"></div></div>
-    <div class="duechip">ส่งแล้ว <b>${subs.length}/${targets.length}</b> คน${lateN?` · ส่งช้า ${lateN}`:""}</div>
+    ${seeSubs?`<div class="progressbar" title="${subs.length}/${targets.length}"><div style="width:${pct}%"></div></div>
+    <div class="duechip">ส่งแล้ว <b>${subs.length}/${targets.length}</b> คน${lateN?` · ส่งช้า ${lateN}`:""}</div>`:""}
     <div class="actions">
-      <button class="btn primary sm" data-roster="${a.id}">📋 ดูรายชื่อ</button>
+      ${seeSubs?`<button class="btn primary sm" data-roster="${a.id}">📋 ดูรายชื่อ</button>`:""}
       ${attachBtn(a)}
       ${mine?`<button class="btn ghost sm" data-wedit="${a.id}">แก้ไข</button>
       <button class="btn danger sm" data-wdel="${a.id}">ลบ</button>`:""}
@@ -1615,14 +1675,29 @@ $("btnWorkCancel").onclick = ()=> $("workModal").classList.remove("show");
 $("wSegNone").onclick = ()=> setWAttach("none");
 $("wSegFile").onclick = ()=> setWAttach("file");
 $("wSegLink").onclick = ()=> setWAttach("link");
+let wLegacyType = null; // งานเดิมที่เป็น file/any: ยังแก้ไขได้ตามเดิม แต่งานใหม่เลือกสองแบบนี้ไม่ได้
 $("wReqText").onclick = ()=> setWSubmit("text");
-$("wReqFile").onclick = ()=> setWSubmit("file");
+$("wReqFile").onclick = ()=> setWSubmit(wLegacyType||"file");
 $("wReqLink").onclick = ()=> setWSubmit("link");
+$("wReqCanva").onclick = ()=> setWSubmit("canva");
+$("wReqDrive").onclick = ()=> setWSubmit("drive");
+const W_REQ_HINT = {
+  canva:"นักเรียนวางลิงก์ Canva (แชร์แบบ \"ทุกคนที่มีลิงก์ ดูได้\") — ไม่กินพื้นที่ระบบเลย",
+  drive:"นักเรียนแนบไฟล์ PDF/JPG/PNG ไม่เกิน 10 MB เก็บใน Google Drive ของโรงเรียน ครูเปิดดูได้จากหน้ารายชื่อ — ไม่กินพื้นที่ระบบ",
+  link:"นักเรียนวางลิงก์เว็บอะไรก็ได้ (เช่น Google Drive, YouTube) — ตรวจแค่ว่าขึ้นต้นด้วย https://",
+  text:"นักเรียนพิมพ์คำตอบในช่องข้อความ",
+  file:"แบบเดิม: ไฟล์ถูกเก็บในพื้นที่ของระบบ (กินพื้นที่) — แนะนำให้ใช้ \"ไฟล์ PDF/รูป\" แทน",
+  any:"แบบเดิม: ไฟล์หรือลิงก์ (ไฟล์ถูกเก็บในพื้นที่ของระบบ) — แนะนำให้ใช้ \"ไฟล์ PDF/รูป\" แทน"
+};
 function setWSubmit(m){
   wSubmitType = m;
+  $("wReqCanva").classList.toggle("active", m==="canva");
+  $("wReqDrive").classList.toggle("active", m==="drive");
   $("wReqText").classList.toggle("active", m==="text");
-  $("wReqFile").classList.toggle("active", m==="file");
+  $("wReqFile").classList.toggle("active", m==="file"||m==="any");
   $("wReqLink").classList.toggle("active", m==="link");
+  $("wReqHint").textContent = W_REQ_HINT[m]||"";
+  if(m==="drive" && !DRIVE_URL) $("wReqHint").textContent = "⚠ ยังไม่ได้ตั้งค่าที่เก็บไฟล์ Drive (ดูขั้นตอนใน tools/drive-submission/README.md) — ตั้งค่าเสร็จแล้วจึงเลือกแบบนี้ได้ค่ะ";
 }
 function setWAttach(m){
   wAttach = m;
@@ -1654,7 +1729,10 @@ function openWorkModal(id){
   } else { $("wDue").value = ""; }
   $("wRoomExtra").value = ""; $("wFile").value = ""; $("wUrl").value = a?.external_url||"";
   roomOptions(a?.class_rooms||[]);
-  setWSubmit((a && ["text","file","link"].includes(a.submission_type))? a.submission_type : "file");
+  wLegacyType = (a && ["file","any"].includes(a.submission_type))? a.submission_type : null;
+  $("wReqFile").classList.toggle("hidden", !wLegacyType);
+  if(wLegacyType) $("wReqFile").textContent = SUBMIT_TYPE_LABEL[wLegacyType] + " (แบบเดิม)";
+  setWSubmit(a? (a.submission_type||"canva") : "canva");
   setWAttach(a? (a.file_path? "file" : (a.external_url? "link":"none")) : "none");
   // แก้ไข: เปลี่ยนไฟล์แนบเดิมไม่ได้ (ลบแล้วสร้างใหม่ถ้าจำเป็น)
   if(a && a.file_path){ $("wFileWrap").classList.add("hidden"); }
@@ -1669,6 +1747,10 @@ $("btnWorkSave").onclick = async ()=>{
   session = freshSession;
   const title = $("wTitle").value.trim();
   if(!title) return msg("workMsg","ใส่ชื่องานก่อนนะคะ","err");
+  if(wSubmitType==="drive" && !DRIVE_URL){
+    const keep = editingWorkId && assignments.find(x=>x.id===editingWorkId)?.submission_type==="drive";
+    if(!keep) return msg("workMsg","ยังไม่ได้ตั้งค่าที่เก็บไฟล์ Drive ค่ะ เลือกส่งเป็นลิงก์ Canva ไปก่อน หรือตั้งค่าตามขั้นตอนแล้วค่อยเลือกแบบนี้นะคะ","err");
+  }
   const rooms = [...$("wRooms").querySelectorAll("input:checked")].map(i=>i.value);
   $("wRoomExtra").value.split(",").map(x=>x.trim()).filter(Boolean).forEach(r=>{ if(!rooms.includes(r)) rooms.push(r); });
   if(rooms.length===0) return msg("workMsg","เลือกอย่างน้อย 1 ห้องนะคะ","err");
@@ -1775,7 +1857,9 @@ function renderRoster(){
     else if(a.due_at && new Date() > new Date(a.due_at)) st = `<span class="status overdue">⚠ ค้างส่ง</span>`;
     const open = sub? (sub.text_answer
       ? `<button class="btn ghost sm" data-viewtext="${sub.id}">📝 ดูคำตอบ</button>`
-      : sub.file_path
+      : sub.drive_file_id
+        ? `<button class="btn ghost sm" data-dv="${sub.id}">📎 เปิดงาน</button>`
+        : sub.file_path
         ? `<button class="btn ghost sm" data-sd="${sub.id}">📎 เปิดงาน</button>`
         : (sub.external_url? `<a class="btn ghost sm" href="${esc(sub.external_url)}" target="_blank" rel="noopener">🔗 เปิดงาน</a>` : "")) : "";
     const note = sub?.note? ` <span class="duechip" title="${esc(sub.note)}">💬</span>` : "";
@@ -1786,6 +1870,18 @@ function renderRoster(){
   $("rosterRows").querySelectorAll("[data-viewtext]").forEach(b=> b.onclick=()=>{
     const sub = allSubs.find(x=>x.id===b.dataset.viewtext); if(!sub) return;
     openTextView("📝 คำตอบของนักเรียน", sub.text_answer);
+  });
+  $("rosterRows").querySelectorAll("[data-dv]").forEach(b=> b.onclick=async ()=>{
+    const sub = allSubs.find(x=>x.id===b.dataset.dv); if(!sub||!sub.drive_file_id) return;
+    const w = window.open("", "_blank"); // เปิดแท็บก่อนทันที กันเบราว์เซอร์บล็อกป๊อปอัป
+    if(w) w.document.body.textContent = "กำลังเปิดไฟล์…";
+    b.disabled = true;
+    try{
+      const j = await driveCall({action:"get", submissionId: sub.id});
+      const url = URL.createObjectURL(b64ToBlob(j.data, j.mime));
+      if(w) w.location.href = url; else window.open(url, "_blank");
+    }catch(e){ if(w) w.close(); toast("เปิดไฟล์ไม่สำเร็จ: "+e.message); }
+    b.disabled = false;
   });
   $("rosterRows").querySelectorAll("[data-sd]").forEach(b=> b.onclick=async ()=>{
     const sub = allSubs.find(x=>x.id===b.dataset.sd); if(!sub||!sub.file_path) return;
@@ -1807,7 +1903,10 @@ function setSMode(m){
   $("sSegLink").classList.toggle("active", m==="link");
   $("sTextWrap").classList.toggle("hidden", m!=="text");
   $("sFileWrap").classList.toggle("hidden", m!=="file");
-  $("sLinkWrap").classList.toggle("hidden", m!=="link");
+  $("sLinkWrap").classList.toggle("hidden", !(m==="link"||m==="canva"));
+  $("sDriveWrap").classList.toggle("hidden", m!=="drive");
+  $("sLinkHint").textContent = m==="canva" ? "ใน Canva กด \"แชร์\" → ตั้งเป็น \"ทุกคนที่มีลิงก์ ดูได้\" → กด \"คัดลอกลิงก์\" แล้ววางตรงนี้ (ห้ามวางลิงก์ที่ลงท้าย /edit เพราะครูจะเปิดไม่ได้)" : "";
+  $("sUrl").placeholder = m==="canva" ? "https://www.canva.com/design/…" : "https://… เช่นลิงก์ Canva";
 }
 let subAid = null;
 function openSubModal(aid){
@@ -1815,7 +1914,7 @@ function openSubModal(aid){
   const a = assignments.find(x=>x.id===aid);
   const sub = mySubs[aid];
   $("subModalTitle").textContent = (sub? "ส่งใหม่: ":"ส่งงาน: ") + a.title;
-  $("sFile").value = ""; $("sUrl").value = sub?.external_url||""; $("sNote").value = sub?.note||""; $("sText").value = sub?.text_answer||"";
+  $("sFile").value = ""; $("sDriveFile").value = ""; $("sUrl").value = sub?.external_url||""; $("sNote").value = sub?.note||""; $("sText").value = sub?.text_answer||"";
   const type = a.submission_type || "any";
   if(type==="any"){
     $("sModeSeg").classList.remove("hidden");
@@ -1832,33 +1931,56 @@ $("btnSubSave").onclick = async ()=>{
   const old = mySubs[subAid];
   $("btnSubSave").disabled = true;
   try{
-    const row = { assignment_id:subAid, student_id:profile.id, note:$("sNote").value.trim()||null,
-      submitted_at:new Date().toISOString(), file_path:null, file_name:null, external_url:null, text_answer:null };
-    if(sMode==="text"){
-      const t = $("sText").value.trim();
-      if(!t) throw new Error("พิมพ์คำตอบก่อนนะคะ");
-      row.text_answer = t;
-    }else if(sMode==="link"){
-      const u = $("sUrl").value.trim();
-      if(!/^https?:\/\//.test(u)) throw new Error("ลิงก์ต้องขึ้นต้นด้วย http:// หรือ https://");
-      row.external_url = u;
-    }else{
-      const picked = $("sFile").files[0];
+    if(sMode==="drive"){
+      // ไฟล์ PDF/รูป → ส่งไป Drive ผ่าน Apps Script (ฐานข้อมูลบันทึกให้เองในขั้นตอนเดียวกัน)
+      const picked = $("sDriveFile").files[0];
       if(!picked) throw new Error("เลือกไฟล์ก่อนนะคะ");
-      if(picked.size > 50*1024*1024) throw new Error("ไฟล์ใหญ่เกิน 50MB ค่ะ");
-      msg("subMsg","กำลังเตรียมและอัพโหลด…","ok");
-      const file = await compressImage(picked, 2000, 0.8); // ไฟล์ที่ไม่ใช่รูป (pdf/doc) จะคืนมาเหมือนเดิม
-      const ext = file.name.includes(".")? file.name.split(".").pop() : "bin";
-      const path = profile.id + "/" + subAid + "_" + crypto.randomUUID() + "." + ext;
-      const {error:upErr} = await sb.storage.from("submissions").upload(path, file);
-      if(upErr) throw upErr;
-      row.file_path = path; row.file_name = file.name;
+      const ext0 = (picked.name.split(".").pop()||"").toLowerCase();
+      if(!(picked.type in {"application/pdf":1,"image/jpeg":1,"image/png":1}) && !DRIVE_EXT_MIME[ext0])
+        throw new Error("ส่งได้เฉพาะไฟล์ PDF, JPG หรือ PNG ค่ะ (รูปจาก iPhone ที่เป็น HEIC ให้แคปหน้าจอหรือบันทึกเป็น JPG ก่อนนะคะ)");
+      msg("subMsg","กำลังเตรียมไฟล์…","ok");
+      const file = await compressImage(picked, 2000, 0.8); // รูปถูกย่อ ส่วน PDF ใช้ไฟล์เดิม
+      const mime = file.type || DRIVE_EXT_MIME[(file.name.split(".").pop()||"").toLowerCase()] || "";
+      if(!["application/pdf","image/jpeg","image/png"].includes(mime))
+        throw new Error("ส่งได้เฉพาะไฟล์ PDF, JPG หรือ PNG ค่ะ (รูปจาก iPhone ที่เป็น HEIC ให้แคปหน้าจอหรือบันทึกเป็น JPG ก่อนนะคะ)");
+      if(file.size > 10*1024*1024) throw new Error("ไฟล์ใหญ่เกิน 10 MB ค่ะ ลองลดขนาดไฟล์หรือถ่ายรูปใหม่ให้เล็กลงนะคะ");
+      msg("subMsg","กำลังส่งไฟล์ไปที่ Drive… (ไฟล์ใหญ่อาจใช้เวลาสักครู่ อย่าปิดหน้านี้นะคะ)","ok");
+      await driveCall({action:"submit", assignmentId:subAid, mime, fileName:file.name,
+        note:$("sNote").value.trim()||null, data: await fileToBase64(file)});
+    }else{
+      const row = { assignment_id:subAid, student_id:profile.id, note:$("sNote").value.trim()||null,
+        submitted_at:new Date().toISOString(), file_path:null, file_name:null, external_url:null, text_answer:null };
+      if(sMode==="text"){
+        const t = $("sText").value.trim();
+        if(!t) throw new Error("พิมพ์คำตอบก่อนนะคะ");
+        row.text_answer = t;
+      }else if(sMode==="canva"){
+        const u = $("sUrl").value.trim();
+        if(!CANVA_RE.test(u)) throw new Error("ลิงก์ต้องเป็นลิงก์ Canva ที่ขึ้นต้นด้วย https://www.canva.com/design/ ค่ะ (กด แชร์ ใน Canva แล้วคัดลอกลิงก์)");
+        if(/\/(edit|template)(\?|$|\/)/i.test(u.split("#")[0])) throw new Error("นี่เป็นลิงก์สำหรับแก้ไข ครูจะเปิดไม่ได้ค่ะ ใน Canva ให้กด แชร์ → ทุกคนที่มีลิงก์ → เลือก \"ดูได้\" แล้วคัดลอกลิงก์ใหม่นะคะ");
+        row.external_url = u;
+      }else if(sMode==="link"){
+        const u = $("sUrl").value.trim();
+        if(!/^https?:\/\//.test(u)) throw new Error("ลิงก์ต้องขึ้นต้นด้วย http:// หรือ https://");
+        row.external_url = u;
+      }else{
+        const picked = $("sFile").files[0];
+        if(!picked) throw new Error("เลือกไฟล์ก่อนนะคะ");
+        if(picked.size > 50*1024*1024) throw new Error("ไฟล์ใหญ่เกิน 50MB ค่ะ");
+        msg("subMsg","กำลังเตรียมและอัพโหลด…","ok");
+        const file = await compressImage(picked, 2000, 0.8); // ไฟล์ที่ไม่ใช่รูป (pdf/doc) จะคืนมาเหมือนเดิม
+        const ext = file.name.includes(".")? file.name.split(".").pop() : "bin";
+        const path = profile.id + "/" + subAid + "_" + crypto.randomUUID() + "." + ext;
+        const {error:upErr} = await sb.storage.from("submissions").upload(path, file);
+        if(upErr) throw upErr;
+        row.file_path = path; row.file_name = file.name;
+      }
+      const {error} = old
+        ? await sb.from("submissions").update(row).eq("id", old.id)
+        : await sb.from("submissions").insert(row);
+      if(error) throw error;
+      if(old?.file_path && old.file_path !== row.file_path) await sb.storage.from("submissions").remove([old.file_path]);
     }
-    const {error} = old
-      ? await sb.from("submissions").update(row).eq("id", old.id)
-      : await sb.from("submissions").insert(row);
-    if(error) throw error;
-    if(old?.file_path && old.file_path !== row.file_path) await sb.storage.from("submissions").remove([old.file_path]);
     toast(old? "ส่งงานใหม่เรียบร้อย ✅":"ส่งงานเรียบร้อย ✅");
     $("subModal").classList.remove("show");
     await loadWork();
