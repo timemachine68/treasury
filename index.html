@@ -927,7 +927,7 @@ const EMAIL_DOMAIN = "guidance-pcw.local";
 const FN_URL = SUPABASE_URL + "/functions/v1/manage-users";
 // ที่อยู่ Web app ของ Apps Script ที่รับไฟล์งานนักเรียนเข้า Google Drive (วางหลังติดตั้งตาม tools/drive-submission/README.md)
 // ถ้าเว้นว่าง = ยังเลือก "ไฟล์ PDF/รูป" เป็นวิธีส่งงานไม่ได้ (ตัวเลือกอื่นใช้ได้ปกติ)
-const DRIVE_URL = "";
+const DRIVE_URL = "https://script.google.com/macros/s/AKfycbz3bFmD-2rXt4gUwMYzDGnPeANYYM2J_-K442IQKuaqfvK8mKW4zRwMF_l64QxagVkaOw/exec";
 const sb = supabase.createClient(SUPABASE_URL, ANON_KEY);
 
 // ดึง profiles ที่ role='student' ให้ครบทุกแถว (Supabase/PostgREST จำกัดผลลัพธ์ไว้ที่ 1000 แถวต่อ
