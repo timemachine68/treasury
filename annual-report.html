@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>รายงานประจำปี · แนะให้แนว</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Mitr:wght@400;500;600&family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.js"></script>
+<style>
+:root{
+  --ink:#22313A; --ink-soft:#5B6B72;
+  --board:#EFF3F1; --card:#FFFFFF;
+  --pine:#0F6B5C; --pine-deep:#0A4F44; --pine-tint:#E2F0EC;
+  --note:#FFD34D; --note-deep:#8A6D00;
+  --line:#DCE4E1; --danger:#C0392B;
+  --g1:#F28C6B; --g2:#F2B84B; --g3:#7FB069; --g4:#4E9BB9; --g5:#8E7CC3; --g6:#D96A9C;
+  --radius:14px; --shadow:0 2px 10px rgba(34,49,58,.08);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{font-family:'Sarabun',sans-serif;background:var(--board);color:var(--ink);font-size:16px;line-height:1.55;min-height:100vh}
+h1,h2,h3,.brand{font-family:'Mitr',sans-serif;font-weight:600}
+button{font-family:inherit;cursor:pointer}
+input{font-family:inherit;font-size:16px}
+:focus-visible{outline:3px solid var(--note);outline-offset:2px;border-radius:6px}
+@media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
+.hidden{display:none!important}
+
+.wrap{max-width:1080px;margin:0 auto;padding:0 16px 64px}
+header.app{background:var(--pine);color:#fff;padding:14px 0}
+header.app .wrap{display:flex;align-items:center;gap:12px;padding-bottom:0;flex-wrap:wrap}
+.brand{font-size:1.2rem;display:flex;align-items:center;gap:10px}
+.brand .logo{width:34px;height:34px;border-radius:9px;background:var(--note);color:var(--pine-deep);display:grid;place-items:center;font-size:1.05rem;flex:none}
+.brand small{display:block;font-family:'Sarabun';font-weight:400;font-size:.72rem;opacity:.85}
+.spacer{flex:1}
+.userchip{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.14);padding:6px 12px;border-radius:999px;font-size:.85rem}
+.userchip .role{background:var(--note);color:var(--pine-deep);border-radius:999px;padding:1px 9px;font-weight:700;font-size:.72rem}
+.iconbtn{background:rgba(255,255,255,.14);border:none;color:#fff;border-radius:999px;padding:7px 14px;font-size:.85rem;text-decoration:none}
+.iconbtn:hover{background:rgba(255,255,255,.26)}
+
+.folder-tabs{display:flex;gap:4px;overflow-x:auto;padding:22px 2px 0;scrollbar-width:none}
+.folder-tabs::-webkit-scrollbar{display:none}
+.ftab{flex:none;border:1px solid var(--line);border-bottom:none;background:#fff;color:var(--ink-soft);font-family:'Mitr';font-size:.95rem;font-weight:500;
+  padding:9px 18px 12px;border-radius:12px 12px 0 0;position:relative;top:4px;opacity:.82;transition:top .15s}
+.ftab .dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--tabc,var(--pine));margin-right:7px}
+.ftab.active{top:0;opacity:1;color:var(--ink);border-top:4px solid var(--tabc,var(--pine));box-shadow:0 -3px 8px rgba(34,49,58,.06);z-index:2}
+.folder-body{background:#fff;border:1px solid var(--line);border-radius:0 var(--radius) var(--radius) var(--radius);padding:18px;box-shadow:var(--shadow);position:relative;z-index:1}
+
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin-bottom:16px}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{border:1.5px solid var(--line);background:#fff;border-radius:999px;padding:7px 14px;font-size:.85rem;color:var(--ink-soft);min-height:38px}
+.chip.active{background:var(--pine);border-color:var(--pine);color:#fff;font-weight:600}
+.btn{border:none;border-radius:9px;padding:10px 16px;font-size:.9rem;font-weight:600;display:inline-flex;align-items:center;gap:6px;justify-content:center;min-height:42px;text-decoration:none}
+.btn.primary{background:var(--pine);color:#fff}
+.btn.primary:hover{background:var(--pine-deep)}
+.btn.ghost{background:#fff;border:1.5px solid var(--line);color:var(--ink-soft)}
+.btn.ghost:hover{border-color:var(--pine);color:var(--pine)}
+.btn.note{background:var(--note);color:var(--pine-deep)}
+.btn:disabled{opacity:.55;cursor:wait}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+
+.hero{background:var(--pine);color:#fff;border-radius:var(--radius);border-bottom:5px solid var(--note);padding:22px;margin-bottom:16px}
+.hero h2{font-size:1.35rem;font-weight:500;margin-bottom:4px}
+.hero .take{font-size:1rem;line-height:1.75;max-width:52rem;opacity:.95}
+.hero .take b{color:var(--note)}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,190px),1fr));gap:12px;margin-bottom:16px}
+.kpi{background:#fff;border:1px solid var(--line);border-left:5px solid var(--kc,var(--pine));border-radius:12px;padding:14px;box-shadow:var(--shadow)}
+.kpi .lab{font-size:.85rem;color:var(--ink-soft);font-weight:600}
+.kpi .num{font-family:'Mitr',sans-serif;font-size:2rem;line-height:1.2;color:var(--pine-deep)}
+.kpi .num small{font-size:.95rem;color:var(--ink-soft);margin-left:4px;font-weight:400}
+.kpi .sub{font-size:.8rem;color:var(--ink-soft)}
+
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:14px;margin-bottom:14px}
+.panel{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow);min-width:0}
+.panel + .panel{margin-top:14px}
+.grid2 .panel + .panel{margin-top:0}
+.panel h3{font-size:1.02rem;font-weight:500;color:var(--pine-deep);margin-bottom:2px}
+.panel .hint{font-size:.82rem;color:var(--ink-soft);margin-bottom:12px}
+
+.bars{display:flex;flex-direction:column;gap:12px}
+.bar .top{display:flex;justify-content:space-between;gap:10px;align-items:baseline;font-size:.92rem}
+.bar .nm{min-width:0;overflow-wrap:anywhere}
+.bar .val{font-family:'Mitr',sans-serif;white-space:nowrap;font-size:.92rem}
+.bar .val small{font-family:'Sarabun';color:var(--ink-soft);margin-left:6px}
+.track{height:12px;background:var(--board);border-radius:999px;margin-top:5px;overflow:hidden;position:relative}
+.fill{height:100%;background:var(--pine);border-radius:999px}
+.fill.alt{background:var(--note)}
+.fill.warn{background:var(--g1)}
+.track .ghostfill{position:absolute;inset:0 auto 0 0;background:var(--pine-tint);border-radius:999px}
+.track .fill{position:relative}
+
+.tw{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:.88rem}
+th{text-align:left;padding:8px 10px;background:var(--board);color:var(--ink-soft);font-size:.78rem;white-space:nowrap}
+td{padding:8px 10px;border-bottom:1px solid var(--line)}
+th.r,td.r{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.tag{display:inline-block;font-size:.72rem;font-weight:700;border-radius:6px;padding:2px 8px;background:var(--pine-tint);color:var(--pine-deep)}
+.tag.warn{background:#FBEAE7;color:var(--danger)}
+.tag.gold{background:#FFF3CE;color:var(--note-deep)}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:.8rem;color:var(--ink-soft);margin-bottom:10px}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.points{padding-left:1.2rem;font-size:.92rem}
+.points li{margin:4px 0}
+.empty{padding:40px 16px;text-align:center;color:var(--ink-soft)}
+.empty .big{font-size:2rem;margin-bottom:6px}
+.muted{color:var(--ink-soft)}
+.foot{font-size:.8rem;color:var(--ink-soft);margin-top:14px}
+.msg{border-radius:10px;padding:10px 13px;font-size:.88rem;margin-bottom:12px}
+.msg.err{background:#FBEAE7;color:var(--danger)}
+.offscreen{position:absolute;left:-9999px;top:0;width:0;height:0;overflow:hidden}
+
+.login-stage{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background:linear-gradient(160deg,var(--pine) 0%,var(--pine-deep) 60%),var(--pine)}
+.login-card{background:#fff;border-radius:20px;padding:30px 26px;max-width:400px;width:100%;box-shadow:0 18px 50px rgba(0,0,0,.28)}
+.login-card .logo-big{width:58px;height:58px;border-radius:16px;background:var(--note);color:var(--pine-deep);display:grid;place-items:center;font-size:1.6rem;margin:0 auto 12px}
+.login-card h1{text-align:center;font-size:1.35rem;color:var(--pine-deep)}
+.login-card .sub{text-align:center;font-size:.85rem;color:var(--ink-soft);margin-bottom:20px}
+.field{margin-bottom:13px}
+.field label{display:block;font-size:.85rem;font-weight:700;margin-bottom:5px}
+.field input{width:100%;padding:10px 12px;border:1.5px solid var(--line);border-radius:10px}
+.login-card .btn{width:100%;padding:12px;font-size:1rem}
+
+@media print{
+  .no-print,header.app,.folder-tabs,.toolbar{display:none!important}
+  body{background:#fff}
+  .folder-body{border:none;box-shadow:none;padding:0}
+  .panel,.kpi,.hero{break-inside:avoid;box-shadow:none}
+  .hero,.fill,.ghostfill,.tag{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+</style>
+</head>
+<body>
+
+<!-- เข้าสู่ระบบ -->
+<div id="loginStage" class="login-stage hidden">
+  <div class="login-card">
+    <div class="logo-big">📊</div>
+    <h1>รายงานประจำปี</h1>
+    <p class="sub">สำหรับครูแนะแนวและผู้ดูแลระบบ · ใช้บัญชีเดียวกับคลังแนะแนว</p>
+    <div id="loginMsg"></div>
+    <div class="field"><label for="u">ชื่อผู้ใช้</label><input id="u" type="text" autocomplete="username"></div>
+    <div class="field"><label for="p">รหัสผ่าน</label><input id="p" type="password" autocomplete="current-password"></div>
+    <button class="btn primary" id="btnLogin">เข้าสู่ระบบ</button>
+    <p style="margin-top:12px;text-align:center"><a href="index.html" class="muted" style="font-size:.85rem">🏠 กลับคลังแนะแนว</a></p>
+  </div>
+</div>
+
+<div id="appStage" class="hidden">
+  <header class="app">
+    <div class="wrap">
+      <div class="brand"><div class="logo">📊</div><div>รายงานประจำปี<small>แนะให้แนว · พูลเจริญวิทยาคม</small></div></div>
+      <div class="spacer"></div>
+      <div class="userchip"><span id="uName"></span><span class="role" id="uRole"></span></div>
+      <a class="iconbtn" href="index.html">🏠 คลังแนะแนว</a>
+      <button class="iconbtn" id="btnLogout">ออกจากระบบ</button>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <div id="denyBox" class="panel hidden" style="margin-top:22px">
+      <div class="empty"><div class="big">🔒</div><b>หน้านี้เปิดให้เฉพาะครูแนะแนวและผู้ดูแลระบบ</b><br>ถ้าต้องการใช้งาน ติดต่องานแนะแนว</div>
+    </div>
+
+    <div id="mainBox" class="hidden">
+      <nav class="folder-tabs" role="tablist" aria-label="เลือกรายงาน">
+        <button class="ftab" role="tab" data-tab="survey" style="--tabc:var(--g4)"><span class="dot"></span>🎓 เรียนต่อหลังจบ</button>
+        <button class="ftab" role="tab" data-tab="quota" style="--tabc:var(--g2)"><span class="dot"></span>🧭 โควตา</button>
+        <button class="ftab" role="tab" data-tab="awards" style="--tabc:var(--g5)"><span class="dot"></span>🏅 ผลงานนักเรียน</button>
+      </nav>
+      <div class="folder-body">
+        <div class="toolbar">
+          <div class="chips" id="yearChips" role="group" aria-label="เลือกปีการศึกษา"></div>
+          <div class="actions">
+            <button class="btn ghost" id="btnPrint">🖨️ พิมพ์ / PDF</button>
+            <button class="btn note" id="btnDocx">📄 รายงานสำหรับผู้บริหาร (Word)</button>
+          </div>
+        </div>
+        <div id="view"><div class="empty">กำลังโหลดข้อมูล…</div></div>
+        <p class="foot">ตัวเลขนับสดจากฐานข้อมูลทุกครั้งที่เปิดหน้า เป็นยอดรวม ไม่แสดงรายชื่อนักเรียน · เฉพาะครูแนะแนวและผู้ดูแลระบบเท่านั้น</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="offscreen" aria-hidden="true"><canvas id="cv" width="900" height="440"></canvas></div>
+
+<script>
+const SUPABASE_URL = "https://ikkhjslmtjwrxzxvtokb.supabase.co";
+const SUPABASE_KEY = "sb_publishable_gkUomr4OsxcNV2a6EkVgRA__gCuRM7q";
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const num = n => Number(n || 0).toLocaleString("th-TH");
+const pct = (n, d) => d ? (Number(n) * 100 / Number(d)).toFixed(1) + "%" : "–";
+const pctNum = (n, d) => d ? Number(n) * 100 / Number(d) : 0;
+const thaiToday = () => new Date().toLocaleDateString("th-TH", { year: "numeric", month: "long", day: "numeric" });
+
+let ME = null, TAB = "survey";
+const CACHE = { survey: {}, quota: {}, awards: {} };   // ข้อมูลแยกตามปี
+const YEAR = { survey: null, quota: null, awards: null };
+
+/* ---------- สารสนเทศการใช้งาน ---------- */
+function logUse(page){
+  try{
+    const k = "pcw_u_" + (ME ? ME.id.slice(0, 8) : "") + "_" + page + "_" + new Date().toISOString().slice(0, 10);
+    if(sessionStorage.getItem(k)) return;
+    sessionStorage.setItem(k, "1");
+  }catch(e){}
+  sb.rpc("usage_log", { p_page: page }).then(()=>{}, ()=>{});
+}
+
+/* ---------- เข้าสู่ระบบ ---------- */
+async function boot(){
+  const { data: { session } } = await sb.auth.getSession();
+  if(!session){ showLogin(); return; }
+  const { data: p } = await sb.from("profiles").select("id,display_name,role,is_guidance").eq("id", session.user.id).maybeSingle();
+  if(!p){ await sb.auth.signOut(); showLogin(); return; }
+  ME = p;
+  $("loginStage").classList.add("hidden");
+  $("appStage").classList.remove("hidden");
+  $("uName").textContent = p.display_name || "";
+  const staff = p.role === "admin" || (p.role === "teacher" && p.is_guidance);
+  $("uRole").textContent = p.role === "admin" ? "ผู้ดูแล" : staff ? "ครูแนะแนว" : "ครู";
+  if(!staff){ $("denyBox").classList.remove("hidden"); return; }
+  $("mainBox").classList.remove("hidden");
+  logUse("page:annual-report");
+  const h = (location.hash || "").slice(1);
+  setTab(["survey", "quota", "awards"].includes(h) ? h : "survey");
+}
+function showLogin(){ $("appStage").classList.add("hidden"); $("loginStage").classList.remove("hidden"); }
+async function login(){
+  const u = $("u").value.trim(), p = $("p").value;
+  if(!u || !p){ $("loginMsg").innerHTML = '<div class="msg err">กรอกชื่อผู้ใช้และรหัสผ่านให้ครบก่อน</div>'; return; }
+  const b = $("btnLogin"); b.disabled = true; b.textContent = "กำลังเข้าสู่ระบบ…";
+  const email = u.includes("@") ? u : u + "@guidance-pcw.local";
+  const { error } = await sb.auth.signInWithPassword({ email, password: p });
+  b.disabled = false; b.textContent = "เข้าสู่ระบบ";
+  if(error){ $("loginMsg").innerHTML = '<div class="msg err">ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง</div>'; return; }
+  $("p").value = ""; $("loginMsg").innerHTML = "";
+  boot();
+}
+$("btnLogin").onclick = login;
+$("p").addEventListener("keydown", e => { if(e.key === "Enter") login(); });
+$("btnLogout").onclick = async () => { await sb.auth.signOut(); location.reload(); };
+
+/* ---------- แท็บและปี ---------- */
+document.querySelectorAll(".ftab").forEach(b => b.onclick = () => setTab(b.dataset.tab));
+function setTab(t){
+  TAB = t;
+  document.querySelectorAll(".ftab").forEach(b => { const on = b.dataset.tab === t; b.classList.toggle("active", on); b.setAttribute("aria-selected", on); });
+  try{ history.replaceState(null, "", "#" + t); }catch(e){}
+  load(t, YEAR[t]);
+}
+let _loadSeq = 0;
+async function load(t, year){
+  const key = year == null ? "_latest" : String(year);
+  const seq = ++_loadSeq;
+  if(!CACHE[t][key]){
+    $("view").innerHTML = '<div class="empty">กำลังโหลดข้อมูล…</div>';
+    $("yearChips").innerHTML = "";
+    const fn = { survey: "report_survey", quota: "report_quota", awards: "report_awards" }[t];
+    const arg = t === "awards" ? { p_year: year == null ? null : Number(year) } : { p_year: year == null ? null : String(year) };
+    const { data, error } = await sb.rpc(fn, arg);
+    if(seq !== _loadSeq) return;     // ผู้ใช้กดแท็บอื่นไปแล้ว
+    if(error){
+      $("view").innerHTML = error.code === "42501"
+        ? '<div class="empty"><div class="big">🔒</div>บัญชีนี้ไม่มีสิทธิ์ดูรายงานนี้</div>'
+        : '<div class="empty"><div class="big">⚠️</div>โหลดข้อมูลไม่สำเร็จ ตรวจอินเทอร์เน็ตแล้วกดแท็บอีกครั้ง</div>';
+      return;
+    }
+    CACHE[t][key] = data;
+    if(data && data.year != null) CACHE[t][String(data.year)] = data;
+  }
+  if(seq !== _loadSeq) return;
+  const d = CACHE[t][key];
+  YEAR[t] = d.year;
+  renderYears(t, d);
+  ({ survey: renderSurvey, quota: renderQuota, awards: renderAwards })[t](d);
+}
+function renderYears(t, d){
+  const ys = (d.years || []).map(String);
+  $("yearChips").innerHTML = ys.length
+    ? ys.map(y => `<button class="chip${y === String(d.year) ? " active" : ""}" data-y="${esc(y)}">ปีการศึกษา ${esc(y)}</button>`).join("")
+    : "";
+  $("yearChips").querySelectorAll("[data-y]").forEach(b => b.onclick = () => { YEAR[t] = b.dataset.y; load(t, b.dataset.y); });
+}
+const cur = () => CACHE[TAB][String(YEAR[TAB])] || CACHE[TAB]._latest;
+
+/* ---------- ชิ้นส่วนหน้าจอ ---------- */
+const kpi = (lab, n, unit, sub, color) =>
+  `<div class="kpi" style="--kc:${color || "var(--pine)"}"><div class="lab">${esc(lab)}</div><div class="num">${n}${unit ? `<small>${esc(unit)}</small>` : ""}</div><div class="sub">${sub || "&nbsp;"}</div></div>`;
+function bars(rows, opt = {}){
+  // rows: [{name, n, of?, note?}]  ความยาวแท่ง = n เทียบค่ามากสุด หรือ n/of ถ้ากำหนด asShare
+  if(!rows.length) return `<div class="empty">${esc(opt.empty || "ยังไม่มีข้อมูล")}</div>`;
+  const mx = Math.max(1, ...rows.map(r => opt.asShare ? 100 : Number(r.n)));
+  return '<div class="bars">' + rows.map(r => {
+    const w = opt.asShare ? pctNum(r.n, r.of) : Number(r.n) * 100 / mx;
+    const g = opt.ghost ? Math.min(100, Number(r.ghost || 0) * 100 / Math.max(1, ...rows.map(x => Math.max(Number(x.ghost || 0), Number(x.n))))) : 0;
+    const w2 = opt.ghost ? Number(r.n) * 100 / Math.max(1, ...rows.map(x => Math.max(Number(x.ghost || 0), Number(x.n)))) : w;
+    return `<div class="bar"><div class="top"><span class="nm">${esc(r.name)}</span><span class="val">${r.label ?? num(r.n)}${r.note ? `<small>${esc(r.note)}</small>` : ""}</span></div>
+      <div class="track">${opt.ghost ? `<div class="ghostfill" style="width:${g}%"></div>` : ""}<div class="fill ${r.cls || opt.cls || ""}" style="width:${Math.max(r.n > 0 ? 2 : 0, w2)}%"></div></div></div>`;
+  }).join("") + "</div>";
+}
+function table(heads, rows, rightCols = []){
+  if(!rows.length) return '<div class="empty">ยังไม่มีข้อมูล</div>';
+  return `<div class="tw"><table><thead><tr>${heads.map((h, i) => `<th class="${rightCols.includes(i) ? "r" : ""}">${esc(h)}</th>`).join("")}</tr></thead><tbody>` +
+    rows.map(r => `<tr>${r.map((c, i) => `<td class="${rightCols.includes(i) ? "r" : ""}">${c}</td>`).join("")}</tr>`).join("") + "</tbody></table></div>";
+}
+const panel = (title, hint, body) => `<div class="panel"><h3>${esc(title)}</h3>${hint ? `<p class="hint">${esc(hint)}</p>` : ""}${body}</div>`;
+const hero = (title, points) => `<div class="hero"><h2>${esc(title)}</h2><p class="take">${points}</p></div>`;
+function emptyView(icon, text){ $("view").innerHTML = `<div class="empty"><div class="big">${icon}</div>${esc(text)}</div>`; }
+
+/* =====================================================================
+   1) เรียนต่อหลังจบ (แบบสำรวจ)
+   ===================================================================== */
+function surveyFacts(d){
+  const grades = d.grades || [];
+  const g = name => grades.find(x => x.grade === name);
+  const st = name => (d.status || []).filter(x => x.grade === name);
+  const n = (gr, s) => Number((st(gr).find(x => x.status === s) || {}).n || 0);
+  return { grades, g, st, n };
+}
+function surveyPoints(d){
+  const F = surveyFacts(d), pts = [];
+  F.grades.forEach(x => {
+    pts.push(`${x.grade} ตอบแบบสำรวจแล้ว ${num(x.responded)} จาก ${num(x.students)} คน (${pct(x.responded, x.students)})` +
+      (x.responded ? ` ในจำนวนนี้เรียนต่อ ${num(x.study)} คน (${pct(x.study, x.responded)})` : ""));
+  });
+  const m6 = F.g("ม.6");
+  if(m6 && m6.responded){
+    const uni = F.n("ม.6", "มหาวิทยาลัย");
+    pts.push(`ม.6 ที่ตอบแล้วเข้ามหาวิทยาลัย ${num(uni)} คน (${pct(uni, m6.responded)})`);
+    const t = (d.tcas || []).slice().sort((a, b) => b.n - a.n)[0];
+    if(t && uni) pts.push(`รอบ TCAS ที่ได้ที่เรียนมากที่สุดคือ ${t.round} (${num(t.n)} คน)`);
+    const u = (d.universities || [])[0];
+    if(u && u.n > 1) pts.push(`มหาวิทยาลัยที่นักเรียนเข้าเรียนมากที่สุดคือ ${u.name} (${num(u.n)} คน)`);
+  }
+  const lowRooms = (d.rooms || []).filter(r => r.students >= 5 && pctNum(r.responded, r.students) < 50);
+  if(lowRooms.length) pts.push(`ห้องที่ตอบแบบสำรวจไม่ถึงครึ่ง ${num(lowRooms.length)} ห้อง ควรติดตามก่อนสรุปผล`);
+  return pts;
+}
+function renderSurvey(d){
+  const F = surveyFacts(d);
+  if(!F.grades.length){ emptyView("🎓", "ยังไม่มีรอบแบบสำรวจเรียนต่อ — สร้างรอบได้ที่แท็บ \"สำรวจเรียนต่อ\" ในคลังแนะแนว"); return; }
+  const totStu = F.grades.reduce((s, x) => s + Number(x.students), 0);
+  const totRes = F.grades.reduce((s, x) => s + Number(x.responded), 0);
+  let h = hero(`ผลการศึกษาต่อของนักเรียน ปีการศึกษา ${d.year}`, surveyPoints(d).map(esc).join(" · "));
+
+  h += '<div class="kpis">' + kpi("ตอบแบบสำรวจแล้ว", num(totRes), "คน", `จากนักเรียน ${num(totStu)} คน (${pct(totRes, totStu)})`, "var(--g4)");
+  F.grades.forEach(x => {
+    h += kpi(`${x.grade} เรียนต่อ`, pct(x.study, x.responded), "", `${num(x.study)} จาก ${num(x.responded)} คนที่ตอบ`, x.grade === "ม.6" ? "var(--g6)" : "var(--g3)");
+  });
+  const m6 = F.g("ม.6");
+  if(m6) h += kpi("ม.6 เข้ามหาวิทยาลัย", num(F.n("ม.6", "มหาวิทยาลัย")), "คน", `${pct(F.n("ม.6", "มหาวิทยาลัย"), m6.responded)} ของคนที่ตอบ`, "var(--g2)");
+  h += "</div>";
+
+  h += '<div class="grid2">';
+  F.grades.forEach(x => {
+    const rows = F.st(x.grade).map(s => ({ name: s.status, n: s.n, of: x.responded, label: num(s.n) + " คน", note: pct(s.n, x.responded),
+      cls: (d.study_status || []).includes(s.status) ? "" : "alt" }));
+    h += panel(`${x.grade} ไปทางไหนบ้าง`, `คิดจาก ${num(x.responded)} คนที่ตอบ · แท่งเขียว = เรียนต่อ แท่งเหลือง = ทางอื่น`, bars(rows, { asShare: true, empty: "ยังไม่มีคนตอบ" }));
+  });
+  h += "</div>";
+
+  if(m6){
+    const uni = F.n("ม.6", "มหาวิทยาลัย");
+    h += '<div class="grid2">';
+    h += panel("ม.6 ได้ที่เรียนรอบไหน (TCAS)", `เฉพาะ ${num(uni)} คนที่เข้ามหาวิทยาลัย`,
+      bars((d.tcas || []).map(t => ({ name: t.round, n: t.n, label: num(t.n) + " คน", note: pct(t.n, uni) })), { empty: "ยังไม่มีข้อมูล" }));
+    h += panel("มหาวิทยาลัยที่เข้าเรียน", "เรียงจากมากไปน้อย (สูงสุด 20 แห่ง)",
+      bars((d.universities || []).map(u => ({ name: u.name, n: u.n, label: num(u.n) + " คน" })), { empty: "ยังไม่มีข้อมูล" }));
+    h += "</div>";
+    if((d.programs || []).length) h += panel("คณะ/สาขาที่เข้าเรียน", "ตามที่นักเรียนพิมพ์ (สูงสุด 15 อันดับ)",
+      table(["คณะ/สาขา", "จำนวน (คน)"], d.programs.map(p => [esc(p.name), num(p.n)]), [1]));
+  }
+  if((d.schools_m3 || []).length) h += panel("ม.3 ศึกษาต่อที่ไหน", "สูงสุด 15 แห่ง",
+    table(["สถานศึกษา", "จำนวน (คน)"], d.schools_m3.map(p => [esc(p.name), num(p.n)]), [1]));
+
+  const rooms = d.rooms || [];
+  h += panel("การตอบแบบสำรวจรายห้อง", "ใช้ติดตามห้องที่ยังตอบน้อย · ห้องที่ตอบไม่ถึง 50% มีป้ายเตือน",
+    table(["ห้อง", "นักเรียน", "ตอบแล้ว", "ร้อยละ", ""], rooms.map(r => [esc(r.room), num(r.students), num(r.responded), pct(r.responded, r.students),
+      pctNum(r.responded, r.students) < 50 ? '<span class="tag warn">ติดตาม</span>' : '<span class="tag">ครบพอ</span>']), [1, 2, 3]));
+
+  const yrs = [...new Set((d.trend || []).map(t => t.year))];
+  if(yrs.length > 1) h += panel("เทียบย้อนหลัง", "จำนวนคนที่ตอบในแต่ละปี (ไม่ได้เทียบอัตราตอบ เพราะรายชื่อนักเรียนเปลี่ยนทุกปี)",
+    table(["ปีการศึกษา", "ระดับชั้น", "ตอบแล้ว", "เรียนต่อ", "เข้ามหาวิทยาลัย"], d.trend.map(t => [esc(t.year), esc(t.grade), num(t.responded),
+      `${num(t.study)} (${pct(t.study, t.responded)})`, t.grade === "ม.6" ? `${num(t.university)} (${pct(t.university, t.responded)})` : "–"]), [2, 3, 4]));
+
+  h += '<p class="foot">จำนวนนักเรียนนับจากบัญชีนักเรียนในระบบตอนนี้ ถ้ามีนักเรียนย้าย/ลบบัญชีหลังทำแบบสำรวจ ร้อยละการตอบอาจคลาดเล็กน้อย · นักเรียนที่ตอบหลายรอบในปีเดียวกัน นับคำตอบล่าสุดครั้งเดียว</p>';
+  $("view").innerHTML = h;
+}
+
+/* =====================================================================
+   2) โควตา
+   ===================================================================== */
+const QST = { submitted: "ส่งใบสมัครแล้ว", under_review: "กำลังพิจารณา", shortlisted: "ผ่านรอบแรก", approved: "ได้รับคัดเลือก",
+  waitlisted: "สำรอง", promoted: "เลื่อนจากสำรอง", rejected: "ไม่ผ่าน", withdrawn: "ถอนใบสมัคร" };
+const QSTATUS = { open: "เปิดรับ", screening: "กำลังคัดกรอง", announced: "ประกาศผลแล้ว", closed: "ปิดแล้ว" };
+function quotaPoints(d){
+  const k = d.kpi || {}, pts = [];
+  pts.push(`ปีการศึกษา ${d.year} มีโควตา ${num(k.quotas)} โครงการ จาก ${num(k.universities)} มหาวิทยาลัย รวม ${num(k.seats)} ที่นั่ง`);
+  pts.push(`นักเรียนสมัคร ${num(k.applicants)} คน (${num(k.applications)} ใบสมัคร)` + (k.withdrawn ? ` ถอนใบสมัคร ${num(k.withdrawn)} ใบ` : ""));
+  pts.push(`ได้รับคัดเลือกจากโรงเรียน ${num(k.selected_students)} คน` + (k.applications ? ` คิดเป็น ${pct(k.selected, k.applications)} ของใบสมัคร` : ""));
+  if(k.pending) pts.push(`ยังรอผลพิจารณา ${num(k.pending)} ใบ`);
+  const top = (d.by_university || [])[0];
+  if(top && top.applicants) pts.push(`มหาวิทยาลัยที่มีผู้สมัครมากที่สุดคือ ${top.university} (${num(top.applicants)} ใบ)`);
+  const unused = (d.by_quota || []).filter(q => !q.applicants);
+  if(unused.length) pts.push(`โควตาที่ไม่มีผู้สมัคร ${num(unused.length)} โครงการ ควรประชาสัมพันธ์เพิ่มในปีหน้า`);
+  return pts;
+}
+function renderQuota(d){
+  const k = d.kpi || {};
+  if(!k.quotas){ emptyView("🧭", "ปีนี้ยังไม่มีโควตาที่เปิดในระบบ"); return; }
+  let h = hero(`ผลการสมัครโควตา ปีการศึกษา ${d.year}`, quotaPoints(d).map(esc).join(" · "));
+  h += '<div class="kpis">' +
+    kpi("โควตาทั้งหมด", num(k.quotas), "โครงการ", `${num(k.seats)} ที่นั่ง · ${num(k.universities)} มหาวิทยาลัย`, "var(--g2)") +
+    kpi("นักเรียนที่สมัคร", num(k.applicants), "คน", `${num(k.applications)} ใบสมัคร (ไม่นับที่ถอน)`, "var(--g4)") +
+    kpi("ได้รับคัดเลือก", num(k.selected_students), "คน", k.applications ? `${pct(k.selected, k.applications)} ของใบสมัคร` : "ยังไม่มีใบสมัคร", "var(--g3)") +
+    kpi("รอผล / สำรอง", num(Number(k.pending) + Number(k.waitlisted)), "ใบ", `รอผล ${num(k.pending)} · สำรอง ${num(k.waitlisted)}`, "var(--g1)") +
+    "</div>";
+  h += '<div class="grid2">';
+  h += panel("ผู้สมัครเทียบที่นั่ง แยกมหาวิทยาลัย", "แท่งเขียวเข้ม = ใบสมัคร · แท่งเขียวอ่อน = ที่นั่ง",
+    '<div class="legend"><span><i style="background:var(--pine)"></i>ใบสมัคร</span><span><i style="background:var(--pine-tint)"></i>ที่นั่ง</span></div>' +
+    bars((d.by_university || []).map(u => ({ name: u.university, n: u.applicants, ghost: u.seats, label: `${num(u.applicants)} ใบ`, note: `${num(u.seats)} ที่นั่ง · ได้ ${num(u.selected)}` })), { ghost: true }));
+  const st = (d.status || []).map(s => ({ name: QST[s.status] || s.status, n: s.n, label: num(s.n) + " ใบ",
+    cls: ["approved", "promoted"].includes(s.status) ? "" : s.status === "withdrawn" || s.status === "rejected" ? "warn" : "alt" }));
+  h += panel("สถานะใบสมัครทั้งหมด", "รวมใบที่ถอนแล้ว", bars(st));
+  h += "</div>";
+  h += panel("รายโควตา", "เรียงตามมหาวิทยาลัย",
+    table(["โควตา", "มหาวิทยาลัย / คณะ", "ที่นั่ง", "สมัคร", "ได้รับคัดเลือก", "สำรอง", "สถานะ"],
+      (d.by_quota || []).map(q => [esc(q.name), `${esc(q.university)}<br><span class="muted" style="font-size:.8rem">${esc(q.faculty)}</span>`, num(q.seats),
+        q.applicants ? num(q.applicants) : '<span class="tag warn">ไม่มีผู้สมัคร</span>', num(q.selected), num(q.waitlisted),
+        `<span class="tag gold">${esc(QSTATUS[q.status] || q.status)}</span>`]), [2, 3, 4, 5]));
+  if((d.by_level || []).length > 1) h += panel("ผู้สมัครแยกระดับชั้น", "", bars(d.by_level.map(l => ({ name: l.level, n: l.applicants, label: num(l.applicants) + " คน" }))));
+  if((d.trend || []).length > 1) h += panel("เทียบย้อนหลัง", "",
+    table(["ปีการศึกษา", "โควตา", "ที่นั่ง", "ใบสมัคร", "ได้รับคัดเลือก"], d.trend.map(t => [esc(t.year), num(t.quotas), num(t.seats), num(t.applicants), num(t.selected)]), [1, 2, 3, 4]));
+  h += '<p class="foot">"ได้รับคัดเลือก" = ครูอนุมัติหรือเลื่อนจากสำรอง ในระบบคัดกรองของโรงเรียน (ผลจริงจากมหาวิทยาลัยดูได้ที่แท็บเรียนต่อหลังจบ)</p>';
+  $("view").innerHTML = h;
+}
+
+/* =====================================================================
+   3) ผลงานนักเรียน
+   ===================================================================== */
+const ATYPE = { activity: "กิจกรรม", prize: "รางวัล", project: "โครงงาน/ผลงาน", course: "อบรม/หลักสูตร" };
+function awardsPoints(d){
+  const k = d.kpi || {}, pts = [];
+  pts.push(`ปีการศึกษา ${d.year} มีผลงานที่ยืนยันแล้ว ${num(k.events)} รายการ นักเรียนมีผลงาน ${num(k.students)} คน (รวม ${num(k.participations)} ครั้ง)`);
+  if(k.high_level) pts.push(`ผลงานระดับภาคขึ้นไป ${num(k.high_level)} รายการ`);
+  const g = (d.by_group || []).filter(x => x.events).sort((a, b) => b.students - a.students);
+  if(g[0]) pts.push(`กลุ่มสาระที่มีนักเรียนมีผลงานมากที่สุดคือ ${g[0].group} (${num(g[0].students)} คน)`);
+  const none = (d.by_group || []).filter(x => !x.events).length;
+  if(none) pts.push(`ยังไม่มีผลงานที่ยืนยันแล้ว ${num(none)} กลุ่มสาระ`);
+  if(k.pending || k.returned || k.draft) pts.push(`ยังไม่นับในรายงาน: รอตรวจ ${num(k.pending)} · ส่งกลับแก้ไข ${num(k.returned)} · ฉบับร่าง ${num(k.draft)}`);
+  return pts;
+}
+function renderAwards(d){
+  const k = d.kpi || {};
+  if(!k.events && !k.pending && !k.draft && !k.returned){ emptyView("🏅", "ปีนี้ยังไม่มีผลงานนักเรียนในระบบ"); return; }
+  let h = hero(`ผลงานนักเรียน ปีการศึกษา ${d.year}`, awardsPoints(d).map(esc).join(" · "));
+  h += '<div class="kpis">' +
+    kpi("ผลงานที่ยืนยันแล้ว", num(k.events), "รายการ", `${num(k.groups)} กลุ่มสาระ`, "var(--g5)") +
+    kpi("นักเรียนที่มีผลงาน", num(k.students), "คน", `เข้าร่วมรวม ${num(k.participations)} ครั้ง`, "var(--g4)") +
+    kpi("ระดับภาคขึ้นไป", num(k.high_level), "รายการ", "ภาค ประเทศ นานาชาติ", "var(--g2)") +
+    kpi("รอตรวจ / ส่งกลับ", num(Number(k.pending) + Number(k.returned)), "รายการ", `ฉบับร่าง ${num(k.draft)} · ยังไม่นับในรายงาน`, "var(--g1)") +
+    "</div>";
+  h += '<div class="grid2">';
+  h += panel("แยกตามกลุ่มสาระ", "จำนวนนักเรียนที่มีผลงาน (ไม่ซ้ำคน)",
+    bars((d.by_group || []).map(g => ({ name: g.group, n: g.students, label: num(g.students) + " คน", note: `${num(g.events)} รายการ`, cls: g.events ? "" : "alt" }))));
+  h += panel("แยกตามระดับ", "จำนวนครั้งที่นักเรียนเข้าร่วม",
+    bars((d.by_level || []).map(l => ({ name: l.label, n: l.participations, label: num(l.participations) + " ครั้ง", note: `${num(l.events)} รายการ` }))));
+  h += "</div>";
+  h += '<div class="grid2">';
+  h += panel("แยกตามประเภท (TCASVerified)", "",
+    bars((d.by_type || []).map(t => ({ name: ATYPE[t.type] || t.type, n: t.participations, label: num(t.participations) + " ครั้ง", note: `${num(t.events)} รายการ` }))));
+  h += panel("นักเรียนที่มีผลงาน แยกระดับชั้น", "ระดับชั้นปัจจุบันของนักเรียน",
+    bars((d.by_class_level || []).map(l => ({ name: l.level, n: l.students, label: num(l.students) + " คน" }))));
+  h += "</div>";
+  h += panel("ผลงานเด่น", "เรียงจากระดับสูงสุด แล้วตามจำนวนนักเรียน (สูงสุด 15 รายการ)",
+    table(["ผลงาน", "ระดับ", "กลุ่มสาระ", "ประเภท", "นักเรียน"], (d.top_events || []).map(e => [esc(e.title), esc(e.level), esc(e.group || "-"), esc(ATYPE[e.type] || e.type), num(e.participations)]), [4]));
+  if((d.trend || []).length > 1) h += panel("เทียบย้อนหลัง", "",
+    table(["ปีการศึกษา", "ผลงาน", "นักเรียน", "ครั้งที่เข้าร่วม"], d.trend.map(t => [esc(t.year), num(t.events), num(t.students), num(t.participations)]), [1, 2, 3]));
+  h += '<p class="foot">นับเฉพาะผลงานที่งานแนะแนวตรวจและยืนยันแล้ว</p>';
+  $("view").innerHTML = h;
+}
+
+/* =====================================================================
+   Word สำหรับผู้บริหาร
+   ===================================================================== */
+let _chart = null;
+function chartPng(type, labels, values, opt = {}){
+  if(!window.Chart || !labels.length) return null;
+  const c = $("cv");
+  c.width = opt.w || 900; c.height = opt.h || 440;
+  if(_chart){ _chart.destroy(); _chart = null; }
+  Chart.defaults.font.family = "Sarabun, sans-serif";
+  Chart.defaults.font.size = 18;
+  _chart = new Chart(c, {
+    type,
+    data: { labels, datasets: [{ data: values, backgroundColor: type === "doughnut" ? ["#0F6B5C","#FFD34D","#4E9BB9","#F28C6B","#8E7CC3","#7FB069","#D96A9C","#5B6B72"] : "#0F6B5C", borderRadius: 6 }] },
+    options: { responsive: false, animation: false, indexAxis: opt.horizontal ? "y" : "x",
+      plugins: { legend: { display: type === "doughnut", position: "right" } },
+      scales: type === "doughnut" ? {} : { x: { beginAtZero: true, ticks: { precision: 0 } }, y: { beginAtZero: true, ticks: { precision: 0 } } } }
+  });
+  const t = document.createElement("canvas");
+  t.width = c.width; t.height = c.height;
+  const g = t.getContext("2d"); g.fillStyle = "#fff"; g.fillRect(0, 0, t.width, t.height); g.drawImage(c, 0, 0);
+  const b64 = t.toDataURL("image/png").split(",")[1], bin = atob(b64), u8 = new Uint8Array(bin.length);
+  for(let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+  return { data: u8, ratio: t.height / t.width };
+}
+
+function docKit(){
+  const D = window.docx, FONT = "TH Sarabun New", GREEN = "0F6B5C", LIGHT = "E2F0EC";
+  const L = D.AlignmentType.LEFT, R = D.AlignmentType.RIGHT, C = D.AlignmentType.CENTER;
+  const run = (text, o = {}) => new D.TextRun({ text: String(text ?? ""), font: FONT, size: 32, ...o });
+  const para = (text, o = {}) => new D.Paragraph({ spacing: { after: 100 }, ...(o.p || {}), children: [run(text, o.r)] });
+  const head = text => new D.Paragraph({ spacing: { before: 280, after: 120 }, keepNext: true,
+    border: { bottom: { style: D.BorderStyle.SINGLE, size: 8, color: GREEN, space: 2 } },
+    children: [run(text, { bold: true, size: 36, color: GREEN })] });
+  const cell = (text, o = {}) => new D.TableCell({
+    width: { size: o.w || 20, type: D.WidthType.PERCENTAGE },
+    shading: o.fill ? { type: D.ShadingType.CLEAR, color: "auto", fill: o.fill } : undefined,
+    margins: { top: 60, bottom: 60, left: 100, right: 100 },
+    children: [new D.Paragraph({ alignment: o.align || L, children: [run(text, { bold: !!o.bold, color: o.color, size: o.size || 30 })] })] });
+  const table = (heads, widths, rightCols, body) => new D.Table({
+    width: { size: 100, type: D.WidthType.PERCENTAGE },
+    rows: [
+      new D.TableRow({ tableHeader: true, cantSplit: true, children: heads.map((h, i) => cell(h, { w: widths[i], fill: GREEN, color: "FFFFFF", bold: true, align: rightCols.includes(i) ? R : L })) }),
+      ...body.map((r, ri) => new D.TableRow({ cantSplit: true, children: r.map((v, i) => cell(v, { w: widths[i], align: rightCols.includes(i) ? R : L, fill: ri % 2 ? "F4F8F6" : undefined, bold: r.bold })) }))
+    ] });
+  const kpis = items => new D.Table({ width: { size: 100, type: D.WidthType.PERCENTAGE },
+    borders: { top: { style: D.BorderStyle.NONE }, bottom: { style: D.BorderStyle.NONE }, left: { style: D.BorderStyle.NONE },
+      right: { style: D.BorderStyle.NONE }, insideHorizontal: { style: D.BorderStyle.NONE }, insideVertical: { style: D.BorderStyle.SINGLE, size: 12, color: "FFFFFF" } },
+    rows: [new D.TableRow({ children: items.map(([lab, val]) => new D.TableCell({
+      width: { size: Math.floor(100 / items.length), type: D.WidthType.PERCENTAGE },
+      shading: { type: D.ShadingType.CLEAR, color: "auto", fill: LIGHT },
+      margins: { top: 120, bottom: 120, left: 100, right: 100 },
+      children: [new D.Paragraph({ alignment: C, children: [run(lab, { size: 28, color: "555555" })] }),
+                 new D.Paragraph({ alignment: C, children: [run(val, { size: 40, bold: true, color: GREEN })] })] })) })] });
+  const bullets = list => list.map(t => new D.Paragraph({ bullet: { level: 0 }, spacing: { after: 80 }, children: [run(t)] }));
+  const img = (p, w) => p ? new D.Paragraph({ alignment: C, spacing: { after: 120 },
+    children: [new D.ImageRun({ data: p.data, type: "png", transformation: { width: w, height: Math.round(w * p.ratio) } })] }) : null;
+  const cover = (title, year) => [
+    new D.Paragraph({ alignment: C, spacing: { after: 40 }, children: [run("โรงเรียนพูลเจริญวิทยาคม · งานแนะแนว", { size: 32, color: "555555" })] }),
+    new D.Paragraph({ alignment: C, spacing: { after: 40 }, children: [run(title, { size: 50, bold: true, color: GREEN })] }),
+    new D.Paragraph({ alignment: C, spacing: { after: 240 }, children: [run("ปีการศึกษา " + year, { size: 40, bold: true })] })];
+  const finish = async (title, kids, file) => {
+    kids.push(new D.Paragraph({ spacing: { before: 300 }, alignment: R,
+      children: [run("จัดทำโดย งานแนะแนว · ข้อมูลจากระบบแนะให้แนว ณ วันที่ " + thaiToday(), { size: 26, color: "666666" })] }));
+    const doc = new D.Document({
+      creator: "งานแนะแนว โรงเรียนพูลเจริญวิทยาคม", title,
+      styles: { default: { document: { run: { font: FONT, size: 32 } } } },
+      sections: [{ properties: { page: { margin: { top: 1000, bottom: 1000, left: 1100, right: 1100 } } },
+        footers: { default: new D.Footer({ children: [new D.Paragraph({ alignment: C,
+          children: [new D.TextRun({ children: ["หน้า ", D.PageNumber.CURRENT], font: FONT, size: 26, color: "777777" })] })] }) },
+        children: kids.filter(Boolean) }] });
+    const blob = await D.Packer.toBlob(doc);
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob); a.download = file;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  };
+  return { run, para, head, table, kpis, bullets, img, cover, finish };
+}
+
+async function docSurvey(d){
+  const K = docKit(), F = surveyFacts(d), kids = [];
+  if(!F.grades.length) return false;
+  const totStu = F.grades.reduce((s, x) => s + Number(x.students), 0), totRes = F.grades.reduce((s, x) => s + Number(x.responded), 0);
+  kids.push(...K.cover("รายงานผลการศึกษาต่อของนักเรียน", d.year));
+  const items = [["ตอบแบบสำรวจ", `${num(totRes)} คน (${pct(totRes, totStu)})`]];
+  F.grades.forEach(x => items.push([`${x.grade} เรียนต่อ`, pct(x.study, x.responded)]));
+  kids.push(K.kpis(items.slice(0, 4)));
+  kids.push(K.head("ข้อสังเกตสำคัญ"), ...K.bullets(surveyPoints(d)));
+  F.grades.forEach(x => {
+    kids.push(K.head(`${x.grade} ไปทางไหนบ้าง`));
+    kids.push(K.para(`คิดจากนักเรียนที่ตอบแบบสำรวจ ${num(x.responded)} คน จากทั้งหมด ${num(x.students)} คน`, { r: { size: 28, color: "555555" } }));
+    const st = F.st(x.grade);
+    kids.push(K.table(["สถานะหลังจบ", "จำนวน (คน)", "ร้อยละ"], [56, 22, 22], [1, 2], st.map(s => [s.status, num(s.n), pct(s.n, x.responded)])));
+    kids.push(K.img(chartPng("doughnut", st.map(s => s.status), st.map(s => s.n), { w: 800, h: 400 }), 420));
+  });
+  if(F.g("ม.6")){
+    const uni = F.n("ม.6", "มหาวิทยาลัย");
+    if((d.tcas || []).length){ kids.push(K.head("ม.6 ได้ที่เรียนรอบไหน (TCAS)"));
+      kids.push(K.table(["รอบ", "จำนวน (คน)", "ร้อยละ"], [56, 22, 22], [1, 2], d.tcas.map(t => [t.round, num(t.n), pct(t.n, uni)]))); }
+    if((d.universities || []).length){ kids.push(K.head("มหาวิทยาลัยที่เข้าเรียน"));
+      kids.push(K.table(["ที่", "มหาวิทยาลัย", "จำนวน (คน)"], [8, 70, 22], [2], d.universities.map((u, i) => [String(i + 1), u.name, num(u.n)])));
+      const top = d.universities.slice(0, 10);
+      kids.push(K.img(chartPng("bar", top.map(u => u.name.length > 28 ? u.name.slice(0, 27) + "…" : u.name), top.map(u => u.n), { horizontal: true, w: 900, h: Math.max(260, top.length * 46) }), 560)); }
+    if((d.programs || []).length){ kids.push(K.head("คณะ/สาขาที่เข้าเรียน"));
+      kids.push(K.table(["คณะ/สาขา", "จำนวน (คน)"], [78, 22], [1], d.programs.map(p => [p.name, num(p.n)]))); }
+  }
+  if((d.schools_m3 || []).length){ kids.push(K.head("ม.3 ศึกษาต่อที่ไหน"));
+    kids.push(K.table(["สถานศึกษา", "จำนวน (คน)"], [78, 22], [1], d.schools_m3.map(p => [p.name, num(p.n)]))); }
+  kids.push(K.head("การตอบแบบสำรวจรายห้อง"));
+  kids.push(K.table(["ห้อง", "นักเรียน", "ตอบแล้ว", "ร้อยละ"], [25, 25, 25, 25], [1, 2, 3], (d.rooms || []).map(r => [r.room, num(r.students), num(r.responded), pct(r.responded, r.students)])));
+  await K.finish("รายงานผลการศึกษาต่อ ปีการศึกษา " + d.year, kids, `รายงานเรียนต่อ-ปี${d.year}.docx`);
+  return true;
+}
+
+async function docQuota(d){
+  const K = docKit(), k = d.kpi || {}, kids = [];
+  if(!k.quotas) return false;
+  kids.push(...K.cover("รายงานผลการสมัครโควตา", d.year));
+  kids.push(K.kpis([["โควตา", `${num(k.quotas)} โครงการ`], ["ที่นั่งรวม", num(k.seats)], ["นักเรียนสมัคร", `${num(k.applicants)} คน`], ["ได้รับคัดเลือก", `${num(k.selected_students)} คน`]]));
+  kids.push(K.head("ข้อสังเกตสำคัญ"), ...K.bullets(quotaPoints(d)));
+  kids.push(K.head("สรุปแยกมหาวิทยาลัย"));
+  const bu = d.by_university || [];
+  const tot = ["รวม", num(bu.reduce((s, u) => s + u.quotas, 0)), num(k.seats), num(k.applications), num(k.selected)]; tot.bold = true;
+  kids.push(K.table(["มหาวิทยาลัย", "โควตา", "ที่นั่ง", "ใบสมัคร", "ได้รับคัดเลือก"], [40, 15, 15, 15, 15], [1, 2, 3, 4], [...bu.map(u => [u.university, num(u.quotas), num(u.seats), num(u.applicants), num(u.selected)]), tot]));
+  kids.push(K.img(chartPng("bar", bu.map(u => u.university.length > 28 ? u.university.slice(0, 27) + "…" : u.university), bu.map(u => u.applicants), { horizontal: true, w: 900, h: Math.max(240, bu.length * 50) }), 540));
+  kids.push(K.head("รายโควตา"));
+  kids.push(K.table(["โควตา", "มหาวิทยาลัย/คณะ", "ที่นั่ง", "สมัคร", "ได้รับคัดเลือก"], [34, 30, 12, 12, 12], [2, 3, 4],
+    (d.by_quota || []).map(q => [q.name, q.university + " / " + q.faculty, num(q.seats), num(q.applicants), num(q.selected)])));
+  kids.push(K.head("สถานะใบสมัคร"));
+  kids.push(K.table(["สถานะ", "จำนวน (ใบ)"], [70, 30], [1], (d.status || []).map(s => [QST[s.status] || s.status, num(s.n)])));
+  if((d.trend || []).length > 1){ kids.push(K.head("เทียบย้อนหลัง"));
+    kids.push(K.table(["ปีการศึกษา", "โควตา", "ที่นั่ง", "ใบสมัคร", "ได้รับคัดเลือก"], [24, 19, 19, 19, 19], [1, 2, 3, 4], d.trend.map(t => [t.year, num(t.quotas), num(t.seats), num(t.applicants), num(t.selected)]))); }
+  kids.push(K.para('หมายเหตุ: "ได้รับคัดเลือก" คือผลคัดเลือกของโรงเรียนเพื่อส่งชื่อให้มหาวิทยาลัย', { r: { size: 26, color: "666666" } }));
+  await K.finish("รายงานผลการสมัครโควตา ปีการศึกษา " + d.year, kids, `รายงานโควตา-ปี${d.year}.docx`);
+  return true;
+}
+
+async function docAwards(d){
+  const K = docKit(), k = d.kpi || {}, kids = [];
+  if(!k.events && !k.pending && !k.draft && !k.returned) return false;
+  kids.push(...K.cover("รายงานผลงานนักเรียน", d.year));
+  kids.push(K.kpis([["ผลงานที่ยืนยันแล้ว", `${num(k.events)} รายการ`], ["นักเรียนที่มีผลงาน", `${num(k.students)} คน`], ["ระดับภาคขึ้นไป", `${num(k.high_level)} รายการ`]]));
+  kids.push(K.head("ข้อสังเกตสำคัญ"), ...K.bullets(awardsPoints(d)));
+  kids.push(K.head("แยกตามกลุ่มสาระ"));
+  const bg = d.by_group || [];
+  kids.push(K.table(["กลุ่มสาระ", "ผลงาน (รายการ)", "นักเรียน (คน)", "เข้าร่วม (ครั้ง)"], [46, 18, 18, 18], [1, 2, 3], bg.map(g => [g.group, num(g.events), num(g.students), num(g.participations)])));
+  const bgOn = bg.filter(g => g.students);
+  kids.push(K.img(chartPng("bar", bgOn.map(g => g.group.length > 26 ? g.group.slice(0, 25) + "…" : g.group), bgOn.map(g => g.students), { horizontal: true, w: 900, h: Math.max(220, bgOn.length * 50) }), 540));
+  kids.push(K.head("แยกตามระดับ"));
+  kids.push(K.table(["ระดับ", "ผลงาน (รายการ)", "เข้าร่วม (ครั้ง)"], [50, 25, 25], [1, 2], (d.by_level || []).map(l => [l.label, num(l.events), num(l.participations)])));
+  kids.push(K.head("แยกตามประเภท"));
+  kids.push(K.table(["ประเภท", "ผลงาน (รายการ)", "เข้าร่วม (ครั้ง)"], [50, 25, 25], [1, 2], (d.by_type || []).map(t => [ATYPE[t.type] || t.type, num(t.events), num(t.participations)])));
+  kids.push(K.head("นักเรียนที่มีผลงาน แยกระดับชั้น"));
+  kids.push(K.table(["ระดับชั้น", "นักเรียน (คน)"], [60, 40], [1], (d.by_class_level || []).map(l => [l.level, num(l.students)])));
+  if((d.top_events || []).length){ kids.push(K.head("ผลงานเด่น"));
+    kids.push(K.table(["ผลงาน", "ระดับ", "กลุ่มสาระ", "นักเรียน"], [44, 18, 26, 12], [3], d.top_events.map(e => [e.title, e.level, e.group || "-", num(e.participations)]))); }
+  if((d.trend || []).length > 1){ kids.push(K.head("เทียบย้อนหลัง"));
+    kids.push(K.table(["ปีการศึกษา", "ผลงาน", "นักเรียน", "เข้าร่วม (ครั้ง)"], [25, 25, 25, 25], [1, 2, 3], d.trend.map(t => [String(t.year), num(t.events), num(t.students), num(t.participations)]))); }
+  kids.push(K.para("หมายเหตุ: นับเฉพาะผลงานที่งานแนะแนวตรวจและยืนยันแล้ว", { r: { size: 26, color: "666666" } }));
+  await K.finish("รายงานผลงานนักเรียน ปีการศึกษา " + d.year, kids, `รายงานผลงานนักเรียน-ปี${d.year}.docx`);
+  return true;
+}
+
+$("btnDocx").onclick = async () => {
+  const b = $("btnDocx"), old = b.textContent;
+  const d = cur();
+  if(!d){ return; }
+  b.disabled = true; b.textContent = "กำลังสร้างไฟล์…";
+  try{
+    if(!window.docx) throw new Error("no docx");
+    const ok = await ({ survey: docSurvey, quota: docQuota, awards: docAwards })[TAB](d);
+    b.textContent = ok ? "✓ ดาวน์โหลดแล้ว" : "ปีนี้ยังไม่มีข้อมูล";
+  }catch(e){
+    console.error(e);
+    b.textContent = window.docx ? "สร้างไฟล์ไม่สำเร็จ ลองใหม่" : "โหลดตัวสร้าง Word ไม่สำเร็จ ตรวจอินเทอร์เน็ต";
+  }
+  setTimeout(() => { b.textContent = old; b.disabled = false; }, 2500);
+};
+$("btnPrint").onclick = () => window.print();
+
+boot();
+</script>
+</body>
+</html>

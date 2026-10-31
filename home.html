@@ -290,6 +290,29 @@ var SUPABASE_URL='https://ikkhjslmtjwrxzxvtokb.supabase.co';
 var SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlra2hqc2xtdGp3cnh6eHZ0b2tiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM3NDMzNjksImV4cCI6MjA5OTMxOTM2OX0.3OR_9mEv82Ns1LLjx5nnRwJYzrtKFtWCWd1bPuQfNKU';
 var sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 
+/* สารสนเทศการใช้งาน: บันทึกการเปิดหน้า/ทางลัด 1 ครั้งต่อคนต่อหน้าต่อวัน (บันทึกไม่สำเร็จก็ไม่กระทบการใช้งาน) */
+var USE_UID='';
+function logUse(page){
+  if(!USE_UID||!page)return;
+  try{
+    var k='pcw_u_'+USE_UID.slice(0,8)+'_'+page+'_'+new Date().toISOString().slice(0,10);
+    if(sessionStorage.getItem(k))return;
+    sessionStorage.setItem(k,'1');
+  }catch(e){}
+  try{sb.rpc('usage_log',{p_page:page}).then(function(){},function(){});}catch(e){}
+}
+document.addEventListener('click',function(e){
+  var a=e.target&&e.target.closest?e.target.closest('a.sc[href]'):null;
+  if(!a)return;
+  try{
+    var u=new URL(a.getAttribute('href'),location.href);
+    var file=(u.pathname.split('/').pop()||'').toLowerCase();
+    if(u.host===location.host&&/\.html$/.test(file)&&file!=='index.html'){
+      logUse('app:'+file.replace(/\.html$/,'').replace(/[^a-z0-9_-]/g,'').slice(0,50));
+    }
+  }catch(err){}
+});
+
 var MON=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
 var MONF=['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
 var DAYF=['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์'];
@@ -812,6 +835,7 @@ async function init(){
     if(p.error)throw p.error;
     if(!p.data){screen('<h1 style="color:var(--pine-deep)">ไม่พบข้อมูลผู้ใช้</h1><p class="muted">กรุณาติดต่อผู้ดูแลระบบ</p><a class="btn primary" href="index.html">กลับหน้าเข้าสู่ระบบ</a>');return;}
     S.profile=p.data;
+    USE_UID=S.user.id;logUse('home');
     S.staff=p.data.role==='admin'||(p.data.role==='teacher'&&!!p.data.is_guidance);
     $('uName').textContent=p.data.display_name||'';
     $('uRole').textContent=S.staff&&p.data.role==='teacher'?'ครูแนะแนว':(ROLE_LABEL[p.data.role]||'')+(p.data.role==='student'&&p.data.class_room?' · '+p.data.class_room:'');

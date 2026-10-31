@@ -99,6 +99,22 @@ th.r,td.r{text-align:right;font-variant-numeric:tabular-nums}
 tr.zero td{color:var(--muted)}
 .tag{display:inline-block;margin-left:8px;font-size:.75rem;background:#efe9d8;color:var(--bark);border-radius:99px;padding:1px 9px}
 
+.utiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:6px}
+.utile{background:var(--note);border:1px solid var(--line);border-radius:10px;padding:12px}
+.utile .lab{font-size:.85rem;color:var(--bark);font-weight:600}
+.utile .num{font-family:'Mitr',sans-serif;font-size:1.7rem;color:var(--pine-dk);line-height:1.2}
+.utile .sub{font-size:.8rem;color:var(--muted)}
+.usub{font-family:'Mitr',sans-serif;font-weight:500;font-size:.98rem;color:var(--pine-dk);margin:20px 0 4px}
+.ucols{display:flex;align-items:flex-end;gap:8px;height:170px;padding-top:20px;overflow-x:auto}
+.ucol{flex:1 0 44px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%}
+.ucol .v{font-weight:700;font-size:.85rem;margin-bottom:3px}
+.ucol .stack{width:70%;max-width:46px;display:flex;flex-direction:column-reverse;border-radius:6px 6px 0 0;overflow:hidden;min-height:2px}
+.ucol .stack i{display:block}
+.ucol .l{margin-top:6px;font-size:.8rem;color:var(--muted);white-space:nowrap}
+.lvrow{display:grid;grid-template-columns:3.2rem 1fr 9.5rem;gap:10px;align-items:center;margin:7px 0;font-size:.9rem}
+.lvrow .mt{height:12px;border-radius:99px;background:#e9e3d2;overflow:hidden}
+.lvrow .mt div{height:100%;background:var(--pine-lt);border-radius:99px}
+.lvrow .r{text-align:right;color:var(--muted);font-variant-numeric:tabular-nums}
 .foot{margin:18px 2px 0;font-size:.82rem;color:var(--muted)}
 .state{text-align:center;padding:60px 16px;color:var(--muted)}
 .state b{display:block;font-family:'Mitr',sans-serif;color:var(--bark);font-size:1.1rem;margin-bottom:6px}
@@ -175,6 +191,12 @@ tr.zero td{color:var(--muted)}
         <div class="twrap"><table><thead><tr><th>โมดูล</th><th>สิ่งที่นับ</th><th class="r">จำนวน</th></tr></thead><tbody id="mods"></tbody></table></div>
       </div>
 
+      <div class="card full" id="usageCard">
+        <h3>การใช้งานระบบ</h3>
+        <p class="hint" id="usageHint">นับ 1 ครั้งต่อคน ต่อหน้า ต่อวัน · ไม่แสดงรายชื่อ</p>
+        <div id="usageBody"><div class="empty-line">กำลังโหลด…</div></div>
+      </div>
+
       <p class="foot" id="foot"></p>
     </div>
   </div>
@@ -238,6 +260,95 @@ async function load(){
   }
   DATA = data;
   render();
+  logUse('page:exec-overview');
+  loadUsage();
+}
+
+/* ---------------- การใช้งานระบบ ---------------- */
+let USAGE = null;
+const PAGE_LABEL = {
+  'index':'เข้าคลังแนะแนว', 'home':'หน้าแรก',
+  'index:library':'คลังสื่อ', 'index:work':'งานมอบหมาย', 'index:announce':'ประชาสัมพันธ์', 'index:survey':'สำรวจเรียนต่อ',
+  'index:strength':'จุดแข็ง', 'index:overview':'ภาพรวมนักเรียน', 'index:apps':'ระบบของเรา', 'index:manage':'จัดการบัญชี',
+  'page:exec-overview':'ภาพรวมผู้บริหาร', 'page:annual-report':'รายงานประจำปี',
+  'app:scholarship-apply':'สมัครทุน (นักเรียน)', 'app:scholarship-hub':'จัดการทุน', 'app:scholarship-admin':'ตั้งเกณฑ์ทุน',
+  'app:scholarship-results':'ผลคัดกรองทุน', 'app:scholarship-annual-summary':'สรุปทุนประจำปี',
+  'app:quota-apply':'สมัครโควตา (นักเรียน)', 'app:quota-hub':'จัดการโควตา', 'app:quota-teacher':'ตั้งค่าโควตา', 'app:quota-results':'ผลคัดกรองโควตา',
+  'app:chang-phueak-apply':'สมัครช้างเผือก', 'app:chang-phueak-teacher':'จัดการช้างเผือก',
+  'app:awards-hub':'ผลงานนักเรียน', 'app:awards-entry':'บันทึกผลงาน', 'app:awards-review':'ตรวจผลงาน', 'app:awards-export':'ส่งออก TCASVerified',
+  'app:interview':'ซ้อมสัมภาษณ์', 'app:tgat-prep-app':'ฝึกข้อสอบ TGAT/TPAT', 'app:tarot-student':'การ์ดสำรวจใจ', 'app:tarot-teacher':'สรุปการ์ดสำรวจใจ',
+  'app:work-permit-student':'ขอหนังสือฝึกงาน', 'app:work-permit-teacher':'จัดการหนังสือฝึกงาน', 'app:counseling-log':'บันทึกให้คำปรึกษา',
+  'app:mou':'ความร่วมมือ MOU', 'app:ledger-app':'บัญชีกองกลาง', 'app:exec-overview':'ภาพรวมผู้บริหาร', 'app:annual-report':'รายงานประจำปี',
+  'app:profile':'โปรไฟล์ของฉัน', 'app:congrats-cards':'การ์ดแสดงความยินดี'
+};
+function pageLabel(k){
+  if(PAGE_LABEL[k]) return PAGE_LABEL[k];
+  if(k.startsWith('ext:')) return 'ลิงก์ภายนอก (' + k.slice(4).replace(/-/g, '.') + ')';
+  if(k.startsWith('app:')) return k.slice(4);
+  return k;
+}
+const TH_MONTH = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+const monthLabel = ym => { const [y, m] = ym.split('-').map(Number); return TH_MONTH[m - 1] + ' ' + String((y + 543) % 100).padStart(2, '0'); };
+const share = (n, d) => d ? (n * 100 / d).toFixed(1) + '%' : '–';
+
+async function loadUsage(){
+  const {data, error} = await sb.rpc('usage_summary', {p_months: 12});
+  if(error){ USAGE = null; $('#usageBody').innerHTML = '<div class="empty-line">โหลดข้อมูลการใช้งานไม่สำเร็จ ลองเปิดหน้านี้ใหม่อีกครั้ง</div>'; return; }
+  USAGE = data;
+  renderUsage();
+}
+function renderUsage(){
+  const u = USAGE, acc = u.accounts || {}, l = u.last30 || {};
+  $('#usageHint').textContent = 'นับ 1 ครั้งต่อคน ต่อหน้า ต่อวัน · ไม่แสดงรายชื่อ' +
+    (u.first_day ? ' · เริ่มเก็บข้อมูล ' + thaiDate(new Date(u.first_day + 'T00:00:00')) : '');
+  if(!u.first_day){
+    $('#usageBody').innerHTML = '<div class="empty-line">เริ่มเก็บข้อมูลแล้ว ตัวเลขจะขึ้นเมื่อมีคนเข้าใช้ระบบ</div>';
+    return;
+  }
+  let h = '<div class="utiles">' +
+    `<div class="utile"><div class="lab">นักเรียนที่เข้าใช้</div><div class="num">${fmt(l.student)}</div><div class="sub">30 วันล่าสุด · ${share(l.student, acc.student)} ของนักเรียน</div></div>` +
+    `<div class="utile"><div class="lab">ครูแนะแนวและแอดมิน</div><div class="num">${fmt(l.guidance)}</div><div class="sub">จาก ${fmt(acc.guidance)} บัญชี</div></div>` +
+    `<div class="utile"><div class="lab">ครูกลุ่มสาระ</div><div class="num">${fmt(l.teacher)}</div><div class="sub">จาก ${fmt(acc.teacher)} บัญชี</div></div>` +
+    `<div class="utile"><div class="lab">วันใช้งานรวม</div><div class="num">${fmt(l.user_days)}</div><div class="sub">คน × วัน ใน 30 วัน</div></div>` +
+    '</div>';
+
+  const mo = u.monthly || [];
+  h += '<div class="usub">ผู้ใช้ไม่ซ้ำรายเดือน</div>';
+  if(mo.length){
+    const tot = r => r.student + r.guidance + r.teacher, mx = Math.max(...mo.map(tot), 1);
+    h += '<div class="ucols">' + mo.map(r => {
+      const t = tot(r), H = 120;
+      return `<div class="ucol"><div class="v">${fmt(t)}</div><div class="stack" style="height:${Math.max(t / mx * H, 2)}px" title="${esc(monthLabel(r.month))} · นักเรียน ${fmt(r.student)} · ครู ${fmt(r.guidance + r.teacher)}">` +
+        `<i style="flex:${r.student};background:var(--pine-lt)"></i><i style="flex:${r.guidance + r.teacher};background:var(--gold)"></i></div><div class="l">${esc(monthLabel(r.month))}</div></div>`;
+    }).join('') + '</div>' +
+    '<div class="legend"><span><i style="background:var(--pine-lt)"></i>นักเรียน</span><span><i style="background:var(--gold)"></i>ครูและแอดมิน</span></div>';
+  }
+
+  const lv = u.levels30 || [];
+  if(lv.length){
+    h += '<div class="usub">นักเรียนที่เข้าใช้ใน 30 วัน แยกระดับชั้น</div>';
+    h += lv.map(r => `<div class="lvrow"><span>${esc(r.level)}</span><div class="mt"><div style="width:${r.total ? Math.min(r.used / r.total * 100, 100) : 0}%"></div></div><span class="r">${fmt(r.used)} / ${fmt(r.total)} (${share(r.used, r.total)})</span></div>`).join('');
+  }
+
+  const pg = u.pages30 || [];
+  h += '<div class="usub">หน้าที่ใช้มากที่สุด (30 วัน)</div>';
+  h += pg.length
+    ? '<div class="twrap"><table><thead><tr><th>หน้า/ระบบ</th><th class="r">ผู้ใช้</th><th class="r">นักเรียน</th><th class="r">ครู</th><th class="r">วันใช้งาน</th></tr></thead><tbody>' +
+      pg.map(r => `<tr><td>${esc(pageLabel(r.page))}</td><td class="r">${fmt(r.users)}</td><td class="r">${fmt(r.student)}</td><td class="r">${fmt(r.staff)}</td><td class="r">${fmt(r.days)}</td></tr>`).join('') +
+      '</tbody></table></div>'
+    : '<div class="empty-line">ยังไม่มีการเข้าใช้ใน 30 วันล่าสุด</div>';
+  h += '<p class="hint" style="margin:12px 0 0">นับเฉพาะการเปิดผ่านหน้าคลังแนะแนว/หน้าแรก/หน้ารายงาน ถ้าเปิดลิงก์ระบบย่อยตรง ๆ จะไม่ถูกนับ</p>';
+  $('#usageBody').innerHTML = h;
+}
+
+/* บันทึกการเปิดหน้านี้ (ครั้งเดียวต่อวันต่อแท็บ) */
+function logUse(page){
+  try{
+    const k = 'pcw_u_' + page + '_' + new Date().toISOString().slice(0, 10);
+    if(sessionStorage.getItem(k)) return;
+    sessionStorage.setItem(k, '1');
+  }catch(e){}
+  sb.rpc('usage_log', {p_page: page}).then(() => {}, () => {});
 }
 
 /* ---------------- วาดหน้า ---------------- */
@@ -366,6 +477,24 @@ function buildDocx(){
   if(d.app_status.length){
     body += para('สถานะใบสมัครแต่ละระบบ', {size:36, bold:true, color:'1D4B38', before:300, after:100});
     body += table(['ระบบ','สถานะ','จำนวนใบสมัคร'], d.app_status.map(r => [r.sys, r.st, fmt(r.n)]), [3600,3600,1500], [2]);
+  }
+  if(USAGE && USAGE.first_day){
+    const u = USAGE, acc = u.accounts || {}, l = u.last30 || {};
+    body += para('การใช้งานระบบ (30 วันล่าสุด)', {size:36, bold:true, color:'1D4B38', before:300, after:100});
+    body += para('นับ 1 ครั้งต่อคน ต่อหน้า ต่อวัน เริ่มเก็บข้อมูลเมื่อ ' + thaiDate(new Date(u.first_day + 'T00:00:00')), {size:28, color:'595959', after:100});
+    body += table(['กลุ่มผู้ใช้','เข้าใช้ (คน)','บัญชีทั้งหมด','ร้อยละ'], [
+      ['นักเรียน', fmt(l.student), fmt(acc.student), share(l.student, acc.student)],
+      ['ครูแนะแนวและแอดมิน', fmt(l.guidance), fmt(acc.guidance), share(l.guidance, acc.guidance)],
+      ['ครูกลุ่มสาระ', fmt(l.teacher), fmt(acc.teacher), share(l.teacher, acc.teacher)]
+    ], [3300,1800,1800,1800], [1,2,3]);
+    if((u.monthly || []).length){
+      body += para('ผู้ใช้ไม่ซ้ำรายเดือน', {size:32, bold:true, color:'1D4B38', before:240, after:100});
+      body += table(['เดือน','นักเรียน','ครูและแอดมิน','วันใช้งานรวม'], u.monthly.map(r => [monthLabel(r.month), fmt(r.student), fmt(r.guidance + r.teacher), fmt(r.user_days)]), [3000,1900,1900,1900], [1,2,3]);
+    }
+    if((u.pages30 || []).length){
+      body += para('หน้าที่ใช้มากที่สุด', {size:32, bold:true, color:'1D4B38', before:240, after:100});
+      body += table(['หน้า/ระบบ','ผู้ใช้ (คน)','นักเรียน','ครู'], u.pages30.slice(0, 10).map(r => [pageLabel(r.page), fmt(r.users), fmt(r.student), fmt(r.staff)]), [3900,1600,1600,1600], [1,2,3]);
+    }
   }
   body += para('ตัวเลขนับจากฐานข้อมูลของระบบแนะให้แนว ณ เวลาที่ดาวน์โหลด ไม่มีข้อมูลรายบุคคล', {size:26, color:'595959', before:300});
   const doc = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>' + body +

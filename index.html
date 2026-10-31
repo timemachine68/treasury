@@ -1074,10 +1074,38 @@ async function showLogin(){
   }catch(e){ /* แสดง login ตามปกติ */ }
 }
 
+/* ---------- สารสนเทศการใช้งาน: บันทึกว่าเปิดหน้าไหน (1 ครั้ง/คน/หน้า/วัน, ไม่มีผลกับการใช้งานถ้าบันทึกไม่สำเร็จ) ---------- */
+function logUse(page){
+  try{
+    if(!session || !page) return;
+    const k = "pcw_u_" + session.user.id.slice(0, 8) + "_" + page + "_" + new Date().toISOString().slice(0, 10);
+    if(sessionStorage.getItem(k)) return;
+    sessionStorage.setItem(k, "1");
+  }catch(e){}
+  sb.rpc("usage_log", { p_page: page }).then(()=>{}, ()=>{});
+}
+function usageKeyOfLink(href){
+  try{
+    const u = new URL(href, location.href);
+    if(u.protocol !== "https:" && u.protocol !== "http:") return null;
+    const file = (u.pathname.split("/").pop() || "").toLowerCase();
+    if(u.host === location.host && /\.html$/.test(file)) return "app:" + file.replace(/\.html$/, "").replace(/[^a-z0-9_-]/g, "").slice(0, 50);
+    if(u.host === location.host) return null;
+    return "ext:" + u.host.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 50);
+  }catch(e){ return null; }
+}
+document.addEventListener("click", e => {
+  const a = e.target.closest && e.target.closest("#appGrid a[href]");
+  if(!a) return;
+  const k = usageKeyOfLink(a.getAttribute("href"));
+  if(k) logUse(k);
+});
+
 async function enterApp(){
   const {data:p, error} = await sb.from("profiles").select("*").eq("id", session.user.id).maybeSingle();
   if(error || !p){ msg("loginMsg","ไม่พบข้อมูลผู้ใช้ กรุณาติดต่อผู้ดูแล","err"); await sb.auth.signOut(); session=null; return showLogin(); }
   profile = p;
+  logUse("index");
   $("loginStage").classList.add("hidden");
   $("appStage").classList.remove("hidden");
   $("uName").textContent = profile.display_name;
@@ -1163,6 +1191,7 @@ function switchView(v){
   // #6 fix: โหลดซ้ำก็ต่อเมื่อเปลี่ยน view จริงๆ (กด tab เดิมซ้ำ = ไม่ยิง network อีกรอบ)
   if(v === _currentView) return;
   _currentView = v;
+  logUse("index:" + v);
   if(v==="library") loadResources();
   if(v==="manage"){ loadUsers(); loadHealth(); }
   if(v==="work") loadWork();
