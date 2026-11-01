@@ -2283,7 +2283,7 @@ function svTeacherCard(r){
     <div class="duechip">ตอบแล้ว <b>${resp.length}/${targets.length}</b> คน (${pct}%)</div>
     <div class="actions">
       <button class="btn ${r.is_open?"ghost":"note"} sm" data-svt="${r.id}">${r.is_open?"⏸ ปิดรอบ":"▶ เปิดรอบ"}</button>
-      <button class="btn primary sm" data-svr="${r.id}">📊 ผลสำรวจ</button>
+      <a class="btn primary sm" style="text-decoration:none" href="survey-results.html?round=${encodeURIComponent(r.id)}">📊 ผลสำรวจ</a>
       ${mine?`<button class="btn danger sm" data-svd="${r.id}">ลบ</button>`:""}
     </div>
     <div class="meta"><span>👩‍🏫 ${esc(r.creator_name||"-")}</span><span>${thDate(r.created_at)}</span></div>
@@ -2297,7 +2297,7 @@ function svStudentCard(r){
     <h3>${esc(r.title)}</h3>
     ${r.academic_year?`<span class="duechip">ปีการศึกษา ${esc(r.academic_year)}</span>`:""}
     ${ans?`<p class="desc">คำตอบ: ${esc(ans.status)}${ans.institution? " · "+esc(ans.institution):""}</p>`:""}
-    <div class="actions"><button class="btn primary sm" data-svf="${r.id}">${ans?"✏️ แก้ไขคำตอบ":"📝 ตอบแบบสำรวจ"}</button></div>
+    <div class="actions"><a class="btn primary sm" style="text-decoration:none" href="survey.html?round=${encodeURIComponent(r.id)}">${ans?"✏️ แก้ไข / เพิ่มที่ที่ติด":"📝 ตอบแบบสำรวจ"}</a></div>
   </article>`;
 }
 

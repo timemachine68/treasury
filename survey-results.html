@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ผลสำรวจเรียนต่อ | แนะให้แนว</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Mitr:wght@400;500;600&family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{
+  --ink:#22313A; --ink-soft:#5B6B72; --board:#EFF3F1; --card:#FFFFFF;
+  --pine:#0F6B5C; --pine-deep:#0A4F44; --pine-tint:#E2F0EC;
+  --note:#FFD34D; --note-deep:#8A6D00; --line:#DCE4E1; --danger:#C0392B;
+  --radius:14px; --shadow:0 2px 10px rgba(34,49,58,.08);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Sarabun',sans-serif;background:var(--board);color:var(--ink);font-size:16px;line-height:1.55;min-height:100vh}
+h1,h2,h3,.brand{font-family:'Mitr',sans-serif;font-weight:600}
+button{font-family:inherit;cursor:pointer}
+input,select{font-family:inherit;font-size:16px}
+:focus-visible{outline:3px solid var(--note);outline-offset:2px;border-radius:6px}
+.wrap{max-width:1180px;margin:0 auto;padding:0 16px 60px}
+header.app{background:var(--pine);color:#fff;padding:14px 0}
+header.app .wrap{display:flex;align-items:center;gap:12px;padding-bottom:0;flex-wrap:wrap}
+.brand{font-size:1.15rem;display:flex;align-items:center;gap:10px}
+.brand .logo{width:34px;height:34px;border-radius:9px;background:var(--note);color:var(--pine-deep);display:grid;place-items:center;flex:none}
+.brand small{display:block;font-family:'Sarabun';font-weight:400;font-size:.72rem;opacity:.85}
+.spacer{flex:1}
+.iconbtn{background:rgba(255,255,255,.14);border:none;color:#fff;border-radius:999px;padding:7px 14px;font-size:.85rem;text-decoration:none}
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:16px}
+.chip{min-height:40px;padding:0 14px;border-radius:999px;border:1.5px solid var(--line);background:#fff;color:var(--ink);font-weight:600;font-size:.9rem}
+.chip.active{background:var(--pine);border-color:var(--pine);color:#fff}
+select.sel{min-height:40px;border-radius:999px;border:1.5px solid var(--line);padding:0 12px;background:#fff;font-size:.95rem}
+.search{flex:1 1 200px;min-height:40px;border-radius:999px;border:none;background:#fff;padding:0 16px}
+.btn{border:none;border-radius:9px;padding:9px 14px;font-size:.9rem;font-weight:600;display:inline-flex;align-items:center;gap:6px;justify-content:center;min-height:40px;text-decoration:none}
+.btn.primary{background:var(--pine);color:#fff}
+.btn.ghost{background:#fff;border:1px solid var(--line);color:var(--ink)}
+.btn.note{background:var(--note);color:var(--ink)}
+.btn.sm{min-height:34px;padding:4px 10px;font-size:.82rem;white-space:nowrap}
+.btn:disabled{opacity:.55;cursor:not-allowed}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin-top:16px}
+.tile{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);padding:14px 16px}
+.tile .k{font-size:.85rem;color:var(--ink-soft)}
+.tile .v{font-family:'Mitr';font-weight:600;font-size:1.8rem;color:var(--pine)}
+.tile .s{font-size:.8rem;color:var(--ink-soft)}
+.tile.warn .v{color:var(--danger)}
+.cols{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start;margin-top:16px}
+.panel{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);padding:16px;min-width:0}
+.panel h2{font-size:1.05rem;margin-bottom:10px}
+.legend{display:flex;gap:14px;font-size:.8rem;color:var(--ink-soft);margin-bottom:8px}
+.legend i{display:inline-block;width:14px;height:10px;border-radius:3px;margin-right:6px;vertical-align:middle}
+.barrow{margin-bottom:10px}
+.barrow .t{display:flex;justify-content:space-between;gap:2px 8px;font-size:.88rem;flex-wrap:wrap}
+.barrow .t b{font-weight:600}
+.barrow .t span{color:var(--ink-soft);white-space:nowrap}
+.track{height:9px;border-radius:5px;background:var(--board);margin-top:3px}
+.track div{height:9px;border-radius:5px}
+.tbl{overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:680px;font-size:.92rem}
+th{background:var(--board);color:var(--ink-soft);font-size:.8rem;text-align:left;padding:8px 10px}
+td{padding:9px 10px;border-top:1px solid var(--line);vertical-align:top}
+.pill{display:inline-block;border-radius:999px;padding:1px 10px;font-size:.78rem;font-weight:700;white-space:nowrap}
+.pill.n{background:var(--pine-tint);color:var(--pine-deep)}
+.pill.no{background:#FBEAE7;color:var(--danger)}
+.pill.mute{background:var(--board);color:var(--ink-soft)}
+.alist{list-style:none;margin-top:8px;display:flex;flex-direction:column;gap:5px}
+.alist li{padding:6px 10px;border-radius:9px;background:var(--board);font-size:.86rem}
+.alist li.c{background:#FFF6D6;border:1.5px solid var(--note)}
+.switch{display:flex;align-items:center;gap:8px;background:#fff;border:1.5px solid var(--line);border-radius:999px;padding:0 14px;min-height:40px;font-size:.9rem;cursor:pointer}
+.switch input{width:20px;height:20px;accent-color:var(--pine)}
+.modal-back{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;padding:16px;z-index:50}
+.modal-back.show{display:flex}
+.modal{background:#fff;border-radius:16px;max-width:720px;width:100%;max-height:88vh;overflow:auto;padding:20px}
+.modal h2{color:var(--pine-deep);font-size:1.1rem;margin-bottom:8px}
+.fixrow{border-bottom:1px solid var(--line);padding:10px 0}
+.fixrow .r{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.fixrow select{flex:1;min-width:220px;min-height:40px;border-radius:9px;border:1.5px solid var(--line);padding:0 8px}
+.empty{padding:40px 16px;text-align:center;color:var(--ink-soft)}
+.hint{font-size:.85rem;color:var(--ink-soft)}
+#toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:11px 20px;border-radius:999px;font-size:.9rem;opacity:0;pointer-events:none;transition:opacity .25s;z-index:99;max-width:92vw;text-align:center}
+#toast.show{opacity:1}
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+<header class="app"><div class="wrap">
+  <div class="brand"><span class="logo">📊</span><span>ผลสำรวจเรียนต่อ<small>แนะให้แนว · พูลเจริญวิทยาคม</small></span></div>
+  <div class="spacer"></div>
+  <a class="iconbtn" href="congrats-cards.html">🎉 ตรวจการ์ด</a>
+  <a class="iconbtn" href="index.html#survey">🏠 หน้าหลัก</a>
+</div></header>
+<div class="wrap" id="main"><div class="empty">กำลังโหลด…</div></div>
+
+<div class="modal-back" id="fixModal">
+  <div class="modal">
+    <h2>🎓 จัดชื่อมหาวิทยาลัยให้ตรงกัน</h2>
+    <p class="hint">ชื่อที่นักเรียนพิมพ์เองและยังไม่ตรงรายการ เลือกมหาวิทยาลัยที่ถูกต้อง ระบบจะจำชื่อนี้ไว้ รอบหน้าตรงกันเอง</p>
+    <div id="fixList"></div>
+    <div style="text-align:right;margin-top:12px"><button class="btn ghost" id="btnFixClose">ปิด</button></div>
+  </div>
+</div>
+<div id="toast"></div>
+
+<script>
+const SUPABASE_URL = "https://ikkhjslmtjwrxzxvtokb.supabase.co";
+const ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlra2hqc2xtdGp3cnh6eHZ0b2tiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM3NDMzNjksImV4cCI6MjA5OTMxOTM2OX0.3OR_9mEv82Ns1LLjx5nnRwJYzrtKFtWCWd1bPuQfNKU";
+const sb = supabase.createClient(SUPABASE_URL, ANON_KEY);
+const PAGE = 1000;
+const KIND_LABEL = {university:"มหาวิทยาลัย",higher_voc:"ปวส. / สายอาชีพ",m4_here:"ม.4 ที่นี่",m4_other:"ม.4 โรงเรียนอื่น",vocational:"ปวช. / อาชีวะ",nfe:"กศน.",other:"อื่น ๆ"};
+const STUDY = ["ต่อ ม.4 โรงเรียนเดิม","ต่อ ม.4 โรงเรียนอื่น","ปวช.","กศน.","มหาวิทยาลัย","ปวส./ปวช.ต่อเนื่อง","อื่นๆ"];
+const NONSTUDY = ["ทำงาน","เตรียมสอบใหม่ (เด็กซิ่ว)","เกณฑ์ทหาร"];
+
+let profile=null, rounds=[], round=null, students=[], resps=[], adms=[], unis=null;
+let room="all", filt="all", q="", openRow={};
+
+const $ = id => document.getElementById(id);
+const esc = s => (s??"").toString().replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+function toast(t){ $("toast").textContent=t; $("toast").classList.add("show"); clearTimeout(toast._t); toast._t=setTimeout(()=>$("toast").classList.remove("show"),2800); }
+function roomCmp(a,b){ const x=String(a||"").match(/\d+/g)||[], y=String(b||"").match(/\d+/g)||[]; for(let i=0;i<3;i++){ const d=(+x[i]||0)-(+y[i]||0); if(d) return d; } return 0; }
+function thDate(s){ try{ return new Date(s).toLocaleString("th-TH",{dateStyle:"medium",timeStyle:"short"}); }catch(e){ return ""; } }
+// PostgREST ตัดที่ 1,000 แถว → ดึงทีละหน้า (build ต้อง order ปิดท้ายด้วย id)
+async function fetchAllRows(build){
+  const all=[]; let from=0;
+  for(;;){
+    const r = await build().range(from, from+PAGE-1);
+    if(r.error) return {data:all, error:r.error};
+    all.push(...(r.data||[]));
+    if(!r.data || r.data.length<PAGE) break;
+    from += PAGE;
+  }
+  return {data:all, error:null};
+}
+
+async function boot(){
+  const {data:{session}} = await sb.auth.getSession();
+  if(!session) return gate("กรุณาเข้าสู่ระบบที่หน้าหลักก่อน แล้วกลับมาเปิดหน้านี้อีกครั้ง");
+  const {data:p} = await sb.from("profiles").select("id,display_name,role,is_guidance").eq("id", session.user.id).maybeSingle();
+  profile = p;
+  if(!(p && (p.role==="admin" || (p.role==="teacher" && p.is_guidance===true)))) return gate("หน้านี้สำหรับครูแนะแนวและผู้ดูแลระบบ");
+  const {data, error} = await sb.from("survey_rounds").select("*").order("created_at",{ascending:false});
+  if(error) return gate("โหลดรอบสำรวจไม่สำเร็จ: "+error.message);
+  rounds = data||[];
+  if(!rounds.length) return gate("ยังไม่มีรอบสำรวจ สร้างรอบได้ที่หน้าหลัก แท็บสำรวจเรียนต่อ");
+  const want = new URLSearchParams(location.search).get("round");
+  await pickRound((rounds.find(r=>r.id===want)||rounds[0]).id);
+}
+function gate(t){ $("main").innerHTML = `<div class="empty"><p style="font-size:2.2rem">🔒</p><p>${esc(t)}</p></div>`; }
+
+async function pickRound(id){
+  round = rounds.find(r=>r.id===id); room="all"; openRow={};
+  $("main").innerHTML = `<div class="empty">กำลังโหลด…</div>`;
+  const [st, rs, ad] = await Promise.all([
+    fetchAllRows(()=> sb.from("profiles").select("id,username,display_name,class_room").eq("role","student").like("class_room", round.grade+"/%").order("id")),
+    fetchAllRows(()=> sb.from("survey_responses").select("id,student_id,status,institution,program,tcas_round,other_detail,submitted_at,photo_path,photo_consent,card_status").eq("round_id", round.id).order("id")),
+    fetchAllRows(()=> sb.from("survey_admissions").select("id,response_id,student_id,kind,institution,university_id,faculty,major,admit_round,is_chosen,created_at,survey_responses!inner(round_id)").eq("survey_responses.round_id", round.id).order("id"))
+  ]);
+  const err = st.error||rs.error||ad.error;
+  if(err) return gate("โหลดข้อมูลไม่สำเร็จ: "+err.message);
+  students = st.data; resps = rs.data; adms = ad.data;
+  // นักเรียนที่ตอบแล้วแต่ย้ายห้อง/ไม่อยู่ในระดับนี้แล้ว ยังนับรวม
+  const known = new Set(students.map(s=>s.id));
+  const missing = resps.filter(r=> !known.has(r.student_id)).map(r=> r.student_id);
+  for(let i=0;i<missing.length;i+=150){
+    const chunk = missing.slice(i,i+150);
+    const {data} = await fetchAllRows(()=> sb.from("profiles").select("id,username,display_name,class_room").in("id", chunk).order("id"));
+    students.push(...(data||[]));
+  }
+  render();
+}
+
+function model(){
+  const rmap = {}; resps.forEach(r=> rmap[r.student_id]=r);
+  const amap = {}; adms.forEach(a=> (amap[a.response_id] = amap[a.response_id]||[]).push(a));
+  return students.map(s=>{
+    const r = rmap[s.id]||null, list = r? (amap[r.id]||[]) : [];
+    list.sort((a,b)=> (b.is_chosen-a.is_chosen) || String(a.created_at).localeCompare(String(b.created_at)));
+    return { s, r, list, chosen: list.find(a=>a.is_chosen)||null };
+  });
+}
+
+function render(){
+  const all = model();
+  const inRoom = all.filter(x=> room==="all" || x.s.class_room===room);
+  const answered = inRoom.filter(x=>x.r);
+  const multi = answered.filter(x=> x.list.length>1).length;
+  const notChosen = answered.filter(x=> x.list.length && !x.chosen).length;
+  const nonStudy = answered.filter(x=> NONSTUDY.includes(x.r.status)).length;
+  const rooms = ["all", ...[...new Set(all.map(x=>x.s.class_room).filter(Boolean))].sort(roomCmp)];
+
+  let list = inRoom;
+  if(filt==="multi") list = list.filter(x=> x.list.length>1);
+  else if(filt==="nochoice") list = list.filter(x=> x.r && x.list.length && !x.chosen);
+  else if(filt==="none") list = list.filter(x=> !x.r);
+  const qq = q.trim().toLowerCase();
+  if(qq) list = list.filter(x=> (x.s.display_name||"").toLowerCase().includes(qq) || (x.s.username||"").toLowerCase().includes(qq));
+  list.sort((a,b)=> roomCmp(a.s.class_room,b.s.class_room) || String(a.s.username||"").localeCompare(String(b.s.username||"")));
+  const shown = list.slice(0, 200);
+
+  const m6 = round.grade==="ม.6";
+  let h = `<div class="bar">
+    <select class="sel" id="selRound" aria-label="รอบสำรวจ">${rounds.map(r=>`<option value="${r.id}" ${r.id===round.id?"selected":""}>${esc(r.grade)} · ${esc(r.title)}${r.academic_year?" ("+esc(r.academic_year)+")":""}${r.is_open?" · เปิดอยู่":""}</option>`).join("")}</select>
+    <select class="sel" id="selRoom" aria-label="ห้อง">${rooms.map(x=>`<option value="${esc(x)}" ${x===room?"selected":""}>${x==="all"?"ทุกห้อง":esc(x)}</option>`).join("")}</select>
+    ${m6? `<label class="switch"><input type="checkbox" id="swPhoto" ${round.allow_photo?"checked":""}>เปิดให้แนบรูปทำการ์ด</label>`:""}
+    <span class="spacer"></span>
+    ${m6? `<button class="btn ghost" id="btnFix">🎓 จัดชื่อมหาวิทยาลัย</button>`:""}
+    <button class="btn ghost" id="btnCsv">⬇️ ส่งออก Excel (CSV)</button>
+  </div>
+  <div class="tiles">
+    <div class="tile"><div class="k">ตอบแล้ว</div><div class="v">${answered.length}/${inRoom.length}</div><div class="s">${inRoom.length? Math.round(answered.length/inRoom.length*100):0}% ของนักเรียน ${esc(round.grade)}${room==="all"?"":" ห้อง "+esc(room)}</div></div>
+    <div class="tile"><div class="k">ติดมากกว่า 1 ที่</div><div class="v">${multi}</div><div class="s">ดูได้ว่าเลือกที่ไหน สละที่ไหน</div></div>
+    <div class="tile ${notChosen?"warn":""}"><div class="k">ติดแล้ว แต่ยังไม่เลือก</div><div class="v">${notChosen}</div><div class="s">ควรตามให้กลับมาเลือกที่เรียน</div></div>
+    <div class="tile"><div class="k">ทำงาน / สอบใหม่ / เกณฑ์ทหาร</div><div class="v">${nonStudy}</div><div class="s">ไม่ได้เรียนต่อในปีนี้</div></div>
+  </div>
+  <div class="cols">
+    <section class="panel" style="flex:1 1 330px">${m6? uniBars(inRoom) : kindBars(inRoom)}</section>
+    <section class="panel" style="flex:999 1 560px">
+      <h2>รายคน</h2>
+      <div class="bar" style="margin-top:0;margin-bottom:10px">
+        ${[["all","ทั้งหมด"],["multi","ติดหลายที่"],["nochoice","ยังไม่เลือก"],["none","ยังไม่ตอบ"]].map(([k,l])=>`<button class="chip ${filt===k?"active":""}" data-f="${k}">${l}</button>`).join("")}
+        <input class="search" id="q" type="search" placeholder="🔍 ค้นชื่อ / เลขประจำตัว" value="${esc(q)}">
+      </div>
+      <div class="tbl"><table><thead><tr><th>ห้อง</th><th>เลขประจำตัว</th><th>ชื่อ</th><th>สถานะ</th><th>ติด</th><th>ที่ที่เลือกเรียน</th><th></th></tr></thead><tbody>
+      ${shown.map(rowHtml).join("") || `<tr><td colspan="7" style="text-align:center;color:var(--ink-soft)">ไม่มีรายการ</td></tr>`}
+      </tbody></table></div>
+      ${list.length>shown.length? `<p class="hint" style="margin-top:8px">แสดง ${shown.length} จาก ${list.length} คน เลือกห้องหรือค้นชื่อเพื่อดูคนอื่น (ไฟล์ CSV มีครบทุกคน)</p>`:""}
+    </section>
+  </div>`;
+  $("main").innerHTML = h;
+  $("selRound").onchange = e=> pickRound(e.target.value);
+  $("selRoom").onchange = e=>{ room = e.target.value; render(); };
+  document.querySelectorAll("[data-f]").forEach(b=> b.onclick=()=>{ filt=b.dataset.f; render(); });
+  $("q").oninput = e=>{ q = e.target.value; clearTimeout(render._t); render._t=setTimeout(()=>{ render(); const el=$("q"); el.focus(); el.setSelectionRange(el.value.length, el.value.length); }, 250); };
+  document.querySelectorAll("[data-open]").forEach(b=> b.onclick=()=>{ openRow[b.dataset.open]=!openRow[b.dataset.open]; render(); });
+  $("btnCsv").onclick = ()=> csv(all);
+  if($("btnFix")) $("btnFix").onclick = openFix;
+  if($("swPhoto")) $("swPhoto").onchange = togglePhoto;
+}
+
+function rowHtml(x){
+  const r = x.r, n = x.list.length, op = !!openRow[x.s.id];
+  const status = !r? `<span class="pill no">ยังไม่ตอบ</span>` : `<span class="pill mute">${esc(r.status)}</span>`;
+  const choice = x.chosen? `<b>${esc(x.chosen.institution)}</b>${[x.chosen.faculty,x.chosen.major].filter(Boolean).length? "<br><span class='hint'>"+esc([x.chosen.faculty,x.chosen.major].filter(Boolean).join(" · "))+"</span>":""}`
+    : n? `<span class="pill no">ยังไม่เลือก</span>` : (r && r.other_detail? esc(r.other_detail) : "-");
+  const detail = op && n? `<ul class="alist">${x.list.map(a=>`<li class="${a.is_chosen?"c":""}">${a.is_chosen?"✓ ":"• "}<b>${esc(a.institution)}</b>${a.faculty||a.major?" · "+esc([a.faculty,a.major].filter(Boolean).join(" · ")):""} <span class="hint">· ${esc(KIND_LABEL[a.kind]||a.kind)}${a.admit_round?" · "+esc(a.admit_round):""}${a.kind==="university"&&!a.university_id?" · ชื่อไม่ตรงรายการ":""}</span></li>`).join("")}</ul>` : "";
+  return `<tr><td>${esc(x.s.class_room||"-")}</td><td>${esc(x.s.username||"")}</td><td>${esc(x.s.display_name||"")}</td><td>${status}</td>
+    <td>${n? `<span class="pill n">${n} ที่</span>`:"-"}</td><td>${choice}${detail}</td>
+    <td>${n>0? `<button class="btn ghost sm" data-open="${x.s.id}">${op?"ซ่อน":"ดูทุกที่"}</button>`:""}</td></tr>`;
+}
+
+function barBlock(title, rows, labelA, labelB, colA, colB){
+  const max = Math.max(1, ...rows.map(r=> r.a));
+  return `<h2>${title}</h2>
+    <div class="legend"><span><i style="background:${colA}"></i>${labelA}</span><span><i style="background:${colB}"></i>${labelB}</span></div>
+    ${rows.length? rows.map(r=>`<div class="barrow"><div class="t"><b>${esc(r.name)}</b><span>${labelA} ${r.a} · ${labelB} ${r.b}${r.a-r.b>0?" · สละ "+(r.a-r.b):""}</span></div>
+      <div class="track"><div style="width:${Math.round(r.a/max*100)}%;background:${colA}"></div></div>
+      <div class="track"><div style="width:${Math.round(r.b/max*100)}%;background:${colB}"></div></div></div>`).join("")
+      : `<p class="hint">ยังไม่มีข้อมูลที่ที่ติด</p>`}`;
+}
+function uniBars(rows){
+  const g = {};
+  rows.forEach(x=> x.list.forEach(a=>{
+    const k = a.kind==="university"? a.institution : "ปวส. / สายอาชีพ (รวม)";
+    g[k] = g[k] || {name:k, a:0, b:0}; g[k].a++; if(a.is_chosen) g[k].b++;
+  }));
+  const list = Object.values(g).sort((p,q)=> q.a-p.a || q.b-p.b || p.name.localeCompare(q.name,"th"));
+  return barBlock("ติด vs เลือกเรียน รายสถาบัน", list.slice(0,15), "ติด", "เลือกเรียน", "#9FD3C7", "#0F6B5C") +
+    (list.length>15? `<p class="hint">แสดง 15 อันดับแรก จาก ${list.length} แห่ง (ดูครบในไฟล์ CSV)</p>`:"");
+}
+function kindBars(rows){
+  const g = {};
+  rows.forEach(x=> x.list.forEach(a=>{
+    const k = KIND_LABEL[a.kind]||a.kind;
+    g[k] = g[k] || {name:k, a:0, b:0}; g[k].a++; if(a.is_chosen) g[k].b++;
+  }));
+  const list = Object.values(g).sort((p,q)=> q.a-p.a);
+  return barBlock("ติด vs เลือกเรียน ตามเส้นทาง", list, "ติด", "เลือกเรียน", "#9FD3C7", "#0F6B5C");
+}
+
+async function togglePhoto(e){
+  const on = e.target.checked; e.target.disabled = true;
+  const {data, error} = await sb.from("survey_rounds").update({allow_photo:on}).eq("id", round.id).select("id");
+  e.target.disabled = false;
+  if(error || !(data||[]).length){ e.target.checked = !on; return toast("เปลี่ยนไม่สำเร็จ: "+(error?.message||"ไม่มีสิทธิ์")); }
+  round.allow_photo = on;
+  toast(on? "เปิดแล้ว นักเรียน ม.6 แนบรูปและดูการ์ดของตัวเองได้" : "ปิดแล้ว นักเรียนจะไม่เห็นส่วนรูปและการ์ด");
+}
+
+function csv(all){
+  const qv = v => `"${String(v??"").replace(/"/g,'""')}"`;
+  const head = ["ห้อง","เลขประจำตัว","ชื่อ-นามสกุล","สถานะ","จำนวนที่ติด","ที่ที่ติด","ประเภท","คณะ/แผนการเรียน","สาขา","รอบ","เลือกเรียนที่นี่","รายละเอียดอื่น","เวลาตอบล่าสุด"];
+  const rows = [head.map(qv).join(",")];
+  let list = all.filter(x=> room==="all" || x.s.class_room===room);
+  list.sort((a,b)=> roomCmp(a.s.class_room,b.s.class_room) || String(a.s.username||"").localeCompare(String(b.s.username||"")));
+  list.forEach(x=>{
+    const base = [x.s.class_room||"", x.s.username||"", x.s.display_name||"", x.r? x.r.status : "ยังไม่ตอบ", x.list.length];
+    const tail = [x.r?.other_detail||"", x.r? thDate(x.r.submitted_at):""];
+    if(!x.list.length) rows.push([...base,"","","","","","",...tail].map(qv).join(","));
+    else x.list.forEach(a=> rows.push([...base, a.institution, KIND_LABEL[a.kind]||a.kind, a.faculty||"", a.major||"", a.admit_round||"", a.is_chosen?"ใช่":"", ...tail].map(qv).join(",")));
+  });
+  const el = document.createElement("a");
+  el.href = URL.createObjectURL(new Blob(["﻿"+rows.join("\r\n")],{type:"text/csv;charset=utf-8"}));
+  el.download = `ผลสำรวจเรียนต่อ_${round.grade}_${round.title}${room==="all"?"":"_"+room}.csv`.replace(/[\\/:*?"<>|]/g,"-");
+  document.body.appendChild(el); el.click(); el.remove();
+}
+
+/* ── จัดชื่อมหาวิทยาลัยที่พิมพ์เอง ── */
+$("btnFixClose").onclick = ()=> $("fixModal").classList.remove("show");
+async function openFix(){
+  if(!unis){
+    const {data} = await fetchAllRows(()=> sb.from("iv_universities").select("id,name,sort_order").eq("is_active",true).order("sort_order").order("id"));
+    unis = data||[];
+  }
+  renderFix(); $("fixModal").classList.add("show");
+}
+function renderFix(){
+  const groups = {};
+  adms.filter(a=> a.kind==="university" && !a.university_id).forEach(a=>{ const k=a.institution.trim(); groups[k]=(groups[k]||0)+1; });
+  const keys = Object.keys(groups).sort((a,b)=> groups[b]-groups[a] || a.localeCompare(b,"th"));
+  const opts = `<option value="">— เลือกมหาวิทยาลัย —</option>` + unis.map(u=>`<option value="${u.id}">${esc(u.name)}</option>`).join("") + `<option value="__new">➕ เพิ่มเป็นมหาวิทยาลัยใหม่ (ใช้ชื่อนี้)</option>`;
+  $("fixList").innerHTML = keys.length? keys.map((k,i)=>`<div class="fixrow"><b>${esc(k)}</b> <span class="hint">· ${groups[k]} รายการ</span>
+    ${/[,/&]|และ/.test(k)? `<p class="hint">ดูเหมือนพิมพ์หลายแห่งในช่องเดียว ให้นักเรียนแยกเป็นทีละที่ในแบบสำรวจจะถูกต้องกว่า</p>`:""}
+    <div class="r"><select data-fs="${i}">${opts}</select><button class="btn primary" data-fb="${i}">จัดให้</button></div></div>`).join("")
+    : `<p class="empty">ชื่อตรงรายการครบทุกคนแล้ว 🎉</p>`;
+  $("fixList").querySelectorAll("[data-fb]").forEach(b=> b.onclick = async ()=>{
+    const i = +b.dataset.fb, text = keys[i], sel = $("fixList").querySelector(`[data-fs="${i}"]`).value;
+    if(!sel) return toast("เลือกมหาวิทยาลัยก่อนค่ะ");
+    b.disabled = true;
+    let uid = sel;
+    if(sel==="__new"){
+      const maxSort = Math.max(0, ...unis.map(u=>u.sort_order||0));
+      const {data, error} = await sb.from("iv_universities").insert({name:text, short_name:text, aliases:[], sort_order:maxSort+1, is_active:true}).select("id,name,sort_order").single();
+      if(error){ b.disabled=false; return toast("เพิ่มไม่สำเร็จ: "+error.message); }
+      uid = data.id; unis.push(data);
+    }
+    const {data:n, error} = await sb.rpc("survey_map_university", {p_text:text, p_university_id:uid});
+    b.disabled = false;
+    if(error) return toast("จัดไม่สำเร็จ: "+error.message);
+    toast("จัดชื่อให้ "+n+" รายการแล้ว ✅");
+    await pickRound(round.id); renderFix();
+  });
+}
+
+boot();
+</script>
+</body>
+</html>
