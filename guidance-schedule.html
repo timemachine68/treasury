@@ -1,0 +1,377 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ตารางแนะแนวรายคาบ · แนะให้แนว</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Mitr:wght@400;500;600&family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{
+  --ink:#22313A; --ink-soft:#5B6B72;
+  --board:#EFF3F1; --card:#FFFFFF;
+  --pine:#0F6B5C; --pine-deep:#0A4F44; --pine-tint:#E2F0EC;
+  --note:#FFD34D; --note-deep:#8A6D00;
+  --line:#DCE4E1; --danger:#C0392B;
+  --g3:#F2B84B; --g6:#8E7CC3;
+  --radius:14px; --shadow:0 2px 10px rgba(34,49,58,.08);
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:'Sarabun',sans-serif;background:var(--board);color:var(--ink);font-size:16px;line-height:1.55}
+h1,h2,h3,.brand{font-family:'Mitr',sans-serif;font-weight:600}
+:focus-visible{outline:3px solid var(--note);outline-offset:2px;border-radius:6px}
+.wrap{max-width:1080px;margin:0 auto;padding:0 16px}
+header.app{background:var(--pine);color:#fff;padding:12px 0}
+header.app .wrap{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.brand{font-size:20px}
+.sub{font-size:14px;opacity:.85;flex:1}
+main{padding:18px 0 40px}
+.btn{font-family:'Sarabun',sans-serif;font-weight:600;font-size:15px;border:1.5px solid var(--line);background:#fff;color:var(--ink);border-radius:9px;padding:9px 14px;cursor:pointer;text-decoration:none;display:inline-block}
+.btn.primary{background:var(--pine);border-color:var(--pine);color:#fff}
+.btn.ghost{background:#fff}
+.btn.danger{background:#fff;color:var(--danger);border-color:#EAC7C2}
+.btn.sm{padding:6px 10px;font-size:14px}
+.btn:disabled{opacity:.5;cursor:default}
+.chip{font-family:'Sarabun',sans-serif;font-weight:600;border:1.5px solid var(--line);background:#fff;border-radius:999px;padding:6px 14px;cursor:pointer;font-size:15px}
+.chip.active{background:var(--pine);color:#fff;border-color:var(--pine)}
+.levels{display:flex;gap:8px;margin-bottom:12px}
+.folder-tabs{display:flex;gap:6px;margin-bottom:-1px;flex-wrap:wrap}
+.ftab{font-family:'Mitr',sans-serif;font-size:15px;border:1px solid var(--line);border-bottom:none;background:#E5ECE9;color:var(--ink-soft);border-radius:12px 12px 0 0;padding:8px 16px;cursor:pointer}
+.ftab.active{background:#fff;color:var(--pine);border-top:4px solid var(--pine)}
+.folder-body{background:#fff;border:1px solid var(--line);border-radius:0 var(--radius) var(--radius) var(--radius);padding:16px;box-shadow:var(--shadow);min-height:200px}
+.toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+.hint{color:var(--ink-soft);font-size:14px}
+.rows{display:flex;flex-direction:column;gap:8px}
+.wk{display:flex;align-items:center;gap:12px;border:1px solid var(--line);border-left:5px solid var(--pine);border-radius:12px;padding:10px 12px;background:#fff;flex-wrap:wrap}
+.wk.todo{border-left-color:var(--note)}
+.wk .no{font-family:'Mitr',sans-serif;font-weight:500;min-width:110px}
+.wk .dt{color:var(--ink-soft);font-size:14px;min-width:170px}
+.wk .inst{flex:1;min-width:180px}
+.wk .inst.empty-inst{color:var(--ink-soft);font-style:italic}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px}
+table.grid{width:100%;border-collapse:collapse;min-width:640px}
+table.grid th,table.grid td{border:1px solid var(--line);padding:8px;vertical-align:top;text-align:center}
+table.grid thead th{background:var(--board);color:var(--ink-soft);font-family:'Mitr',sans-serif;font-weight:500;font-size:15px}
+table.grid th.pcell{text-align:left;width:150px;background:#fff}
+.time{color:var(--ink-soft);font-size:13px}
+.linkish{background:none;border:none;padding:0;font-family:'Mitr',sans-serif;font-size:15px;color:var(--pine);cursor:pointer;font-weight:500}
+td.editable{cursor:pointer;min-width:110px;height:58px}
+td.editable:hover{background:var(--pine-tint)}
+td b{font-size:16px;color:var(--pine-deep)}
+.note{font-size:13px;color:var(--note-deep);margin-top:2px}
+.empty{text-align:center;color:var(--ink-soft);padding:40px 0;font-size:16px}
+.msg{margin-top:12px;padding:10px 14px;border-radius:10px}
+.msg.ok{background:var(--pine-tint);color:var(--pine-deep)}
+.msg.err{background:#FBEAE7;color:var(--danger)}
+.modal-bg{position:fixed;inset:0;background:rgba(34,49,58,.45);display:flex;align-items:center;justify-content:center;padding:16px;z-index:50}
+.modal-bg[hidden]{display:none}
+.modal{background:#fff;border-radius:16px;padding:20px;width:100%;max-width:440px;box-shadow:var(--shadow)}
+.modal h3{margin:0 0 12px;color:var(--pine-deep)}
+.field{display:flex;flex-direction:column;gap:4px;margin-bottom:12px}
+.field label{font-weight:600;font-size:14px;color:var(--ink-soft)}
+.field input,.field textarea{font-family:'Sarabun',sans-serif;font-size:16px;border:1.5px solid var(--line);border-radius:9px;padding:9px 11px;width:100%}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.mBtns{display:flex;justify-content:flex-end;gap:8px;margin-top:6px}
+</style>
+</head>
+<body>
+<header class="app">
+  <div class="wrap">
+    <div class="brand">แนะให้แนว</div>
+    <div class="sub">ตารางแนะแนวรายคาบ · พูลเจริญวิทยาคม</div>
+    <a class="btn ghost sm" href="home.html">← หน้าแรก</a>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="levels">
+    <button class="chip" data-level="m3">ม.3</button>
+    <button class="chip" data-level="m6">ม.6</button>
+  </div>
+  <nav class="folder-tabs">
+    <button class="ftab" data-tab="weeks">สัปดาห์ที่สถาบันเข้าแนะแนว</button>
+    <button class="ftab" data-tab="grid">ตารางคาบ</button>
+  </nav>
+  <section class="folder-body" id="view"><div class="empty">กำลังโหลด…</div></section>
+  <div class="msg" id="msg" hidden></div>
+</main>
+
+<div class="modal-bg" id="modal" hidden>
+  <div class="modal">
+    <h3 id="mTitle"></h3>
+    <div id="mBody"></div>
+    <div class="mBtns">
+      <button class="btn ghost" id="mCancel">ยกเลิก</button>
+      <button class="btn primary" id="mSave">บันทึก</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ตั้งค่าเดียวกับ index.html (URL และ anon key) — คัดลอกมาวางตรงนี้
+const SB_URL = 'https://ikkhjslmtjwrxzxvtokb.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlra2hqc2xtdGp3cnh6eHZ0b2tiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM3NDMzNjksImV4cCI6MjA5OTMxOTM2OX0.3OR_9mEv82Ns1LLjx5nnRwJYzrtKFtWCWd1bPuQfNKU';
+const sb = supabase.createClient(SB_URL, SB_KEY);
+
+const DAYS = ['จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์'];
+const MON = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+const LV = {m3:'ม.3', m6:'ม.6'};
+const S = {level:'m3', tab:'weeks', canEdit:false, weeks:[], periods:[], slots:[]};
+let saveFn = null;
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const thDate = d => { if(!d) return ''; const [y,m,dd] = d.split('-').map(Number); return `${dd} ${MON[m-1]} ${y+543}`; };
+const friendly = e => {
+  if (e && e.code === '23505') return 'มีรายการนี้อยู่แล้ว กรุณาเปลี่ยนหมายเลขหรือค่าที่กรอก';
+  if (e && e.code === '42501') return 'ไม่มีสิทธิ์แก้ไขข้อมูลนี้';
+  return 'บันทึกไม่สำเร็จ: ' + (e && e.message ? e.message : 'เกิดข้อผิดพลาด');
+};
+
+function msg(t, err) {
+  const el = $('#msg');
+  el.hidden = false;
+  el.className = 'msg ' + (err ? 'err' : 'ok');
+  el.textContent = t;
+  clearTimeout(msg._t);
+  msg._t = setTimeout(() => el.hidden = true, 4000);
+}
+
+function openModal(title, html, onSave) {
+  $('#mTitle').textContent = title;
+  $('#mBody').innerHTML = html;
+  $('#modal').hidden = false;
+  saveFn = onSave;
+}
+function closeModal() { $('#modal').hidden = true; saveFn = null; }
+$('#mCancel').onclick = closeModal;
+$('#mSave').onclick = async () => {
+  if (!saveFn) return;
+  $('#mSave').disabled = true;
+  try {
+    const ok = await saveFn();
+    if (ok) closeModal();
+  } catch (e) {
+    msg(friendly(e), true);
+  } finally {
+    $('#mSave').disabled = false;
+  }
+};
+
+async function load() {
+  const [w, p, s] = await Promise.all([
+    sb.from('guidance_week_institutions').select('*').eq('level', S.level).order('week_no'),
+    sb.from('guidance_periods').select('*').eq('level', S.level).order('period_no'),
+    sb.from('guidance_slots').select('*').eq('level', S.level)
+  ]);
+  for (const r of [w, p, s]) if (r.error) throw r.error;
+  S.weeks = w.data; S.periods = p.data; S.slots = s.data;
+}
+
+async function refresh() {
+  try { await load(); render(); }
+  catch (e) { msg('โหลดข้อมูลไม่สำเร็จ: ' + e.message, true); }
+}
+
+function render() {
+  document.querySelectorAll('[data-level]').forEach(b => b.classList.toggle('active', b.dataset.level === S.level));
+  document.querySelectorAll('[data-tab]').forEach(b => b.classList.toggle('active', b.dataset.tab === S.tab));
+  S.tab === 'weeks' ? renderWeeks() : renderGrid();
+}
+
+/* ---------- สัปดาห์สถาบัน ---------- */
+function renderWeeks() {
+  const add = S.canEdit ? `<div class="toolbar"><button class="btn primary sm" data-act="addWeek">+ เพิ่มสัปดาห์</button><span class="hint">แตะที่สัปดาห์เพื่อแก้ชื่อสถาบันหรือวันที่</span></div>` : '';
+  if (!S.weeks.length) {
+    $('#view').innerHTML = add + `<div class="empty">ยังไม่มีข้อมูลสัปดาห์ของ ${LV[S.level]}</div>`;
+    return;
+  }
+  const items = S.weeks.map(w => {
+    const inst = w.institution
+      ? `<div class="inst">${esc(w.institution)}</div>`
+      : `<div class="inst empty-inst">ยังไม่ระบุสถาบัน</div>`;
+    const clickable = S.canEdit ? `data-act="editWeek" data-id="${w.id}" style="cursor:pointer"` : '';
+    return `<div class="wk ${w.institution ? '' : 'todo'}" ${clickable}>
+      <div class="no">สัปดาห์ที่ ${w.week_no}</div>
+      <div class="dt">${thDate(w.date_start)} – ${thDate(w.date_end)}</div>
+      ${inst}
+    </div>`;
+  }).join('');
+  $('#view').innerHTML = add + `<div class="rows">${items}</div>`;
+}
+
+function weekForm(w, isNew) {
+  const nextNo = S.weeks.length ? Math.max(...S.weeks.map(x => x.week_no)) + 1 : 1;
+  return `
+    ${isNew ? `<div class="field"><label>สัปดาห์ที่</label><input id="f_no" type="number" min="1" max="60" value="${nextNo}"></div>` : ''}
+    <div class="field"><label>ชื่อสถาบัน (ว่างได้ถ้ายังไม่ระบุ)</label><input id="f_inst" value="${esc(w?.institution || '')}"></div>
+    <div class="row2">
+      <div class="field"><label>วันเริ่ม</label><input id="f_ds" type="date" value="${w?.date_start || ''}"></div>
+      <div class="field"><label>วันสิ้นสุด</label><input id="f_de" type="date" value="${w?.date_end || ''}"></div>
+    </div>`;
+}
+
+function readWeekForm() {
+  const inst = $('#f_inst').value.trim();
+  const ds = $('#f_ds').value, de = $('#f_de').value;
+  if (!ds || !de || de < ds) { msg('กรุณาระบุวันเริ่มและวันสิ้นสุดให้ถูกต้อง', true); return null; }
+  return {institution: inst || null, date_start: ds, date_end: de};
+}
+
+/* ---------- ตารางคาบ ---------- */
+function renderGrid() {
+  const add = S.canEdit ? `<div class="toolbar"><button class="btn primary sm" data-act="addPeriod">+ เพิ่มคาบ</button><span class="hint">แตะชื่อคาบเพื่อแก้เวลา แตะช่องเพื่อใส่ห้องหรือหมายเหตุ</span></div>` : '';
+  if (!S.periods.length) {
+    $('#view').innerHTML = add + `<div class="empty">ยังไม่มีคาบของ ${LV[S.level]}</div>`;
+    return;
+  }
+  const map = new Map(S.slots.map(s => [s.day_no + '-' + s.period_no, s]));
+  let h = add + `<div class="tbl-wrap"><table class="grid"><thead><tr><th class="pcell">คาบ</th>${DAYS.map(d => `<th>${d}</th>`).join('')}${S.canEdit ? '<th></th>' : ''}</tr></thead><tbody>`;
+  for (const p of S.periods) {
+    const pAct = S.canEdit ? `data-act="editPeriod" data-p="${p.period_no}"` : '';
+    h += `<tr><th class="pcell">${S.canEdit
+            ? `<button class="linkish" ${pAct}>${esc(p.label)}</button>`
+            : `<span class="linkish" style="cursor:default">${esc(p.label)}</span>`}
+          <div class="time">${esc(p.time_text || '')}</div></th>`;
+    for (let d = 1; d <= 5; d++) {
+      const s = map.get(d + '-' + p.period_no);
+      const inner = s && (s.class_room || s.note)
+        ? `<b>${esc(s.class_room || '')}</b>${s.note ? `<div class="note">${esc(s.note)}</div>` : ''}`
+        : '';
+      const act = S.canEdit ? `data-act="editSlot" data-d="${d}" data-p="${p.period_no}" class="editable"` : '';
+      h += `<td ${act}>${inner}</td>`;
+    }
+    if (S.canEdit) h += `<td><button class="btn danger sm" data-act="delPeriod" data-p="${p.period_no}">ลบคาบ</button></td>`;
+    h += `</tr>`;
+  }
+  h += `</tbody></table></div>`;
+  $('#view').innerHTML = h;
+}
+
+function periodForm(p, isNew) {
+  const nextNo = S.periods.length ? Math.max(...S.periods.map(x => x.period_no)) + 1 : 1;
+  return `
+    <div class="row2">
+      <div class="field"><label>หมายเลขคาบ (เรียงตามนี้)</label>
+        <input id="f_pno" type="number" min="0" max="20" value="${isNew ? nextNo : p.period_no}" ${isNew ? '' : 'disabled'}></div>
+      <div class="field"><label>ชื่อคาบ</label><input id="f_label" value="${esc(p?.label || 'คาบ ' + nextNo)}"></div>
+    </div>
+    <div class="field"><label>เวลา (เช่น 08.30–09.20, ว่างได้)</label><input id="f_time" value="${esc(p?.time_text || '')}"></div>`;
+}
+
+/* ---------- การกระทำ (แบบ event delegation) ---------- */
+$('#view').onclick = e => {
+  const t = e.target.closest('[data-act]');
+  if (!t || !S.canEdit) return;
+  const act = t.dataset.act;
+
+  if (act === 'addWeek') {
+    openModal('เพิ่มสัปดาห์', weekForm(null, true), async () => {
+      const f = readWeekForm(); if (!f) return false;
+      const no = parseInt($('#f_no').value, 10);
+      if (!no || no < 1 || no > 60) { msg('หมายเลขสัปดาห์ต้องอยู่ระหว่าง 1–60', true); return false; }
+      const {error} = await sb.from('guidance_week_institutions').insert({level: S.level, week_no: no, ...f});
+      if (error) throw error;
+      msg('เพิ่มสัปดาห์แล้ว'); await refresh(); return true;
+    });
+  }
+
+  if (act === 'editWeek') {
+    const w = S.weeks.find(x => x.id === t.dataset.id);
+    if (!w) return;
+    openModal(`สัปดาห์ที่ ${w.week_no}`, weekForm(w, false), async () => {
+      const f = readWeekForm(); if (!f) return false;
+      const {error} = await sb.from('guidance_week_institutions').update(f).eq('id', w.id);
+      if (error) throw error;
+      msg('บันทึกสัปดาห์แล้ว'); await refresh(); return true;
+    });
+  }
+
+  if (act === 'addPeriod') {
+    openModal(`เพิ่มคาบของ ${LV[S.level]}`, periodForm(null, true), async () => {
+      const pno = parseInt($('#f_pno').value, 10);
+      const label = $('#f_label').value.trim();
+      if (isNaN(pno) || pno < 0 || pno > 20) { msg('หมายเลขคาบต้องอยู่ระหว่าง 0–20', true); return false; }
+      if (!label) { msg('กรุณาใส่ชื่อคาบ', true); return false; }
+      const {error} = await sb.from('guidance_periods').insert({
+        level: S.level, period_no: pno, label, time_text: $('#f_time').value.trim() || null
+      });
+      if (error) throw error;
+      msg('เพิ่มคาบแล้ว'); await refresh(); return true;
+    });
+  }
+
+  if (act === 'editPeriod') {
+    const pno = parseInt(t.dataset.p, 10);
+    const p = S.periods.find(x => x.period_no === pno);
+    if (!p) return;
+    openModal(`แก้ไข ${p.label}`, periodForm(p, false), async () => {
+      const label = $('#f_label').value.trim();
+      if (!label) { msg('กรุณาใส่ชื่อคาบ', true); return false; }
+      const {error} = await sb.from('guidance_periods')
+        .update({label, time_text: $('#f_time').value.trim() || null})
+        .eq('level', S.level).eq('period_no', pno);
+      if (error) throw error;
+      msg('บันทึกคาบแล้ว'); await refresh(); return true;
+    });
+  }
+
+  if (act === 'delPeriod') {
+    const pno = parseInt(t.dataset.p, 10);
+    const p = S.periods.find(x => x.period_no === pno);
+    if (!p) return;
+    const n = S.slots.filter(s => s.period_no === pno && (s.class_room || s.note)).length;
+    const warn = n ? `\n\nคาบนี้มีข้อมูล ${n} ช่อง ข้อมูลในคาบนี้จะถูกลบไปด้วย` : '';
+    if (!confirm(`ลบ "${p.label}" ออกจากตารางใช่ไหม?${warn}`)) return;
+    (async () => {
+      const {error} = await sb.from('guidance_periods').delete().eq('level', S.level).eq('period_no', pno);
+      if (error) { msg(friendly(error), true); return; }
+      msg('ลบคาบแล้ว'); await refresh();
+    })();
+  }
+
+  if (act === 'editSlot') {
+    const d = parseInt(t.dataset.d, 10), pno = parseInt(t.dataset.p, 10);
+    const s = S.slots.find(x => x.day_no === d && x.period_no === pno);
+    const p = S.periods.find(x => x.period_no === pno);
+    openModal(`${DAYS[d-1]} · ${p ? p.label : 'คาบ ' + pno}`, `
+      <div class="field"><label>ห้องที่เข้าแนะแนว / ชื่อกิจกรรม</label><input id="f_room" value="${esc(s?.class_room || '')}"></div>
+      <div class="field"><label>หมายเหตุ</label><input id="f_note" value="${esc(s?.note || '')}"></div>
+      <div class="hint">ถ้าเว้นว่างทั้งสองช่อง ช่องนี้จะกลับเป็นว่าง</div>`, async () => {
+      const room = $('#f_room').value.trim() || null;
+      const note = $('#f_note').value.trim() || null;
+      if (!room && !note) {
+        const {error} = await sb.from('guidance_slots').delete()
+          .eq('level', S.level).eq('day_no', d).eq('period_no', pno);
+        if (error) throw error;
+      } else {
+        const {error} = await sb.from('guidance_slots').upsert(
+          {level: S.level, day_no: d, period_no: pno, class_room: room, note},
+          {onConflict: 'level,day_no,period_no'});
+        if (error) throw error;
+      }
+      msg('บันทึกช่องแล้ว'); await refresh(); return true;
+    });
+  }
+};
+
+/* ---------- เริ่มต้น ---------- */
+document.querySelectorAll('[data-level]').forEach(b => b.onclick = async () => {
+  S.level = b.dataset.level; await refresh();
+});
+document.querySelectorAll('[data-tab]').forEach(b => b.onclick = () => {
+  S.tab = b.dataset.tab; render();
+});
+
+(async function init() {
+  const {data: {session}} = await sb.auth.getSession();
+  if (!session) { location.href = 'index.html'; return; }
+  const {data: p} = await sb.from('profiles').select('role,is_guidance').eq('id', session.user.id).maybeSingle();
+  S.canEdit = !!p && (p.role === 'admin' || p.is_guidance === true);
+  await refresh();
+})();
+</script>
+</body>
+</html>
