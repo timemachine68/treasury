@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>แบบสำรวจเรียนต่อ | แนะให้แนว</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chonburi&family=Mitr:wght@400;500;600&family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="congrats-card-draw.js"></script>
+<style>
+:root{
+  --ink:#22313A; --ink-soft:#5B6B72; --board:#EFF3F1; --card:#FFFFFF;
+  --pine:#0F6B5C; --pine-deep:#0A4F44; --pine-tint:#E2F0EC;
+  --note:#FFD34D; --note-deep:#8A6D00; --line:#DCE4E1; --danger:#C0392B;
+  --g3:#7FB069; --g6:#D96A9C;
+  --radius:14px; --shadow:0 2px 10px rgba(34,49,58,.08);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Sarabun',sans-serif;background:var(--board);color:var(--ink);font-size:16px;line-height:1.55;min-height:100vh}
+h1,h2,h3,.brand{font-family:'Mitr',sans-serif;font-weight:600}
+button{font-family:inherit;cursor:pointer}
+input,select,textarea{font-family:inherit;font-size:16px}
+:focus-visible{outline:3px solid var(--note);outline-offset:2px;border-radius:6px}
+.wrap{max-width:640px;margin:0 auto;padding:0 16px 80px}
+header.app{background:var(--pine);color:#fff;padding:14px 0}
+header.app .wrap{display:flex;align-items:center;gap:12px;padding-bottom:0;flex-wrap:wrap}
+.brand{font-size:1.1rem;display:flex;align-items:center;gap:10px}
+.brand .logo{width:34px;height:34px;border-radius:9px;background:var(--note);color:var(--pine-deep);display:grid;place-items:center;font-size:1.05rem;flex:none}
+.brand small{display:block;font-family:'Sarabun';font-weight:400;font-size:.72rem;opacity:.85}
+.spacer{flex:1}
+.iconbtn{background:rgba(255,255,255,.14);border:none;color:#fff;border-radius:999px;padding:7px 14px;font-size:.85rem;text-decoration:none}
+.panel{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:16px;margin-top:16px;box-shadow:var(--shadow)}
+.panel h2{font-size:1.05rem;color:var(--pine-deep);margin-bottom:10px}
+.panel .sub{color:var(--ink-soft);font-size:.88rem}
+.field{margin-bottom:12px}
+.field label,.lbl{display:block;font-size:.9rem;font-weight:700;margin-bottom:5px}
+.field input,.field select{width:100%;padding:10px 12px;border:1.5px solid var(--line);border-radius:10px;min-height:44px;background:#fff}
+.hint{font-size:.82rem;color:var(--ink-soft);margin-top:4px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{min-height:42px;padding:0 14px;border-radius:999px;border:1.5px solid var(--line);background:#fff;color:var(--ink);font-weight:600;font-size:.92rem}
+.chip.active{background:var(--pine);border-color:var(--pine);color:#fff}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.grid2 .chip{border-radius:10px;min-height:48px}
+.btn{border:none;border-radius:9px;padding:10px 16px;font-size:.95rem;font-weight:600;display:inline-flex;align-items:center;gap:6px;justify-content:center;min-height:44px}
+.btn.primary{background:var(--pine);color:#fff}
+.btn.note{background:var(--note);color:var(--ink);font-weight:700}
+.btn.ghost{background:#fff;border:1.5px solid var(--line);color:var(--ink)}
+.btn.out{background:#fff;border:1.5px solid var(--pine);color:var(--pine)}
+.btn.danger{background:#fff;border:1.5px solid #EAC7C2;color:var(--danger)}
+.btn.block{width:100%}
+.btn:disabled{opacity:.55;cursor:not-allowed}
+.adm{background:#fff;border:1px solid var(--line);border-left:5px solid var(--line);border-radius:12px;padding:14px;margin-top:10px;box-shadow:var(--shadow)}
+.adm.chosen{border-left-color:var(--note)}
+.adm .top{display:flex;justify-content:space-between;gap:8px;align-items:flex-start;flex-wrap:wrap}
+.adm h3{font-family:'Mitr';font-weight:500;font-size:1.02rem;margin-top:6px}
+.adm p{color:var(--ink-soft);font-size:.92rem}
+.adm .acts{display:flex;gap:8px;margin-top:12px;padding-top:10px;border-top:1px dashed var(--line);flex-wrap:wrap}
+.adm .acts .btn{flex:1 1 auto}
+.tag{display:inline-block;border-radius:999px;padding:2px 10px;font-size:.78rem;font-weight:700;background:var(--pine-tint);color:var(--pine-deep)}
+.tag.yes{background:var(--note);color:var(--ink)}
+.formbox{border:2px dashed var(--pine);border-radius:var(--radius);padding:16px;margin-top:12px;background:#fff}
+.formbox h3{font-family:'Mitr';color:var(--pine-deep);font-size:1rem;margin-bottom:10px}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+.row .btn{flex:1 1 140px}
+.photo{display:flex;gap:14px;align-items:center}
+.photo .frame{width:108px;height:144px;flex:none;border-radius:12px;overflow:hidden;background:var(--pine-tint);border:2px dashed #9FD3C7;display:grid;place-items:center;font-size:.8rem;color:var(--pine-deep);text-align:center}
+.photo .frame img{width:100%;height:100%;object-fit:cover;display:block}
+.checklist{list-style:none;display:flex;flex-direction:column;gap:4px;font-size:.95rem}
+.checklist .no{color:var(--danger);font-weight:600}
+.status{border-radius:10px;padding:10px 12px;font-weight:600;font-size:.95rem;margin:10px 0}
+.status.wait{background:#FFF6D6;color:var(--note-deep)}
+.status.ok{background:var(--pine-tint);color:var(--pine-deep)}
+.status.bad{background:#FBEAE7;color:var(--danger)}
+#cardCv{display:block;width:100%;max-width:340px;height:auto;margin:6px auto 0;border-radius:10px;box-shadow:0 6px 22px rgba(20,39,74,.2)}
+.msg{border-radius:10px;padding:10px 13px;font-size:.9rem;margin-top:10px;display:none}
+.msg.err{display:block;background:#FBEAE7;color:var(--danger)}
+.msg.ok{display:block;background:var(--pine-tint);color:var(--pine-deep)}
+.consent{display:flex;gap:10px;align-items:flex-start;font-size:.95rem;cursor:pointer}
+.consent input{width:22px;height:22px;margin-top:2px;accent-color:var(--pine);flex:none}
+.closed{background:#FFF6D6;color:var(--note-deep);border-radius:10px;padding:10px 12px;font-weight:600;margin-top:16px}
+.login-stage{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background:linear-gradient(160deg,var(--pine) 0%,var(--pine-deep) 60%),var(--pine)}
+.login-card{background:#fff;border-radius:20px;padding:30px 26px;max-width:400px;width:100%;box-shadow:0 18px 50px rgba(0,0,0,.28)}
+.login-card .logo-big{width:58px;height:58px;border-radius:16px;background:var(--note);color:var(--pine-deep);display:grid;place-items:center;font-size:1.5rem;margin:0 auto 12px}
+.login-card h1{text-align:center;font-size:1.25rem;color:var(--pine-deep);margin-bottom:16px}
+.empty{padding:40px 16px;text-align:center;color:var(--ink-soft)}
+.empty .big{font-size:2.4rem}
+#toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:11px 20px;border-radius:999px;font-size:.9rem;box-shadow:0 6px 20px rgba(0,0,0,.3);opacity:0;pointer-events:none;transition:opacity .25s;z-index:99;max-width:92vw;text-align:center}
+#toast.show{opacity:1}
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+
+<div id="loginStage" class="login-stage hidden">
+  <div class="login-card">
+    <div class="logo-big">🎓</div>
+    <h1>แบบสำรวจเรียนต่อ</h1>
+    <div id="liMsg" class="msg"></div>
+    <div class="field"><label for="liUser">รหัสนักเรียน</label><input id="liUser" autocomplete="username"></div>
+    <div class="field"><label for="liPass">รหัสผ่าน</label><input id="liPass" type="password" autocomplete="current-password"></div>
+    <button id="btnLogin" class="btn primary block">เข้าสู่ระบบ</button>
+  </div>
+</div>
+
+<div id="appStage" class="hidden">
+  <header class="app"><div class="wrap">
+    <div class="brand"><span class="logo">🎓</span><span>แบบสำรวจเรียนต่อ<small>แนะให้แนว · พูลเจริญวิทยาคม</small></span></div>
+    <div class="spacer"></div>
+    <a class="iconbtn" href="index.html#survey" title="กลับหน้าหลัก">🏠 หน้าหลัก</a>
+  </div></header>
+  <div class="wrap" id="main"><div class="empty">กำลังโหลด…</div></div>
+</div>
+<div id="toast"></div>
+
+<script>
+const SUPABASE_URL = "https://ikkhjslmtjwrxzxvtokb.supabase.co";
+const ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlra2hqc2xtdGp3cnh6eHZ0b2tiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM3NDMzNjksImV4cCI6MjA5OTMxOTM2OX0.3OR_9mEv82Ns1LLjx5nnRwJYzrtKFtWCWd1bPuQfNKU";
+const EMAIL_DOMAIN = "guidance-pcw.local";
+const sb = supabase.createClient(SUPABASE_URL, ANON_KEY);
+
+/* ── ตัวเลือกตามระดับชั้น ── */
+// "เรียนต่อ" = มีที่ที่ติดได้; ตัวเลือกอื่นเก็บเป็นสถานะตรง ๆ (ตรงกับรายงานประจำปีเดิม)
+const OTHER_STATUS = {
+  "ม.6": ["ทำงาน","เตรียมสอบใหม่ (เด็กซิ่ว)","เกณฑ์ทหาร","ยังไม่แน่ใจ","อื่นๆ"],
+  "ม.3": ["ทำงาน","ยังไม่แน่ใจ","อื่นๆ"]
+};
+const NEED_DETAIL = ["ทำงาน","อื่นๆ"];
+const KINDS = {
+  "ม.6": [{k:"university",l:"มหาวิทยาลัย"},{k:"higher_voc",l:"ปวส. / สายอาชีพ"}],
+  "ม.3": [{k:"m4_here",l:"ม.4 ที่นี่"},{k:"m4_other",l:"ม.4 โรงเรียนอื่น"},{k:"vocational",l:"ปวช. / อาชีวะ"},{k:"nfe",l:"กศน."},{k:"other",l:"อื่น ๆ"}]
+};
+const KIND_LABEL = {university:"มหาวิทยาลัย",higher_voc:"ปวส. / สายอาชีพ",m4_here:"ม.4 ที่นี่",m4_other:"ม.4 โรงเรียนอื่น",vocational:"ปวช. / อาชีวะ",nfe:"กศน.",other:"อื่น ๆ"};
+const KIND_STATUS = {university:"มหาวิทยาลัย",higher_voc:"ปวส./ปวช.ต่อเนื่อง",m4_here:"ต่อ ม.4 โรงเรียนเดิม",m4_other:"ต่อ ม.4 โรงเรียนอื่น",vocational:"ปวช.",nfe:"กศน.",other:"อื่นๆ"};
+const WAITING = "เรียนต่อ (รอผล/ยังไม่เลือกที่)";
+const STUDY_STATUS = [...Object.values(KIND_STATUS), WAITING];
+const ROUNDS = {
+  "ม.6": ["รอบ 1 Portfolio","รอบ 2 Quota","รอบ 3 Admission","รอบ 4 Direct Admission","ยังไม่ทราบ/รอประกาศ"],
+  "ม.3": ["ห้องเรียนพิเศษ","รอบนักเรียนเดิม / โควตา","รอบทั่วไป","อื่น ๆ"]
+};
+const SCHOOL = "โรงเรียนพูลเจริญวิทยาคม";
+
+let profile=null, round=null, grade="", resp=null, adms=[], unis=null;
+let mode="study", otherStatus="", otherDetail="";      // ที่นักเรียนเลือกบนหน้าจอ (ยังไม่บันทึก)
+let editing=null;                                        // null = ปิดฟอร์ม, {} = เพิ่มใหม่, {id..} = แก้
+let photoFile=null, photoUrl=null, consent=false, busy=false;
+
+const $ = id => document.getElementById(id);
+const esc = s => (s??"").toString().replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+function toast(t){ $("toast").textContent=t; $("toast").classList.add("show"); clearTimeout(toast._t); toast._t=setTimeout(()=>$("toast").classList.remove("show"),2800); }
+const normTh = t => String(t||"").toLowerCase().replace(/[\s.\-,()]/g,"");
+function friendly(e){
+  const m = (e && (e.message||e))+"";
+  if(/no_dup|duplicate key/i.test(m)) return "ที่นี้ใส่ไว้แล้วค่ะ";
+  if(/row-level|permission denied/i.test(m)) return "แบบสำรวจนี้ปิดรับคำตอบแล้ว หรือไม่มีสิทธิ์แก้ค่ะ";
+  if(/ไม่เกิน 15/.test(m)) return "ใส่ได้ไม่เกิน 15 ที่ค่ะ";
+  if(/Failed to fetch|NetworkError/i.test(m)) return "เชื่อมต่ออินเทอร์เน็ตไม่ได้ ลองใหม่อีกครั้งนะคะ";
+  return m.replace(/^.*?ERROR:\s*/,"");
+}
+
+/* ── เข้าสู่ระบบ ── */
+async function boot(){
+  const {data:{session}} = await sb.auth.getSession();
+  if(!session){ $("loginStage").classList.remove("hidden"); return; }
+  const {data:p} = await sb.from("profiles").select("id,username,display_name,class_room,role").eq("id", session.user.id).maybeSingle();
+  if(!p){ await sb.auth.signOut(); $("loginStage").classList.remove("hidden"); return; }
+  profile = p;
+  $("appStage").classList.remove("hidden");
+  if(p.role!=="student"){
+    $("main").innerHTML = `<div class="empty"><div class="big">🧑‍🏫</div><p>หน้านี้สำหรับนักเรียนตอบแบบสำรวจ</p><p style="margin-top:12px"><a class="btn primary" href="survey-results.html">ดูผลสำรวจ (ครู)</a></p></div>`;
+    return;
+  }
+  await load();
+}
+$("btnLogin").onclick = async ()=>{
+  const u=$("liUser").value.trim(), pw=$("liPass").value;
+  if(!u||!pw){ $("liMsg").textContent="กรอกรหัสนักเรียนและรหัสผ่านก่อนนะคะ"; $("liMsg").className="msg err"; return; }
+  $("btnLogin").disabled=true;
+  const {error} = await sb.auth.signInWithPassword({email:u+"@"+EMAIL_DOMAIN, password:pw});
+  $("btnLogin").disabled=false;
+  if(error){ $("liMsg").textContent="เข้าสู่ระบบไม่สำเร็จ: รหัสนักเรียนหรือรหัสผ่านไม่ถูกต้อง"; $("liMsg").className="msg err"; return; }
+  location.reload();
+};
+$("liPass").addEventListener("keydown", e=>{ if(e.key==="Enter") $("btnLogin").click(); });
+
+/* ── โหลดข้อมูล ── */
+async function load(){
+  grade = (profile.class_room||"").split("/")[0].trim();
+  const want = new URLSearchParams(location.search).get("round");
+  const {data:rounds, error} = await sb.from("survey_rounds").select("*").order("created_at",{ascending:false});
+  if(error) return fail("โหลดแบบสำรวจไม่สำเร็จ: "+friendly(error));
+  const list = (rounds||[]).filter(r=> r.grade===grade);
+  round = list.find(r=> r.id===want) || list.find(r=> r.is_open) || null;
+  if(!round){
+    $("main").innerHTML = `<div class="empty"><div class="big">📭</div><p>ตอนนี้ยังไม่มีแบบสำรวจเรียนต่อที่เปิดให้ ${esc(grade||"ระดับชั้นนี้")}</p></div>`;
+    return;
+  }
+  await reloadMine();
+  const st = resp?.status || "";
+  if(!resp || adms.length) mode = "study";
+  else if(STUDY_STATUS.includes(st)) mode = "study";
+  else { mode = "other"; otherStatus = st; }
+  otherDetail = resp?.other_detail || "";
+  consent = resp?.photo_consent === true;
+  render();
+  if(resp?.photo_path) loadPhoto(resp.photo_path);
+}
+function fail(t){ $("main").innerHTML = `<div class="empty"><div class="big">⚠️</div><p>${esc(t)}</p></div>`; }
+async function reloadMine(){
+  const {data:r} = await sb.from("survey_responses").select("*").eq("round_id", round.id).eq("student_id", profile.id).maybeSingle();
+  resp = r || null;
+  adms = [];
+  if(resp){
+    const {data:a} = await sb.from("survey_admissions").select("*").eq("response_id", resp.id).order("created_at").order("id");
+    adms = a || [];
+  }
+}
+async function loadUnis(){
+  if(unis) return unis;
+  const all=[]; let from=0;
+  for(;;){
+    const {data, error} = await sb.from("iv_universities").select("id,name,short_name,aliases,sort_order").eq("is_active",true).order("sort_order").order("id").range(from, from+999);
+    if(error) break; all.push(...(data||[])); if(!data || data.length<1000) break; from+=1000;
+  }
+  unis = all; return unis;
+}
+function matchUni(text){
+  const n = normTh(text); if(!n || !unis) return null;
+  const hits = unis.filter(u=> [u.name,u.short_name,...(u.aliases||[])].some(x=> x && normTh(x)===n));
+  return hits.length===1 ? hits[0] : null;
+}
+async function loadPhoto(path){
+  const {data} = await sb.storage.from("survey-photos").download(path);
+  if(!data) return;
+  if(photoUrl) URL.revokeObjectURL(photoUrl);
+  photoUrl = URL.createObjectURL(data);
+  render();
+}
+
+/* ── แสดงผล ── */
+const isOpen = ()=> !!round && round.is_open;
+const chosen = ()=> adms.find(a=> a.is_chosen) || null;
+const cardOn = ()=> grade==="ม.6" && round.allow_photo;
+
+function render(){
+  const open = isOpen(), m6 = grade==="ม.6";
+  let h = `<div class="panel" style="margin-top:18px">
+    <h2>${esc(round.title)}</h2>
+    <p class="sub">${esc(profile.display_name)} · ${esc(profile.class_room||"")}${round.academic_year?` · ปีการศึกษา ${esc(round.academic_year)}`:""}</p>
+  </div>`;
+  if(!open) h += `<div class="closed">แบบสำรวจนี้ปิดรับคำตอบแล้ว ดูข้อมูลได้อย่างเดียวค่ะ</div>`;
+
+  // 1) หลังจบ ม.x
+  h += `<div class="panel"><h2>หลังจบ ${esc(grade)} ฉันจะ…</h2><div class="chips">
+    <button class="chip ${mode==="study"?"active":""}" data-mode="study" ${open?"":"disabled"}>เรียนต่อ</button>
+    ${(OTHER_STATUS[grade]||[]).map(s=>`<button class="chip ${mode==="other"&&otherStatus===s?"active":""}" data-other="${esc(s)}" ${open?"":"disabled"}>${esc(s)}</button>`).join("")}
+  </div>
+  ${mode==="other" && NEED_DETAIL.includes(otherStatus)? `<div class="field" style="margin-top:12px"><label for="fOther">${otherStatus==="ทำงาน"?"ทำงานที่ไหน / อาชีพอะไร":"ระบุรายละเอียด"}</label><input id="fOther" maxlength="200" value="${esc(otherDetail)}" ${open?"":"disabled"}></div>`:""}
+  </div>`;
+
+  // 2) ที่ที่ติด
+  if(mode==="study"){
+    const c = chosen();
+    h += `<div class="panel"><h2>ที่ที่ติดแล้ว (${adms.length})</h2>
+      <p class="sub">ติดกี่ที่ใส่ได้หมด แล้วกด <b>“เลือกเรียนที่นี่”</b> ที่ที่ตัดสินใจไปเรียน (เลือกได้ 1 ที่) ยังไม่ติดที่ไหน เว้นไว้ก่อนได้</p>
+      ${adms.length && !c? `<div class="status wait">ยังไม่ได้เลือกที่เรียน ตัดสินใจแล้วกด “เลือกเรียนที่นี่” นะคะ</div>`:""}
+      ${adms.map(admCard).join("")}
+      ${open && !editing && adms.length<15? `<button class="btn out block" style="margin-top:12px" id="btnAdd">+ เพิ่มที่ที่ติด</button>`:""}
+      ${editing? formHtml():""}
+    </div>`;
+  }
+
+  // 3) รูป + ยินยอม + การ์ด (ม.6)
+  if(m6 && mode==="study" && cardOn()){
+    h += `<div class="panel"><h2>รูปสำหรับการ์ดแสดงความยินดี</h2>
+      <div class="photo"><div class="frame">${photoUrl? `<img src="${photoUrl}" alt="รูปของฉัน">`:"ยังไม่มีรูป"}</div>
+        <div style="flex:1;display:flex;flex-direction:column;gap:8px">
+          <label class="btn out" for="fPhoto" style="cursor:${open?"pointer":"not-allowed"}">${photoUrl?"เปลี่ยนรูป":"เลือกรูป / ถ่ายรูป"}</label>
+          <input type="file" id="fPhoto" accept="image/*" class="hidden" ${open?"":"disabled"}>
+          <span class="hint" id="photoHint">รูปหน้าตรง เห็นหน้าชัด ระบบย่อรูปให้เอง</span>
+        </div></div>
+      <label class="consent" style="margin-top:14px"><input type="checkbox" id="fConsent" ${consent?"checked":""} ${open?"":"disabled"}>
+        <span>ยินยอมให้โรงเรียนทำการ์ดแสดงความยินดีจาก <b>ที่ที่เลือกเรียน</b> พร้อมรูปนี้ และเผยแพร่ในช่องทางของโรงเรียนหลังครูตรวจแล้ว</span></label>
+      <p class="hint" style="margin-top:6px">ไม่ติ๊กก็ไม่เป็นไรค่ะ ไม่มีผลต่อการตอบ</p>
+    </div>`;
+    h += cardPanel();
+  }
+
+  h += `<div id="saveMsg" class="msg"></div>`;
+  if(open) h += `<button class="btn note block" style="margin-top:16px;min-height:50px;font-size:1.05rem" id="btnSave">${resp?"บันทึกการแก้ไข":"ส่งแบบสำรวจ"}</button>
+    <p class="hint" style="text-align:center;margin-top:8px">ติดเพิ่มในรอบถัดไป กลับมาเพิ่มได้เรื่อย ๆ จนครูปิดแบบสำรวจ</p>`;
+  $("main").innerHTML = h;
+  bind();
+  if(m6 && mode==="study" && cardOn()) drawCard();
+}
+
+function admCard(a){
+  const open = isOpen();
+  const sub = [a.faculty, a.major].filter(Boolean).join(" · ");
+  return `<article class="adm ${a.is_chosen?"chosen":""}">
+    <div class="top"><span class="tag">${esc(KIND_LABEL[a.kind]||a.kind)}${a.admit_round? " · "+esc(a.admit_round):""}</span>
+      ${a.is_chosen? `<span class="tag yes">✓ เลือกเรียนที่นี่</span>`:""}</div>
+    <h3>${esc(a.institution)}</h3>
+    ${sub? `<p>${esc(sub)}</p>`:""}
+    ${a.kind==="university" && !a.university_id? `<p class="hint">ชื่อนี้ไม่ตรงรายการมหาวิทยาลัย ครูจะตรวจชื่อให้</p>`:""}
+    ${open? `<div class="acts">
+      ${a.is_chosen? `<button class="btn ghost" data-unchoose="${a.id}">ยกเลิกการเลือก</button>` : `<button class="btn primary" data-choose="${a.id}">เลือกเรียนที่นี่</button>`}
+      <button class="btn ghost" data-edit="${a.id}">แก้ไข</button>
+      <button class="btn danger" data-del="${a.id}">ลบ</button>
+    </div>`:""}
+  </article>`;
+}
+
+function formHtml(){
+  const e = editing, kinds = KINDS[grade]||[], kind = e.kind || kinds[0].k, m6 = grade==="ม.6";
+  const instLabel = kind==="university"? "มหาวิทยาลัย" : kind==="higher_voc"? "สถานศึกษา" : kind==="vocational"? "ชื่อวิทยาลัย" : kind==="nfe"? "ชื่อ กศน." : kind==="other"? "ชื่อสถานที่" : "ชื่อโรงเรียน";
+  const facLabel = m6? "คณะ" : kind==="vocational"? "สาขา" : kind==="m4_here"||kind==="m4_other"? "แผนการเรียน" : "รายละเอียด";
+  const facHint = m6? "เช่น คณะวิทยาศาสตร์" : kind==="vocational"? "เช่น ช่างยนต์ การบัญชี" : "เช่น วิทย์–คณิต ศิลป์–ภาษา";
+  const showRound = m6? kind==="university" : (kind==="m4_here"||kind==="m4_other"||kind==="vocational");
+  return `<div class="formbox" id="admForm"><h3>${e.id? "แก้ไขที่ที่ติด":"เพิ่มที่ที่ติด"}</h3>
+    <div class="field"><span class="lbl">ประเภท</span><div class="${m6?"chips":"grid2"}">
+      ${kinds.map(x=>`<button type="button" class="chip ${x.k===kind?"active":""}" data-kind="${x.k}">${esc(x.l)}</button>`).join("")}</div></div>
+    ${kind==="m4_here"? `<p class="hint" style="margin-bottom:12px">สถานศึกษา: ${SCHOOL}</p>` : `
+    <div class="field"><label for="fInst">${instLabel}</label>
+      <input id="fInst" maxlength="150" autocomplete="off" value="${esc(e.institution||"")}" ${kind==="university"?'list="uniList"':""} placeholder="${kind==="university"?"พิมพ์ชื่อสั้น ๆ เช่น บูรพา แล้วเลือกจากรายการ":"พิมพ์ชื่อเต็ม"}">
+      ${kind==="university"? `<datalist id="uniList">${(unis||[]).map(u=>`<option value="${esc(u.name)}"></option>`).join("")}</datalist><p class="hint" id="uniHint"></p>
+      <label class="consent hidden" id="uniOtherWrap" style="margin-top:6px"><input type="checkbox" id="fUniOther"><span>ไม่มีในรายการ (ครูจะตรวจชื่อให้)</span></label>`:""}
+    </div>`}
+    <div class="field"><label for="fFac">${facLabel}</label><input id="fFac" maxlength="150" value="${esc(e.faculty||"")}" placeholder="${facHint}"></div>
+    ${m6? `<div class="field"><label for="fMajor">สาขา <span style="font-weight:400;color:var(--ink-soft)">(ถ้ายังไม่มีสาขา เว้นว่างได้)</span></label><input id="fMajor" maxlength="150" value="${esc(e.major||"")}" placeholder="เช่น สาขาเคมี"></div>`:""}
+    ${showRound? `<div class="field"><label for="fRound">ติดรอบไหน</label><select id="fRound"><option value="">— ไม่ระบุ —</option>${ROUNDS[grade].map(r=>`<option ${e.admit_round===r?"selected":""}>${esc(r)}</option>`).join("")}</select></div>`:""}
+    <div id="formMsg" class="msg"></div>
+    <div class="row" style="margin-top:6px">
+      <button type="button" class="btn ghost" id="btnFormCancel">ยกเลิก</button>
+      <button type="button" class="btn primary" id="btnFormSave">บันทึกที่นี่</button>
+    </div>
+  </div>`;
+}
+
+function cardPanel(){
+  const c = chosen(), hasPhoto = !!(resp?.photo_path) || !!photoFile;
+  const cs = resp?.card_status || null;
+  let st = "";
+  if(!consent) st = `<div class="status wait">ติ๊กยินยอมก่อน ระบบถึงจะทำการ์ดให้ค่ะ</div>`;
+  else if(!c || !hasPhoto) st = `<div class="status wait">ยังทำการ์ดไม่ได้ ดูรายการที่ยังขาดด้านบน</div>`;
+  else if(photoFile || !resp || resp.photo_consent!==consent) st = `<div class="status wait">กด “บันทึก” ด้านล่าง แล้วการ์ดจะส่งให้ครูตรวจ</div>`;
+  else if(cs==="approved") st = `<div class="status ok">✓ ครูอนุมัติแล้ว ดาวน์โหลดการ์ดได้เลย</div>`;
+  else if(cs==="returned") st = `<div class="status bad">ครูขอให้แก้: “${esc(resp.card_note||"")}” — แก้แล้วกดบันทึกใหม่</div>`;
+  else if(cs==="pending") st = `<div class="status wait">⏳ ส่งให้ครูตรวจแล้ว ระหว่างนี้ยังแก้ข้อมูลได้</div>`;
+  const can = cs==="approved" && !photoFile;
+  return `<div class="panel"><h2>การ์ดแสดงความยินดีของฉัน</h2>
+    <ul class="checklist">
+      <li class="${consent?"":"no"}">${consent?"✓ ยินยอมแล้ว":"✗ ยังไม่ติ๊กยินยอม"}</li>
+      <li class="${hasPhoto?"":"no"}">${hasPhoto?"✓ มีรูปแล้ว":"✗ ยังไม่มีรูป"}</li>
+      <li class="${c?"":"no"}">${c?"✓ เลือกที่เรียนแล้ว":"✗ ยังไม่ได้เลือกที่เรียน"}</li>
+    </ul>
+    ${st}
+    ${c? `<canvas id="cardCv" aria-label="ตัวอย่างการ์ดแสดงความยินดี"></canvas>`:""}
+    <button class="btn ${can?"primary":"ghost"} block" style="margin-top:12px" id="btnDl" ${can?"":"disabled"}>${can?"ดาวน์โหลดการ์ด (PNG)":"ดาวน์โหลดได้หลังครูอนุมัติ"}</button>
+  </div>`;
+}
+
+let photoImg=null, photoImgSrc=null;
+async function drawCard(){
+  const cv = $("cardCv"), c = chosen(); if(!cv || !c) return;
+  if(photoUrl && photoImgSrc!==photoUrl){
+    photoImg = await new Promise(ok=>{ const i=new Image(); i.onload=()=>ok(i); i.onerror=()=>ok(null); i.src=photoUrl; });
+    photoImgSrc = photoUrl;
+  }
+  if(!photoUrl) photoImg = null;
+  await PCWCard.fontsReady();
+  if(!$("cardCv")) return;
+  PCWCard.draw($("cardCv"), cardData(), "4:5");
+}
+function cardData(){
+  const c = chosen();
+  return { name: profile.display_name||"", cls: profile.class_room||"", inst: c.institution,
+    prog: [c.faculty, c.major].filter(Boolean).join(" ") || " ", round: PCWCard.roundShort(c.admit_round), photo: photoImg };
+}
+
+/* ── ปุ่มต่าง ๆ ── */
+function bind(){
+  document.querySelectorAll("[data-mode]").forEach(b=> b.onclick=()=>{ keepDetail(); mode="study"; render(); });
+  document.querySelectorAll("[data-other]").forEach(b=> b.onclick=()=>{ keepDetail(); mode="other"; otherStatus=b.dataset.other; editing=null; render(); });
+  if($("btnAdd")) $("btnAdd").onclick = async ()=>{ editing = {}; if(grade==="ม.6") await loadUnis(); render(); $("admForm")?.scrollIntoView({behavior:"smooth",block:"center"}); };
+  document.querySelectorAll("[data-edit]").forEach(b=> b.onclick = async ()=>{ editing = {...adms.find(a=>a.id===b.dataset.edit)}; if(grade==="ม.6") await loadUnis(); render(); $("admForm")?.scrollIntoView({behavior:"smooth",block:"center"}); });
+  document.querySelectorAll("[data-del]").forEach(b=> b.onclick = ()=> delAdm(b.dataset.del));
+  document.querySelectorAll("[data-choose]").forEach(b=> b.onclick = ()=> setChosen(b.dataset.choose, true));
+  document.querySelectorAll("[data-unchoose]").forEach(b=> b.onclick = ()=> setChosen(b.dataset.unchoose, false));
+  document.querySelectorAll("[data-kind]").forEach(b=> b.onclick = ()=>{ readForm(); editing.kind = b.dataset.kind; render(); });
+  if($("btnFormCancel")) $("btnFormCancel").onclick = ()=>{ editing=null; render(); };
+  if($("btnFormSave")) $("btnFormSave").onclick = saveAdm;
+  if($("fInst") && $("uniHint")){ $("fInst").addEventListener("input", ()=>uniCheck(false)); $("fInst").addEventListener("change", ()=>uniCheck(true)); uniCheck(false); }
+  if($("fOther")) $("fOther").addEventListener("input", ()=>{ otherDetail = $("fOther").value; });
+  if($("fConsent")) $("fConsent").onchange = ()=>{ consent = $("fConsent").checked; render(); };
+  if($("fPhoto")) $("fPhoto").onchange = pickPhoto;
+  if($("btnSave")) $("btnSave").onclick = saveAll;
+  if($("btnDl")) $("btnDl").onclick = download;
+}
+function keepDetail(){ if($("fOther")) otherDetail = $("fOther").value; }
+function readForm(){
+  if(!editing) return;
+  if($("fInst")) editing.institution = $("fInst").value;
+  if($("fFac")) editing.faculty = $("fFac").value;
+  if($("fMajor")) editing.major = $("fMajor").value;
+  if($("fRound")) editing.admit_round = $("fRound").value;
+}
+function uniCheck(snap){
+  const t = $("fInst").value.trim(), u = matchUni(t);
+  if(u && snap) $("fInst").value = u.name;
+  $("uniOtherWrap").classList.toggle("hidden", !(t && !u));
+  $("uniHint").textContent = !t? "พิมพ์ชื่อสั้น ๆ เช่น บูรพา แล้วเลือกจากรายการ" : u? "✓ ตรงกับ: "+u.name : "ไม่พบในรายการ ลองพิมพ์ชื่อสั้น ๆ แล้วเลือกจากรายการ ถ้าไม่มีจริง ๆ ให้ติ๊ก “ไม่มีในรายการ”";
+}
+function formErr(t){ $("formMsg").textContent=t; $("formMsg").className="msg err"; }
+
+// ต้องมีคำตอบก่อนถึงจะเพิ่มที่ที่ติดได้
+async function ensureResponse(){
+  if(resp) return resp;
+  const row = { round_id: round.id, student_id: profile.id, status: mode==="study"? studyStatusGuess() : (otherStatus||"ยังไม่แน่ใจ"), submitted_at: new Date().toISOString() };
+  const {data, error} = await sb.from("survey_responses").insert(row).select("*").single();
+  if(error) throw error;
+  resp = data; return resp;
+}
+// สถานะจริงมาจากที่ที่เลือก (ฐานข้อมูลตั้งให้เอง) ส่วนนี้ใช้ตอนยังไม่ได้เลือก
+function studyStatusGuess(){
+  const c = chosen(); if(c) return KIND_STATUS[c.kind];
+  return WAITING;
+}
+
+async function saveAdm(){
+  if(busy) return; readForm();
+  const kind = editing.kind || KINDS[grade][0].k;
+  const row = { kind, faculty: (editing.faculty||"").trim()||null, major: grade==="ม.6"? ((editing.major||"").trim()||null) : null,
+    admit_round: (editing.admit_round||"").trim()||null, institution: kind==="m4_here"? SCHOOL : (editing.institution||"").trim(), university_id: null };
+  const showRound = grade==="ม.6"? kind==="university" : (kind==="m4_here"||kind==="m4_other"||kind==="vocational");
+  if(!showRound) row.admit_round = null;
+  if(!row.institution || row.institution.length<2) return formErr("กรุณาใส่ชื่อสถานศึกษาค่ะ");
+  if(grade==="ม.6" && !row.faculty) return formErr("กรุณาใส่คณะค่ะ");
+  if(kind==="university"){
+    const u = matchUni(row.institution);
+    if(u){ row.institution = u.name; row.university_id = u.id; }
+    else if(!$("fUniOther")?.checked) return formErr("ยังไม่พบชื่อนี้ในรายการ เลือกจากรายการ หรือติ๊ก “ไม่มีในรายการ” ค่ะ");
+  }
+  busy = true; $("btnFormSave").disabled = true;
+  try{
+    await ensureResponse();
+    let res;
+    if(editing.id) res = await sb.from("survey_admissions").update(row).eq("id", editing.id).select("id");
+    else res = await sb.from("survey_admissions").insert({...row, response_id: resp.id, student_id: profile.id, is_chosen: false}).select("id");
+    if(res.error) throw res.error;
+    if(editing.id && !(res.data||[]).length) throw new Error("row-level");
+    editing = null; await reloadMine(); render(); toast("บันทึกที่ที่ติดแล้ว ✅");
+  }catch(e){ if($("formMsg")) formErr(friendly(e)); else toast(friendly(e)); }
+  busy = false; if($("btnFormSave")) $("btnFormSave").disabled = false;
+}
+async function delAdm(id){
+  const a = adms.find(x=>x.id===id); if(!a || busy) return;
+  if(!confirm(`ลบ “${a.institution}” ใช่ไหมคะ?`)) return;
+  busy = true;
+  const {data, error} = await sb.from("survey_admissions").delete().eq("id", id).select("id");
+  busy = false;
+  if(error || !(data||[]).length) return toast(friendly(error||"row-level"));
+  await reloadMine(); render(); toast("ลบแล้ว");
+}
+async function setChosen(id, on){
+  if(busy) return; busy = true;
+  const {data, error} = await sb.from("survey_admissions").update({is_chosen: on}).eq("id", id).select("id");
+  busy = false;
+  if(error || !(data||[]).length) return toast(friendly(error||"row-level"));
+  await reloadMine(); render(); toast(on? "เลือกที่เรียนแล้ว 🎉" : "ยกเลิกการเลือกแล้ว");
+}
+
+// บีบอัดรูปก่อนอัปโหลด (เหมือนหน้าคลังแนะแนวเดิม: ด้านยาวไม่เกิน 1280px, JPEG 0.82)
+function compressImage(file, maxDim=1280, quality=0.82){
+  return new Promise((resolve)=>{
+    if(!file.type.startsWith("image/")){ resolve(file); return; }
+    const img = new Image(), url = URL.createObjectURL(file);
+    img.onload = ()=>{
+      URL.revokeObjectURL(url);
+      let {width:w, height:h} = img;
+      if(w > maxDim || h > maxDim){ if(w >= h){ h = Math.round(h*maxDim/w); w = maxDim; } else { w = Math.round(w*maxDim/h); h = maxDim; } }
+      const cv = document.createElement("canvas"); cv.width = w; cv.height = h;
+      cv.getContext("2d").drawImage(img, 0, 0, w, h);
+      cv.toBlob(blob=>{
+        if(!blob || blob.size >= file.size){ resolve(file); return; }
+        resolve(new File([blob], (file.name.replace(/\.[^.]+$/,"")||"photo")+".jpg", {type:"image/jpeg"}));
+      }, "image/jpeg", quality);
+    };
+    img.onerror = ()=>{ URL.revokeObjectURL(url); resolve(null); };
+    img.src = url;
+  });
+}
+async function pickPhoto(){
+  const f = $("fPhoto").files[0]; if(!f) return;
+  $("photoHint").textContent = "กำลังย่อขนาดรูป…";
+  const out = await compressImage(f);
+  if(!out){ $("photoHint").textContent = "เปิดรูปนี้ไม่ได้ ถ้าเป็นรูป HEIC ให้แปลงเป็น JPG ก่อนนะคะ"; return; }
+  if(out.size > 10*1024*1024){ $("photoHint").textContent = "รูปยังใหญ่เกิน 10MB ลองเลือกรูปอื่นนะคะ"; return; }
+  photoFile = out;
+  if(photoUrl) URL.revokeObjectURL(photoUrl);
+  photoUrl = URL.createObjectURL(out);
+  render();
+  toast(`ย่อรูปเหลือ ${(out.size/1024).toFixed(0)} KB แล้ว อย่าลืมกดบันทึกนะคะ`);
+}
+
+async function saveAll(){
+  if(busy) return; keepDetail();
+  const box = $("saveMsg");
+  if(mode==="other" && !otherStatus){ box.textContent="เลือกก่อนว่าหลังจบจะทำอะไรค่ะ"; box.className="msg err"; return; }
+  if(editing){ box.textContent="มีฟอร์มที่ที่ติดยังไม่ได้บันทึก กด “บันทึกที่นี่” หรือ “ยกเลิก” ก่อนนะคะ"; box.className="msg err"; return; }
+  busy = true; $("btnSave").disabled = true; box.textContent="กำลังบันทึก…"; box.className="msg ok";
+  try{
+    const row = {
+      status: mode==="study"? studyStatusGuess() : otherStatus,
+      other_detail: mode==="other" && NEED_DETAIL.includes(otherStatus)? (otherDetail.trim()||null) : null,
+      photo_consent: grade==="ม.6" && mode==="study" && cardOn() && consent,
+      submitted_at: new Date().toISOString()
+    };
+    if(mode==="other"){
+      row.institution = null; row.program = null; row.tcas_round = null; row.university_id = null;
+      // ไม่เรียนต่อแล้ว → ปลดที่ที่เลือกออก (ที่ที่ติดยังเก็บไว้)
+      const c = chosen();
+      if(c){ const {error} = await sb.from("survey_admissions").update({is_chosen:false}).eq("id", c.id); if(error) throw error; }
+    }
+    let oldPhoto = null;
+    if(photoFile && cardOn()){
+      const path = profile.id + "/survey_" + round.id + "_" + crypto.randomUUID() + ".jpg";
+      const {error:up} = await sb.storage.from("survey-photos").upload(path, photoFile, {contentType: photoFile.type||"image/jpeg"});
+      if(up) throw new Error("อัปโหลดรูปไม่สำเร็จ: "+up.message);
+      oldPhoto = resp?.photo_path || null; row.photo_path = path;
+    }
+    if(!resp){
+      const {data, error} = await sb.from("survey_responses").insert({...row, round_id: round.id, student_id: profile.id}).select("*").single();
+      if(error) throw error; resp = data;
+    }else{
+      const {data, error} = await sb.from("survey_responses").update(row).eq("id", resp.id).select("*");
+      if(error) throw error;
+      if(!(data||[]).length) throw new Error("row-level");
+    }
+    if(oldPhoto && oldPhoto !== row.photo_path) await sb.storage.from("survey-photos").remove([oldPhoto]);
+    photoFile = null;
+    await reloadMine();
+    if(resp?.photo_path) await loadPhoto(resp.photo_path); else render();
+    $("saveMsg").textContent = "บันทึกแล้ว ✅"; $("saveMsg").className = "msg ok";
+    toast("บันทึกแบบสำรวจแล้ว ✅");
+  }catch(e){ $("saveMsg").textContent = friendly(e); $("saveMsg").className = "msg err"; }
+  busy = false; if($("btnSave")) $("btnSave").disabled = false;
+}
+
+async function download(){
+  const c = chosen(); if(!c || resp?.card_status!=="approved") return;
+  const cv = document.createElement("canvas");
+  await PCWCard.fontsReady();
+  PCWCard.draw(cv, cardData(), "4:5");
+  cv.toBlob(b=>{
+    const a = document.createElement("a"); a.href = URL.createObjectURL(b);
+    a.download = "การ์ดแสดงความยินดี_" + (profile.username||"") + ".png";
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href), 3000);
+  }, "image/png");
+}
+
+boot();
+</script>
+</body>
+</html>
