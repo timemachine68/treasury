@@ -121,6 +121,7 @@ td.cell.editable:hover{background:var(--pine-tint)}
     <button class="chip" data-level="m3">ม.3</button>
     <button class="chip" data-level="m6">ม.6</button>
   </div>
+  <div class="toolbar" id="visBar" hidden></div>
   <nav class="folder-tabs">
     <button class="ftab" data-tab="weeks">สัปดาห์ที่สถาบันเข้าแนะแนว</button>
     <button class="ftab" data-tab="grid">ตารางคาบแนะแนวของแต่ละห้อง</button>
@@ -151,7 +152,7 @@ const DAYS = ['จันทร์','อังคาร','พุธ','พฤห�
 const MON = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
 const LV = {m3:'ม.3', m6:'ม.6'};
 const S = {level:'m3', tab:'weeks', canEdit:false, myRoom:'', tok:0,
-           weeks:[], periods:[], cls:[], visits:[], periodsAll:[], clsAll:[],
+           weeks:[], periods:[], cls:[], visits:[], periodsAll:[], clsAll:[], settings:{},
            modal:null, returnTo:null, pick:false, add:false, busy:false};
 let saveFn = null;
 
@@ -225,8 +226,10 @@ async function load() {
     fetchAll((a, b) => sb.from('guidance_class_periods').select('*').in('level', ['m3', 'm6'])
       .order('day_no').order('period_no').order('class_room').range(a, b))
   ]);
+  const sAll = await fetchAll((a, b) => sb.from('guidance_schedule_settings').select('*').order('level').range(a, b));
   if (tok !== S.tok) return false;
   S.periodsAll = pAll; S.clsAll = cAll;
+  S.settings = Object.fromEntries(sAll.map(r => [r.level, r.show_to_students]));
   cls.sort((x, y) => x.day_no - y.day_no || x.period_no - y.period_no || roomCmp(x.class_room, y.class_room));
   visits.sort((x, y) => x.day_no - y.day_no || x.period_no - y.period_no || roomCmp(x.class_room, y.class_room));
   S.weeks = weeks; S.periods = periods; S.cls = cls; S.visits = visits;
@@ -245,7 +248,13 @@ function render() {
   document.querySelectorAll('[data-level]').forEach(b => b.classList.toggle('active', b.dataset.level === S.level));
   document.querySelectorAll('[data-tab]').forEach(b => b.classList.toggle('active', b.dataset.tab === S.tab));
   $('#lvls').hidden = S.tab === 'all';
-  if (S.tab === 'weeks') renderWeeks();
+  renderVisBar();
+  const blocked = !S.canEdit && (S.tab === 'all'
+    ? S.settings.m3 === false && S.settings.m6 === false
+    : S.settings[S.level] === false);
+  if (blocked) {
+    $('#view').innerHTML = `<div class="empty">ตารางนี้ยังไม่เปิดให้ดูในตอนนี้ ครูแนะแนวจะแจ้งเมื่อพร้อม</div>`;
+  } else if (S.tab === 'weeks') renderWeeks();
   else if (S.tab === 'all') renderAll();
   else renderGrid();
   renderModal();
@@ -736,6 +745,32 @@ function handle(act, t) {
     }); break;
   }
 }
+
+/* ---------- สวิตช์เปิด/ปิดให้นักเรียนเห็น (เฉพาะครูแนะแนวและ admin) ---------- */
+function renderVisBar() {
+  const bar = $('#visBar');
+  if (!S.canEdit || S.tab === 'all') { bar.hidden = true; bar.innerHTML = ''; return; }
+  const on = S.settings[S.level] !== false;
+  bar.hidden = false;
+  bar.innerHTML = `<label class="chk" style="margin:0"><input type="checkbox" id="visChk" ${on ? 'checked' : ''}> แสดงตาราง ${LV[S.level]} ให้นักเรียนเห็น</label>
+    <span class="hint">${on ? 'นักเรียนเห็นตารางนี้อยู่' : 'ตอนนี้นักเรียนยังไม่เห็นตารางนี้ (ครูยังเห็นอยู่)'}</span>`;
+}
+document.addEventListener('change', e => {
+  if (e.target.id !== 'visChk') return;
+  const on = e.target.checked, level = S.level;
+  run(async () => {
+    try {
+      const {error} = await sb.from('guidance_schedule_settings')
+        .upsert({level, show_to_students: on}, {onConflict: 'level'});
+      if (error) throw error;
+      S.settings[level] = on;
+      msg(on ? `เปิดให้นักเรียนเห็น${LV[level]}แล้ว` : `ปิดไม่ให้นักเรียนเห็น${LV[level]}แล้ว`);
+    } catch (err) {
+      msg(friendly(err), true);
+    }
+    render();
+  });
+});
 
 /* ---------- เริ่มต้น ---------- */
 document.querySelectorAll('[data-level]').forEach(b => b.onclick = async () => {
