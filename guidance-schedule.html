@@ -55,12 +55,12 @@ main.wrap{padding:18px 16px 40px}
 .badge.zero{background:#F6F1DA;color:var(--note-deep)}
 .badge.mine{background:var(--note);color:#4a3b00}
 .tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px}
-table.grid{width:100%;border-collapse:collapse;min-width:680px}
+table.grid{width:100%;border-collapse:collapse;min-width:900px}
 table.grid th,table.grid td{border:1px solid var(--line);padding:8px;vertical-align:top;text-align:center}
 table.grid thead th{background:var(--board);color:var(--ink-soft);font-family:'Mitr',sans-serif;font-weight:500;font-size:15px}
-table.grid th.pcell{text-align:left;width:150px;background:#fff}
-tr.brk th.pcell,tr.brk td{background:#F3F6F4;color:var(--ink-soft)}
-tr.brk td{font-style:italic;text-align:center}
+table.grid th.pcell{text-align:left;width:110px;background:#fff}
+table.grid th.ph{min-width:118px;background:var(--board)}
+table.grid th.ph.brk,table.grid td.brk{background:#F3F6F4;color:var(--ink-soft);font-style:italic;width:80px;min-width:80px}
 .time{color:var(--ink-soft);font-size:13px}
 .linkish{background:none;border:none;padding:0;font-family:'Mitr',sans-serif;font-size:15px;color:var(--pine);cursor:pointer;font-weight:500}
 td.cell{min-width:110px;height:58px}
@@ -104,7 +104,7 @@ td.cell.editable:hover{background:var(--pine-tint)}
 .sep{height:1px;background:var(--line);margin:12px 0}
 .chk{display:flex;gap:8px;align-items:center;font-size:15px;margin-bottom:12px}
 @media (max-width:560px){.row2{grid-template-columns:1fr}.vrow{flex-wrap:wrap}.vp{min-width:100%}
-  table.grid{min-width:600px}table.grid th.pcell{width:96px}}
+  table.grid th.pcell{width:84px}table.grid th.ph{min-width:104px}}
 </style>
 </head>
 <body>
@@ -473,6 +473,13 @@ $('#mSave').onclick = async () => {
 };
 
 /* ---------- แท็บ: ตารางคาบแนะแนวของแต่ละห้อง ---------- */
+function gridCellsHtml(items, d, p, editable) {
+  const chips = items.map(c => `<span class="cc ${isMine(c.class_room) ? 'mine' : ''}">${esc(cl(c.class_room))}${c.room_no ? `<small>${esc(c.room_no)}</small>` : ''}</span>`).join('');
+  return editable
+    ? `<td class="cell editable" data-act="openCell" data-d="${d}" data-p="${p}">${chips}</td>`
+    : `<td class="cell">${chips}</td>`;
+}
+
 function renderGrid() {
   let tools = '';
   if (S.canEdit) tools = `<div class="toolbar"><button class="btn primary sm" data-act="addPeriod">+ เพิ่มคาบ</button>
@@ -488,26 +495,22 @@ function renderGrid() {
     if (!map.has(k)) map.set(k, []);
     map.get(k).push(c);
   }
-  let h = tools + `<div class="tbl-wrap"><table class="grid"><thead><tr><th class="pcell">คาบ</th>${DAYS.map(d => `<th>${d}</th>`).join('')}${S.canEdit ? '<th></th>' : ''}</tr></thead><tbody>`;
+  let h = tools + `<div class="tbl-wrap"><table class="grid"><thead><tr><th class="pcell">วัน</th>`;
   for (const p of S.periods) {
     const label = S.canEdit
       ? `<button class="linkish" data-act="editPeriod" data-p="${p.period_no}">${esc(p.label)}</button>`
       : `<span class="linkish" style="cursor:default">${esc(p.label)}</span>`;
-    const head = `<th class="pcell">${label}<div class="time">${esc(p.time_text || '')}</div></th>`;
-    const del = S.canEdit ? `<td><button class="btn danger sm" data-act="delPeriod" data-p="${p.period_no}">ลบคาบ</button></td>` : '';
-    if (p.is_break) {
-      h += `<tr class="brk">${head}<td colspan="5">ช่วงพัก ไม่มีการเข้าแนะแนว</td>${del}</tr>`;
-      continue;
+    const del = S.canEdit ? `<div><button class="btn danger sm" data-act="delPeriod" data-p="${p.period_no}">ลบคาบ</button></div>` : '';
+    h += `<th class="ph ${p.is_break ? 'brk' : ''}">${label}<div class="time">${esc(p.time_text || '')}</div>${del}</th>`;
+  }
+  h += `</tr></thead><tbody>`;
+  for (let d = 1; d <= 5; d++) {
+    h += `<tr><th class="pcell">${DAYS[d - 1]}</th>`;
+    for (const p of S.periods) {
+      if (p.is_break) { h += `<td class="brk">พัก</td>`; continue; }
+      h += gridCellsHtml(map.get(d + '-' + p.period_no) || [], d, p.period_no, S.canEdit);
     }
-    h += `<tr>${head}`;
-    for (let d = 1; d <= 5; d++) {
-      const items = map.get(d + '-' + p.period_no) || [];
-      const chips = items.map(c => `<span class="cc ${isMine(c.class_room) ? 'mine' : ''}">${esc(cl(c.class_room))}${c.room_no ? `<small>${esc(c.room_no)}</small>` : ''}</span>`).join('');
-      h += S.canEdit
-        ? `<td class="cell editable" data-act="openCell" data-d="${d}" data-p="${p.period_no}">${chips}</td>`
-        : `<td class="cell">${chips}</td>`;
-    }
-    h += `${del}</tr>`;
+    h += `</tr>`;
   }
   h += `</tbody></table></div>`;
   $('#view').innerHTML = h;
@@ -533,20 +536,20 @@ function renderAll() {
     if (!map.has(k)) map.set(k, []);
     map.get(k).push(c);
   }
-  let h = head + `<div class="tbl-wrap"><table class="grid"><thead><tr><th class="pcell">คาบ</th>${DAYS.map(d => `<th>${d}</th>`).join('')}</tr></thead><tbody>`;
-  for (const no of [...byNo.keys()].sort((a, b) => a - b)) {
+  const cols = [...byNo.keys()].sort((a, b) => a - b).map(no => {
     const list = byNo.get(no);
-    const p = list.find(x => x.label) || list[0];
-    const head2 = `<th class="pcell"><span class="linkish" style="cursor:default">${esc(p.label)}</span><div class="time">${esc(p.time_text || '')}</div></th>`;
-    if (list.every(x => x.is_break)) {
-      h += `<tr class="brk">${head2}<td colspan="5">ช่วงพัก ไม่มีการเข้าแนะแนว</td></tr>`;
-      continue;
-    }
-    h += `<tr>${head2}`;
-    for (let d = 1; d <= 5; d++) {
-      const items = map.get(d + '-' + no) || [];
-      const chips = items.map(c => `<span class="cc ${isMine(c.class_room) ? 'mine' : ''}">${esc(cl(c.class_room))}${c.room_no ? `<small>${esc(c.room_no)}</small>` : ''}</span>`).join('');
-      h += `<td class="cell">${chips}</td>`;
+    return {no, p: list.find(x => x.label) || list[0], brk: list.every(x => x.is_break)};
+  });
+  let h = head + `<div class="tbl-wrap"><table class="grid"><thead><tr><th class="pcell">วัน</th>`;
+  for (const c of cols) {
+    h += `<th class="ph ${c.brk ? 'brk' : ''}"><span class="linkish" style="cursor:default">${esc(c.p.label)}</span><div class="time">${esc(c.p.time_text || '')}</div></th>`;
+  }
+  h += `</tr></thead><tbody>`;
+  for (let d = 1; d <= 5; d++) {
+    h += `<tr><th class="pcell">${DAYS[d - 1]}</th>`;
+    for (const c of cols) {
+      if (c.brk) { h += `<td class="brk">พัก</td>`; continue; }
+      h += gridCellsHtml(map.get(d + '-' + c.no) || [], d, c.no, false);
     }
     h += `</tr>`;
   }
