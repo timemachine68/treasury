@@ -117,13 +117,14 @@ td.cell.editable:hover{background:var(--pine-tint)}
 </header>
 
 <main class="wrap">
-  <div class="levels">
+  <div class="levels" id="lvls">
     <button class="chip" data-level="m3">ม.3</button>
     <button class="chip" data-level="m6">ม.6</button>
   </div>
   <nav class="folder-tabs">
     <button class="ftab" data-tab="weeks">สัปดาห์ที่สถาบันเข้าแนะแนว</button>
     <button class="ftab" data-tab="grid">ตารางคาบแนะแนวของแต่ละห้อง</button>
+    <button class="ftab" data-tab="all">ตารางรวม ม.3 + ม.6</button>
   </nav>
   <section class="folder-body" id="view"><div class="empty">กำลังโหลด…</div></section>
   <div class="msg" id="msg" hidden></div>
@@ -150,7 +151,7 @@ const DAYS = ['จันทร์','อังคาร','พุธ','พฤห�
 const MON = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
 const LV = {m3:'ม.3', m6:'ม.6'};
 const S = {level:'m3', tab:'weeks', canEdit:false, myRoom:'', tok:0,
-           weeks:[], periods:[], cls:[], visits:[],
+           weeks:[], periods:[], cls:[], visits:[], periodsAll:[], clsAll:[],
            modal:null, returnTo:null, pick:false, add:false, busy:false};
 let saveFn = null;
 
@@ -219,7 +220,13 @@ async function load() {
     visits = await fetchAll((a, b) => sb.from('guidance_visit_slots').select('*').in('week_id', ids)
       .order('day_no').order('period_no').order('class_room').order('id').range(a, b));
   }
+  const [pAll, cAll] = await Promise.all([
+    fetchAll((a, b) => sb.from('guidance_periods').select('*').in('level', ['m3', 'm6']).order('period_no').order('level').range(a, b)),
+    fetchAll((a, b) => sb.from('guidance_class_periods').select('*').in('level', ['m3', 'm6'])
+      .order('day_no').order('period_no').order('class_room').range(a, b))
+  ]);
   if (tok !== S.tok) return false;
+  S.periodsAll = pAll; S.clsAll = cAll;
   cls.sort((x, y) => x.day_no - y.day_no || x.period_no - y.period_no || roomCmp(x.class_room, y.class_room));
   visits.sort((x, y) => x.day_no - y.day_no || x.period_no - y.period_no || roomCmp(x.class_room, y.class_room));
   S.weeks = weeks; S.periods = periods; S.cls = cls; S.visits = visits;
@@ -237,7 +244,10 @@ const P = no => S.periods.find(p => p.period_no === no) || {period_no: no, label
 function render() {
   document.querySelectorAll('[data-level]').forEach(b => b.classList.toggle('active', b.dataset.level === S.level));
   document.querySelectorAll('[data-tab]').forEach(b => b.classList.toggle('active', b.dataset.tab === S.tab));
-  S.tab === 'weeks' ? renderWeeks() : renderGrid();
+  $('#lvls').hidden = S.tab === 'all';
+  if (S.tab === 'weeks') renderWeeks();
+  else if (S.tab === 'all') renderAll();
+  else renderGrid();
   renderModal();
 }
 
@@ -489,6 +499,47 @@ function renderGrid() {
         : `<td class="cell">${chips}</td>`;
     }
     h += `${del}</tr>`;
+  }
+  h += `</tbody></table></div>`;
+  $('#view').innerHTML = h;
+}
+
+/* ---------- แท็บ: ตารางรวม ม.3 + ม.6 (ดูอย่างเดียว) ---------- */
+function renderAll() {
+  const n3 = S.clsAll.filter(c => c.level === 'm3').length;
+  const n6 = S.clsAll.filter(c => c.level === 'm6').length;
+  const head = `<div class="toolbar"><span class="hint">ดูอย่างเดียว · ม.3 ${n3} ห้อง · ม.6 ${n6} ห้อง · ถ้าจะแก้ไขให้เลือกแท็บ ม.3 หรือ ม.6</span></div>`;
+  if (!S.periodsAll.length) {
+    $('#view').innerHTML = head + `<div class="empty">ยังไม่มีข้อมูลคาบ</div>`;
+    return;
+  }
+  const byNo = new Map();
+  for (const p of S.periodsAll) {
+    if (!byNo.has(p.period_no)) byNo.set(p.period_no, []);
+    byNo.get(p.period_no).push(p);
+  }
+  const map = new Map();
+  for (const c of S.clsAll) {
+    const k = c.day_no + '-' + c.period_no;
+    if (!map.has(k)) map.set(k, []);
+    map.get(k).push(c);
+  }
+  let h = head + `<div class="tbl-wrap"><table class="grid"><thead><tr><th class="pcell">คาบ</th>${DAYS.map(d => `<th>${d}</th>`).join('')}</tr></thead><tbody>`;
+  for (const no of [...byNo.keys()].sort((a, b) => a - b)) {
+    const list = byNo.get(no);
+    const p = list.find(x => x.label) || list[0];
+    const head2 = `<th class="pcell"><span class="linkish" style="cursor:default">${esc(p.label)}</span><div class="time">${esc(p.time_text || '')}</div></th>`;
+    if (list.every(x => x.is_break)) {
+      h += `<tr class="brk">${head2}<td colspan="5">ช่วงพัก ไม่มีการเข้าแนะแนว</td></tr>`;
+      continue;
+    }
+    h += `<tr>${head2}`;
+    for (let d = 1; d <= 5; d++) {
+      const items = map.get(d + '-' + no) || [];
+      const chips = items.map(c => `<span class="cc ${isMine(c.class_room) ? 'mine' : ''}">${esc(cl(c.class_room))}${c.room_no ? `<small>${esc(c.room_no)}</small>` : ''}</span>`).join('');
+      h += `<td class="cell">${chips}</td>`;
+    }
+    h += `</tr>`;
   }
   h += `</tbody></table></div>`;
   $('#view').innerHTML = h;
