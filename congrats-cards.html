@@ -173,7 +173,7 @@ async function pickRound(id){
   $("main").innerHTML = `<div class="empty">กำลังโหลด…</div>`;
   const [rs, ad] = await Promise.all([
     fetchAllRows(()=> sb.from("survey_responses").select("id,student_id,status,photo_path,photo_consent,card_status,card_note,card_changed,card_snapshot,card_reviewed_at").eq("round_id", round.id).order("id")),
-    fetchAllRows(()=> sb.from("survey_admissions").select("id,response_id,institution,faculty,major,admit_round,is_chosen,survey_responses!inner(round_id)").eq("survey_responses.round_id", round.id).order("id"))
+    fetchAllRows(()=> sb.from("survey_admissions").select("id,response_id,institution,campus,faculty,major,admit_round,is_chosen,survey_responses!inner(round_id)").eq("survey_responses.round_id", round.id).order("id"))
   ]);
   if(rs.error || ad.error) return gate("โหลดข้อมูลไม่สำเร็จ: "+(rs.error||ad.error).message);
   const ids = [...new Set(rs.data.map(r=>r.student_id))], pmap = {};
@@ -269,7 +269,7 @@ $("btnReturnSel").onclick = ()=> openReturn([...sel]);
 /* ── วาดการ์ด ── */
 function cardData(x){
   const c = x.chosen||{};
-  return { name:x.name, cls:x.cls, inst:c.institution||"", prog:[c.faculty,c.major].filter(Boolean).join(" ")||" ", round:PCWCard.roundShort(c.admit_round), photo: photoCache[x.r.photo_path]||null };
+  return { name:x.name, cls:x.cls, inst:c.institution||"", campus:c.campus||"", prog:[c.faculty,c.major].filter(Boolean).join(" ")||" ", round:PCWCard.roundShort(c.admit_round), photo: photoCache[x.r.photo_path]||null };
 }
 async function loadPhoto(path){
   if(!path) return null;

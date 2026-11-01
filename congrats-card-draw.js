@@ -36,6 +36,12 @@ var __UNI=[
     var i; for (i = 0; i < UNI_COLORS.length; i++) { if (inst && inst.indexOf(UNI_COLORS[i][0]) > -1) { return UNI_COLORS[i][1]; } }
     return null;
   }
+  // ชื่อบนการ์ด: ใส่วิทยาเขตต่อท้ายถ้ามี (วิทยาลัยพยาบาลบรมราชชนนีใช้ชื่อจังหวัดต่อท้ายเลย)
+  function uniText(d) {
+    var cp = d.campus ? String(d.campus).trim() : '';
+    if (!cp) { return d.inst; }
+    return d.inst + (String(d.inst).indexOf('บรมราชชนนี') > -1 ? ' ' : ' วิทยาเขต') + cp;
+  }
   function effColor(d) { return d.color || uniColor(d.inst) || DEFAULT_U; }
   function theme(d) {
     var u = effColor(d);
@@ -252,7 +258,7 @@ var __UNI=[
     c.save(); c.setLineDash([14 * k, 11 * k]); c.lineWidth = 3 * k; c.strokeStyle = '#cfc8b2'; c.beginPath(); c.moveTo(tx + nr + 12 * k, py); c.lineTo(tx + tw - nr - 12 * k, py); c.stroke(); c.restore();
 
     // ส่วนล่าง
-    var lw = tw - 2 * pad, uni = fitBlock(c, d.inst, lw, 68 * k, 32, '700', 2), fac = fitBlock(c, d.prog, lw, 44 * k, 26, '600', 2);
+    var lw = tw - 2 * pad, uni = fitBlock(c, uniText(d), lw, 68 * k, 32, '700', 2), fac = fitBlock(c, d.prog, lw, 44 * k, 26, '600', 2);
     var lg = 14 * k, contentH = lab * 1.45 + uni.lines.length * uni.size * 1.2 + lg + lab * 1.45 + fac.lines.length * fac.size * 1.3;
     var rTop = py + nr, rBot = ty + th - footH, yy = rTop + Math.max(10 * k, (rBot - rTop - contentH) * 0.34);
     c.textAlign = 'left'; c.font = '600 ' + lab + 'px ' + F_B; c.fillStyle = '#7b8494'; c.fillText('มหาวิทยาลัย', tx + pad, yy + lab * 0.9); yy += lab * 1.45;

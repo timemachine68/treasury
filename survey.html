@@ -220,7 +220,7 @@ async function loadUnis(){
   if(unis) return unis;
   const all=[]; let from=0;
   for(;;){
-    const {data, error} = await sb.from("iv_universities").select("id,name,short_name,aliases,sort_order").eq("is_active",true).order("sort_order").order("id").range(from, from+999);
+    const {data, error} = await sb.from("iv_universities").select("id,name,short_name,aliases,sort_order,campuses").eq("is_active",true).order("sort_order").order("id").range(from, from+999);
     if(error) break; all.push(...(data||[])); if(!data || data.length<1000) break; from+=1000;
   }
   unis = all; return unis;
@@ -302,6 +302,7 @@ function admCard(a){
     <div class="top"><span class="tag">${esc(KIND_LABEL[a.kind]||a.kind)}${a.admit_round? " · "+esc(a.admit_round):""}</span>
       ${a.is_chosen? `<span class="tag yes">✓ เลือกเรียนที่นี่</span>`:""}</div>
     <h3>${esc(a.institution)}</h3>
+    ${a.campus? `<p>วิทยาเขต${a.kind==="university" && /บรมราชชนนี/.test(a.institution)? " / ที่ตั้ง":""}: ${esc(a.campus)}</p>`:""}
     ${sub? `<p>${esc(sub)}</p>`:""}
     ${a.kind==="university" && !a.university_id? `<p class="hint">ชื่อนี้ไม่ตรงรายการมหาวิทยาลัย ครูจะตรวจชื่อให้</p>`:""}
     ${open? `<div class="acts">
@@ -327,6 +328,8 @@ function formHtml(){
       ${kind==="university"? `<datalist id="uniList">${(unis||[]).map(u=>`<option value="${esc(u.name)}"></option>`).join("")}</datalist><p class="hint" id="uniHint"></p>
       <label class="consent hidden" id="uniOtherWrap" style="margin-top:6px"><input type="checkbox" id="fUniOther"><span>ไม่มีในรายการ (ครูจะตรวจชื่อให้)</span></label>`:""}
     </div>`}
+    ${kind==="university"? `<div class="field hidden" id="campusWrap"><label for="fCampus">วิทยาเขต / ที่ตั้ง</label>
+      <input id="fCampus" maxlength="80" autocomplete="off" list="campusList" value="${esc(e.campus||"")}" placeholder="เลือกจากรายการ หรือพิมพ์เอง"><datalist id="campusList"></datalist></div>`:""}
     <div class="field"><label for="fFac">${facLabel}</label><input id="fFac" maxlength="150" value="${esc(e.faculty||"")}" placeholder="${facHint}"></div>
     ${m6? `<div class="field"><label for="fMajor">สาขา <span style="font-weight:400;color:var(--ink-soft)">(ถ้ายังไม่มีสาขา เว้นว่างได้)</span></label><input id="fMajor" maxlength="150" value="${esc(e.major||"")}" placeholder="เช่น สาขาเคมี"></div>`:""}
     ${showRound? `<div class="field"><label for="fRound">ติดรอบไหน</label><select id="fRound"><option value="">— ไม่ระบุ —</option>${ROUNDS[grade].map(r=>`<option ${e.admit_round===r?"selected":""}>${esc(r)}</option>`).join("")}</select></div>`:""}
@@ -375,7 +378,7 @@ async function drawCard(){
 }
 function cardData(){
   const c = chosen();
-  return { name: profile.display_name||"", cls: profile.class_room||"", inst: c.institution,
+  return { name: profile.display_name||"", cls: profile.class_room||"", inst: c.institution, campus: c.campus||"",
     prog: [c.faculty, c.major].filter(Boolean).join(" ") || " ", round: PCWCard.roundShort(c.admit_round), photo: photoImg };
 }
 
@@ -405,11 +408,18 @@ function readForm(){
   if($("fFac")) editing.faculty = $("fFac").value;
   if($("fMajor")) editing.major = $("fMajor").value;
   if($("fRound")) editing.admit_round = $("fRound").value;
+  if($("fCampus")) editing.campus = $("fCampus").value;
 }
 function uniCheck(snap){
   const t = $("fInst").value.trim(), u = matchUni(t);
   if(u && snap) $("fInst").value = u.name;
   $("uniOtherWrap").classList.toggle("hidden", !(t && !u));
+  const cps = (u && u.campuses) || [];
+  if($("campusWrap")){
+    $("campusWrap").classList.toggle("hidden", !cps.length);
+    $("campusList").innerHTML = cps.map(c=>`<option value="${esc(c)}"></option>`).join("");
+    if(!cps.length) $("fCampus").value = "";
+  }
   $("uniHint").textContent = !t? "พิมพ์ชื่อสั้น ๆ เช่น บูรพา แล้วเลือกจากรายการ" : u? "✓ ตรงกับ: "+u.name : "ไม่พบในรายการ ลองพิมพ์ชื่อสั้น ๆ แล้วเลือกจากรายการ ถ้าไม่มีจริง ๆ ให้ติ๊ก “ไม่มีในรายการ”";
 }
 function formErr(t){ $("formMsg").textContent=t; $("formMsg").className="msg err"; }
@@ -432,14 +442,20 @@ async function saveAdm(){
   if(busy) return; readForm();
   const kind = editing.kind || KINDS[grade][0].k;
   const row = { kind, faculty: (editing.faculty||"").trim()||null, major: grade==="ม.6"? ((editing.major||"").trim()||null) : null,
-    admit_round: (editing.admit_round||"").trim()||null, institution: kind==="m4_here"? SCHOOL : (editing.institution||"").trim(), university_id: null };
+    admit_round: (editing.admit_round||"").trim()||null, campus: null, institution: kind==="m4_here"? SCHOOL : (editing.institution||"").trim(), university_id: null };
   const showRound = grade==="ม.6"? kind==="university" : (kind==="m4_here"||kind==="m4_other"||kind==="vocational");
   if(!showRound) row.admit_round = null;
   if(!row.institution || row.institution.length<2) return formErr("กรุณาใส่ชื่อสถานศึกษาค่ะ");
   if(grade==="ม.6" && !row.faculty) return formErr("กรุณาใส่คณะค่ะ");
   if(kind==="university"){
     const u = matchUni(row.institution);
-    if(u){ row.institution = u.name; row.university_id = u.id; }
+    if(u){
+      row.institution = u.name; row.university_id = u.id;
+      if((u.campuses||[]).length){
+        row.campus = (editing.campus||"").trim()||null;
+        if(!row.campus) return formErr("กรุณาระบุวิทยาเขต / ที่ตั้งค่ะ");
+      }
+    }
     else if(!$("fUniOther")?.checked) return formErr("ยังไม่พบชื่อนี้ในรายการ เลือกจากรายการ หรือติ๊ก “ไม่มีในรายการ” ค่ะ");
   }
   busy = true; $("btnFormSave").disabled = true;

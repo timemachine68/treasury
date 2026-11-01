@@ -154,7 +154,7 @@ async function pickRound(id){
   const [st, rs, ad] = await Promise.all([
     fetchAllRows(()=> sb.from("profiles").select("id,username,display_name,class_room").eq("role","student").like("class_room", round.grade+"/%").order("id")),
     fetchAllRows(()=> sb.from("survey_responses").select("id,student_id,status,institution,program,tcas_round,other_detail,submitted_at,photo_path,photo_consent,card_status").eq("round_id", round.id).order("id")),
-    fetchAllRows(()=> sb.from("survey_admissions").select("id,response_id,student_id,kind,institution,university_id,faculty,major,admit_round,is_chosen,created_at,survey_responses!inner(round_id)").eq("survey_responses.round_id", round.id).order("id"))
+    fetchAllRows(()=> sb.from("survey_admissions").select("id,response_id,student_id,kind,institution,campus,university_id,faculty,major,admit_round,is_chosen,created_at,survey_responses!inner(round_id)").eq("survey_responses.round_id", round.id).order("id"))
   ]);
   const err = st.error||rs.error||ad.error;
   if(err) return gate("โหลดข้อมูลไม่สำเร็จ: "+err.message);
@@ -241,9 +241,9 @@ function render(){
 function rowHtml(x){
   const r = x.r, n = x.list.length, op = !!openRow[x.s.id];
   const status = !r? `<span class="pill no">ยังไม่ตอบ</span>` : `<span class="pill mute">${esc(r.status)}</span>`;
-  const choice = x.chosen? `<b>${esc(x.chosen.institution)}</b>${[x.chosen.faculty,x.chosen.major].filter(Boolean).length? "<br><span class='hint'>"+esc([x.chosen.faculty,x.chosen.major].filter(Boolean).join(" · "))+"</span>":""}`
+  const choice = x.chosen? `<b>${esc(x.chosen.institution)}</b>${x.chosen.campus? " <span class='hint'>(วิทยาเขต"+esc(x.chosen.campus)+")</span>":""}${[x.chosen.faculty,x.chosen.major].filter(Boolean).length? "<br><span class='hint'>"+esc([x.chosen.faculty,x.chosen.major].filter(Boolean).join(" · "))+"</span>":""}`
     : n? `<span class="pill no">ยังไม่เลือก</span>` : (r && r.other_detail? esc(r.other_detail) : "-");
-  const detail = op && n? `<ul class="alist">${x.list.map(a=>`<li class="${a.is_chosen?"c":""}">${a.is_chosen?"✓ ":"• "}<b>${esc(a.institution)}</b>${a.faculty||a.major?" · "+esc([a.faculty,a.major].filter(Boolean).join(" · ")):""} <span class="hint">· ${esc(KIND_LABEL[a.kind]||a.kind)}${a.admit_round?" · "+esc(a.admit_round):""}${a.kind==="university"&&!a.university_id?" · ชื่อไม่ตรงรายการ":""}</span></li>`).join("")}</ul>` : "";
+  const detail = op && n? `<ul class="alist">${x.list.map(a=>`<li class="${a.is_chosen?"c":""}">${a.is_chosen?"✓ ":"• "}<b>${esc(a.institution)}</b>${a.campus?" ("+esc(a.campus)+")":""}${a.faculty||a.major?" · "+esc([a.faculty,a.major].filter(Boolean).join(" · ")):""} <span class="hint">· ${esc(KIND_LABEL[a.kind]||a.kind)}${a.admit_round?" · "+esc(a.admit_round):""}${a.kind==="university"&&!a.university_id?" · ชื่อไม่ตรงรายการ":""}</span></li>`).join("")}</ul>` : "";
   return `<tr><td>${esc(x.s.class_room||"-")}</td><td>${esc(x.s.username||"")}</td><td>${esc(x.s.display_name||"")}</td><td>${status}</td>
     <td>${n? `<span class="pill n">${n} ที่</span>`:"-"}</td><td>${choice}${detail}</td>
     <td>${n>0? `<button class="btn ghost sm" data-open="${x.s.id}">${op?"ซ่อน":"ดูทุกที่"}</button>`:""}</td></tr>`;
@@ -289,15 +289,15 @@ async function togglePhoto(e){
 
 function csv(all){
   const qv = v => `"${String(v??"").replace(/"/g,'""')}"`;
-  const head = ["ห้อง","เลขประจำตัว","ชื่อ-นามสกุล","สถานะ","จำนวนที่ติด","ที่ที่ติด","ประเภท","คณะ/แผนการเรียน","สาขา","รอบ","เลือกเรียนที่นี่","รายละเอียดอื่น","เวลาตอบล่าสุด"];
+  const head = ["ห้อง","เลขประจำตัว","ชื่อ-นามสกุล","สถานะ","จำนวนที่ติด","ที่ที่ติด","วิทยาเขต/ที่ตั้ง","ประเภท","คณะ/แผนการเรียน","สาขา","รอบ","เลือกเรียนที่นี่","รายละเอียดอื่น","เวลาตอบล่าสุด"];
   const rows = [head.map(qv).join(",")];
   let list = all.filter(x=> room==="all" || x.s.class_room===room);
   list.sort((a,b)=> roomCmp(a.s.class_room,b.s.class_room) || String(a.s.username||"").localeCompare(String(b.s.username||"")));
   list.forEach(x=>{
     const base = [x.s.class_room||"", x.s.username||"", x.s.display_name||"", x.r? x.r.status : "ยังไม่ตอบ", x.list.length];
     const tail = [x.r?.other_detail||"", x.r? thDate(x.r.submitted_at):""];
-    if(!x.list.length) rows.push([...base,"","","","","","",...tail].map(qv).join(","));
-    else x.list.forEach(a=> rows.push([...base, a.institution, KIND_LABEL[a.kind]||a.kind, a.faculty||"", a.major||"", a.admit_round||"", a.is_chosen?"ใช่":"", ...tail].map(qv).join(",")));
+    if(!x.list.length) rows.push([...base,"","","","","","","",...tail].map(qv).join(","));
+    else x.list.forEach(a=> rows.push([...base, a.institution, a.campus||"", KIND_LABEL[a.kind]||a.kind, a.faculty||"", a.major||"", a.admit_round||"", a.is_chosen?"ใช่":"", ...tail].map(qv).join(",")));
   });
   const el = document.createElement("a");
   el.href = URL.createObjectURL(new Blob(["﻿"+rows.join("\r\n")],{type:"text/csv;charset=utf-8"}));
