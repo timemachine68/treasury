@@ -102,6 +102,10 @@ td.cell.editable:hover{background:var(--pine-tint)}
 .inline{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .inline select{font-family:'Sarabun',sans-serif;font-size:15px;border:1.5px solid var(--line);border-radius:9px;padding:7px 9px;max-width:100%}
 .sep{height:1px;background:var(--line);margin:12px 0}
+#wkSel{font-family:'Sarabun',sans-serif;font-size:15px;border:1.5px solid var(--line);border-radius:9px;padding:7px 9px;max-width:100%;background:#fff}
+.wkbox{margin-bottom:12px}
+.wkrow{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:8px;background:#fff}
+.wkrow .rooms{margin-top:6px;font-size:15px;color:var(--pine-deep);font-weight:600}
 .chk{display:flex;gap:8px;align-items:center;font-size:15px;margin-bottom:12px}
 @media (max-width:560px){.row2{grid-template-columns:1fr}.vrow{flex-wrap:wrap}.vp{min-width:100%}
   table.grid th.pcell{width:84px}table.grid th.ph{min-width:104px}}
@@ -152,7 +156,7 @@ const DAYS = ['จันทร์','อังคาร','พุธ','พฤห�
 const MON = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
 const LV = {m3:'ม.3', m6:'ม.6'};
 const S = {level:'m3', tab:'weeks', canEdit:false, myRoom:'', tok:0,
-           weeks:[], periods:[], cls:[], visits:[], periodsAll:[], clsAll:[], settings:{},
+           weeks:[], periods:[], cls:[], visits:[], periodsAll:[], clsAll:[], settings:{}, weeksAll:[], visitsAll:[], wk:null,
            modal:null, returnTo:null, pick:false, add:false, busy:false};
 let saveFn = null;
 
@@ -226,10 +230,15 @@ async function load() {
     fetchAll((a, b) => sb.from('guidance_class_periods').select('*').in('level', ['m3', 'm6'])
       .order('day_no').order('period_no').order('class_room').range(a, b))
   ]);
+  const wAll = await fetchAll((a, b) => sb.from('guidance_week_institutions').select('*').in('level', ['m3', 'm6'])
+    .order('date_start').order('level').range(a, b));
+  const vAll = wAll.length ? await fetchAll((a, b) => sb.from('guidance_visit_slots').select('*')
+    .in('week_id', wAll.map(w => w.id)).order('day_no').order('period_no').order('class_room').order('id').range(a, b)) : [];
   const sAll = await fetchAll((a, b) => sb.from('guidance_schedule_settings').select('*').order('level').range(a, b));
   if (tok !== S.tok) return false;
   S.periodsAll = pAll; S.clsAll = cAll;
   S.settings = Object.fromEntries(sAll.map(r => [r.level, r.show_to_students]));
+  S.weeksAll = wAll; S.visitsAll = vAll;
   cls.sort((x, y) => x.day_no - y.day_no || x.period_no - y.period_no || roomCmp(x.class_room, y.class_room));
   visits.sort((x, y) => x.day_no - y.day_no || x.period_no - y.period_no || roomCmp(x.class_room, y.class_room));
   S.weeks = weeks; S.periods = periods; S.cls = cls; S.visits = visits;
@@ -518,9 +527,12 @@ function renderGrid() {
 
 /* ---------- แท็บ: ตารางรวม ม.3 + ม.6 (ดูอย่างเดียว) ---------- */
 function renderAll() {
+  if (S.wk === null) S.wk = currentWeekKey();
+  const sel = weekSelectHtml();
+  if (S.wk) { renderWeekAll(sel); return; }
   const n3 = S.clsAll.filter(c => c.level === 'm3').length;
   const n6 = S.clsAll.filter(c => c.level === 'm6').length;
-  const head = `<div class="toolbar"><span class="hint">ดูอย่างเดียว · ม.3 ${n3} ห้อง · ม.6 ${n6} ห้อง · ถ้าจะแก้ไขให้เลือกแท็บ ม.3 หรือ ม.6</span></div>`;
+  const head = sel + `<div class="toolbar"><span class="hint">ดูอย่างเดียว · ม.3 ${n3} ห้อง · ม.6 ${n6} ห้อง · ถ้าจะแก้ไขให้เลือกแท็บ ม.3 หรือ ม.6</span></div>`;
   if (!S.periodsAll.length) {
     $('#view').innerHTML = head + `<div class="empty">ยังไม่มีข้อมูลคาบ</div>`;
     return;
@@ -556,6 +568,89 @@ function renderAll() {
   h += `</tbody></table></div>`;
   $('#view').innerHTML = h;
 }
+
+/* ---------- ตารางรวมรายสัปดาห์ (ดูอย่างเดียว) ---------- */
+function weekKey(w) { return w.date_start + '|' + w.date_end; }
+function currentWeekKey() {
+  const today = new Intl.DateTimeFormat('en-CA', {timeZone: 'Asia/Bangkok'}).format(new Date());
+  const w = S.weeksAll.find(x => x.date_start <= today && today <= x.date_end);
+  return w ? weekKey(w) : '';
+}
+function weekGroups() {
+  const m = new Map();
+  for (const w of S.weeksAll) {
+    const k = weekKey(w);
+    if (!m.has(k)) m.set(k, {key: k, ds: w.date_start, de: w.date_end, weeks: []});
+    m.get(k).weeks.push(w);
+  }
+  return [...m.values()].sort((a, b) => (a.ds < b.ds ? -1 : a.ds > b.ds ? 1 : 0));
+}
+function weekSelectHtml() {
+  const cur = currentWeekKey();
+  const opts = weekGroups().map(g => {
+    const nums = [...g.weeks].sort((a, b) => a.level.localeCompare(b.level))
+      .map(w => `${LV[w.level]} ที่ ${w.week_no}`).join(' · ');
+    return `<option value="${esc(g.key)}" ${g.key === S.wk ? 'selected' : ''}>${thDate(g.ds)} – ${thDate(g.de)} (${nums})${g.key === cur ? ' · สัปดาห์นี้' : ''}</option>`;
+  }).join('');
+  return `<div class="toolbar"><label class="hint" for="wkSel"><b>ดูตาม:</b></label>
+    <select id="wkSel">
+      <option value="" ${S.wk === '' ? 'selected' : ''}>ตารางคาบปกติ (ทุกห้อง)</option>${opts}
+    </select></div>`;
+}
+function renderWeekAll(sel) {
+  const g = weekGroups().find(x => x.key === S.wk);
+  if (!g) { S.wk = ''; renderAll(); return; }
+  const levelOf = new Map(g.weeks.map(w => [w.id, w.level]));
+  const vs = S.visitsAll.filter(v => levelOf.has(v.week_id)).map(v => ({...v, level: levelOf.get(v.week_id)}));
+  let info = '';
+  for (const L of ['m3', 'm6']) {
+    const w = g.weeks.find(x => x.level === L);
+    if (!w) { info += `<div class="wkrow"><b>${LV[L]}</b> · ไม่มีสัปดาห์นี้ในระบบ</div>`; continue; }
+    const rooms = [...new Set(vs.filter(v => v.level === L).map(v => v.class_room))].sort(roomCmp);
+    const inst = w.institution ? esc(w.institution) : '<span class="hint">ยังไม่ระบุสถาบัน</span>';
+    info += `<div class="wkrow"><b>${LV[L]}</b> · สถาบัน: ${inst} · เข้า <b>${rooms.length}</b> ห้อง`
+      + (rooms.length
+        ? `<div class="rooms">${esc(rooms.map(cl).join(', '))}</div>`
+        : `<div class="hint">ยังไม่มีห้องเข้าแนะแนวในสัปดาห์นี้</div>`)
+      + `</div>`;
+  }
+  const map = new Map();
+  for (const v of vs) {
+    const k = v.day_no + '-' + v.period_no;
+    if (!map.has(k)) map.set(k, []);
+    map.get(k).push(v);
+  }
+  const byNo = new Map();
+  for (const p of S.periodsAll) {
+    if (!byNo.has(p.period_no)) byNo.set(p.period_no, []);
+    byNo.get(p.period_no).push(p);
+  }
+  const cols = [...byNo.keys()].sort((a, b) => a - b).map(no => {
+    const list = byNo.get(no);
+    return {no, p: list.find(x => x.label) || list[0], brk: list.every(x => x.is_break)};
+  });
+  let h = sel + `<div class="wkbox">${info}</div>`
+    + `<div class="tbl-wrap"><table class="grid"><thead><tr><th class="pcell">วัน</th>`;
+  for (const c of cols) {
+    h += `<th class="ph ${c.brk ? 'brk' : ''}"><span class="linkish" style="cursor:default">${esc(c.p.label)}</span><div class="time">${esc(c.p.time_text || '')}</div></th>`;
+  }
+  h += `</tr></thead><tbody>`;
+  for (let d = 1; d <= 5; d++) {
+    h += `<tr><th class="pcell">${DAYS[d - 1]}<div class="time">${dayDate({date_start: g.ds, date_end: g.de}, d).text}</div></th>`;
+    for (const c of cols) {
+      if (c.brk) { h += `<td class="brk">พัก</td>`; continue; }
+      h += gridCellsHtml(map.get(d + '-' + c.no) || [], d, c.no, false);
+    }
+    h += `</tr>`;
+  }
+  h += `</tbody></table></div>`;
+  $('#view').innerHTML = h;
+}
+document.addEventListener('change', e => {
+  if (e.target.id !== 'wkSel') return;
+  S.wk = e.target.value;
+  renderAll();
+});
 
 function periodForm(p, isNew) {
   const nextNo = S.periods.length ? Math.max(...S.periods.map(x => x.period_no)) + 1 : 1;
