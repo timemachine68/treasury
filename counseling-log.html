@@ -533,12 +533,13 @@ async function loadMine(){
 }
 
 async function loadOverview(){
-  const { data: totals } = await sb.from('counseling_overview_totals').select('*').single();
+  const { data: ov } = await sb.rpc('counseling_overview');
+  const totals = (ov && ov.totals) || {};
   document.getElementById('ov-total').textContent = totals?.total_all_time ?? '0';
   document.getElementById('ov-month').textContent = totals?.total_this_month ?? '0';
   document.getElementById('ov-open').textContent = totals?.total_open ?? '0';
 
-  const { data: cats } = await sb.from('counseling_overview_categories').select('*');
+  const cats = (ov && ov.categories) || [];
   const catEl = document.getElementById('ov-categories');
   catEl.innerHTML = '';
   const maxCat = Math.max(1, ...(cats || []).map(c => c.total));
@@ -552,7 +553,7 @@ async function loadOverview(){
       </div>`;
   });
 
-  const { data: rooms } = await sb.from('counseling_overview_by_room').select('*');
+  const rooms = (ov && ov.rooms) || [];
   const roomEl = document.getElementById('ov-rooms');
   roomEl.innerHTML = '';
   const maxRoom = Math.max(1, ...(rooms || []).map(r => r.total));
