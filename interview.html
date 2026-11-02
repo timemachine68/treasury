@@ -1034,6 +1034,22 @@ async function delSession(id){
   toast("ลบเรียบร้อย"); renderMyResults();
 }
 
+/* ═══════════ ตัวอย่างแนวคำตอบ (แสดงหลังส่งคำตอบ เท่านั้น) ═══════════ */
+function sampleSlot(qid){
+  return qid? `<div class="sample-slot" data-qid="${esc(qid)}"></div>` : "";
+}
+async function fillSamples(root){
+  const slots = [...root.querySelectorAll(".sample-slot")];
+  await Promise.all(slots.map(async el=>{
+    try{
+      const {data, error} = await sb.rpc("iv_sample_for_question", {p_question_id: el.dataset.qid});
+      if(error || !data) return;
+      el.innerHTML = `<div class="guide"><b>⭐ ตัวอย่างแนวคำตอบ:</b> ${esc(data)}</div>
+        <small class="hint">เป็นแค่โครงคำตอบให้ดูเป็นแนว ควรตอบด้วยประสบการณ์และความคิดของตัวเอง</small>`;
+    }catch(e){ /* ไม่แสดงถ้าโหลดไม่ได้ */ }
+  }));
+}
+
 /* ═══════════ รายละเอียดเซ็ต (นักเรียนดู / ครูตรวจ) ═══════════ */
 async function openSessionDetail(id, teacherMode, backTab){
   $("body").innerHTML = `<div class="loading">กำลังโหลด…</div>`;
@@ -1071,6 +1087,7 @@ async function openSessionDetail(id, teacherMode, backTab){
         : `<div class="mine">${esc(a.answer_text||"— ไม่ได้ตอบ/ข้าม —")}</div>`}
       ${teacherMode? autoCheckHtml(questions.find(x=>x.id===a.question_id), a.answer_text) : ""}
       ${a.guide_answer? `<div class="guide"><b>💡 แนวทางการตอบ:</b> ${esc(a.guide_answer)}</div>`:""}
+      ${s.status!=="draft"? sampleSlot(a.question_id):""}
     </div>`).join("")}
     <div class="panel"><h2>คะแนนตามเกณฑ์</h2>
       <div class="score-legend">1 = ${SCORE_LABEL[1]} · 2 = ${SCORE_LABEL[2]} · 3 = ${SCORE_LABEL[3]} · 4 = ${SCORE_LABEL[4]}</div>
@@ -1095,6 +1112,7 @@ async function openSessionDetail(id, teacherMode, backTab){
           <button class="btn primary" id="btnSaveNext">✔ บันทึกแล้วตรวจคนถัดไป ➜</button></div>`
       : (s.teacher_comment? `<div class="guide" style="margin-top:12px"><b>💬 จากครู:</b> ${esc(s.teacher_comment)}</div>`:"")}
     </div>`;
+  fillSamples($("body"));
   if(teacherMode){
     $("btnAIPrep").onclick = ()=> openAIModal(buildAIPrompt(s, ans||[], selfMap));
   }
