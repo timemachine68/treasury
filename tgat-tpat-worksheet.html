@@ -1,0 +1,398 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ใบงาน: คณะที่ฉันอยากเข้า ต้องสอบวิชาไหนบ้าง</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Mitr:wght@400;500;600&family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#22313A; --ink-soft:#5B6B72;
+  --board:#EFF3F1; --card:#FFFFFF;
+  --pine:#0F6B5C; --pine-deep:#0A4F44; --pine-tint:#E2F0EC;
+  --note:#FFD34D; --note-deep:#8A6D00;
+  --line:#DCE4E1; --danger:#C0392B;
+  --g1:#F28C6B; --g2:#F2B84B; --g3:#7FB069; --g4:#4E9BB9; --g5:#8E7CC3; --g6:#D96A9C;
+  --radius:14px; --shadow:0 2px 10px rgba(34,49,58,.08);
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:'Sarabun',sans-serif;background:var(--board);color:var(--ink);font-size:16px;line-height:1.55}
+h1,h2,h3,.brand{font-family:'Mitr',sans-serif;font-weight:600;margin:0}
+:focus-visible{outline:3px solid var(--note);outline-offset:2px;border-radius:6px}
+header.app{background:var(--pine);color:#fff;padding:14px 16px}
+.hwrap{max-width:1080px;margin:0 auto;display:flex;align-items:center;gap:12px}
+.logo{width:42px;height:42px;border-radius:12px;background:var(--note);display:grid;place-items:center;font-size:22px;flex:0 0 auto}
+.brand{font-size:20px;line-height:1.2}
+.sub{font-size:14px;opacity:.85}
+.wrap{max-width:1080px;margin:0 auto;padding:16px}
+.panel{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px;margin-bottom:16px}
+.panel h2{font-size:20px;color:var(--pine-deep);margin-bottom:4px}
+.step{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:50%;background:var(--pine);color:#fff;font-family:'Mitr',sans-serif;font-size:16px;margin-right:8px}
+.hint{color:var(--ink-soft);font-size:15px;margin:0 0 12px}
+label.f{display:block;font-weight:600;margin:10px 0 4px}
+input[type=text],select,textarea{width:100%;font:inherit;font-size:16px;padding:10px 12px;border:2px solid var(--line);border-radius:10px;background:#fff;color:var(--ink)}
+input[type=number]{font:inherit;font-size:16px;padding:8px;border:2px solid var(--line);border-radius:10px;width:84px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.chip{border:2px solid var(--line);background:#fff;border-radius:999px;padding:8px 18px;font:inherit;font-weight:700;color:var(--ink-soft);cursor:pointer}
+.chip.active{background:var(--pine);border-color:var(--pine);color:#fff}
+.chip .dot{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--note);margin-left:6px;vertical-align:middle}
+.btn{font:inherit;font-weight:600;border:0;border-radius:9px;padding:10px 18px;cursor:pointer;background:var(--pine);color:#fff;font-size:16px}
+.btn.ghost{background:#fff;color:var(--ink);border:1.5px solid var(--line)}
+.btn.note{background:var(--note);color:#5A4500}
+.group{margin-top:14px}
+.group h3{font-size:17px;margin-bottom:6px}
+.gtag{display:inline-block;width:12px;height:12px;border-radius:4px;margin-right:6px}
+.row{display:flex;align-items:center;gap:10px;padding:8px 10px;border:2px solid var(--line);border-radius:12px;margin-bottom:8px;background:#fff;flex-wrap:wrap}
+.row.on{border-color:var(--pine);background:var(--pine-tint)}
+.row input[type=checkbox]{width:24px;height:24px;accent-color:var(--pine);flex:0 0 auto}
+.row .name{flex:1 1 220px;font-weight:600}
+.row .name small{display:block;font-weight:400;color:var(--ink-soft);font-size:14px}
+.row .w{display:flex;align-items:center;gap:6px;color:var(--ink-soft);font-size:15px}
+.row .w[hidden]{display:none}
+.warn{background:#FFF4D1;border-radius:10px;padding:10px 14px;margin:8px 0;color:#5A4500}
+.err{background:#FBEAE7;border-radius:10px;padding:10px 14px;margin:8px 0;color:#8E2B1F}
+.sumtable{width:100%;border-collapse:collapse;font-size:15px}
+.sumtable th{background:var(--board);color:var(--ink-soft);text-align:left;padding:8px 10px;font-size:14px}
+.sumtable td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+.pill{display:inline-block;border-radius:999px;padding:1px 10px;font-size:13px;font-weight:700;background:var(--pine-tint);color:var(--pine-deep);margin:1px 3px 1px 0}
+.empty{text-align:center;color:var(--ink-soft);padding:24px 8px}
+.regbox{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-top:12px}
+.regbox div{background:var(--note);color:#5A4500;border-radius:12px;padding:10px 14px}
+.regbox b{display:block;font-family:'Mitr',sans-serif;font-weight:600}
+.foot{color:var(--ink-soft);font-size:14px;text-align:center;padding:8px 16px 28px}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+a{color:var(--pine-deep);font-weight:600}
+@media(max-width:640px){.grid2{grid-template-columns:1fr}.sumtable{font-size:14px}}
+@media print{
+  header.app .sub,.chips,.actions,.noprint{display:none!important}
+  body{background:#fff}.panel{box-shadow:none;border:1px solid var(--line);break-inside:avoid}
+  .group.hidden-print{display:none}
+}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+<header class="app"><div class="hwrap"><div class="logo">🧭</div><div><div class="brand">ใบงาน: คณะที่ฉันอยากเข้า ต้องสอบวิชาไหนบ้าง</div><div class="sub">แนะให้แนว · พูลเจริญวิทยาคม · สำหรับนักเรียน ม.6 (TCAS70)</div></div></div></header>
+
+<div class="wrap">
+
+<div class="panel">
+  <h2><span class="step">1</span>ข้อมูลของฉัน</h2>
+  <p class="hint">ข้อมูลอยู่ในหน้านี้เท่านั้น ไม่ถูกบันทึกในระบบ ปิดหน้าแล้วหาย ถ้าต้องการเก็บให้กด “พิมพ์ / บันทึก PDF” หรือ “คัดลอกสรุป” ก่อนปิด</p>
+  <div class="grid2">
+    <div><label class="f" for="stName">ชื่อ-สกุล</label><input type="text" id="stName" maxlength="80"></div>
+    <div><label class="f" for="stRoom">ห้อง</label><input type="text" id="stRoom" maxlength="20" placeholder="เช่น ม.6/1"></div>
+  </div>
+</div>
+
+<div class="panel">
+  <h2><span class="step">2</span>เลือกคณะที่อยากเข้า (ใส่ได้ 3 อันดับ)</h2>
+  <p class="hint">กดแท็บเพื่อสลับอันดับ จุดเหลืองหมายถึงอันดับนั้นมีข้อมูลแล้ว</p>
+  <div class="chips" id="tabs"></div>
+  <div class="grid2">
+    <div><label class="f" for="uni">มหาวิทยาลัย</label><input type="text" id="uni" maxlength="120" list="uniList" autocomplete="off" placeholder="เช่น จุฬา, มช, มข"><datalist id="uniList"></datalist><div id="uniMsg" class="hint noprint" style="margin:4px 0 0"></div></div>
+    <div><label class="f" for="fac">คณะ / สาขา</label><input type="text" id="fac" maxlength="120" placeholder="เช่น วิศวกรรมคอมพิวเตอร์"></div>
+  </div>
+  <label class="f" for="rnd">สมัครรอบไหน</label>
+  <select id="rnd">
+    <option value="">เลือกรอบ</option>
+    <option>รอบ 1 Portfolio</option>
+    <option>รอบ 2 Quota</option>
+    <option>รอบ 3 Admission</option>
+    <option>รอบ 4 Direct Admission</option>
+  </select>
+</div>
+
+<div class="panel">
+  <h2><span class="step">3</span>ไปหาเกณฑ์ของคณะนี้</h2>
+  <p class="hint">เปิดดู 2 ที่ แล้วกลับมาติ๊กวิชาในขั้นตอนที่ 4</p>
+  <ol style="margin:0;padding-left:22px">
+    <li>ค้นหาหลักสูตรที่ <a href="https://www.mytcas.com" target="_blank" rel="noopener">mytcas.com</a> พิมพ์ชื่อมหาวิทยาลัยหรือคณะ</li>
+    <li>เปิดประกาศรับสมัครของคณะนั้นในรอบที่เลือก มองหาหัวข้อ “คุณสมบัติ” และ “องค์ประกอบคะแนน” หรือ “สัดส่วนคะแนน”</li>
+    <li>จดว่าใช้ TGAT, TPAT วิชาไหน และ A-Level วิชาอะไร พร้อมสัดส่วนคะแนน (ร้อยละ) ถ้ามี</li>
+  </ol>
+</div>
+
+<div class="panel">
+  <h2><span class="step">4</span>ติ๊กวิชาที่คณะนี้กำหนด <span id="who" style="font-family:Sarabun;font-weight:400;color:var(--ink-soft);font-size:16px"></span></h2>
+  <p class="hint">ติ๊กเฉพาะวิชาที่ประกาศของคณะระบุ ถ้ามีสัดส่วนคะแนน (ร้อยละ) ให้กรอกด้วย</p>
+  <div id="groups"></div>
+  <label class="f" for="note">เงื่อนไขอื่น ๆ (เช่น คะแนนขั้นต่ำ GPAX)</label>
+  <textarea id="note" rows="2" maxlength="300"></textarea>
+  <div id="choiceMsg"></div>
+</div>
+
+<div class="panel">
+  <h2><span class="step">5</span>สรุป: ฉันต้องสมัครสอบอะไรบ้าง</h2>
+  <p class="hint">รวมจากทุกอันดับที่ติ๊กไว้ สอบครั้งเดียวใช้ได้กับทุกคณะ</p>
+  <div id="summary"></div>
+  <div class="actions noprint">
+    <button class="btn note" id="btnCopy" type="button">คัดลอกสรุป</button>
+    <button class="btn" id="btnPrint" type="button">พิมพ์ / บันทึก PDF</button>
+    <button class="btn ghost" id="btnReset" type="button">ล้างทั้งหมด</button>
+  </div>
+  <div id="copyMsg" class="noprint" style="margin-top:8px"></div>
+</div>
+
+<div class="panel noprint">
+  <h2><span class="step">6</span>ส่งครู</h2>
+  <p class="hint">ล็อกอินที่คลังแนะแนวด้วยบัญชีนักเรียน แล้วกด “ส่งให้ครู” ส่งใหม่ได้ ระบบจะเก็บฉบับล่าสุด ถ้าส่งไม่ได้ให้กด “คัดลอกสรุป” แล้ววางในงานที่ครูมอบหมาย</p>
+  <div class="actions"><button class="btn note" id="btnSend" type="button">ส่งให้ครู</button></div>
+  <p id="sendMsg" class="hint" style="margin:10px 0 0;font-weight:600" role="status"></p>
+</div>
+
+</div>
+<div class="foot">ใบงานนี้ช่วยจัดข้อมูลเท่านั้น ตรวจเกณฑ์จริงจากประกาศของคณะและ mytcas.com ทุกครั้ง · วันที่อ้างอิงปฏิทิน TCAS70</div>
+
+<script>
+(function(){
+"use strict";
+var EXAMS=[
+ {id:'TGAT',grp:'tgat',name:'TGAT ความถนัดทั่วไป',sub:'TGAT1 อังกฤษ + TGAT2 คิดเหตุผล + TGAT3 สมรรถนะอนาคต',date:'30 ม.ค. 2570 (บ่าย)',reg:'tp'},
+ {id:'TPAT1',grp:'tpat',name:'TPAT1 วิชาเฉพาะ กสพท. (แพทย์ ทันตะ สัตวแพทย์)',sub:'สมัครแยกที่เว็บ กสพท.',date:'13 ก.พ. 2570',reg:'tpat1'},
+ {id:'TPAT2',grp:'tpat',name:'TPAT2 ศิลปกรรมศาสตร์',sub:'',date:'31 ม.ค. 2570 (บ่าย)',reg:'tp'},
+ {id:'TPAT3',grp:'tpat',name:'TPAT3 วิทยาศาสตร์ เทคโนโลยี วิศวกรรมศาสตร์',sub:'',date:'30 ม.ค. 2570 (เช้า)',reg:'tp'},
+ {id:'TPAT4',grp:'tpat',name:'TPAT4 สถาปัตยกรรมศาสตร์',sub:'',date:'1 ก.พ. 2570',reg:'tp'},
+ {id:'TPAT5',grp:'tpat',name:'TPAT5 ครุศาสตร์-ศึกษาศาสตร์',sub:'',date:'31 ม.ค. 2570 (เช้า)',reg:'tp'},
+ {id:'AL_TH',grp:'al',name:'A-Level ภาษาไทย',sub:'',date:'13 มี.ค. 2570',reg:'al'},
+ {id:'AL_SO',grp:'al',name:'A-Level สังคมศึกษา',sub:'',date:'13 มี.ค. 2570',reg:'al'},
+ {id:'AL_PH',grp:'al',name:'A-Level ฟิสิกส์',sub:'',date:'13 มี.ค. 2570',reg:'al'},
+ {id:'AL_BI',grp:'al',name:'A-Level ชีววิทยา',sub:'',date:'13 มี.ค. 2570',reg:'al'},
+ {id:'AL_M1',grp:'al',name:'A-Level คณิตศาสตร์ประยุกต์ 1',sub:'',date:'14 มี.ค. 2570',reg:'al'},
+ {id:'AL_EN',grp:'al',name:'A-Level ภาษาอังกฤษ',sub:'',date:'14 มี.ค. 2570',reg:'al'},
+ {id:'AL_CH',grp:'al',name:'A-Level เคมี',sub:'',date:'14 มี.ค. 2570',reg:'al'},
+ {id:'AL_M2',grp:'al',name:'A-Level คณิตศาสตร์ประยุกต์ 2',sub:'',date:'15 มี.ค. 2570',reg:'al'},
+ {id:'AL_AS',grp:'al',name:'A-Level วิทยาศาสตร์ประยุกต์',sub:'',date:'15 มี.ค. 2570',reg:'al'},
+ {id:'AL_OT',grp:'al',name:'A-Level ภาษาอื่น ๆ',sub:'',date:'15 มี.ค. 2570',reg:'al'}
+];
+var GROUPS=[
+ {k:'tgat',t:'TGAT',c:'var(--g4)'},
+ {k:'tpat',t:'TPAT',c:'var(--g1)'},
+ {k:'al',t:'A-Level',c:'var(--g5)'}
+];
+var BYID={};EXAMS.forEach(function(e){BYID[e.id]=e;});
+var cur=0;
+var ch=[blank(),blank(),blank()];
+function blank(){return {uni:'',fac:'',rnd:'',note:'',sel:{}};}
+function $(id){return document.getElementById(id);}
+function esc(s){return String(s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+function hasData(c){return !!(c.uni||c.fac||c.rnd||c.note||Object.keys(c.sel).some(function(k){return c.sel[k].on;}));}
+
+function renderTabs(){
+  var h='';
+  for(var i=0;i<3;i++){
+    h+='<button type="button" class="chip'+(i===cur?' active':'')+'" data-i="'+i+'">อันดับ '+(i+1)+(hasData(ch[i])?'<span class="dot"></span>':'')+'</button>';
+  }
+  $('tabs').innerHTML=h;
+}
+function renderGroups(){
+  var c=ch[cur],h='';
+  GROUPS.forEach(function(g){
+    h+='<div class="group"><h3><span class="gtag" style="background:'+g.c+'"></span>'+g.t+'</h3>';
+    EXAMS.filter(function(e){return e.grp===g.k;}).forEach(function(e){
+      var s=c.sel[e.id]||{on:false,w:''};
+      h+='<div class="row'+(s.on?' on':'')+'" data-id="'+e.id+'"><input type="checkbox" id="cb_'+e.id+'"'+(s.on?' checked':'')+' data-id="'+e.id+'" aria-label="'+esc(e.name)+'">'
+       +'<label class="name" for="cb_'+e.id+'">'+esc(e.name)+(e.sub?'<small>'+esc(e.sub)+'</small>':'')+'</label>'
+       +'<span class="w"'+(s.on?'':' hidden')+'>สัดส่วน <input type="number" min="0" max="100" step="1" inputmode="numeric" data-w="'+e.id+'" value="'+esc(s.w)+'" aria-label="สัดส่วนคะแนน '+esc(e.name)+' ร้อยละ"> %</span></div>';
+    });
+    h+='</div>';
+  });
+  $('groups').innerHTML=h;
+}
+function loadFields(){
+  var c=ch[cur];
+  $('uni').value=c.uni;$('fac').value=c.fac;$('rnd').value=c.rnd;$('note').value=c.note;
+  $('who').textContent='(อันดับ '+(cur+1)+(c.fac?': '+c.fac:'')+')';
+}
+function choiceWarn(){
+  var c=ch[cur],tot=0,any=false,m='';
+  Object.keys(c.sel).forEach(function(k){var s=c.sel[k];if(s.on&&s.w!==''){tot+=Number(s.w)||0;any=true;}});
+  if(any&&tot!==100) m='<div class="warn">สัดส่วนที่กรอกรวมเป็น '+tot+'% ตรวจดูอีกครั้ง ปกติประกาศของคณะรวมเป็น 100% (บางคณะใช้เงื่อนไขอื่น)</div>';
+  $('choiceMsg').innerHTML=m;
+}
+function sortKey(e){return EXAMS.indexOf(e);}
+function compute(){
+  var used={};
+  ch.forEach(function(c,i){
+    Object.keys(c.sel).forEach(function(k){
+      if(c.sel[k].on){(used[k]=used[k]||[]).push(i+1);}
+    });
+  });
+  var ids=Object.keys(used).sort(function(a,b){return sortKey(BYID[a])-sortKey(BYID[b]);});
+  return {used:used,ids:ids};
+}
+function renderSummary(){
+  var r=compute(),box=$('summary');
+  if(!r.ids.length){box.innerHTML='<div class="empty">ยังไม่ได้ติ๊กวิชา กลับไปขั้นตอนที่ 4 ก่อนนะ</div>';return;}
+  var tp=0,al=0,tpat1=false,h='<table class="sumtable"><thead><tr><th>วิชา</th><th>วันสอบ</th><th>ใช้กับอันดับ</th></tr></thead><tbody>';
+  r.ids.forEach(function(id){
+    var e=BYID[id];
+    if(e.reg==='tp')tp++; else if(e.reg==='al')al++; else if(e.reg==='tpat1')tpat1=true;
+    h+='<tr><td><b>'+esc(e.name)+'</b></td><td>'+esc(e.date)+'</td><td>'+r.used[id].map(function(n){return '<span class="pill">อันดับ '+n+'</span>';}).join('')+'</td></tr>';
+  });
+  h+='</tbody></table><div class="regbox">';
+  if(tp){h+='<div><b>สมัครสอบ TGAT/TPAT 2–5</b>4–10 พ.ย. 2569 (ล่าช้า 11–12 พ.ย.) ที่ mytcas.com<br>'+tp+' วิชา ค่าสมัครประมาณ '+(tp*140)+' บาท (วิชาละ 140 บาท ถ้าเข้าเกณฑ์ที่รัฐช่วยอาจไม่ต้องจ่าย)</div>';}
+  if(tpat1){h+='<div><b>TPAT1 กสพท.</b>สอบ 13 ก.พ. 2570 สมัครแยก ติดตามวันเปิดรับที่เว็บไซต์ กสพท.</div>';}
+  if(al){h+='<div><b>สมัครสอบ A-Level</b>14–20 ม.ค. 2570 (ล่าช้า 21–22 ม.ค.)<br>'+al+' วิชา สอบ 13–15 มี.ค. 2570 ดูค่าสมัครที่ mytcas.com</div>';}
+  h+='</div>';
+  var warn=[];
+  if(!tp&&!tpat1&&al)warn.push('ไม่มี TGAT/TPAT ในรายการนี้ ตรวจอีกครั้งว่าประกาศของคณะไม่ได้ใช้');
+  box.innerHTML=h+(warn.length?'<div class="warn">'+esc(warn[0])+'</div>':'');
+}
+function renderAll(){renderTabs();loadFields();renderGroups();choiceWarn();renderSummary();}
+function textSummary(){
+  var r=compute(),L=[];
+  L.push('ใบงาน: คณะที่ฉันอยากเข้า ต้องสอบวิชาไหนบ้าง');
+  L.push('ชื่อ: '+($('stName').value||'-')+'  ห้อง: '+($('stRoom').value||'-'));
+  ch.forEach(function(c,i){
+    if(!hasData(c))return;
+    L.push('');
+    L.push('อันดับ '+(i+1)+': '+(c.uni||'-')+' / '+(c.fac||'-')+(c.rnd?' ('+c.rnd+')':''));
+    Object.keys(c.sel).filter(function(k){return c.sel[k].on;}).sort(function(a,b){return sortKey(BYID[a])-sortKey(BYID[b]);}).forEach(function(k){
+      L.push('  - '+BYID[k].name+(c.sel[k].w!==''?' สัดส่วน '+c.sel[k].w+'%':''));
+    });
+    if(c.note)L.push('  เงื่อนไขอื่น: '+c.note);
+  });
+  L.push('');
+  L.push('ต้องสมัครสอบรวม:');
+  if(!r.ids.length)L.push('  - ยังไม่ได้เลือกวิชา');
+  r.ids.forEach(function(id){L.push('  - '+BYID[id].name+' ('+BYID[id].date+')');});
+  return L.join('\n');
+}
+
+// events
+$('tabs').addEventListener('click',function(ev){
+  var b=ev.target.closest('button[data-i]');if(!b)return;
+  cur=Number(b.getAttribute('data-i'));renderAll();
+});
+['uni','fac','rnd','note'].forEach(function(id){
+  $(id).addEventListener('input',function(){ch[cur][id]=this.value;renderTabs();$('who').textContent='(อันดับ '+(cur+1)+(ch[cur].fac?': '+ch[cur].fac:'')+')';});
+  $(id).addEventListener('change',function(){ch[cur][id]=this.value;renderTabs();});
+});
+$('groups').addEventListener('change',function(ev){
+  var t=ev.target;
+  if(t.matches('input[type=checkbox]')){
+    var id=t.getAttribute('data-id'),s=ch[cur].sel[id]||(ch[cur].sel[id]={on:false,w:''});
+    s.on=t.checked;
+    var row=t.closest('.row');row.classList.toggle('on',t.checked);
+    row.querySelector('.w').hidden=!t.checked;
+    renderTabs();choiceWarn();renderSummary();
+  }
+});
+$('groups').addEventListener('input',function(ev){
+  var t=ev.target;
+  if(t.matches('input[data-w]')){
+    var id=t.getAttribute('data-w'),s=ch[cur].sel[id]||(ch[cur].sel[id]={on:true,w:''});
+    var v=t.value;if(v!==''){var n=Math.max(0,Math.min(100,Math.round(Number(v)||0)));v=String(n);}
+    s.w=v;choiceWarn();
+  }
+});
+$('btnPrint').addEventListener('click',function(){window.print();});
+$('btnReset').addEventListener('click',function(){
+  if(!window.confirm('ล้างข้อมูลทั้งหมดในหน้านี้ใช่ไหม')) return;
+  ch=[blank(),blank(),blank()];cur=0;$('stName').value='';$('stRoom').value='';renderAll();$('copyMsg').innerHTML='';
+});
+$('btnCopy').addEventListener('click',function(){
+  var txt=textSummary(),m=$('copyMsg');
+  function ok(){m.innerHTML='<div class="warn">คัดลอกแล้ว นำไปวางในงานที่ครูมอบหมายได้เลย</div>';}
+  function fail(){
+    var ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();
+    try{document.execCommand('copy');ok();}catch(e){m.innerHTML='<div class="err">คัดลอกไม่สำเร็จ ลองกด “พิมพ์ / บันทึก PDF” แทน</div>';}
+    document.body.removeChild(ta);
+  }
+  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(txt).then(ok,fail);}else{fail();}
+});
+
+/* ── รายชื่อมหาวิทยาลัยมาตรฐานจากฐานข้อมูล (iv_universities) อ่านอย่างเดียว ── */
+var SB_URL="https://ikkhjslmtjwrxzxvtokb.supabase.co";
+var SB_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlra2hqc2xtdGp3cnh6eHZ0b2tiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM3NDMzNjksImV4cCI6MjA5OTMxOTM2OX0.3OR_9mEv82Ns1LLjx5nnRwJYzrtKFtWCWd1bPuQfNKU";
+var unis=[];
+function norm(s){return String(s||'').replace(/[\s.​]/g,'').toLowerCase();}
+function matchUni(v){
+  var k=norm(v);if(!k)return null;
+  for(var i=0;i<unis.length;i++){if(norm(unis[i].name)===k)return unis[i];}
+  for(var j=0;j<unis.length;j++){
+    var u=unis[j],keys=[u.short_name].concat(u.aliases||[]);
+    for(var m=0;m<keys.length;m++){if(keys[m]&&norm(keys[m])===k)return u;}
+  }
+  return null;
+}
+function uniMsg(t){$('uniMsg').textContent=t||'';}
+async function loadUnis(){
+  if(!window.supabase){return;}
+  try{
+    var sb=window.supabase.createClient(SB_URL,SB_KEY);
+    var s=await sb.auth.getSession();
+    if(!s.data||!s.data.session){
+      uniMsg('ล็อกอินที่คลังแนะแนวก่อน ระบบจะช่วยเลือกชื่อมหาวิทยาลัยให้ตรงกัน (ไม่ล็อกอินก็พิมพ์เองได้)');
+      return;
+    }
+    var all=[],from=0,size=1000;
+    for(;;){
+      var r=await sb.from('iv_universities').select('name,short_name,aliases,sort_order,is_active').eq('is_active',true).order('sort_order').order('name').range(from,from+size-1);
+      if(r.error)throw r.error;
+      all=all.concat(r.data||[]);
+      if(!r.data||r.data.length<size)break;
+      from+=size;
+    }
+    unis=all.filter(function(u){return u&&u.name;});
+    $('uniList').innerHTML=unis.map(function(u){return '<option value="'+esc(u.name)+'"></option>';}).join('');
+    uniMsg(unis.length?'พิมพ์ชื่อสั้น ๆ แล้วเลือกจากรายการ ไม่เจอให้พิมพ์เองได้':'');
+  }catch(e){uniMsg('');}
+}
+$('uni').addEventListener('change',function(){
+  var u=matchUni(this.value);
+  if(u&&u.name!==this.value){this.value=u.name;ch[cur].uni=u.name;renderTabs();}
+});
+loadUnis();
+
+/* ── ส่งให้ครู: บันทึกเป็นงานส่งแบบข้อความ (ตาราง submissions ของตัวเอง) ── */
+var sbc=null;
+function getSb(){if(!sbc&&window.supabase){sbc=window.supabase.createClient(SB_URL,SB_KEY);}return sbc;}
+function sendMsg(t,bad){var e=$('sendMsg');e.textContent=t;e.style.color=bad?'#B3261E':'var(--pine-deep)';}
+var UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+$('btnSend').addEventListener('click',async function(){
+  var btn=this;
+  var c0=ch[0],r=compute();
+  if(!c0.uni.trim()||!c0.fac.trim()){sendMsg('กรอกมหาวิทยาลัยและคณะของอันดับ 1 ก่อนนะ',true);return;}
+  if(!r.ids.length){sendMsg('ติ๊กวิชาที่คณะกำหนดอย่างน้อย 1 วิชาก่อนนะ',true);return;}
+  var sb=getSb();
+  if(!sb){sendMsg('ส่งไม่ได้ในตอนนี้ (ต่ออินเทอร์เน็ตไม่ได้) กด “คัดลอกสรุป” แล้วนำไปวางในงานที่ครูมอบหมายแทน',true);return;}
+  btn.disabled=true;sendMsg('กำลังส่ง…');
+  try{
+    var s=await sb.auth.getSession();
+    if(!s.data||!s.data.session){sendMsg('ยังไม่ได้ล็อกอิน อย่าปิดหน้านี้ ให้เปิดคลังแนะแนวในแท็บใหม่เพื่อล็อกอิน แล้วกลับมากดส่งที่แท็บนี้อีกครั้ง',true);return;}
+    var uid=s.data.session.user.id;
+    var pr=await sb.from('profiles').select('role').eq('id',uid).maybeSingle();
+    if(pr.error)throw pr.error;
+    if(!pr.data||pr.data.role!=='student'){sendMsg('ปุ่มนี้ใช้ได้กับบัญชีนักเรียนเท่านั้น',true);return;}
+    var aid=new URLSearchParams(location.search).get('a');
+    if(!aid||!UUID.test(aid)){
+      var ar=await sb.from('assignments').select('id').ilike('external_url','%tgat-tpat-worksheet%').order('created_at',{ascending:false}).limit(1);
+      if(ar.error)throw ar.error;
+      aid=ar.data&&ar.data[0]?ar.data[0].id:null;
+    }else{
+      var chk=await sb.from('assignments').select('id').eq('id',aid).maybeSingle();
+      if(chk.error)throw chk.error;
+      aid=chk.data?chk.data.id:null;
+    }
+    if(!aid){sendMsg('ไม่พบงานที่ครูมอบหมายให้ห้องของนักเรียน ให้เปิดใบงานจากงานในคลังแนะแนว หรือกด “คัดลอกสรุป” ไปวางส่งแทน',true);return;}
+    var ex=await sb.from('submissions').select('id,submitted_at').eq('assignment_id',aid).eq('student_id',uid).maybeSingle();
+    if(ex.error)throw ex.error;
+    if(ex.data&&!window.confirm('เคยส่งใบงานนี้แล้ว ส่งใหม่จะแทนที่ฉบับเดิม ตกลงไหม')){sendMsg('ยังไม่ได้ส่งใหม่ ฉบับเดิมยังอยู่');return;}
+    var row={assignment_id:aid,student_id:uid,submitted_at:new Date().toISOString(),text_answer:textSummary().slice(0,6000),note:null,file_path:null,file_name:null,external_url:null};
+    var w=ex.data?await sb.from('submissions').update(row).eq('id',ex.data.id):await sb.from('submissions').insert(row);
+    if(w.error)throw w.error;
+    sendMsg('ส่งให้ครูเรียบร้อยแล้ว ✅ ('+new Date().toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'})+' น.) แก้ไขแล้วกดส่งใหม่ได้');
+  }catch(e){
+    sendMsg('ส่งไม่สำเร็จ ลองอีกครั้ง ถ้ายังไม่ได้ให้กด “คัดลอกสรุป” แล้ววางในงานที่ครูมอบหมาย',true);
+  }finally{btn.disabled=false;}
+});
+renderAll();
+})();
+</script>
+</body>
+</html>
