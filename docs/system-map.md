@@ -1,0 +1,93 @@
+# system-map — แผนที่ระบบ "แนะให้แนว" (treasury)
+
+> ตรวจกับฐานข้อมูลจริงเมื่อ 24 ต.ค. 2569 (เพิ่มโมดูลหน้าแรก + ปิดสิทธิ์คนนอก 26 ต.ค. 2569; เพิ่มวันสัมภาษณ์/นับถอยหลังในซ้อมสัมภาษณ์ และนำเข้าคลังคำถาม 85 ข้อ (รวม 327) 31 ต.ค. 2569; เพิ่มคำถามมหาวิทยาลัยแห่งละ 10 ข้อ (รวม 447) และตัวอย่างแนวคำตอบ 180 ข้อ 2 พ.ย. 2569; รวมรายงานผู้บริหารเป็นหน้าเดียว + จำกัดสิทธิ์รายงานให้คำปรึกษา 2 พ.ย. 2569) — ไฟล์นี้เป็น "แผนที่" ไม่ใช่ schema dump
+> ถ้าต้องการคอลัมน์/policy ล่าสุด ให้ดึงสดจาก Supabase (list_tables, pg_get_viewdef, pg_get_functiondef) อย่าเชื่อไฟล์นี้เรื่องรายละเอียดคอลัมน์
+
+## 1) ภาพรวมโครงสร้าง
+
+| รายการ | ค่า |
+|---|---|
+| ชื่อระบบ | แนะให้แนว (ชื่อโปรเจกต์ใน Claude: treasury) |
+| โรงเรียน | โรงเรียนพูลเจริญวิทยาคม จ.สมุทรปราการ |
+| Supabase หลัก | `guidance-library` — ref `ikkhjslmtjwrxzxvtokb` (ap-southeast-1) |
+| Supabase อื่น | `diary-anonymous-counseling` (ref `zqozijyjhqmdamaqxjji`) สถานะ INACTIVE ไม่ได้ใช้งานในระบบนี้ |
+| โปรเจกต์ที่เคยสร้างแล้วไม่เห็นในรายการ | `guidance-mou` (umctwizipniqvfpruqbw) — บันทึกเก่าบอกว่ายังไม่ได้ลบ แต่ตอนนี้ไม่อยู่ใน list_projects ให้ถือว่าไม่มีแล้ว |
+| หน้าเว็บ | HTML ไฟล์เดียวต่อโมดูล ฝากบน GitHub Pages: repo `timemachine68/treasury` → `https://timemachine68.github.io/treasury/` (migration เก็บสำเนาไว้ที่ `supabase/migrations/YYYYMMDD_<ชื่อ>.sql`) |
+| Edge Function | `manage-users` (สร้าง/รีเซ็ตรหัสผ่านบัญชี — admin เท่านั้น) |
+| อีเมลแจ้งเตือนครู | Google Apps Script (Gmail) ถูกเรียกจาก trigger ใน Supabase ผ่าน pg_net — ค่าตั้งอยู่ใน `work_permit_notify_config` และ `award_notify_recipients` |
+
+## 2) บทบาทผู้ใช้และสิทธิ์
+
+- `profiles.role`: `student` / `teacher` / `admin`
+- `profiles.is_guidance` (boolean): ครูงานแนะแนว — ได้สิทธิ์จัดการมากกว่าครูทั่วไป
+- `profiles.menu_permissions` (JSONB): จำกัดเมนูของครูแต่ละคน มีคีย์ เช่น library/work/survey/strength/manage/overview/announcements และ `appsOnly` (array ของ `external_systems.id` ที่จะเห็นในการ์ด "ระบบของเรา") — ถ้าครูคนไหนมี `appsOnly` ต้องใส่ id การ์ดใหม่เข้าไปด้วยจึงจะเห็น (2 พ.ย. 2569: การ์ด "รายงานผู้บริหาร" id `37b93001-edfa-4601-b6b6-5bb278ae2c34` เพิ่มให้ครูแนะแนว 3 คนแล้ว; การ์ด "รายงานประจำปี" id `39e12c02-…` ถูกลบ)
+- ฟังก์ชันเช็คสิทธิ์ที่ใช้ซ้ำ: `get_my_role()`, `get_my_room()`, `is_scholarship_officer()`, `awards_is_officer()`, `iv_is_staff()`, `can_manage_announcements()` (`is_scholarship_officer` / `awards_is_officer` / `iv_is_staff` = admin หรือครูแนะแนว)
+- รูปแบบ username: `username@guidance-pcw.local` (นักเรียนใช้รหัสนักเรียน 5 หลัก)
+- บัญชีกลุ่มสาระ 8 บัญชี (thai, math, science, social, health, art, occup, foreign) เป็น role=teacher จำกัดเมนูให้เห็นเฉพาะการ์ดผลงานนักเรียน — ⚠️ การจำกัดนี้อยู่ที่หน้าเว็บ โมดูลที่มีข้อมูลนักเรียนรายคนหรือสรุปที่อ่อนไหวต้องเช็ค `is_guidance` ใน RLS/ฟังก์ชันด้วย (แบบ `iv_is_staff()`) ไม่ใช่แค่ `role='teacher'`
+- นับ ณ 26 ต.ค. 2569: admin 1, teacher ที่เป็นครูแนะแนว (`is_guidance`) 3, teacher อื่น 8, นักเรียน 2,645
+
+## 3) แผนที่โมดูล → ตาราง
+
+| โมดูล | ตาราง / view หลัก | หน้าเว็บ (prefix) | สถานะ |
+|---|---|---|---|
+| **แกนคลังแนะให้แนว** | `profiles`, `resources`, `assignments`, `submissions`, `external_systems` (การ์ดเมนู: visible_to, sort_order, category) | `index.html` | ใช้งานจริง |
+| **รายงานผู้บริหาร (รวมภาพรวมผู้บริหาร + รายงานประจำปี)** | ไม่มีตารางของตัวเอง อ่านผ่าน RPC: `exec_overview()`, `usage_summary(p_months)`, `report_survey/quota/awards`, `report_programs(p_year)` (ทุน/ฝึกงาน/ซ้อมสัมภาษณ์/MOU/ตารางแนะแนว), `report_counseling(p_year)` (ให้คำปรึกษาแบบไม่ระบุตัวตน ซ่อนกลุ่ม <3 ราย); helper `th_academic_year(timestamptz)` | `executive-report.html` (แท็บ: ภาพรวม/เรียนต่อ/โควตา/ทุน/ผลงาน/ฝึกงาน/ซ้อมสัมภาษณ์/ความร่วมมือ/ให้คำปรึกษา/การใช้งาน; ปุ่ม Word ปุ่มเดียวทั้งฉบับ; พิมพ์/PDF). `exec-overview.html` และ `annual-report.html` เหลือเป็นหน้าเด้งมาหน้านี้ (คง hash เดิม) — บัญชีกองกลางไม่รวมในรายงาน | ใช้งานจริง — migration `20261102_report_programs`; usage key `page:executive-report` (key เก่า `page:exec-overview`, `page:annual-report` ยังมีป้ายชื่อ) |
+| **หน้าแรก + ปฏิทินกำหนดการ** | `calendar_events` (หมวด national/tcas/guidance/other; อ่าน = ทุกคนที่ login, เขียน = `iv_is_staff()`; ห้ามชื่อซ้ำในวันเริ่มเดียวกัน) + หน้าเว็บดึงวันเปิด-ปิดรับจาก `scholarships`/`quotas` (ไม่ใช่ draft) มาแสดงอัตโนมัติ | `home.html` — index.html ส่งไปหน้าแรกเมื่อ login ใหม่หรือเปิดครั้งแรกในแท็บ (flag `sessionStorage.pcw_home_seen`); `index.html#announce` / `#apps` เปิดแท็บนั้นตรง | ใช้งานจริง — merge PR #16 เข้า main 26 ต.ค. 2569; ช้างเผือกไม่มีคอลัมน์วันที่ ครูต้องกรอกในปฏิทินเอง |
+| **ประชาสัมพันธ์** | `announcements` (+ `is_pinned`, `pinned_until` — ปักหมุดได้เฉพาะเจ้าของข่าว/admin), `announcement_reads` | แท็บข่าวใน index.html + home.html | ใช้งานจริง — ตั้งแต่ 26 ต.ค. 2569 ข่าวและไฟล์แนบเห็นเฉพาะผู้ที่ login (revoke จาก anon) |
+| **แบบสำรวจจบการศึกษา** | `survey_rounds`, `survey_responses` | ใน index.html | ใช้งานจริง |
+| **จุดแข็ง (RIASEC / เกียรติบัตรเดิม)** | `strength_assessments`, `strength_tags` (`type`=R/I/A/S/E/C หรือ `award`) | ใน index.html | ใช้งานจริง |
+| **ข้อมูลนักเรียน 360°** | `student_metrics`, `vulnerable_profiles` | ภาพรวมนักเรียน | มีข้อมูลบางส่วน |
+| **ทุนการศึกษา** | `scholarships`, `scholarship_criteria`, `applications`, `application_scores`, `scholarship_audit_log`; view `application_totals`, `scholarship_ranking`, `v_scholarship_*` | scholarship-apply (นักเรียน) / scholarship-hub, scholarship-admin, scholarship-results (ครู) — ทุกหน้าอ่านหลัง login | ใช้งานจริง — ตั้งแต่ 26 ต.ค. 2569 รายชื่อทุนและเกณฑ์ทุนเห็นเฉพาะผู้ที่ login. `scholarship_annual_summary()` เป็น SECURITY DEFINER (view ใต้มัน revoke จาก authenticated) — `report_programs` เรียกผ่านฟังก์ชันนี้ |
+| **โควตา TCAS/มหาวิทยาลัย** | `quotas`, `quota_criteria`, `quota_applications`, `quota_application_scores`, `quota_promotions`; view `quota_application_totals` | quota-* | ใช้งานจริง |
+| **โครงการช้างเผือก (BUU)** | `chang_phueak_majors`, `chang_phueak_programs`, `chang_phueak_applications` + bucket `chang-phueak-docs` | chang-phueak-apply / chang-phueak-teacher | ใช้งานจริง (ไม่มี scoring engine โดยตั้งใจ) |
+| **ผลงานนักเรียน (TCASVerified)** | `subject_groups`, `subject_group_members`, `award_level_map`, `student_identity` (เลขบัตร แยกตาราง), `tcas_batches`, `award_events`, `award_participants`, `award_notify_*`; view `awards.export_*` (4 ตัว, schema `awards` ซ่อนจาก API) | awards-hub / awards-entry / awards-review / awards-export / awards-registry | ระบบครบ รอนำเข้าทะเบียนเลขบัตรทั้งโรงเรียน |
+| **บันทึกให้คำปรึกษา** | `counseling_logs` (ครูเห็นเฉพาะของตัวเอง); view `counseling_overview_by_room/categories/totals` | counseling-log.html | สร้างแล้ว ยังไม่มีข้อมูล. สรุปภาพรวม/รายงานประจำปี (`counseling_overview()`, `counseling_annual_report()`) เรียกได้เฉพาะ `iv_is_staff()` ตั้งแต่ 2 พ.ย. 2569 (migration `20261102_counseling_reports_guidance_only`) |
+| **หนังสืออนุญาตทำงาน/ฝึกงาน** | `work_permit_requests`, `student_work_experiences`, `work_permit_notify_config`; view `work_permit_student_stats` | work-permit-student / work-permit-teacher | ใช้งานจริง + อีเมลแจ้งครู |
+| **บัญชีกองกลางแนะแนว** | `ledger_*` | ledger-app.html | ใช้งานจริง (ครูแนะแนว + admin) |
+| **MOU + ตารางแนะแนวรายคาบ** | `mou_institutions`, `mou_agreements`, `mou_documents`, `mou_activities_log` (ไฟล์เก็บใน Google Drive เก็บแค่ drive_file_id/drive_link); `guidance_week_institutions` (สัปดาห์ที่สถาบันเข้าแนะแนว ม.3/ม.6) | mou.html, guidance-schedule.html | ใช้งานได้ (ณ 2 พ.ย. 2569 ยังไม่มีข้อมูล MOU) |
+| **ฝึกข้อสอบ TGAT/TPAT** | `tgat_prep_attempts` (append-only), `tgat_prep_subjects`, `tgat_prep_groups`, `tgat_prep_questions` | tgat-prep-app.html | schema เสร็จ ยังไม่มีข้อมูล |
+| **PA ครูชำนาญการ** | `pa_cycles`, `pa_evidence` + bucket `pa-evidence` (เห็นเฉพาะเจ้าของ, soft delete) | ยังไม่ยืนยัน | schema เสร็จ |
+| **ซ้อมสัมภาษณ์ (iv_*)** | `iv_categories` (9 หมวดตามสายคณะ), `iv_questions` (th/en, easy/medium/hard; `university_id` = ชุดเฉพาะมหาวิทยาลัย, `is_ai` = คำถาม AI, `is_student_shared` = รุ่นพี่แชร์), `iv_sample_answers` (ตัวอย่างแนวคำตอบ 1 ต่อ 1 กับคำถาม; ครูเท่านั้นเขียนได้; นักเรียนเห็นผ่าน RPC หลังส่งคำตอบข้อนั้นแล้ว), `iv_question_submissions` (กล่องรอตรวจคำถามที่นักเรียนแชร์: pending→approved/rejected), `iv_universities` (12 แห่ง + aliases ไว้จับคู่ชื่อที่พิมพ์), `iv_faculty_options` (32 คณะ → หมวดที่แนะนำ), `iv_rubric_criteria` (4 เกณฑ์ คะแนน 1–4; มีคะแนนแล้วลบไม่ได้ ให้ปิด is_active), `iv_sessions` (kind solo/mock, status draft→submitted→reviewed, เป้าหมาย `university_id`/`target_university`/`target_faculty` ไม่บังคับ ≤120 ตัวอักษร), `iv_answers`, `iv_scores`, `iv_checklist_items`, `iv_checklist_done`, **`iv_interview_dates`** (วันสัมภาษณ์ของนักเรียน ตั้งได้หลายวัน ไม่เกิน 30 วันที่ยังไม่ถึง), **`iv_student_goals`** (เป้าจำนวนเซ็ต เห็นเฉพาะเจ้าของ) + bucket `iv-recordings` | `interview.html` (การ์ด "ซ้อมสัมภาษณ์" เห็นทั้งนักเรียน/ครู; ครูที่ไม่ใช่ครูแนะแนวเห็นข้อความแจ้งแทน; นักเรียนมีแท็บ "🗣 แชร์คำถาม" และ **"⏳ นับถอยหลัง"**, ครูแนะแนวมีแท็บ "📨 คำถามจากนักเรียน" แสดงจำนวนรอตรวจ และ **"📅 ใกล้วันสัมภาษณ์"**) | ใช้งานจริง (ข้อมูลน้อย) — ฝั่งครูเปิดเฉพาะ `iv_is_staff()`; นักเรียนแก้คำตอบ/คะแนนตนเองได้เฉพาะตอน draft. เซ็ตซ้อมมีให้เลือก **5 / 7 / 9 ข้อ** ผสมอัตโนมัติ: คำถามหมวด (ไม่รวมคำถามมหาวิทยาลัย/AI) + มหาวิทยาลัย 2 ข้อ (เซ็ต 5–7) หรือ 3 ข้อ (เซ็ต 9) ตามภาษาหมวด + AI ของหมวด 1 ข้อ (เซ็ต 5–7) หรือ 2 ข้อ (เซ็ต 9); คำถามมหาวิทยาลัยภาษาไทยอยู่หมวด "คำถามทั่วไป" ภาษาอังกฤษอยู่หมวด English. ไม่มีคำถามอ้างปรัชญา/คติพจน์มหาวิทยาลัย — **ทุกมหาวิทยาลัยมี 15 ข้อ (ไทย 12 + อังกฤษ 3) รวม 180 ข้อ** (ณ 2 พ.ย. 2569). **ตัวอย่างแนวคำตอบ (2 พ.ย. 2569):** มีทุกข้อของมหาวิทยาลัย 180 ข้อ เป็นแนวโครงคำตอบ ไม่ใช่คำตอบสำเร็จรูป (ข้อประสบการณ์ใช้ "เช่น" ให้นักเรียนใส่ของจริงเอง); แสดงในหน้า "ผลของฉัน"/รายละเอียดเซ็ตหลังสถานะไม่ใช่ draft; migration `20261102_iv_sample_answers` (RLS เฉพาะครูแนะแนว + RPC `iv_sample_for_question` เช็กว่าส่งข้อนั้นแล้ว, REVOKE จาก anon/PUBLIC) — ยังไม่ได้ push/deploy. **ปริมาณคลัง (ณ 2 พ.ย. 2569): 447 ข้อ** — เดิม 243 ข้อ (24 ต.ค.) + นำเข้าจากไฟล์ CSV 85 ข้อ (31 ต.ค.) + เพิ่มคำถามมหาวิทยาลัยแห่งละ 10 ข้อ รวม 120 ข้อ (2 พ.ย.: ไทย 8 + อังกฤษ 2 ต่อแห่ง; จุฬาฯ เกิน 1 ข้อ ลบออก และบูรพาขาด 1 ข้อ เติมแล้ว); ตอนนำเข้า CSV ข้อจาก 8 หมวดใหม่ 46 ข้อถูกจับเข้าหมวดเดิมที่ใกล้ที่สุด (เศรษฐศาสตร์·เศรษฐกิจโลก และท่องเที่ยว → บริหาร; เหตุการณ์โลก และสังคม·ประชากร → มนุษยศาสตร์; AI·เทคโนโลยี, สิ่งแวดล้อม·พลังงาน และเกษตร·อาหาร → วิศวกรรม; ทักษะคิดวิเคราะห์ → คำถามทั่วไป) ส่วนอีก 39 ข้อเข้าหมวดเดิม รวมภาษาอังกฤษ 8 ข้อ. **หมวดยังคงเป็น 9 หมวด** ตามเดิม. **แชร์คำถาม:** นักเรียน (role=student เท่านั้น) ส่งได้ ≤10 ข้อรอตรวจพร้อมกัน, คำถาม 10–300 ตัวอักษร, ข้อความเดิมซ้ำไม่ได้, ลบได้เฉพาะที่ยังรอตรวจ; ครูแนะแนวอนุมัติผ่าน RPC แล้วเข้า `iv_questions` ทันที (ไม่เก็บชื่อผู้แชร์ในคลัง นักเรียนอื่นไม่เห็นกล่องของกัน). **วันสัมภาษณ์/นับถอยหลัง (31 ต.ค. 2569):** รายละเอียดอยู่ที่ `interview-countdown.md` — ครูแนะแนว/admin อ่านวันได้อย่างเดียว, ครูกลุ่มสาระไม่เห็น, ครูไม่เห็นเป้าจำนวนเซ็ตของนักเรียน |
+| **ทาโรต์ (tarot_*)** | `tarot_consents`, `tarot_sessions`, `tarot_reflections`, `tarot_prepost`; view `tarot_class_summary`, `tarot_prepost_summary` | tarot-student / tarot-teacher | การ์ดสำรวจใจ (เกมไพ่ทาโรต์+MBTI คาบแนะแนว ม.3/ม.6) |
+
+## 4) Storage buckets (private ทั้งหมด)
+
+`announcements`, `chang-phueak-docs`, `iv-recordings`, `pa-evidence`, `profile-photos`, `project-media`, `resources`, `scholarship-evidence`, `submissions`, `survey-photos`
+บักเก็ต `chang-phueak-docs` และ `iv-recordings` ใช้ `auth.uid()` เป็นชื่อโฟลเดอร์ (บักเก็ตอื่นให้ตรวจ policy จริงก่อนสมมติ) ดาวน์โหลดผ่าน signed URL เท่านั้น
+บักเก็ต `announcements`: อ่านได้เฉพาะ `authenticated` (แก้ 26 ต.ค. 2569 เดิมเป็น public role)
+
+## 5) RPC สำคัญแยกตามโมดูล
+
+- **ทุน/โควตา:** `compute_*_scores`, `apply_scoring_rules`, `check_eligibility`, `quota_check_eligibility`, `quota_set_status`, `quota_confirm_promotion`, `quota_on_seat_freed`, `adjust_score`, `quota_adjust_score`, `list_open_quotas`, `get_quota_form`
+- **ผลงาน/TCAS:** `awards_*` (lookup, add_participants, verify_events, return_event, review_summary, import_*), `tcas_export_*`, `tcas_validate`, `tcas_batch_*`, `tcas_mark_exported`
+- **ซ้อมสัมภาษณ์:** `iv_save_review(session, scores jsonb {criteria_id: 1–4}, comment)` บันทึกผลตรวจครั้งเดียวจบ (SECURITY INVOKER); `iv_approve_submission(...)` / `iv_reject_submission(id, reason)` ตรวจคำถามที่นักเรียนแชร์ (SECURITY INVOKER, เฉพาะ `iv_is_staff()`, กันอนุมัติซ้ำ/คำถามซ้ำในคลัง/ติดทั้งมหาวิทยาลัยและ AI); **`iv_upcoming_interviews(p_days)`** สรุปนักเรียนที่ใกล้วันสัมภาษณ์ให้ครูแนะแนว (SECURITY INVOKER, เฉพาะ `iv_is_staff()`, ≤500 แถว, ไม่รวมเป้าส่วนตัว); **`iv_sample_for_question(question_id)`** คืนตัวอย่างแนวคำตอบ (SECURITY DEFINER, นักเรียนได้เฉพาะข้อที่ส่งแล้ว, ครูทุกข้อ, REVOKE จาก PUBLIC/anon) — ส่วนอื่นหน้าเว็บเขียนตารางตรง; trigger `iv_sessions_guard` กันนักเรียนแก้ช่องผลตรวจและกันเปลี่ยนเจ้าของเซ็ต, `iv_sub_limit` จำกัดรอตรวจ 10 ข้อ/คน, `iv_dates_guard` กันวันย้อนหลัง/ไกลเกิน 2 ปี/เกิน 30 วันที่ยังไม่ถึง; การผสมเซ็ตทำในหน้าเว็บ (`buildSet()` ใน interview.html)
+- **รายงานผู้บริหาร:** `exec_overview()`, `usage_summary(p_months)`, `usage_log(p_page)`, `report_survey(text)`, `report_quota(text)`, `report_awards(int)`, `report_programs(text)` — ทั้งหมดเป็น SECURITY INVOKER เช็ค `iv_is_staff()` (raise 42501 ถ้าไม่ใช่) ยกเว้น `report_counseling(text)` ที่เป็น SECURITY DEFINER (เพราะ `counseling_logs` ให้ครูเห็นเฉพาะของตัวเอง) เช็ค `iv_is_staff()` ในฟังก์ชัน, ซ่อนกลุ่มที่น้อยกว่า 3 ราย, นับกลุ่มที่ซ่อนแยกเป็น `hidden_*`; ทุกตัว REVOKE จาก PUBLIC/anon. สถานะที่นับ: ทุนนับเฉพาะที่ยืนยันแล้วผ่าน `scholarship_annual_summary()`; ซ้อมสัมภาษณ์ไม่นับ draft
+- **บันทึกให้คำปรึกษา:** `counseling_annual_report(int)` (ยก 42501 ถ้าไม่ใช่ `iv_is_staff()`), `counseling_overview()` (คืนค่าว่างถ้าไม่ใช่ `iv_is_staff()`) — SECURITY DEFINER, ไม่เปิดให้ anon
+- **ปฏิทิน:** ไม่มี RPC — home.html เขียน `calendar_events` ตรง; trigger `calendar_events_touch` ล็อก `created_by`/`created_at` และอัปเดต `updated_at`
+- **ระบบ:** `get_db_health()` (admin), `scholarship_health()`, `manage-users` (Edge Function)
+
+## 5.1) Helper ดึงข้อมูลแบบแบ่งหน้าในหน้าเว็บ
+
+- `index.html`: `fetchAllStudents(cols)`, `fetchAllTgatAttempts()`, `fetchAllIvSessions()`, และตัวกลาง `fetchAllRows(()=> query.order(...).order("id"))` — ใช้กับทุกตารางที่โตตามจำนวนนักเรียน (หน้าภาพรวม/งาน/แบบสำรวจ/จุดแข็ง)
+- `interview.html`: `fetchAllStudents(cols)`, `fetchAllRows(build)` (ใช้กับ iv_sessions, iv_questions, iv_question_submissions ฝั่งครู); `sampleSlot()` / `fillSamples()` เติมตัวอย่างแนวคำตอบในหน้ารายละเอียดเซ็ต
+- `home.html`: `fetchAllRows(build)` ใช้กับ `calendar_events`; ข่าวดึงล่าสุด 60 รายการ
+- ตารางเล็กที่ครูตั้งค่าเอง (assignments, survey_rounds, quotas, scholarships, iv_categories, iv_universities, iv_faculty_options, external_systems, resources, announcements) ยังดึงตรงไม่แบ่งหน้า
+
+## 6) ข้อสังเกตจากการตรวจ (24 ต.ค.–2 พ.ย. 2569)
+
+| ระดับ | เรื่อง | รายละเอียด |
+|---|---|---|
+| แก้แล้ว | สรุปให้คำปรึกษาเรียกได้โดยครูกลุ่มสาระ | 2 พ.ย. 2569: `counseling_annual_report()` / `counseling_overview()` เดิมเช็คแค่ `role in (teacher, admin)` ครูกลุ่มสาระจึงเรียกได้ → เปลี่ยนเป็น `iv_is_staff()` (migration `20261102_counseling_reports_guidance_only`) ทดสอบแล้ว: ครูกลุ่มสาระโดนปฏิเสธ (42501) / ครูแนะแนวใช้ได้ |
+| แก้แล้ว | ข่าวประชาสัมพันธ์อ่านได้โดยไม่ login | 26 ต.ค. 2569: policy SELECT ของ `announcements` เปลี่ยนเป็น `to authenticated`, revoke `announcements`/`announcement_reads` จาก anon, storage `announcements` อ่านได้เฉพาะ authenticated (migration `20261026_home_calendar_and_pinned_news`) |
+| แก้แล้ว | รายชื่อทุนและเกณฑ์ทุนอ่านได้โดยไม่ login | 26 ต.ค. 2569 ครูสั่งปิด: policy `sch_public_read` / `crit_public_read` เปลี่ยนเป็น `to authenticated`, revoke `scholarships`/`scholarship_criteria` จาก anon (migration `20261026_scholarships_login_only`) ทดสอบแล้ว นักเรียนยังเห็นทุนที่เปิด/ประกาศผลตามเดิม |
+| แก้แล้ว | ระบบซ้อมสัมภาษณ์ `iv_*` | แก้ 24 ต.ค. 2569 ครบทุกข้อ: สิทธิ์ (migration `iv_lock_down_guidance_only_and_submitted_sessions`), บันทึกผลตรวจด้วย RPC เดียว + ห้ามลบเกณฑ์ที่มีคะแนน (`iv_save_review_rpc_and_protect_rubric_scores`), แบ่งหน้า iv_sessions/iv_questions |
+| แก้แล้ว | index.html ดึงตารางข้อมูลนักเรียนไม่แบ่งหน้า | แก้ 24 ต.ค. 2569: ใช้ `fetchAllRows()` กับ submissions, survey_responses, strength_assessments (ตอนนั้น 284 แถว), strength_tags, quota_applications, applications, work_permit_requests, chang_phueak_applications, vulnerable_profiles, award_participants |
+| แก้แล้ว | คำถามเฉพาะมหาวิทยาลัยอ้างปรัชญา/คติพจน์ | ครูสั่งเอาออก 24 ต.ค. 2569 — ลบ 14 ข้อ (migration `20261025_iv_remove_motto_questions`) แล้วเติมข้อใหม่ 14 ข้อให้ครบ 5 ข้อ/แห่ง (`20261025_iv_university_questions_top_up`); ถ้าจะเพิ่มคำถามมหาวิทยาลัยใหม่ ห้ามอ้างปรัชญา/คติพจน์/คำขวัญ |
+| แก้แล้ว | คำถามซ้ำในคลังซ้อมสัมภาษณ์ | 31 ต.ค. 2569: "ทำไมถึงเลือกเรียนสาขานี้" มี 2 แถว (คำถามทั่วไป, มนุษยศาสตร์) ลบแถวในมนุษยศาสตร์ออก แล้วย้ายคำตอบฝึกซ้อม 1 รายการไปแถวที่เหลือ (ไม่มีคำตอบค้างเป็น null) |
+| ข้อควรระวัง | แชร์คำถาม: เนื้อหามาจากนักเรียน | ครูต้องอ่านทุกข้อก่อนรับ (ตัดชื่อบุคคล/ข้อมูลส่วนตัวออก) — ระบบไม่ได้กรองให้ ทดสอบสิทธิ์ด้วยบัญชีจำลอง (นักเรียน/ครูกลุ่มสาระ/ครูแนะแนว) ผ่านทั้งหมด |
+| ข้อควรระวัง | ตัวอย่างแนวคำตอบ: นักเรียนอาจลอกไปพูดจริง | ตอบกลับเป็นโครงคำตอบ ไม่สร้างประสบการณ์เฉพาะ; หน้าเว็บมีคำเตือนให้ใช้ประสบการณ์ของตัวเอง ครูอาจตรวจข้อที่ทำให้ไม่ผ่านรายข้อ |
+| ข้อควรระวัง | `survey_responses` ครูทุกคนอ่านได้ | เป็นของเดิม (RLS ให้ role=teacher ทั้งหมด) — ถ้าจะเข้มขึ้นให้เปลี่ยนเป็น `iv_is_staff()` แต่ต้องเช็คหน้าที่ครูกลุ่มสาระใช้ก่อน ยังไม่ได้แก้ |
+| ต่ำ | view `awards.export_course/prize/project` ไม่ได้ตั้ง `security_invoker` | `export_activity` ตั้งไว้แล้ว อีก 3 ตัวยังไม่ตั้ง (บั๊กรูปแบบเดิมที่เคยเจอ) ตอนนี้ anon/authenticated อ่านไม่ได้และ schema ไม่เปิดให้ anon จึงยังไม่รั่ว แต่ควรแก้ให้เหมือนกันทั้ง 4 ตัว |
+| ข้อมูล | view `counseling_overview_*` ตั้ง `security_invoker=false` | ตั้งใจให้เป็นแบบนี้ (สรุปภาพรวมร่วมกัน) จำกัดเฉพาะ teacher/admin ผ่าน `get_my_role()`, anon อ่านไม่ได้, view ตามห้องซ่อนห้องที่มีน้อยกว่า 3 เคส — ⚠️ view เหล่านี้ยังเช็คแค่ role (ไม่ใช่ `is_guidance`) ครูกลุ่มสาระอ่านได้ถ้าเรียกตรง; ฟังก์ชัน RPC ปิดแล้ว แต่ view ยังไม่ได้ปิด |
+| ข้อมูล | `get_my_role()` / `get_my_room()` เป็น SECURITY DEFINER และ anon เรียกได้ | ตั้งใจ (ใช้ใน RLS policy) ตัวอื่นที่เป็น SECURITY DEFINER anon เรียกไม่ได้ทั้งหมด |
+| ข้อมูล | ทุกตารางใน `public` เปิด RLS ครบ | — |
