@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>เกมห้องหนี (ครู) | แนะให้แนว</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Mitr:wght@400;500;600&family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+/* หน้าครู: แถบบนเขียวสน เนื้อหา max 1240px สองคอลัมน์ที่ยุบเป็นคอลัมน์เดียวบนจอแคบ */
+:root{
+  --pine:#1E5F4A; --pine-d:#123D2F; --pine-soft:#E3F1EA; --ink:#1B2A24; --muted:#4F5F57; --ground:#F3F7F2;
+  --line:#E1E8E4; --input:#C9D4CE; --amber:#E89A2C; --amber-soft:#F7E3C2; --warn:#9A4309; --warn-line:#C2570C; --warn-soft:#FCEBDD;
+  --display:'Mitr','Sarabun',sans-serif; --body:'Sarabun',sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);font:16px/1.55 var(--body)}
+h1,h2,h3{font-family:var(--display);font-weight:500;margin:0;line-height:1.35}
+p{margin:6px 0}
+a{color:var(--pine)}
+.top{background:var(--pine);color:#fff}
+.top .in{max-width:1240px;margin:0 auto;padding:12px 20px;display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.tabs button{min-height:44px;padding:0 16px;border-radius:10px;border:0;background:transparent;color:#fff;font:15px var(--body);cursor:pointer}
+.tabs button[aria-selected="true"]{background:#fff;color:var(--pine);font-weight:700}
+main{max-width:1240px;margin:0 auto;padding:20px;display:flex;flex-direction:column;gap:16px}
+.card{background:#fff;border-radius:16px;padding:18px}
+.stack{display:flex;flex-direction:column;gap:12px}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.grow{flex:1 1 auto}
+.split{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start}
+.split>.main{flex:999 1 560px;min-width:0}
+.split>.side{flex:1 1 300px;display:flex;flex-direction:column;gap:16px}
+.muted{color:var(--muted);font-size:14px}
+.btn{min-height:44px;padding:0 16px;border-radius:10px;border:1px solid var(--pine);background:#fff;color:var(--pine);font:15px var(--body);cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.btn.fill{background:var(--pine);color:#fff}
+.btn.amber{background:var(--amber);border-color:var(--amber);color:var(--ink);font-family:var(--display);font-size:16px}
+.btn.dark{background:var(--ink);border-color:var(--ink);color:#fff}
+.btn.plain{border-color:var(--input);color:#33473F}
+.btn.danger{border-color:var(--warn-line);color:var(--warn)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.sm{min-height:36px;padding:0 10px;font-size:14px}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:14px;color:var(--muted)}
+input,select,textarea{min-height:44px;font:16px var(--body);padding:0 12px;border-radius:10px;border:1px solid var(--input);color:var(--ink);background:#fff}
+textarea{padding:10px 12px;resize:vertical}
+.pill{display:inline-block;padding:3px 10px;border-radius:999px;font-size:13px}
+.pill.on{background:var(--pine-soft);color:var(--pine);font-weight:600}
+.pill.off{background:#EEF2EF;color:#33473F}
+.pill.help{background:var(--warn-soft);color:var(--warn);font-weight:600}
+.note{background:var(--warn-soft);color:var(--warn);border-radius:12px;padding:10px 14px}
+.ok{background:var(--pine-soft);color:var(--pine);border-radius:12px;padding:10px 14px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px}
+.tile{background:#fff;border-radius:16px;padding:14px 18px}
+.tile b{display:block;font-family:var(--display);font-weight:500;font-size:30px}
+.tile.help{background:var(--warn-soft);color:var(--warn)}
+.tw{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:15px;min-width:620px}
+th{text-align:left;color:var(--muted);font-weight:500;font-size:14px;padding:8px 6px;border-bottom:1px solid var(--line)}
+td{padding:8px 6px;border-bottom:1px solid #EEF2EF;vertical-align:middle}
+.dots{display:flex;gap:4px}
+.dots i{width:16px;height:16px;border-radius:5px;background:#DCE4E0;display:inline-block}
+.dots i.on{background:var(--pine)}
+.hbar{display:flex;align-items:center;gap:10px;font-size:14px}
+.hbar .t{flex:1;height:14px;background:#EEF2EF;border-radius:999px;overflow:hidden}
+.hbar .t i{display:block;height:100%;border-radius:999px;background:var(--pine)}
+.hbar .t i.low{background:var(--warn-line)}
+.roomgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(68px,1fr));gap:8px}
+.roomgrid button{min-height:44px;border-radius:10px;border:2px solid #D5DED9;background:#fff;font:15px var(--body);cursor:pointer;color:var(--ink)}
+.roomgrid button[aria-pressed="true"]{background:var(--pine);border-color:var(--pine);color:#fff}
+.roomgrid button.busy{border-style:dashed}
+.door-ed{border:2px solid var(--line);border-radius:14px;padding:14px}
+.door-ed.cur{border-color:var(--pine)}
+.chrow{display:flex;align-items:center;gap:10px}
+.chrow input[type=radio]{width:22px;height:22px;min-height:0;accent-color:var(--pine)}
+.chrow input[type=text]{flex:1}
+.overlay{position:fixed;inset:0;background:rgba(15,25,21,.6);display:flex;align-items:center;justify-content:center;padding:16px;z-index:40}
+.overlay .card{width:100%;max-width:560px;max-height:92vh;overflow:auto}
+.proj{position:fixed;inset:0;background:var(--pine-d);color:#fff;z-index:50;overflow:auto;padding:32px}
+.proj h1{font-size:40px}
+.proj .big{font-family:var(--display);font-size:72px;line-height:1}
+.proj .hbar{font-size:22px}.proj .hbar .t{height:26px;background:#2D6B52}.proj .hbar .t i{background:var(--amber)}
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 16px;border-radius:12px;max-width:90vw;opacity:0;pointer-events:none;transition:opacity .2s;z-index:60}
+#toast.show{opacity:1}
+#print{display:none}
+@media print{
+  body>*:not(#print){display:none!important}
+  #print{display:block;font-family:var(--body);color:#000}
+  .pcard{border:2px solid #000;border-radius:12px;padding:18px;margin:0 0 14px;page-break-inside:avoid}
+  .pcard h3{font-size:20pt;margin-bottom:8px}
+  .pcard li{font-size:15pt;margin:4px 0}
+  .pkey{page-break-before:always}
+}
+</style>
+</head>
+<body>
+<div class="top"><div class="in">
+  <span style="font-family:var(--display);font-size:18px">แนะให้แนว · เกมห้องหนี (ครู)</span>
+  <nav class="tabs" role="tablist" id="tabs"></nav>
+</div></div>
+<main id="app"><p class="muted">กำลังโหลด…</p></main>
+<div id="layer"></div>
+<div id="print"></div>
+<div id="toast" role="status"></div>
+<script>
+const SUPABASE_URL = "https://ikkhjslmtjwrxzxvtokb.supabase.co";
+const ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlra2hqc2xtdGp3cnh6eHZ0b2tiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM3NDMzNjksImV4cCI6MjA5OTMxOTM2OX0.3OR_9mEv82Ns1LLjx5nnRwJYzrtKFtWCWd1bPuQfNKU";
+const EMAIL_DOMAIN = "guidance-pcw.local";
+const sb = supabase.createClient(SUPABASE_URL, ANON_KEY);
+const KEYS=["ก","ข","ค","ง"];
+const esc=t=>String(t??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const $=id=>document.getElementById(id);
+function toast(t){const el=$("toast");el.textContent=t;el.classList.add("show");clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove("show"),3800)}
+function errText(e){const m=(e&&e.message)||"";if(/Failed to fetch|NetworkError/i.test(m))return "เชื่อมต่อไม่ได้ ตรวจเน็ตแล้วลองใหม่";if(/duplicate key|er_sessions_one_open/.test(m))return "ห้องนี้มีรอบของชุดนี้เปิดอยู่แล้ว";if(/row-level security|permission denied/i.test(m))return "ไม่มีสิทธิ์ทำรายการนี้";return m||"เกิดข้อผิดพลาด"}
+const fmtTime=d=>d?new Date(d).toLocaleTimeString("th-TH",{hour:"2-digit",minute:"2-digit"}):"-";
+const fmtDate=d=>d?new Date(d).toLocaleDateString("th-TH",{day:"numeric",month:"short",year:"2-digit"}):"-";
+const mins=(a,b)=>Math.round((new Date(b)-new Date(a))/60000);
+
+/* ---------- ชุดตัวอย่าง ---------- */
+const SAMPLE={title:"ห้องลับแห่งตัวตน",topic:"รู้จักตัวเอง",grade:"ม.1",doors:[
+ {type:"mc",q:"การรู้จักตัวเอง หมายถึงข้อใด",choices:["รู้ว่าตัวเองชอบอะไร ถนัดอะไร และมีนิสัยอย่างไร","รู้ว่าเพื่อนคิดอย่างไรกับเรา","จำชื่อและวันเกิดของตัวเองได้","รู้ว่าวิชาไหนได้เกรดสูงสุดเท่านั้น"],answer:0,hint:"นึกถึง ความชอบ ความถนัด และนิสัยของเรา"},
+ {type:"mc",q:"ข้อใดคือ \"จุดแข็ง\" ของตัวเรา",choices:["สิ่งที่เราทำได้ดี และทำได้บ่อย ๆ","สิ่งที่เพื่อนส่วนใหญ่ทำได้","วิชาที่เราได้คะแนนน้อยที่สุด","สิ่งที่เรายังไม่เคยลองทำเลย"],answer:0,hint:"นึกถึงสิ่งที่เราทำแล้วรู้สึกว่า \"อันนี้เราถนัด\""},
+ {type:"mc",q:"\"ความชอบ\" กับ \"ความถนัด\" ต่างกันอย่างไร",choices:["เหมือนกันทุกอย่าง","ความชอบคือทำแล้วมีความสุข ความถนัดคือทำได้ดี","ความถนัดเปลี่ยนไม่ได้เลยตลอดชีวิต","ความชอบต้องได้คะแนนดีเสมอ"],answer:1,hint:"อันหนึ่งเกี่ยวกับใจ อีกอันเกี่ยวกับฝีมือ"},
+ {type:"mc",q:"ถ้าอยากรู้ว่าตัวเองมีจุดแข็งอะไร วิธีใดดีที่สุด",choices:["ทำตามเพื่อนสนิททุกอย่าง","รอให้ครูบอกอย่างเดียว","ลองทำกิจกรรมหลายแบบ แล้วสังเกตว่าอะไรทำได้ดี","ไม่ต้องลองอะไรใหม่เลย"],answer:2,hint:"ต้องลงมือทำเองถึงจะรู้"},
+ {type:"mc",q:"เมื่อเจอสิ่งที่เรายังทำได้ไม่ดี ควรคิดแบบไหน",choices:["เราไม่เก่งเรื่องนี้ไปตลอด","เลิกทำทันที","โทษคนอื่น","ฝึกได้ ค่อย ๆ เก่งขึ้น"],answer:3,hint:"ทุกคนเริ่มจากทำไม่เป็นมาก่อน"},
+ {type:"reflect",q:"ก่อนออกจากห้อง: จุดแข็งของเราคืออะไร",choices:["ช่วยเหลือคนอื่น","วาดรูป/ออกแบบ","เล่นกีฬา","คิดเลขเร็ว","พูดเก่ง","อดทน","ตลก ทำให้เพื่อนยิ้ม","ซ่อมของ/ประดิษฐ์"],max_pick:2}
+]};
+
+/* ---------- สถานะ ---------- */
+let me=null, rooms=[], sets=[], sessions=[], V={tab:"live",sid:null,board:null,edit:null,proj:false}, pollId=null;
+
+async function boot(){
+  const {data:{session}}=await sb.auth.getSession();
+  if(!session)return loginView();
+  const {data:p}=await sb.from("profiles").select("id,display_name,role").eq("id",session.user.id).maybeSingle();
+  if(!p){await sb.auth.signOut();return loginView("ไม่พบข้อมูลผู้ใช้")}
+  me=p;
+  const {data:r,error}=await sb.rpc("er_rooms");
+  if(error){$("app").innerHTML=`<div class="card stack"><h1 style="font-size:22px">หน้านี้สำหรับครูแนะแนว</h1><p>${p.role==="student"?"นักเรียนเล่นเกมได้ที่หน้านักเรียน":"บัญชีนี้ยังไม่มีสิทธิ์ครูแนะแนว ติดต่อแอดมินระบบ"}</p><div class="row">${p.role==="student"?`<a class="btn fill" href="escape-room.html">ไปหน้านักเรียน</a>`:""}<button class="btn plain" onclick="logout()">ออกจากระบบ</button></div></div>`;return}
+  rooms=(r||[]).sort((a,b)=>roomKey(a.class_room)-roomKey(b.class_room));
+  await Promise.all([loadSets(),loadSessions()]);
+  const open=sessions.find(s=>s.status==="open");V.sid=open?open.id:(sessions[0]&&sessions[0].id)||null;
+  if(!sets.length&&!sessions.length)V.tab="sets";
+  render();
+}
+function roomKey(r){const m=String(r).match(/(\d+)\s*\/\s*(\d+)/);return m?(+m[1])*100+(+m[2]):9999}
+function loginView(msg){
+  $("tabs").innerHTML="";
+  $("app").innerHTML=`<form class="card stack" style="max-width:420px;margin:24px auto" id="liForm"><h1 style="font-size:24px">เข้าสู่ระบบครู</h1><p class="muted">ใช้บัญชีเดียวกับแนะให้แนว</p>${msg?`<div class="note">${esc(msg)}</div>`:""}
+  <label class="f">ชื่อผู้ใช้<input id="liUser" autocomplete="username" required></label><label class="f">รหัสผ่าน<input id="liPass" type="password" autocomplete="current-password" required></label><button class="btn fill" type="submit">เข้าสู่ระบบ</button></form>`;
+  $("liForm").onsubmit=async ev=>{ev.preventDefault();const {error}=await sb.auth.signInWithPassword({email:$("liUser").value.trim()+"@"+EMAIL_DOMAIN,password:$("liPass").value});if(error)return loginView("ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง");boot()};
+}
+async function logout(){await sb.auth.signOut();location.reload()}
+async function loadSets(){const {data,error}=await sb.from("er_quiz_sets").select("id,title,topic,grade,doors,created_by,updated_at").order("updated_at",{ascending:false});if(error)toast(errText(error));sets=data||[]}
+async function loadSessions(){const {data,error}=await sb.from("er_sessions").select("id,set_id,title,class_room,status,opened_at,closed_at,created_by").order("opened_at",{ascending:false}).limit(300);if(error)toast(errText(error));sessions=data||[]}
+
+/* ---------- วาดหน้า ---------- */
+function render(){
+  $("tabs").innerHTML=[["live","จอสรุปสด"],["sets","ชุดคำถามและเปิดเกม"]].map(([k,t])=>`<button role="tab" aria-selected="${V.tab===k}" onclick="go('${k}')">${t}</button>`).join("")+`<button onclick="logout()">ออกจากระบบ</button>`;
+  clearInterval(pollId);pollId=null;
+  if(V.tab==="live"){liveView();if(V.sid){loadBoard();pollId=setInterval(()=>{if(!document.hidden&&V.tab==="live")loadBoard(true)},4000)}}
+  else if(V.edit)editorView(); else setsView();
+}
+function go(t){V.tab=t;V.edit=null;V.proj=false;$("layer").innerHTML="";render()}
+
+/* ===== จอสรุปสด ===== */
+function sessLabel(s){return `${s.class_room} · ${s.title} · ${s.status==="open"?"กำลังเล่น":"ปิดแล้ว "+fmtDate(s.closed_at||s.opened_at)}`}
+function liveView(){
+  if(!sessions.length){$("app").innerHTML=`<div class="card stack"><h1 style="font-size:22px">ยังไม่มีรอบเล่น</h1><p>ไปที่ "ชุดคำถามและเปิดเกม" เพื่อเลือกชุดคำถามแล้วเปิดให้ห้องเล่น</p><div><button class="btn fill" onclick="go('sets')">ไปเปิดเกม</button></div></div>`;return}
+  const open=sessions.filter(s=>s.status==="open"),closed=sessions.filter(s=>s.status!=="open");
+  $("app").innerHTML=`<section class="card row" style="align-items:flex-end">
+    <label class="f grow" style="min-width:260px">รอบเล่น
+      <select id="selSess" onchange="V.sid=this.value;V.board=null;render()">
+        ${open.length?`<optgroup label="กำลังเล่น">${open.map(s=>`<option value="${s.id}" ${s.id===V.sid?"selected":""}>${esc(sessLabel(s))}</option>`).join("")}</optgroup>`:""}
+        ${closed.length?`<optgroup label="ปิดแล้ว">${closed.map(s=>`<option value="${s.id}" ${s.id===V.sid?"selected":""}>${esc(sessLabel(s))}</option>`).join("")}</optgroup>`:""}
+      </select></label>
+    <span id="stState"></span>
+    <div class="row" style="margin-left:auto" id="liveActs"></div>
+  </section><div id="board" class="stack"><p class="muted">กำลังโหลด…</p></div>`;
+}
+async function loadBoard(quiet){
+  const sid=V.sid;
+  const {data,error}=await sb.rpc("er_session_board",{p_session:sid});
+  if(sid!==V.sid||V.tab!=="live")return;
+  if(error){if(!quiet)$("board").innerHTML=`<div class="note">${esc(errText(error))}</div>`;return}
+  V.board=data;drawBoard();
+}
+function analyse(b){
+  const doors=b.session.doors,n=doors.length,now=Date.now();
+  const rows=b.rows.map(r=>{
+    const tries=Array.isArray(r.door_tries)?r.door_tries:[];
+    const curTries=r.joined&&!r.finished_at?(tries[r.current_door]||0):0;
+    const idle=r.joined&&!r.finished_at&&b.session.status==="open"?Math.floor((now-new Date(r.last_active_at))/60000):0;
+    let st="ยังไม่เข้า",kind="off";
+    if(r.finished_at){st="หนีออกได้แล้ว";kind="on"}
+    else if(r.joined){
+      if(curTries>=3){st=`ติดประตู ${r.current_door+1} · ตอบผิด ${curTries} ครั้ง`;kind="help"}
+      else if(idle>=3&&b.session.status==="open"){st=`ไม่ขยับ ${idle} นาที`;kind="help"}
+      else{st=b.session.status==="open"?"กำลังเล่น":"เล่นไม่จบ";kind="play"}
+    }
+    return Object.assign({},r,{tries,st,kind});
+  });
+  const joined=rows.filter(r=>r.joined),done=rows.filter(r=>r.finished_at),help=rows.filter(r=>r.kind==="help"),notIn=rows.filter(r=>!r.joined);
+  const stats=doors.map((d,i)=>{const passed=joined.filter(r=>r.current_door>i&&r.tries[i]>0);const first=passed.filter(r=>r.tries[i]===1).length;return {i,type:d.type,reached:joined.filter(r=>r.current_door>i).length,pct:passed.length?Math.round(first/passed.length*100):null}});
+  return {n,rows,joined,done,help,notIn,stats};
+}
+function drawBoard(){
+  const b=V.board;if(!b)return;const s=b.session,A=analyse(b);
+  const sess=sessions.find(x=>x.id===s.id);if(sess)sess.status=s.status;
+  $("stState").innerHTML=s.status==="open"?`<span class="pill on" style="padding:8px 12px">กำลังเล่น · เปิดมา ${mins(s.opened_at,new Date())} นาที</span>`:`<span class="pill off" style="padding:8px 12px">ปิดแล้ว</span>`;
+  $("liveActs").innerHTML=`<button class="btn" onclick="V.proj=true;drawProj()">ฉายขึ้นจอ</button><button class="btn" onclick="exportCSV()">ส่งออกเป็น Excel</button>`+
+    (s.status==="open"?`<button class="btn dark" onclick="setStatus('closed')">ปิดรอบนี้</button>`:`<button class="btn plain" onclick="setStatus('open')">เปิดให้เล่นต่อ</button>`);
+  $("board").innerHTML=`<section class="tiles" aria-label="ภาพรวมห้อง">
+    <div class="tile"><span class="muted">เข้าเล่นแล้ว</span><b>${A.joined.length} <small class="muted" style="font-size:16px">/ ${A.rows.length} คน</small></b></div>
+    <div class="tile"><span class="muted">หนีออกได้แล้ว</span><b style="color:var(--pine)">${A.done.length} <small style="font-size:16px">คน</small></b></div>
+    <div class="tile"><span class="muted">ยังไม่เข้าเล่น</span><b>${A.notIn.length} <small style="font-size:16px">คน</small></b></div>
+    <div class="tile ${A.help.length?"help":""}"><span>ควรเข้าไปช่วย</span><b>${A.help.length} <small style="font-size:16px">คน</small></b></div></section>
+  <div class="split">
+    <section class="card stack main"><div class="row" style="justify-content:space-between"><h2 style="font-size:19px">ความคืบหน้ารายคน · ${esc(s.class_room)}</h2>${s.status==="open"?`<span class="muted">อัปเดตทุก 4 วินาที</span>`:""}</div>
+      ${A.rows.length?`<div class="tw"><table><thead><tr><th>รหัส</th><th>ชื่อ</th><th>ประตู</th><th>ตอบผิดรวม</th><th>สถานะ</th><th></th></tr></thead><tbody>
+      ${A.rows.map(r=>`<tr><td>${esc(r.code)}</td><td>${esc(r.name)}</td>
+        <td><div class="dots" role="img" aria-label="เปิดแล้ว ${r.current_door||0} จาก ${A.n} ประตู">${Array.from({length:A.n},(_,i)=>`<i class="${r.joined&&i<r.current_door?"on":""}"></i>`).join("")}</div></td>
+        <td>${r.joined?r.wrong_total:"-"}</td>
+        <td><span class="pill ${r.kind==="play"?"off":r.kind}">${esc(r.st)}</span></td>
+        <td>${r.joined?`<button class="btn sm plain" onclick="resetAttempt('${r.student_id}','${esc(r.name).replace(/'/g,"")}')">ให้เริ่มใหม่</button>`:""}</td></tr>`).join("")}
+      </tbody></table></div>`:`<p class="muted">ไม่พบรายชื่อนักเรียนในห้องนี้</p>`}
+    </section>
+    <aside class="side">
+      <section class="card stack"><h2 style="font-size:19px">ประตูไหนยากที่สุด</h2><p class="muted" style="margin:0">ร้อยละของคนที่ตอบถูกในครั้งแรก (นับเฉพาะคนที่ผ่านประตูนั้นแล้ว)</p>
+        ${A.stats.map(t=>`<div class="hbar"><span style="width:96px;flex-shrink:0">${t.type==="reflect"?"ประตูสะท้อนคิด":"ประตู "+(t.i+1)}</span>${t.type==="reflect"?`<span class="muted">ไม่มีถูกผิด · ผ่านแล้ว ${t.reached} คน</span>`:`<span class="t"><i class="${t.pct!=null&&t.pct<60?"low":""}" style="width:${t.pct||0}%"></i></span><span style="width:44px;text-align:right">${t.pct==null?"-":t.pct+"%"}</span>`}</div>`).join("")}
+      </section>
+      ${reflectSummary(b,A)}
+      <section class="card stack"><h2 style="font-size:19px">ยังไม่เข้าเล่น (${A.notIn.length})</h2>
+        <p style="margin:0">${A.notIn.length?A.notIn.map(r=>esc(r.code+" "+r.name)).join("<br>"):"เข้าเล่นครบทุกคนแล้ว"}</p>
+        <p class="muted" style="margin:0">ไม่มีมือถือ ให้จับคู่กับเพื่อน หรือใช้การ์ดคำถามแบบกระดาษ (พิมพ์ได้ที่แท็บชุดคำถาม)</p></section>
+    </aside></div>`;
+  if(V.proj)drawProj();
+}
+function reflectSummary(b,A){
+  const ri=b.session.doors.findIndex(d=>d.type==="reflect");if(ri<0)return "";
+  const cnt={};A.rows.forEach(r=>(Array.isArray(r.reflection)?r.reflection:[]).forEach(t=>cnt[t]=(cnt[t]||0)+1));
+  const list=Object.entries(cnt).sort((a,b)=>b[1]-a[1]);
+  return `<section class="card stack"><h2 style="font-size:19px">จุดแข็งที่ห้องนี้เลือก</h2>${list.length?list.map(([t,c])=>`<div class="hbar"><span style="width:140px;flex-shrink:0">${esc(t)}</span><span class="t"><i style="width:${Math.round(c/Math.max(1,A.joined.length)*100)}%"></i></span><span style="width:36px;text-align:right">${c}</span></div>`).join(""):`<p class="muted" style="margin:0">ยังไม่มีคนส่ง</p>`}</section>`;
+}
+function drawProj(){
+  const b=V.board;if(!b||!V.proj){$("layer").innerHTML="";return}
+  const A=analyse(b),s=b.session;
+  $("layer").innerHTML=`<div class="proj" role="dialog" aria-label="หน้าจอฉายขึ้นโปรเจกเตอร์"><div style="max-width:1100px;margin:0 auto;display:flex;flex-direction:column;gap:28px">
+    <div class="row" style="justify-content:space-between"><h1>${esc(s.title)} · ${esc(s.class_room)}</h1><button class="btn" onclick="V.proj=false;drawProj()">ปิดหน้าฉาย</button></div>
+    <div class="row" style="gap:48px"><div><div class="big">${A.done.length}</div><p style="font-size:22px">คน หนีออกได้แล้ว</p></div><div><div class="big">${A.joined.length}</div><p style="font-size:22px">คน เข้าเล่นแล้ว</p></div></div>
+    <div class="stack" style="gap:14px">${A.stats.map(t=>`<div class="hbar"><span style="width:180px">${t.type==="reflect"?"ประตูสุดท้าย":"ผ่านประตู "+(t.i+1)}</span><span class="t"><i style="width:${A.joined.length?Math.round(t.reached/A.joined.length*100):0}%"></i></span><span style="width:90px;text-align:right">${t.reached} คน</span></div>`).join("")}</div>
+    <p style="font-size:18px;opacity:.85">หน้านี้ไม่แสดงชื่อ ใครติดประตูไหนยกมือเรียกครูได้เลย</p></div></div>`;
+}
+async function setStatus(st){
+  if(st==="closed"&&!confirm("ปิดรอบนี้? นักเรียนจะตอบต่อไม่ได้ แต่ผลที่ทำไว้ยังอยู่ครบ"))return;
+  const {error}=await sb.from("er_sessions").update({status:st,closed_at:st==="closed"?new Date().toISOString():null}).eq("id",V.sid);
+  if(error)return toast(errText(error));
+  toast(st==="closed"?"ปิดรอบแล้ว":"เปิดให้เล่นต่อแล้ว");await loadSessions();render();
+}
+async function resetAttempt(uid,name){
+  if(!confirm(`ให้ ${name} เริ่มเล่นใหม่ตั้งแต่ประตูแรก? ผลเดิมของคนนี้ในรอบนี้จะถูกลบ`))return;
+  const {error}=await sb.from("er_attempts").delete().eq("session_id",V.sid).eq("student_id",uid);
+  if(error)return toast(errText(error));toast("ลบผลเดิมแล้ว นักเรียนกดเข้าห้องใหม่ได้เลย");loadBoard();
+}
+function exportCSV(){
+  const b=V.board;if(!b)return;const A=analyse(b),s=b.session;
+  const head=["รหัสนักเรียน","ชื่อ","ห้อง","เข้าเล่น","เปิดประตูได้","จำนวนประตู","ตอบถูกครั้งแรก","ตอบผิดรวม","เวลาเริ่ม","เวลาจบ","ใช้เวลา (นาที)","สิ่งที่เลือกตอนท้าย"];
+  const lines=[head].concat(A.rows.map(r=>[r.code,r.name,s.class_room,r.joined?"เข้า":"ไม่เข้า",r.joined?r.current_door:"",A.n,r.joined?r.first_try:"",r.joined?r.wrong_total:"",r.started_at?new Date(r.started_at).toLocaleString("th-TH"):"",r.finished_at?new Date(r.finished_at).toLocaleString("th-TH"):"",r.finished_at?mins(r.started_at,r.finished_at):"",Array.isArray(r.reflection)?r.reflection.join(" / "):""]));
+  const csv="\ufeff"+lines.map(l=>l.map(v=>`"${String(v??"").replace(/"/g,'""')}"`).join(",")).join("\r\n");
+  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));
+  a.download=`เกมห้องหนี_${s.class_room.replace(/[\\/]/g,"-")}_${new Date(s.opened_at).toISOString().slice(0,10)}.csv`;a.click();
+}
+
+/* ===== ชุดคำถาม ===== */
+function setsView(){
+  const openBy={};sessions.filter(s=>s.status==="open").forEach(s=>{(openBy[s.set_id]=openBy[s.set_id]||[]).push(s.class_room)});
+  $("app").innerHTML=`<section class="card row"><h1 style="font-size:22px" class="grow">ชุดคำถาม</h1>
+    <button class="btn" onclick="newSet(true)">เริ่มจากชุดตัวอย่าง "รู้จักตัวเอง"</button><button class="btn fill" onclick="newSet(false)">+ สร้างชุดใหม่</button></section>
+  ${sets.length?sets.map(x=>{const mine=x.created_by===me.id||me.role==="admin";const op=openBy[x.id]||[];return `<article class="card stack">
+    <div class="row"><div class="grow"><h2 style="font-size:20px">${esc(x.title)}</h2><p class="muted" style="margin:0">${esc(x.topic||"-")} · ${esc(x.grade)} · ประตู ${x.doors.length} บาน · แก้ล่าสุด ${fmtDate(x.updated_at)}${x.created_by===me.id?"":" · ของครูท่านอื่น"}</p>
+      ${op.length?`<p style="margin:4px 0 0"><span class="pill on">เปิดอยู่: ${op.sort((a,b)=>roomKey(a)-roomKey(b)).map(esc).join(", ")}</span></p>`:""}</div>
+      <button class="btn amber" onclick="openPicker('${x.id}')">เปิดให้ห้องเล่น</button></div>
+    <div class="row"><button class="btn sm" onclick="preview('${x.id}')">ลองเล่นเองก่อน</button><button class="btn sm" onclick="printCards('${x.id}')">พิมพ์การ์ดคำถาม (ใช้แทนเมื่อเน็ตล่ม)</button>
+      ${mine?`<button class="btn sm" onclick="editSet('${x.id}')">แก้ไข</button>`:""}<button class="btn sm plain" onclick="copySet('${x.id}')">ทำสำเนา</button>${mine?`<button class="btn sm danger" onclick="delSet('${x.id}')">ลบ</button>`:""}</div>
+  </article>`}).join(""):`<div class="card"><p style="margin:0">ยังไม่มีชุดคำถาม เริ่มจากชุดตัวอย่าง "รู้จักตัวเอง" ของ ม.1 แล้วค่อยแก้ไขให้เหมาะกับห้องได้</p></div>`}`;
+}
+function newSet(sample){V.edit=sample?JSON.parse(JSON.stringify(SAMPLE)):{title:"",topic:"",grade:"ม.1",doors:[blankDoor("mc")]};V.edit.cur=0;render()}
+function editSet(id){const x=sets.find(s=>s.id===id);V.edit=JSON.parse(JSON.stringify({id:x.id,title:x.title,topic:x.topic,grade:x.grade,doors:x.doors}));V.edit.cur=0;render()}
+function copySet(id){const x=sets.find(s=>s.id===id);V.edit=JSON.parse(JSON.stringify({title:x.title+" (สำเนา)",topic:x.topic,grade:x.grade,doors:x.doors}));V.edit.cur=0;render()}
+async function delSet(id){
+  const x=sets.find(s=>s.id===id);if(!confirm(`ลบชุด "${x.title}"? ผลเล่นของรอบที่เคยเปิดไปแล้วยังเก็บไว้ครบ`))return;
+  const {error}=await sb.from("er_quiz_sets").delete().eq("id",id);if(error)return toast(errText(error));
+  toast("ลบแล้ว");await loadSets();render();
+}
+function blankDoor(t){return t==="reflect"?{type:"reflect",q:"",choices:["","",""],max_pick:2}:{type:"mc",q:"",choices:["","","",""],answer:0,hint:""}}
+
+/* ---------- ตัวแก้ชุดคำถาม ---------- */
+function editorView(){
+  const E=V.edit;
+  $("app").innerHTML=`<div class="split"><section class="main stack">
+    <div class="card row" style="align-items:flex-end">
+      <label class="f grow" style="flex:3 1 260px">ชื่อชุดคำถาม<input value="${esc(E.title)}" maxlength="120" oninput="V.edit.title=this.value"></label>
+      <label class="f" style="flex:1 1 160px">เรื่อง<input value="${esc(E.topic)}" oninput="V.edit.topic=this.value"></label>
+      <label class="f" style="flex:0 1 120px">ชั้น<select onchange="V.edit.grade=this.value">${["ม.1","ม.2","ม.3","ม.4","ม.5","ม.6"].map(g=>`<option ${g===E.grade?"selected":""}>${g}</option>`).join("")}</select></label>
+    </div>
+    ${E.doors.map((d,i)=>i===E.cur?doorEditor(d,i):`<div class="card row"><span class="grow"><b>${d.type==="reflect"?"ประตูสะท้อนคิด":"ประตู "+(i+1)}</b> · ${esc(d.q||"(ยังไม่มีคำถาม)")}</span><button class="btn sm" onclick="V.edit.cur=${i};render()">แก้ไข</button></div>`).join("")}
+    ${E.doors.length<10?`<div class="row"><button class="btn plain" onclick="addDoor('mc')">+ เพิ่มประตูคำถาม</button><button class="btn plain" onclick="addDoor('reflect')">+ เพิ่มประตูสะท้อนคิด (ไม่มีถูกผิด)</button></div>`:`<p class="muted">ครบ 10 ประตูแล้ว</p>`}
+  </section>
+  <aside class="side"><section class="card stack"><h2 style="font-size:19px">บันทึก</h2><p class="muted" style="margin:0">ประตู ${E.doors.length} บาน (ได้ 1–10 บาน) · การแก้ชุดคำถามไม่กระทบรอบที่เปิดเล่นไปแล้ว</p>
+    <div id="edErr"></div>
+    <button class="btn fill" onclick="saveSet()">บันทึกชุดคำถาม</button><button class="btn plain" onclick="V.edit=null;render()">ยกเลิก</button></section></aside></div>`;
+}
+function doorEditor(d,i){
+  const n=V.edit.doors.length;
+  return `<article class="card door-ed cur stack"><div class="row"><h2 class="grow" style="font-size:19px">${d.type==="reflect"?"ประตูสะท้อนคิด":"ประตู "+(i+1)}</h2>
+    <button class="btn sm plain" ${i===0?"disabled":""} onclick="moveDoor(${i},-1)" aria-label="เลื่อนขึ้น">ขึ้น</button><button class="btn sm plain" ${i===n-1?"disabled":""} onclick="moveDoor(${i},1)" aria-label="เลื่อนลง">ลง</button>
+    <button class="btn sm danger" ${n<=1?"disabled":""} onclick="delDoor(${i})">ลบประตูนี้</button></div>
+    <label class="f">คำถาม<textarea rows="2" oninput="V.edit.doors[${i}].q=this.value">${esc(d.q)}</textarea></label>
+    ${d.type==="mc"?`<fieldset style="border:0;margin:0;padding:0" class="stack"><legend class="muted" style="margin-bottom:6px">ตัวเลือก 2–4 ข้อ (กดวงกลมหน้าข้อที่ถูก)</legend>
+      ${d.choices.map((c,k)=>`<div class="chrow"><input type="radio" name="ans${i}" ${d.answer===k?"checked":""} onchange="V.edit.doors[${i}].answer=${k}" aria-label="ข้อ ${KEYS[k]} ถูก"><input type="text" value="${esc(c)}" aria-label="ตัวเลือก ${KEYS[k]}" oninput="V.edit.doors[${i}].choices[${k}]=this.value">${d.choices.length>2?`<button class="btn sm plain" onclick="delChoice(${i},${k})" aria-label="ลบตัวเลือก ${KEYS[k]}">ลบ</button>`:""}</div>`).join("")}
+      ${d.choices.length<4?`<div><button class="btn sm plain" onclick="V.edit.doors[${i}].choices.push('');render()">+ เพิ่มตัวเลือก</button></div>`:""}</fieldset>
+      <label class="f">คำใบ้เมื่อตอบผิด (ไม่บังคับ)<input value="${esc(d.hint||"")}" oninput="V.edit.doors[${i}].hint=this.value"></label>`
+    :`<label class="f">ตัวเลือกให้นักเรียนเลือก (บรรทัดละ 1 อย่าง 2–12 อย่าง)<textarea rows="5" oninput="V.edit.doors[${i}].choices=this.value.split('\\n')">${esc(d.choices.join("\n"))}</textarea></label>
+      <label class="f" style="max-width:220px">ให้เลือกได้สูงสุด<input type="number" min="1" max="12" value="${d.max_pick}" oninput="V.edit.doors[${i}].max_pick=parseInt(this.value)||1"></label>`}
+  </article>`;
+}
+function addDoor(t){V.edit.doors.push(blankDoor(t));V.edit.cur=V.edit.doors.length-1;render()}
+function moveDoor(i,dir){const a=V.edit.doors,j=i+dir;[a[i],a[j]]=[a[j],a[i]];V.edit.cur=j;render()}
+function delDoor(i){if(!confirm("ลบประตูนี้?"))return;V.edit.doors.splice(i,1);V.edit.cur=Math.max(0,i-1);render()}
+function delChoice(i,k){const d=V.edit.doors[i];d.choices.splice(k,1);if(d.answer===k)d.answer=0;else if(d.answer>k)d.answer--;render()}
+function cleanDoors(doors){
+  const errs=[],out=[];
+  doors.forEach((d,i)=>{
+    const name=d.type==="reflect"?`ประตูสะท้อนคิด (ลำดับ ${i+1})`:`ประตู ${i+1}`;
+    const q=String(d.q||"").trim();if(!q)errs.push(`${name}: ยังไม่มีคำถาม`);
+    if(d.type==="mc"){
+      const ch=d.choices.map(c=>String(c||"").trim());const keep=[];let ans=-1;
+      ch.forEach((c,k)=>{if(c){if(k===d.answer)ans=keep.length;keep.push(c)}});
+      if(keep.length<2)errs.push(`${name}: ต้องมีตัวเลือกอย่างน้อย 2 ข้อ`);
+      else if(ans<0)errs.push(`${name}: ข้อที่ติ๊กว่าถูกยังว่างอยู่`);
+      if(new Set(keep).size!==keep.length)errs.push(`${name}: มีตัวเลือกซ้ำกัน`);
+      out.push({type:"mc",q,choices:keep,answer:Math.max(ans,0),hint:String(d.hint||"").trim()});
+    }else{
+      const keep=[...new Set(d.choices.map(c=>String(c||"").trim()).filter(Boolean))];
+      if(keep.length<2||keep.length>12)errs.push(`${name}: ต้องมีตัวเลือก 2–12 อย่าง`);
+      const mp=Math.min(Math.max(parseInt(d.max_pick)||1,1),Math.max(keep.length,1));
+      out.push({type:"reflect",q,choices:keep,max_pick:mp});
+    }
+  });
+  if(!doors.length)errs.push("ต้องมีอย่างน้อย 1 ประตู");
+  if(doors.length>10)errs.push("มีได้ไม่เกิน 10 ประตู");
+  return {errs,out};
+}
+async function saveSet(){
+  const E=V.edit,title=String(E.title||"").trim();
+  const {errs,out}=cleanDoors(E.doors);if(!title)errs.unshift("ยังไม่ได้ตั้งชื่อชุดคำถาม");
+  if(errs.length){$("edErr").innerHTML=`<div class="note">${errs.map(esc).join("<br>")}</div>`;return}
+  const row={title,topic:String(E.topic||"").trim(),grade:E.grade,doors:out,updated_at:new Date().toISOString()};
+  const q=E.id?sb.from("er_quiz_sets").update(row).eq("id",E.id):sb.from("er_quiz_sets").insert(Object.assign({created_by:me.id},row));
+  const {error}=await q;if(error){$("edErr").innerHTML=`<div class="note">${esc(errText(error))}</div>`;return}
+  toast("บันทึกแล้ว");V.edit=null;await loadSets();render();
+}
+
+/* ---------- เปิดให้ห้องเล่น ---------- */
+let pick=null;
+function openPicker(id){
+  const x=sets.find(s=>s.id===id);const {errs}=cleanDoors(x.doors);
+  if(errs.length)return toast("ชุดนี้ยังไม่สมบูรณ์ กดแก้ไขก่อนเปิดเกม");
+  pick={id,sel:new Set(),grade:x.grade};drawPicker();
+}
+function drawPicker(){
+  const x=sets.find(s=>s.id===pick.id);
+  const busy=new Set(sessions.filter(s=>s.status==="open"&&s.set_id===x.id).map(s=>s.class_room));
+  const list=rooms.filter(r=>String(r.class_room).replace(/\s/g,"").startsWith(pick.grade.replace(/\s/g,"")+"/"));
+  $("layer").innerHTML=`<div class="overlay" role="dialog" aria-modal="true" aria-label="เปิดให้ห้องเล่น"><div class="card stack">
+    <div class="row"><h2 class="grow" style="font-size:20px">เปิด "${esc(x.title)}"</h2><button class="btn sm plain" onclick="closeLayer()">ปิด</button></div>
+    <label class="f" style="max-width:160px">ชั้น<select onchange="pick.grade=this.value;pick.sel.clear();drawPicker()">${["ม.1","ม.2","ม.3","ม.4","ม.5","ม.6"].map(g=>`<option ${g===pick.grade?"selected":""}>${g}</option>`).join("")}</select></label>
+    <p class="muted" style="margin:0">เลือกห้องที่จะเล่นในคาบนี้ นักเรียนห้องนั้นเห็นภารกิจทันทีที่เข้าระบบ ห้องเส้นประคือเปิดอยู่แล้ว</p>
+    ${list.length?`<div class="roomgrid">${list.map(r=>{const b=busy.has(r.class_room);return `<button class="${b?"busy":""}" ${b?"disabled":""} aria-pressed="${pick.sel.has(r.class_room)}" onclick="togRoom('${esc(r.class_room)}')" title="${r.students} คน">${esc(String(r.class_room).replace(/^ม\.\s*/,""))}</button>`}).join("")}</div>`:`<p class="note">ไม่พบห้องของชั้นนี้ในระบบ</p>`}
+    <button class="btn amber" onclick="openRooms()" ${pick.sel.size?"":"disabled"}>${pick.sel.size?"เปิดเกมให้ "+[...pick.sel].sort((a,b)=>roomKey(a)-roomKey(b)).join(", "):"เลือกห้องก่อน"}</button></div></div>`;
+}
+function togRoom(r){pick.sel.has(r)?pick.sel.delete(r):pick.sel.add(r);drawPicker()}
+function closeLayer(){$("layer").innerHTML="";pick=null;PV=null}
+async function openRooms(){
+  const x=sets.find(s=>s.id===pick.id);const {out}=cleanDoors(x.doors);const ok=[],bad=[];
+  for(const r of pick.sel){
+    const {error}=await sb.from("er_sessions").insert({set_id:x.id,title:x.title,doors:out,class_room:r,created_by:me.id});
+    if(error)bad.push(r+": "+errText(error));else ok.push(r);
+  }
+  closeLayer();await loadSessions();
+  if(bad.length)alert("เปิดไม่สำเร็จบางห้อง\n"+bad.join("\n"));
+  if(ok.length){toast("เปิดเกมแล้ว: "+ok.join(", "));const s=sessions.find(s=>s.status==="open"&&s.set_id===x.id&&s.class_room===ok[0]);V.sid=s?s.id:V.sid;V.tab="live"}
+  render();
+}
+
+/* ---------- ลองเล่นเอง (ไม่บันทึกผล) ---------- */
+let PV=null;
+function preview(id){const x=sets.find(s=>s.id===id);PV={x,i:0,res:null,wrong:[],picked:[]};drawPV()}
+function drawPV(){
+  if(!PV)return;const d=PV.x.doors[PV.i],n=PV.x.doors.length;
+  let body;
+  if(PV.i>=n)body=`<h2 style="font-size:22px">หนีออกมาได้แล้ว</h2><p>นี่คือสิ่งที่นักเรียนจะเห็นเมื่อเปิดครบทุกประตู โหมดลองเล่นไม่บันทึกผล</p><button class="btn fill" onclick="closeLayer()">ปิด</button>`;
+  else if(d.type==="reflect")body=`<p class="muted" style="margin:0">ประตูสุดท้าย · เลือกได้ ${d.max_pick} อย่าง</p><h2 style="font-size:20px">${esc(d.q)}</h2><div class="row">${d.choices.map((c,k)=>`<button class="btn sm ${PV.picked.includes(k)?"fill":"plain"}" onclick="pvTag(${k})">${esc(c)}</button>`).join("")}</div><button class="btn amber" onclick="PV.i++;PV.picked=[];drawPV()" ${PV.picked.length?"":"disabled"}>ส่งคำตอบ</button>`;
+  else body=`<p class="muted" style="margin:0">ประตู ${PV.i+1} จาก ${n}</p><h2 style="font-size:20px">${esc(d.q)}</h2>${d.choices.map((c,k)=>`<button class="btn ${PV.res==="right"&&k===d.answer?"fill":PV.wrong.includes(k)?"danger":"plain"}" style="justify-content:flex-start" onclick="pvAns(${k})">${KEYS[k]}. ${esc(c)}</button>`).join("")}
+    ${PV.res==="wrong"?`<div class="note">ยังไม่ใช่ ลองอีกครั้งนะ${d.hint?"<br>คำใบ้: "+esc(d.hint):""}</div>`:""}${PV.res==="right"?`<div class="ok">ถูกต้อง ประตูเปิดแล้ว</div><button class="btn fill" onclick="PV.i++;PV.res=null;PV.wrong=[];drawPV()">เดินต่อ</button>`:""}`;
+  $("layer").innerHTML=`<div class="overlay" role="dialog" aria-modal="true" aria-label="ลองเล่นเอง"><div class="card stack"><div class="row"><span class="pill on grow">ลองเล่น · ${esc(PV.x.title)}</span><button class="btn sm plain" onclick="closeLayer()">ปิด</button></div>${body}</div></div>`;
+}
+function pvAns(k){if(PV.res==="right")return;const d=PV.x.doors[PV.i];if(k===d.answer)PV.res="right";else{PV.res="wrong";if(!PV.wrong.includes(k))PV.wrong.push(k)}drawPV()}
+function pvTag(k){const d=PV.x.doors[PV.i],i=PV.picked.indexOf(k);if(i>=0)PV.picked.splice(i,1);else if(PV.picked.length<d.max_pick)PV.picked.push(k);drawPV()}
+
+/* ---------- พิมพ์การ์ดสำรอง ---------- */
+function printCards(id){
+  const x=sets.find(s=>s.id===id);
+  $("print").innerHTML=`<h2 style="font-size:16pt">${esc(x.title)} · การ์ดคำถามสำรอง (ใช้เมื่อเน็ตล่มหรือไม่มีมือถือ)</h2>`+
+    x.doors.map((d,i)=>`<div class="pcard"><h3>${d.type==="reflect"?"ประตูสุดท้าย":"ประตู "+(i+1)}: ${esc(d.q)}</h3>${d.type==="mc"?`<ol type="1" style="list-style:none;padding:0">${d.choices.map((c,k)=>`<li>${KEYS[k]}. ${esc(c)}</li>`).join("")}</ol>`:`<p style="font-size:14pt">เลือกได้ ${d.max_pick} อย่าง: ${d.choices.map(esc).join(" / ")}</p>`}</div>`).join("")+
+    `<div class="pkey"><h2 style="font-size:16pt">เฉลยสำหรับครู (ไม่ต้องแจกนักเรียน)</h2>${x.doors.map((d,i)=>d.type==="mc"?`<p style="font-size:14pt">ประตู ${i+1}: ข้อ ${KEYS[d.answer]} ${esc(d.choices[d.answer])}${d.hint?` · คำใบ้: ${esc(d.hint)}`:""}</p>`:`<p style="font-size:14pt">ประตู ${i+1}: สะท้อนคิด ไม่มีถูกผิด</p>`).join("")}</div>`;
+  window.print();
+}
+
+document.addEventListener("keydown",e=>{if(e.key==="Escape"){if(V.proj){V.proj=false;drawProj()}else if($("layer").innerHTML)closeLayer()}});
+boot();
+</script>
+</body>
+</html>

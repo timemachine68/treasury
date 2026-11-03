@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>เกมห้องหนี | แนะให้แนว</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Mitr:wght@400;500;600&family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+/* หน้าเกมห้องหนีของนักเรียน: คอลัมน์เดียวขนาดมือถือ เขียวสนแบบแนะให้แนว */
+:root{
+  --pine:#1E5F4A; --pine-d:#123D2F; --pine-soft:#E3F1EA; --ink:#1B2A24; --muted:#4F5F57; --ground:#F3F7F2;
+  --line:#D5DED9; --amber:#E89A2C; --amber-soft:#F7E3C2; --warn:#9A4309; --warn-line:#C2570C; --warn-soft:#FCEBDD;
+  --map:#2D6B52; --room:#3E8466; --locked:#24543F; --night:#1B2A24;
+  --display:'Mitr','Sarabun',sans-serif; --body:'Sarabun',sans-serif;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--ground);color:var(--ink);font:16px/1.6 var(--body);min-height:100vh}
+body.dark{background:var(--night);color:#fff}
+#app{max-width:480px;margin:0 auto;padding:16px max(16px,env(safe-area-inset-left)) 40px}
+h1,h2,h3{font-family:var(--display);font-weight:500;margin:0;line-height:1.35}
+p{margin:6px 0}
+.muted{color:var(--muted);font-size:14px}
+body.dark .muted{color:#D3E3DA}
+.card{background:#fff;border-radius:18px;padding:18px;box-shadow:0 2px 8px rgba(27,42,36,.07)}
+.stack{display:flex;flex-direction:column;gap:14px}
+.row{display:flex;align-items:center;gap:10px}
+.between{justify-content:space-between}
+.btn{display:block;width:100%;min-height:50px;border:0;border-radius:12px;background:var(--amber);color:var(--ink);font:500 18px var(--display);cursor:pointer;text-align:center;text-decoration:none;padding:12px}
+.btn.pine{background:var(--pine);color:#fff}
+.btn.ghost{background:transparent;border:2px solid var(--pine);color:var(--pine)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.link{background:none;border:0;color:inherit;font:inherit;text-decoration:underline;cursor:pointer;min-height:44px;padding:0 4px}
+button:focus-visible,a:focus-visible,input:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
+label{display:flex;flex-direction:column;gap:4px;font-size:14px;color:var(--muted)}
+input{min-height:48px;font:17px var(--body);padding:0 12px;border:1px solid #C9D4CE;border-radius:10px;color:var(--ink)}
+.pill{display:inline-block;padding:3px 10px;border-radius:999px;font-size:13px;font-weight:600}
+.pill.on{background:var(--pine-soft);color:var(--pine)}
+.note{background:var(--warn-soft);color:var(--warn);border-radius:12px;padding:10px 12px;font-size:15px}
+.hero{background:var(--pine);color:#fff;border-radius:0 0 22px 22px;margin:-16px -16px 0;padding:20px 20px 26px}
+.avatars{display:flex;justify-content:space-between;gap:8px}
+.av{width:62px;height:62px;border-radius:50%;border:3px solid transparent;background:var(--ground);display:flex;align-items:center;justify-content:center;cursor:pointer}
+.av[aria-pressed="true"]{border-color:var(--pine);background:var(--pine-soft)}
+.game{border:2px solid var(--pine)}
+/* แมป */
+.bar{flex:1;height:10px;background:#33473F;border-radius:999px;overflow:hidden}
+.bar>i{display:block;height:100%;background:var(--amber);border-radius:999px;transition:width .5s}
+.map{background:var(--map);border-radius:20px;padding:16px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.door{position:relative;min-height:118px;border-radius:14px;border:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font:15px var(--body);color:#D3E3DA;background:var(--locked)}
+.door.open{background:var(--room);color:#fff}
+.door.now{background:var(--amber-soft);color:var(--ink);border:3px solid var(--amber);cursor:pointer;animation:glow 1.6s ease-in-out infinite}
+.door.now b{font-family:var(--display);font-weight:500}
+@keyframes glow{50%{box-shadow:0 0 0 6px rgba(232,154,44,.35)}}
+.me{position:absolute;left:-10px;bottom:-10px;width:40px;height:40px;transition:transform .35s}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+/* คำถาม */
+.sheet{position:fixed;inset:0;background:rgba(15,25,21,.72);display:flex;align-items:flex-end;justify-content:center;padding:14px;z-index:20}
+.sheet .card{width:100%;max-width:480px;max-height:92vh;overflow:auto;border-radius:22px;color:var(--ink)}
+.choice{display:flex;align-items:center;gap:12px;width:100%;min-height:56px;padding:10px 14px;border-radius:14px;border:2px solid var(--line);background:#fff;font:16px var(--body);color:var(--ink);text-align:left;cursor:pointer}
+.choice .k{width:32px;height:32px;flex-shrink:0;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--display);background:var(--ground)}
+.choice.right{border-color:var(--pine);background:var(--pine-soft)}.choice.right .k{background:var(--pine);color:#fff}
+.choice.wrong{border-color:var(--warn-line);background:var(--warn-soft)}.choice.wrong .k{background:var(--warn-line);color:#fff}
+.choice:disabled{cursor:default}
+.tags{display:flex;flex-wrap:wrap;gap:8px}
+.tag{min-height:44px;padding:8px 14px;border-radius:999px;border:2px solid var(--line);background:#fff;font:15px var(--body);color:var(--ink);cursor:pointer}
+.tag[aria-pressed="true"]{background:var(--pine);border-color:var(--pine);color:#fff}
+.ok{background:var(--pine-soft);border-radius:14px;padding:14px}
+.ok strong{font-family:var(--display);font-weight:500;font-size:18px;color:var(--pine)}
+.bad{background:var(--warn-soft);border-radius:14px;padding:14px}
+.bad strong{font-family:var(--display);font-weight:500;font-size:18px;color:var(--warn)}
+.stat{background:#2D6B52;border-radius:12px;padding:10px;color:#fff}
+.stat b{font-family:var(--display);font-weight:500;font-size:22px;display:block}
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 16px;border-radius:12px;font-size:15px;max-width:90vw;opacity:0;pointer-events:none;transition:opacity .2s;z-index:30}
+#toast.show{opacity:1}
+</style>
+</head>
+<body>
+<div id="app" aria-live="polite"><p class="muted">กำลังโหลด…</p></div>
+<div id="toast" role="status"></div>
+<script>
+const SUPABASE_URL = "https://ikkhjslmtjwrxzxvtokb.supabase.co";
+const ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlra2hqc2xtdGp3cnh6eHZ0b2tiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM3NDMzNjksImV4cCI6MjA5OTMxOTM2OX0.3OR_9mEv82Ns1LLjx5nnRwJYzrtKFtWCWd1bPuQfNKU";
+const EMAIL_DOMAIN = "guidance-pcw.local";
+const sb = supabase.createClient(SUPABASE_URL, ANON_KEY);
+
+const AV = [["#2F6FB3","สีฟ้า"],["#E89A2C","สีส้ม"],["#7A4FB0","สีม่วง"],["#1E8A6E","สีเขียว"]];
+const KEYS = ["ก","ข","ค","ง"];
+const $ = document.getElementById("app");
+const esc = t => String(t ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+let profile = null, S = { screen: "loading" }, timerId = null, pollId = null;
+
+function toast(t){const el=document.getElementById("toast");el.textContent=t;el.classList.add("show");clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove("show"),3500)}
+function face(i, size){const c=AV[i]?AV[i][0]:AV[0][0];return `<svg width="${size}" height="${size}" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="18" fill="${c}" stroke="#fff" stroke-width="2.5"/><circle cx="14" cy="17" r="2.5" fill="#fff"/><circle cx="26" cy="17" r="2.5" fill="#fff"/><path d="M13 25 Q20 30 27 25" stroke="#fff" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg>`}
+const ICON = {
+  check:'<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M8 12l3 3 5-6"/></svg>',
+  lock:'<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>',
+  star:'<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.7 5.5 6 .9-4.4 4.2 1 6-5.3-2.8-5.3 2.8 1-6L3.3 9.4l6-.9z"/></svg>',
+  door:'<svg width="40" height="50" viewBox="0 0 46 56" aria-hidden="true"><rect x="4" y="4" width="38" height="50" rx="4" fill="#8A5A2B"/><rect x="9" y="9" width="28" height="40" rx="2" fill="#A86F38"/><circle cx="31" cy="30" r="3" fill="#E89A2C"/></svg>',
+  back:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>'
+};
+function mmss(ms){ms=Math.max(0,ms);const s=Math.floor(ms/1000);return String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0")}
+function errText(e){const m=(e&&e.message)||"";if(/Failed to fetch|NetworkError|network/i.test(m))return "เน็ตหลุด ลองใหม่อีกครั้งนะ";return m||"เกิดข้อผิดพลาด ลองใหม่อีกครั้ง"}
+function myAvatar(){try{const v=+localStorage.getItem("er_av_"+profile.id);return v>=0&&v<4?v:0}catch(e){return 0}}
+function saveAvatar(i){try{localStorage.setItem("er_av_"+profile.id,String(i))}catch(e){}}
+function stopTimers(){clearInterval(timerId);clearInterval(pollId);timerId=pollId=null}
+
+/* ---------- เข้าสู่ระบบ ---------- */
+async function boot(){
+  stopTimers();
+  const {data:{session}} = await sb.auth.getSession();
+  if(!session){S={screen:"login"};return render()}
+  const {data:p} = await sb.from("profiles").select("id,display_name,role,class_room").eq("id",session.user.id).maybeSingle();
+  if(!p){await sb.auth.signOut();S={screen:"login",msg:"ไม่พบข้อมูลผู้ใช้"};return render()}
+  profile = p;
+  if(p.role!=="student"){S={screen:"notStudent"};return render()}
+  await openLobby();
+}
+async function doLogin(ev){
+  ev.preventDefault();
+  const u=document.getElementById("liUser").value.trim(), pw=document.getElementById("liPass").value, b=document.getElementById("btnLogin");
+  if(!u||!pw){S.msg="กรอกรหัสนักเรียนและรหัสผ่านก่อนนะ";return render()}
+  b.disabled=true;
+  const {error}=await sb.auth.signInWithPassword({email:u+"@"+EMAIL_DOMAIN,password:pw});
+  if(error){S.msg=/fetch/i.test(error.message)?"เน็ตหลุด ลองใหม่อีกครั้งนะ":"รหัสนักเรียนหรือรหัสผ่านไม่ถูกต้อง";return render()}
+  boot();
+}
+async function logout(){stopTimers();await sb.auth.signOut();location.reload()}
+
+/* ---------- หน้าเลือกภารกิจ ---------- */
+async function openLobby(){
+  stopTimers();
+  S={screen:"lobby",loading:true,av:myAvatar()};render();
+  await loadLobby();
+  pollId=setInterval(()=>{if(S.screen==="lobby")loadLobby(true)},20000);
+}
+async function loadLobby(quiet){
+  const {data,error}=await sb.rpc("er_my_games");
+  if(S.screen!=="lobby")return;
+  S.loading=false;
+  if(error){if(!quiet)S.err=errText(error);return render()}
+  S.err=null;S.games=data;render();
+}
+function pickAvatar(i){S.av=i;saveAvatar(i);render()}
+
+/* ---------- เข้าเกม ---------- */
+async function enterGame(id){
+  stopTimers();
+  S={screen:"game",loading:true,sid:id};render();
+  const {data,error}=await sb.rpc("er_join",{p_session:id,p_avatar:myAvatar()});
+  if(error){toast(errText(error));return openLobby()}
+  applyGame(data);
+  timerId=setInterval(tick,1000);
+  pollId=setInterval(refreshGame,15000);
+}
+function applyGame(d){
+  S.loading=false;S.session=d.session;S.doors=d.doors;S.att=d.attempt;S.escaped=d.escaped;
+  S.screen=d.attempt.finished_at?"escaped":"game";
+  render();
+}
+async function refreshGame(){
+  if(S.screen!=="game"||S.q)return;
+  const {data,error}=await sb.rpc("er_join",{p_session:S.sid,p_avatar:null});
+  if(!error&&data&&S.screen==="game"&&!S.q)applyGame(data);
+}
+function tick(){const el=document.getElementById("clock");if(el&&S.att)el.textContent=mmss(Date.now()-new Date(S.att.started_at).getTime())}
+
+function openDoor(i){
+  if(S.session.status!=="open"){return toast("ครูปิดภารกิจนี้แล้ว")}
+  if(i!==S.att.current_door)return;
+  S.q={door:i,picked:[],wrong:[],result:null,busy:false};render();
+}
+function closeSheet(){S.q=null;render()}
+async function answerMC(idx){
+  const q=S.q;if(!q||q.busy||q.result==="right"||q.wrong.includes(idx))return;
+  q.busy=true;q.picked=[idx];render();
+  await send([idx]);
+}
+function toggleTag(idx){
+  const q=S.q,d=S.doors[q.door],max=d.max_pick||1;if(q.busy||q.result==="right")return;
+  const k=q.picked.indexOf(idx);
+  if(k>=0)q.picked.splice(k,1);else if(q.picked.length<max)q.picked.push(idx);else{toast("เลือกได้ "+max+" อย่าง")}
+  render();
+}
+async function sendReflect(){const q=S.q;if(!q.picked.length)return toast("เลือกอย่างน้อย 1 อย่างนะ");q.busy=true;render();await send(q.picked.slice())}
+async function send(choices){
+  const q=S.q;
+  const {data,error}=await sb.rpc("er_answer",{p_session:S.sid,p_door:q.door,p_choices:choices});
+  q.busy=false;
+  if(error){toast(errText(error)+" (คำตอบยังไม่ถูกส่ง)");q.picked=[];return render()}
+  if(data.error){
+    if(data.error==="stale"){S.q=null;toast("โหลดข้อมูลล่าสุดแล้ว");return refreshGameNow()}
+    toast(data.error);if(/ปิด/.test(data.error)){S.session.status="closed";S.q=null}
+    return render();
+  }
+  if(data.finished&&data.correct===undefined){S.q=null;return refreshGameNow()}
+  S.escaped=data.escaped;
+  if(data.correct){
+    q.result="right";S.att.current_door=data.current_door;
+    if(data.tries===1&&S.doors[q.door].type==="mc")S.att.first_try++;
+    if(data.finished){S.att.finished_at=new Date().toISOString()}
+  }else{
+    q.result="wrong";q.wrong.push(choices[0]);q.hint=data.hint;S.att.wrong_total++;
+  }
+  render();
+}
+async function refreshGameNow(){const {data,error}=await sb.rpc("er_join",{p_session:S.sid,p_avatar:null});if(!error)applyGame(data);else render()}
+function nextAfterRight(){
+  const fin=!!S.att.finished_at;S.q=null;
+  if(fin){S.screen="escaped";refreshGameNow()}else render();
+}
+
+/* ---------- วาดหน้าจอ ---------- */
+function render(){
+  document.body.classList.toggle("dark",S.screen==="game");
+  $.innerHTML=(VIEWS[S.screen]||VIEWS.loading)();
+  const f=document.getElementById("liForm");if(f)f.onsubmit=doLogin;
+  const s=document.querySelector(".sheet .card");if(s){const h=s.querySelector("h2");if(h&&!S.q._focused){S.q._focused=true;h.focus()}}
+  tick();
+}
+const VIEWS={
+loading:()=>`<p class="muted">กำลังโหลด…</p>`,
+login:()=>`<div class="stack" style="padding-top:24px">
+  <div class="center" style="text-align:center">${ICON.door}</div>
+  <h1 style="text-align:center;font-size:28px">เกมห้องหนี</h1>
+  <p class="muted" style="text-align:center">ใช้บัญชีเดียวกับแนะให้แนว</p>
+  ${S.msg?`<div class="note" role="alert">${esc(S.msg)}</div>`:""}
+  <form id="liForm" class="card stack" autocomplete="on">
+    <label>รหัสนักเรียน<input id="liUser" inputmode="numeric" autocomplete="username" required></label>
+    <label>รหัสผ่าน<input id="liPass" type="password" autocomplete="current-password" required></label>
+    <button class="btn pine" id="btnLogin" type="submit">เข้าสู่ระบบ</button>
+  </form></div>`,
+notStudent:()=>`<div class="card stack" style="margin-top:24px">
+  <h1 style="font-size:22px">หน้านี้สำหรับนักเรียน</h1>
+  <p>คุณครูเปิดเกมและดูผลได้ที่หน้าครูค่ะ</p>
+  <a class="btn pine" href="escape-room-teacher.html">ไปหน้าครู</a>
+  <button class="link" onclick="logout()">ออกจากระบบ</button></div>`,
+lobby:()=>{
+  const g=S.games||{open:[],done:[]};
+  const first=String(profile.display_name||"").trim().split(/\s+/).filter(w=>!/^(ด\.ช\.|ด\.ญ\.|นาย|นางสาว|เด็กชาย|เด็กหญิง)$/.test(w))[0]||"";
+  return `<div class="stack">
+  <header class="hero stack" style="gap:4px">
+    <div class="row between"><span style="font-family:var(--display);font-size:15px;opacity:.9">แนะให้แนว · เกมห้องหนี</span><button class="link" style="color:#fff" onclick="logout()">ออกจากระบบ</button></div>
+    <h1 style="font-size:26px">สวัสดี ${esc(first)}</h1>
+    <p style="margin:0;opacity:.9">${esc(profile.class_room||"ยังไม่มีห้องในระบบ")}</p>
+  </header>
+  ${S.err?`<div class="note" role="alert">${esc(S.err)} <button class="link" onclick="loadLobby()">ลองใหม่</button></div>`:""}
+  <section class="card stack" style="gap:10px"><h2 style="font-size:17px">เลือกตัวละครของเรา</h2>
+    <div class="avatars">${AV.map((a,i)=>`<button class="av" aria-label="ตัวละคร${a[1]}" aria-pressed="${S.av===i}" onclick="pickAvatar(${i})">${face(i,40)}</button>`).join("")}</div></section>
+  <section class="stack" style="gap:10px"><h2 style="font-size:17px">ภารกิจที่ครูเปิดให้ห้องเรา</h2>
+    ${S.loading?`<p class="muted">กำลังโหลด…</p>`:g.open.length?g.open.map(x=>`<article class="card game stack" style="gap:10px">
+      <div class="row between"><span class="pill on">${x.finished_at?"หนีออกได้แล้ว":"เปิดอยู่ตอนนี้"}</span><span class="muted">${esc(x.teacher||"")}</span></div>
+      <h3 style="font-size:22px;font-weight:600">${esc(x.title)}</h3>
+      <p class="muted" style="margin:0">ประตู ${x.doors} บาน${x.current_door!=null&&!x.finished_at?` · เปิดไปแล้ว ${x.current_door} บาน`:""}</p>
+      <button class="btn" onclick="enterGame('${x.id}')">${x.finished_at?"ดูผลของเรา":x.current_door!=null?"เล่นต่อ":"เข้าห้องเลย"}</button></article>`).join("")
+      :`<div class="card"><p style="margin:0">ตอนนี้ยังไม่มีภารกิจ รอครูเปิดเกมก่อนนะ</p><p class="muted">หน้านี้จะเช็กให้เองทุก 20 วินาที</p><button class="btn ghost" style="margin-top:8px" onclick="loadLobby()">เช็กอีกครั้ง</button></div>`}
+  </section>
+  ${g.done&&g.done.length?`<section class="stack" style="gap:10px"><h2 style="font-size:17px">เล่นไปแล้ว</h2>
+    ${g.done.map(x=>`<div class="card row between" style="padding:14px 16px"><span style="font-weight:600">${esc(x.title)}</span><span class="muted" style="color:var(--pine);font-weight:600">${x.finished_at?"หนีออกได้ ":"เปิดได้ "}${x.current_door}/${x.doors}</span></div>`).join("")}</section>`:""}
+  <p class="muted" style="text-align:center">ถ้าเน็ตหลุด ไม่ต้องกังวล กลับเข้ามาใหม่ได้ ระบบจำว่าเปิดถึงประตูไหนแล้ว</p>
+  </div>`},
+game:()=>{
+  if(S.loading)return `<p class="muted" style="color:#fff">กำลังเข้าห้อง…</p>`;
+  const n=S.doors.length,cur=S.att.current_door,closed=S.session.status!=="open";
+  const doors=S.doors.map((d,i)=>{
+    const last=i===n-1&&d.type==="reflect";
+    if(i<cur)return `<div class="door open">${ICON.check}<span>ประตู ${i+1} เปิดแล้ว</span></div>`;
+    if(i===cur&&!closed)return `<button class="door now" onclick="openDoor(${i})" aria-label="ประตู ${i+1} แตะเพื่อไขประตู">${ICON.door}<b>${last?"ประตูสุดท้าย":"ประตู "+(i+1)}</b><span style="font-size:13px">แตะเพื่อไขประตู</span><span class="me">${face(S.att.avatar,40)}</span></button>`;
+    return `<div class="door">${last?ICON.star:ICON.lock}<span>${last?"ประตูสุดท้าย":"ประตู "+(i+1)}</span></div>`;
+  }).join("");
+  return `<div class="stack">
+  <header class="stack" style="gap:8px">
+    <div class="row between"><button class="link row" style="color:#fff;text-decoration:none;gap:2px" onclick="openLobby()">${ICON.back}ออกไปก่อน</button>
+      <span style="font-family:var(--display);font-size:17px;text-align:center">${esc(S.session.title)}</span>
+      <span id="clock" style="font-variant-numeric:tabular-nums">00:00</span></div>
+    <div class="row"><div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="${n}" aria-valuenow="${cur}"><i style="width:${Math.round(cur/n*100)}%"></i></div><span style="font-size:14px;font-weight:600">เปิดแล้ว ${cur}/${n}</span></div>
+  </header>
+  ${closed?`<div class="note" role="alert">ครูปิดภารกิจนี้แล้ว ผลที่ทำไว้ถูกบันทึกเรียบร้อย</div>`:""}
+  <main class="map" aria-label="แมปห้องหนี">${doors}</main>
+  <p class="muted" style="margin:0">${closed?"":"แตะประตูสีส้มเพื่อไขประตู"} · ห้องเรา: หนีออกได้แล้ว ${S.escaped} คน</p>
+  </div>${S.q?sheet():""}`},
+escaped:()=>{
+  const a=S.att,mcN=S.doors.filter(d=>d.type==="mc").length,dur=a.finished_at?mmss(new Date(a.finished_at)-new Date(a.started_at)):"-";
+  const ref=Array.isArray(a.reflection)?a.reflection:[];
+  return `<div class="stack" style="padding-top:8px">
+  <section class="card stack" style="background:var(--pine);color:#fff;align-items:center;text-align:center;gap:8px">
+    <svg width="72" height="72" viewBox="0 0 72 72" aria-hidden="true"><circle cx="36" cy="36" r="34" fill="#E89A2C"/><path d="M22 37l10 10 19-21" stroke="#1B2A24" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <h1 style="font-size:26px">หนีออกมาได้แล้ว</h1>
+    <p style="margin:0">${esc(S.session.title)} · ครบ ${S.doors.length} ประตู</p>
+    <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;width:100%">
+      <div class="stat"><b>${a.first_try}/${mcN}</b><span style="font-size:13px">ตอบถูกในครั้งแรก</span></div>
+      <div class="stat"><b>${dur}</b><span style="font-size:13px">เวลาที่ใช้</span></div></div>
+  </section>
+  ${ref.length?`<section class="card stack" style="gap:8px"><h2 style="font-size:17px">สิ่งที่เราเลือกตอนท้าย</h2><div class="tags">${ref.map(t=>`<span class="tag" aria-pressed="true">${esc(t)}</span>`).join("")}</div></section>`:""}
+  <p class="muted" style="text-align:center">ห้องเรา: หนีออกได้แล้ว ${S.escaped} คน</p>
+  <button class="btn pine" onclick="openLobby()">กลับหน้าเลือกภารกิจ</button></div>`}
+};
+function sheet(){
+  const q=S.q,d=S.doors[q.door],n=S.doors.length,last=q.door===n-1;
+  const head=`<div class="row between"><span class="pill" style="background:var(--amber-soft);color:#6B3F0E">${last&&d.type==="reflect"?"ประตูสุดท้าย":"ประตู "+(q.door+1)+" จาก "+n}</span>
+    ${q.result==="right"?"":`<button class="link" aria-label="ปิดคำถาม" style="width:44px;text-decoration:none;font-size:22px" onclick="closeSheet()">✕</button>`}</div>
+    <h2 tabindex="-1" style="font-size:21px">${esc(d.q)}</h2>`;
+  let body="";
+  if(d.type==="reflect"){
+    body=`<p class="muted" style="margin:0">เลือกได้ ${d.max_pick} อย่าง ข้อนี้ไม่มีถูกหรือผิด (${q.picked.length}/${d.max_pick})</p>
+    <div class="tags">${d.choices.map((c,i)=>`<button class="tag" aria-pressed="${q.picked.includes(i)}" onclick="toggleTag(${i})" ${q.result==="right"?"disabled":""}>${esc(c)}</button>`).join("")}</div>
+    ${q.result==="right"?"":`<button class="btn" onclick="sendReflect()" ${q.busy||!q.picked.length?"disabled":""}>${q.busy?"กำลังส่ง…":"ส่งคำตอบ"}</button>`}`;
+  }else{
+    body=`<div class="stack" style="gap:10px">${d.choices.map((c,i)=>{
+      const cls=q.result==="right"&&q.picked[0]===i?"right":q.wrong.includes(i)?"wrong":"";
+      return `<button class="choice ${cls}" onclick="answerMC(${i})" ${q.busy||q.result==="right"||q.wrong.includes(i)?"disabled":""}><span class="k">${KEYS[i]||i+1}</span><span>${esc(c)}</span></button>`}).join("")}</div>
+    ${q.busy?`<p class="muted" style="margin:0">กำลังส่งคำตอบ…</p>`:""}`;
+  }
+  let fb="";
+  if(q.result==="right")fb=`<div class="ok stack" role="status" style="gap:8px"><strong>${d.type==="reflect"?"ส่งแล้ว ประตูสุดท้ายเปิดแล้ว":"ถูกต้อง ประตูเปิดแล้ว"}</strong><button class="btn pine" onclick="nextAfterRight()">${S.att.finished_at?"ออกจากห้อง":"เดินต่อ"}</button></div>`;
+  else if(q.result==="wrong")fb=`<div class="bad" role="status"><strong>ยังไม่ใช่ ลองอีกครั้งนะ</strong>${q.hint?`<p style="margin:4px 0 0">คำใบ้: ${esc(q.hint)}</p>`:""}</div>`;
+  return `<div class="sheet" role="dialog" aria-modal="true"><div class="card stack">${head}${body}${fb}</div></div>`;
+}
+
+sb.auth.onAuthStateChange((ev)=>{if(ev==="SIGNED_OUT"&&S.screen!=="login"){S={screen:"login"};render()}});
+boot();
+</script>
+</body>
+</html>
