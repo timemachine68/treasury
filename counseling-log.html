@@ -367,13 +367,36 @@ function bindPhotoInputs(){
   });
 }
 
+// แยกเลขชั้น/ห้องจาก class_room เช่น "ม.1/10" -> [1, 10] เพื่อเรียงแบบตัวเลขจริง
+// (เรียงแบบ string ธรรมดาจะได้ ม.1/1, ม.1/10, ม.1/11, ..., ม.1/2 ซึ่งผิด)
+function classRoomSortKey(room){
+  const m = (room || '').match(/(\d+)\s*\/\s*(\d+)/);
+  if (m) return [parseInt(m[1], 10), parseInt(m[2], 10)];
+  return [999, 999]; // ไม่มีห้อง/รูปแบบไม่ตรง ให้ไปอยู่ท้ายสุด
+}
+
+// ดึงนักเรียนทั้งหมดแบบแบ่งหน้า (PostgREST ตัดผลลัพธ์ที่ 1,000 แถวโดยไม่แจ้ง error)
+async function fetchAllStudents(){
+  let all = [], from = 0;
+  const pageSize = 1000;
+  while (true){
+    const { data, error } = await sb.from('profiles')
+      .select('id, display_name, class_room')
+      .eq('role', 'student')
+      .order('class_room', { ascending: true })
+      .order('id', { ascending: true })
+      .range(from, from + pageSize - 1);
+    if (error) return { data: all, error };
+    all = all.concat(data || []);
+    if (!data || data.length < pageSize) break;
+    from += pageSize;
+  }
+  return { data: all, error: null };
+}
+
 async function loadStudents(){
-  const { data, error } = await sb.from('profiles')
-    .select('id, display_name, class_room')
-    .eq('role', 'student')
-    .order('class_room', { ascending: true })
-    .order('display_name', { ascending: true });
   const sel = document.getElementById('f-student');
+  const { data, error } = await fetchAllStudents();
   if (error){
     const opt = document.createElement('option');
     opt.textContent = 'โหลดรายชื่อนักเรียนไม่สำเร็จ: ' + error.message;
@@ -381,6 +404,13 @@ async function loadStudents(){
     return;
   }
   if (!data) return;
+  data.sort((a, b) => {
+    const [ag, ar] = classRoomSortKey(a.class_room);
+    const [bg, br] = classRoomSortKey(b.class_room);
+    if (ag !== bg) return ag - bg;
+    if (ar !== br) return ar - br;
+    return (a.display_name || '').localeCompare(b.display_name || '', 'th');
+  });
   data.forEach(s => {
     const opt = document.createElement('option');
     opt.value = s.id;
