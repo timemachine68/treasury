@@ -97,6 +97,11 @@
   .docrow .fname{font-weight:600;font-size:.92rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .docrow .dtype{font-size:.78rem;color:var(--ink-soft)}
   .docrow a{color:var(--leaf);font-weight:600;font-size:.85rem;white-space:nowrap}
+  .doclinks{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+  .doclinks a{display:inline-block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+    font-size:.8rem;font-weight:600;color:var(--leaf-deep);background:var(--leaf-tint);border:1px solid #bcd8c6;
+    border-radius:20px;padding:4px 12px;text-decoration:none}
+  .doclinks a:hover{background:#d5eadd}
   .adddoc{display:grid;grid-template-columns:1fr 1fr auto auto;gap:8px;margin-top:10px}
   @media(max-width:560px){.adddoc{grid-template-columns:1fr}}
 
@@ -243,7 +248,10 @@
         <input id="dLink" placeholder="วางลิงก์ Google Drive ที่นี่" style="grid-column:1/-1">
         <button class="btn sm" id="addDocBtn" style="grid-column:1/-1">+ เพิ่มลิงก์เอกสาร</button>
       </div>
+      <div id="docMsg" class="msg" style="margin-top:12px;margin-bottom:0"></div>
     </div>
+
+    <p id="docNewHint" class="muted hidden" style="margin:0 0 4px">📎 กดบันทึก MOU ก่อน แล้วระบบจะเปิดช่องแนบลิงก์เอกสารให้ต่อทันที</p>
 
     <div class="toolbar"><div class="toolbar-inner">
       <button class="btn danger hidden" id="deleteAgreementBtn">ลบ MOU</button>
@@ -266,6 +274,8 @@ const views = {
 function show(v){ Object.values(views).forEach(x=>x.classList.add("hidden")); views[v].classList.remove("hidden"); window.scrollTo(0,0); }
 function msg(el,t,ty){ el.textContent=t; el.className="msg "+(ty||""); }
 function esc(s){ return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+// ลิงก์เอกสารต้องเป็น http(s) เท่านั้น (กัน javascript: ฯลฯ)
+function safeUrl(u){ return /^https?:\/\//i.test(u||"") ? u : "#"; }
 function fmtDate(d){ return d? new Date(d).toLocaleDateString("th-TH",{day:"numeric",month:"short",year:"2-digit"}) : "—"; }
 
 const INST_TYPE_LABEL = {university:"มหาวิทยาลัย", vocational:"อาชีวศึกษา", government:"หน่วยงานราชการ", private:"เอกชน", other:"อื่นๆ"};
@@ -406,8 +416,17 @@ async function deleteInstitution(){
 /* ── MOU: list ── */
 async function loadAgreements(){
   const box=$("#agreementList"); box.innerHTML='<div class="spin"></div>';
-  const {data,error} = await sb.from("mou_agreements")
-    .select("*, mou_institutions(name)").order("created_at",{ascending:false});
+  // แบ่งหน้าดึงทีละ 1,000 แถว (PostgREST ตัดผลลัพธ์ที่ 1,000) พร้อมแนบรายการเอกสารมาด้วยเพื่อแสดงลิงก์ในรายการ
+  let data=[], error=null, from=0;
+  while(true){
+    const r = await sb.from("mou_agreements")
+      .select("*, mou_institutions(name), mou_documents(id,file_name,doc_type,drive_link,uploaded_at)")
+      .order("created_at",{ascending:false}).order("id").range(from,from+999);
+    if(r.error){ error=r.error; break; }
+    data = data.concat(r.data||[]);
+    if(!r.data || r.data.length<1000) break;
+    from += 1000;
+  }
   if(error){ box.innerHTML='<div class="empty">โหลดข้อมูลไม่สำเร็จ</div>'; return; }
   if(!data.length){
     box.innerHTML=`<div class="empty"><p>ยังไม่มี MOU · เริ่มจากปุ่ม "เพิ่ม MOU"</p></div>`;
@@ -417,12 +436,19 @@ async function loadAgreements(){
   data.forEach(a=>{
     const instName = a.mou_institutions?.name || "(ไม่ระบุสถาบัน)";
     const period = (a.start_date||a.end_date) ? `${fmtDate(a.start_date)} – ${fmtDate(a.end_date)}` : "ยังไม่ระบุช่วงเวลา";
+    const docs = (a.mou_documents||[]).slice().sort((x,y)=> (y.uploaded_at||"").localeCompare(x.uploaded_at||""));
+    const docsHtml = docs.length
+      ? `<div class="doclinks">${docs.map(d=>`<a href="${esc(safeUrl(d.drive_link))}" target="_blank" rel="noopener" title="${esc((DOC_TYPE_LABEL[d.doc_type]||"")+" · "+(d.file_name||""))}">📎 ${esc(d.file_name||"เอกสาร")} ↗</a>`).join("")}</div>`
+      : `<div class="meta" style="margin-top:6px">ยังไม่มีเอกสารแนบ</div>`;
     const el=document.createElement("div"); el.className="srow";
     el.innerHTML=`<div class="grow">
         <h3>${esc(a.title)}</h3>
         <div class="meta">${esc(instName)} · ${period}</div>
+        ${docsHtml}
       </div>
       <span class="status-tag st-${a.status}">${esc(MOU_STATUS_LABEL[a.status]||a.status)}</span>`;
+    // คลิกลิงก์เอกสารแล้วเปิดไฟล์เลย ไม่ต้องเข้าหน้าแก้ไข
+    el.querySelectorAll(".doclinks a").forEach(l=> l.addEventListener("click", e=> e.stopPropagation()));
     el.onclick=()=>openEditAgreement(a.id);
     box.appendChild(el);
   });
@@ -443,6 +469,7 @@ function openNewAgreement(){
   $("#aStaff").value=""; $("#aDesc").value="";
   $("#deleteAgreementBtn").classList.add("hidden");
   $("#docsCard").classList.add("hidden"); // ต้องบันทึก MOU ก่อนถึงจะแนบเอกสารได้
+  $("#docNewHint").classList.remove("hidden");
   msg($("#editAgreementMsg"),"","");
   show("editAgreement");
 }
@@ -461,8 +488,10 @@ async function openEditAgreement(id){
   $("#aStaff").value=a.responsible_staff||""; $("#aDesc").value=a.description||"";
   $("#deleteAgreementBtn").classList.remove("hidden");
   $("#docsCard").classList.remove("hidden");
+  $("#docNewHint").classList.add("hidden");
   fillSelectOptions($("#dType"), DOC_TYPE_LABEL);
   $("#dName").value=""; $("#dLink").value="";
+  msg($("#docMsg"),"","");
   await loadDocs(id);
   show("editAgreement");
 }
@@ -484,6 +513,8 @@ async function saveAgreement(){
   };
   const btn=$("#saveAgreementBtn"); btn.disabled=true; const old=btn.textContent; btn.textContent="กำลังบันทึก…";
   try{
+    // ถ้ากรอกลิงก์เอกสารไว้แต่ยังไม่ได้กด "+ เพิ่มลิงก์เอกสาร" ให้เพิ่มให้เลย (เดิมลิงก์นั้นหายเงียบ ๆ ตอนกดบันทึก)
+    if(EDITING_AGREEMENT && !(await insertPendingDoc(false))) return;
     if(EDITING_AGREEMENT){
       const {error}=await sb.from("mou_agreements").update(payload).eq("id",EDITING_AGREEMENT.id);
       if(error) throw error;
@@ -522,24 +553,38 @@ function renderDocs(){
         <div class="fname">${esc(d.file_name||"(ไม่ระบุชื่อไฟล์)")}</div>
         <div class="dtype">${esc(DOC_TYPE_LABEL[d.doc_type]||d.doc_type||"อื่นๆ")}</div>
       </div>
-      <a href="${esc(d.drive_link)}" target="_blank" rel="noopener">เปิดไฟล์ ↗</a>
+      <a href="${esc(safeUrl(d.drive_link))}" target="_blank" rel="noopener">เปิดไฟล์ ↗</a>
       <button class="mini" data-deldoc="${d.id}" title="ลบลิงก์นี้" style="background:none;border:1.5px solid var(--line);border-radius:9px;width:32px;height:32px;cursor:pointer;color:var(--danger);font-size:1.1rem;line-height:1">×</button>
     </div>`).join("");
   box.querySelectorAll("[data-deldoc]").forEach(b=> b.onclick = ()=> removeDoc(b.dataset.deldoc));
 }
+// แสดงข้อความตรงช่องเพิ่มเอกสาร (เดิมข้อความไปขึ้นบนสุดของหน้า ซึ่งอยู่นอกจอตอนกรอกลิงก์)
+function docMsg(t,ty){
+  const el=$("#docMsg"); msg(el,t,ty);
+  if(ty==="err") el.scrollIntoView({block:"center",behavior:"smooth"});
+}
+// เพิ่มลิงก์ที่กรอกค้างอยู่ในช่อง — คืน true ถ้าเพิ่มสำเร็จหรือไม่มีอะไรให้เพิ่ม, false ถ้าผิดพลาด
+async function insertPendingDoc(requireLink){
+  if(!EDITING_AGREEMENT) return true;
+  const link=$("#dLink").value.trim(), nameIn=$("#dName").value.trim();
+  if(!link && !nameIn && !requireLink) return true;
+  if(!link){ docMsg("วางลิงก์ Google Drive ก่อนนะคะ","err"); $("#dLink").focus(); return false; }
+  if(!/^https?:\/\//i.test(link)){ docMsg("ลิงก์เอกสารต้องขึ้นต้นด้วย http:// หรือ https://","err"); $("#dLink").focus(); return false; }
+  const {error}=await sb.from("mou_documents").insert({
+    mou_id:EDITING_AGREEMENT.id, doc_type:$("#dType").value, file_name:nameIn||link, drive_link:link, uploaded_by:ME.id,
+  });
+  if(error){ docMsg("เพิ่มลิงก์ไม่สำเร็จ: "+error.message,"err"); return false; }
+  $("#dName").value=""; $("#dLink").value="";
+  return true;
+}
 async function addDoc(){
   if(!EDITING_AGREEMENT) return;
-  const link=$("#dLink").value.trim();
-  if(!/^https?:\/\//.test(link)){ msg($("#editAgreementMsg"),"ลิงก์เอกสารต้องขึ้นต้นด้วย http:// หรือ https://","err"); return; }
-  const name=$("#dName").value.trim() || link;
   const btn=$("#addDocBtn"); btn.disabled=true;
-  const {error}=await sb.from("mou_documents").insert({
-    mou_id:EDITING_AGREEMENT.id, doc_type:$("#dType").value, file_name:name, drive_link:link, uploaded_by:ME.id,
-  });
+  const ok = await insertPendingDoc(true);
   btn.disabled=false;
-  if(error){ msg($("#editAgreementMsg"),"เพิ่มลิงก์ไม่สำเร็จ: "+error.message,"err"); return; }
-  $("#dName").value=""; $("#dLink").value="";
+  if(!ok) return;
   await loadDocs(EDITING_AGREEMENT.id);
+  docMsg("เพิ่มลิงก์เอกสารแล้ว ✓","ok");
 }
 async function removeDoc(id){
   if(!confirm("ลบลิงก์เอกสารนี้ออกจากรายการ?")) return; // ไฟล์จริงใน Drive ไม่ถูกลบ แค่เอาลิงก์ออกจากระบบ
