@@ -570,8 +570,11 @@ async function insertPendingDoc(requireLink){
   if(!link && !nameIn && !requireLink) return true;
   if(!link){ docMsg("วางลิงก์ Google Drive ก่อนนะคะ","err"); $("#dLink").focus(); return false; }
   if(!/^https?:\/\//i.test(link)){ docMsg("ลิงก์เอกสารต้องขึ้นต้นด้วย http:// หรือ https://","err"); $("#dLink").focus(); return false; }
+  // ดึงรหัสไฟล์จากลิงก์ Drive (…/file/d/<รหัส>/view หรือ …?id=<รหัส>) — ถ้าไม่ใช่ลิงก์ Drive ก็เก็บเป็นว่างได้
+  const idm = link.match(/\/d\/([A-Za-z0-9_-]{15,100})/) || link.match(/[?&]id=([A-Za-z0-9_-]{15,100})/);
   const {error}=await sb.from("mou_documents").insert({
-    mou_id:EDITING_AGREEMENT.id, doc_type:$("#dType").value, file_name:nameIn||link, drive_link:link, uploaded_by:ME.id,
+    mou_id:EDITING_AGREEMENT.id, doc_type:$("#dType").value, file_name:nameIn||link, drive_link:link,
+    drive_file_id: idm ? idm[1] : null, uploaded_by:ME.id,
   });
   if(error){ docMsg("เพิ่มลิงก์ไม่สำเร็จ: "+error.message,"err"); return false; }
   $("#dName").value=""; $("#dLink").value="";
