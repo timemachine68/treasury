@@ -207,6 +207,12 @@ textarea.csvbox{font-family:monospace;font-size:.82rem;min-height:120px}
 }
 .site-foot{text-align:center;font-size:.78rem;color:var(--ink-soft,#5B6B72);padding:22px 16px 28px;margin-top:24px;border-top:1px dashed var(--line,#DCE4E1)}
 .site-foot b{font-weight:600;color:var(--pine-deep,#0A4F44)}
+
+.photo-lb{position:fixed;inset:0;z-index:9999;background:rgba(10,30,26,.82);display:none;align-items:center;justify-content:center;flex-direction:column;gap:12px;padding:16px}
+.photo-lb.show{display:flex}
+.photo-lb img{max-width:min(92vw,520px);max-height:80vh;border-radius:16px;background:#fff;box-shadow:0 8px 40px rgba(0,0,0,.4)}
+.photo-lb span{color:#fff;font-size:.85rem;opacity:.85}
+.zoomable{cursor:zoom-in}
 </style>
 </head>
 <body>
@@ -3183,6 +3189,21 @@ function renderOverview(){
   }
 }
 
+
+/* ดูรูปขยาย: แตะรูปเพื่อขยาย แตะที่ไหนก็ได้เพื่อปิด */
+function openPhoto(url){
+  let lb = document.getElementById("photoLb");
+  if(!lb){
+    lb = document.createElement("div"); lb.id = "photoLb"; lb.className = "photo-lb";
+    lb.innerHTML = '<img alt="รูปนักเรียน"><span>แตะที่ว่างเพื่อปิด</span>';
+    lb.onclick = ()=> lb.classList.remove("show");
+    document.addEventListener("keydown", e=>{ if(e.key==="Escape") lb.classList.remove("show"); });
+    document.body.appendChild(lb);
+  }
+  lb.querySelector("img").src = url;
+  lb.classList.add("show");
+}
+
 $("btnOvClose").onclick = ()=> $("ovModal").classList.remove("show");
 async function openOvModal(sid){
   ovSid = sid;
@@ -3316,7 +3337,7 @@ async function openOvModal(sid){
   $("ovModalBody").innerHTML = `
     <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
       <div style="width:60px;height:60px;border-radius:50%;overflow:hidden;flex:none;background:var(--pine-tint);display:grid;place-items:center;font-family:'Mitr';font-size:1.5rem;color:var(--pine-deep)">
-        ${ovAvatarUrl ? `<img src="${ovAvatarUrl}" style="width:100%;height:100%;object-fit:cover" alt="">` : esc((s.display_name||"?").trim().charAt(0).toUpperCase())}
+        ${ovAvatarUrl ? `<img src="${ovAvatarUrl}" class="zoomable" title="แตะเพื่อดูรูปขยาย" onclick="openPhoto(this.src)" style="width:100%;height:100%;object-fit:cover" alt="">` : esc((s.display_name||"?").trim().charAt(0).toUpperCase())}
       </div>
       <h2 style="margin:0">🧑‍🎓 ${esc(s.display_name)}${s.nickname ? ` <span style="font-size:.85rem;background:var(--pine-tint);color:var(--pine-deep);border-radius:999px;padding:1px 12px">${esc(s.nickname)}</span>` : ""} <small style="font-weight:400;color:var(--ink-soft)">${esc(s.username)} · ${esc(s.class_room||"-")}${s.previous_school ? " · เดิม: "+esc(s.previous_school) : ""}</small></h2>
     </div>

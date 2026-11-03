@@ -42,6 +42,12 @@ header.app .wrap{display:flex;align-items:center;gap:12px;padding-bottom:0;flex-
 .avatar-frame{position:relative;width:128px;height:128px}
 .avatar{width:128px;height:128px;border-radius:50%;object-fit:cover;background:var(--pine-tint);
   display:grid;place-items:center;font-family:'Mitr';font-size:2.4rem;color:var(--pine-deep);border:3px solid var(--pine-tint)}
+
+.photo-lb{position:fixed;inset:0;z-index:9999;background:rgba(10,30,26,.82);display:none;align-items:center;justify-content:center;flex-direction:column;gap:12px;padding:16px}
+.photo-lb.show{display:flex}
+.photo-lb img{max-width:min(92vw,520px);max-height:80vh;border-radius:16px;background:#fff;box-shadow:0 8px 40px rgba(0,0,0,.4)}
+.photo-lb span{color:#fff;font-size:.85rem;opacity:.85}
+.zoomable{cursor:zoom-in}
 .avatar-edit{position:absolute;bottom:2px;right:2px;width:36px;height:36px;border-radius:50%;background:var(--pine);
   color:#fff;border:3px solid #fff;display:grid;place-items:center;font-size:1rem;box-shadow:0 2px 8px rgba(0,0,0,.2)}
 .avatar-name{font-family:'Mitr';font-size:1.1rem;color:var(--ink);text-align:center}
@@ -244,12 +250,28 @@ async function saveNick(value){
 $("btnSaveNick").onclick = ()=> saveNick($("nickInput").value);
 $("btnClearNick").onclick = ()=>{ if(confirm("ลบชื่อเล่นนี้ใช่ไหม?")) saveNick(""); };
 
+
+/* ดูรูปขยาย: แตะรูปเพื่อขยาย แตะที่ไหนก็ได้เพื่อปิด */
+function openPhoto(url){
+  let lb = document.getElementById("photoLb");
+  if(!lb){
+    lb = document.createElement("div"); lb.id = "photoLb"; lb.className = "photo-lb";
+    lb.innerHTML = '<img alt="รูปนักเรียน"><span>แตะที่ว่างเพื่อปิด</span>';
+    lb.onclick = ()=> lb.classList.remove("show");
+    document.addEventListener("keydown", e=>{ if(e.key==="Escape") lb.classList.remove("show"); });
+    document.body.appendChild(lb);
+  }
+  lb.querySelector("img").src = url;
+  lb.classList.add("show");
+}
+
 /* ═══════════ รูปโปรไฟล์ ═══════════ */
 async function loadAvatar(){
   if(!profile.avatar_path){ $("btnRemovePhoto").classList.add("hidden"); return; }
   const {data, error} = await sb.storage.from(BUCKET).createSignedUrl(profile.avatar_path, 3600);
   if(error) return; // ไม่มีรูปหรือดึงไม่สำเร็จ ปล่อยเป็นตัวอักษรย่อไป
-  $("avatarImg").innerHTML = `<img src="${data.signedUrl}" style="width:100%;height:100%;border-radius:50%;object-fit:cover">`;
+  $("avatarImg").innerHTML = `<img src="${data.signedUrl}" style="width:100%;height:100%;border-radius:50%;object-fit:cover" class="zoomable" title="แตะเพื่อดูรูปขยาย">`;
+  $("avatarImg").querySelector("img").onclick = ()=> openPhoto(data.signedUrl);
   $("btnRemovePhoto").classList.remove("hidden");
 }
 
