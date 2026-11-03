@@ -488,7 +488,7 @@ textarea.csvbox{font-family:monospace;font-size:.82rem;min-height:120px}
         <h2>🧑‍🎓 ภาพรวมนักเรียน 360°</h2>
         <p class="field hint" style="margin-bottom:10px">รวมข้อมูลจากทุกระบบในคลังแนะแนวไว้ในหน้าเดียวต่อคน: ผลงานนักเรียน · ทุนการศึกษา · ขออนุญาตทำงาน (กดที่ช่องเพื่อดูรายละเอียดของคนนั้น)</p>
         <div class="toolbar">
-          <div class="search"><input id="ovQ" placeholder="ค้นหาชื่อ/ชื่อเล่น/ห้อง…"></div>
+          <div class="search"><input id="ovQ" placeholder="ค้นหาชื่อ/ชื่อเล่น/โรงเรียนเดิม/ห้อง…"></div>
           <div class="chips" id="ovRooms"></div>
         </div>
         <div class="tbl-wrap">
@@ -3069,7 +3069,7 @@ async function loadOverview(){
   $("ovLoading").classList.remove("hidden");
   const [{data:stu},{data:asg},{data:sub},{data:rnd},{data:resp},{data:asm},{data:tg},{data:tgat},
     {data:qa},{data:ql},{data:sa},{data:sl},{data:wp},{data:cp},{data:iv},{data:ivc},{data:vp},{data:tca}] = await Promise.all([
-    fetchAllStudents("id,username,student_id,display_name,class_room,avatar_path,nickname"),
+    fetchAllStudents("id,username,student_id,display_name,class_room,avatar_path,nickname,previous_school"),
     sb.from("assignments").select("id,title,class_rooms,due_at"),
     // ดึง content ด้วยเพื่อให้ AI วิเคราะห์ได้ (text_answer, file_name, external_url)
     fetchAllRows(()=> sb.from("submissions").select("id,assignment_id,student_id,submitted_at,text_answer,file_name,external_url,note").order("submitted_at").order("id")),
@@ -3140,7 +3140,7 @@ function renderOverview(){
 
   let list = ovStudents;
   if(ovF.room!=="all") list = list.filter(s=>s.class_room===ovF.room);
-  if(ovF.q) list = list.filter(s=> ((s.username||"")+" "+(s.display_name||"")+" "+(s.nickname||"")+" "+(s.class_room||"")).toLowerCase().includes(ovF.q));
+  if(ovF.q) list = list.filter(s=> ((s.username||"")+" "+(s.display_name||"")+" "+(s.nickname||"")+" "+(s.previous_school||"")+" "+(s.class_room||"")).toLowerCase().includes(ovF.q));
   list = [...list].sort((a,b)=> roomCompare(a.class_room, b.class_room) || (a.username||"").localeCompare(b.username||""));
 
   const total = list.length;
@@ -3318,7 +3318,7 @@ async function openOvModal(sid){
       <div style="width:60px;height:60px;border-radius:50%;overflow:hidden;flex:none;background:var(--pine-tint);display:grid;place-items:center;font-family:'Mitr';font-size:1.5rem;color:var(--pine-deep)">
         ${ovAvatarUrl ? `<img src="${ovAvatarUrl}" style="width:100%;height:100%;object-fit:cover" alt="">` : esc((s.display_name||"?").trim().charAt(0).toUpperCase())}
       </div>
-      <h2 style="margin:0">🧑‍🎓 ${esc(s.display_name)}${s.nickname ? ` <span style="font-size:.85rem;background:var(--pine-tint);color:var(--pine-deep);border-radius:999px;padding:1px 12px">${esc(s.nickname)}</span>` : ""} <small style="font-weight:400;color:var(--ink-soft)">${esc(s.username)} · ${esc(s.class_room||"-")}</small></h2>
+      <h2 style="margin:0">🧑‍🎓 ${esc(s.display_name)}${s.nickname ? ` <span style="font-size:.85rem;background:var(--pine-tint);color:var(--pine-deep);border-radius:999px;padding:1px 12px">${esc(s.nickname)}</span>` : ""} <small style="font-weight:400;color:var(--ink-soft)">${esc(s.username)} · ${esc(s.class_room||"-")}${s.previous_school ? " · เดิม: "+esc(s.previous_school) : ""}</small></h2>
     </div>
 
     <div class="panel" style="margin-top:12px">
