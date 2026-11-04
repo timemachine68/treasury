@@ -520,6 +520,10 @@ async function init(){
   initYearSelect();
   bindReport();
   loadTodo();
+
+  // เปิดมาจากหน้าโปรไฟล์นักเรียน: ?student=<id> → เลือกนักเรียนคนนั้นในฟอร์มบันทึกใหม่
+  const sid = new URLSearchParams(location.search).get('student');
+  if (sid && [...document.getElementById('f-student').options].some(o => o.value === sid)) startNewFor(sid);
 }
 
 function bindOtherDetailToggle(){
@@ -926,7 +930,7 @@ async function openTimeline(studentId){
 
   const p = data[0].profiles;
   document.getElementById('tl-title').textContent = p ? `${p.display_name} (${p.class_room || '-'})` : 'ประวัติการให้คำปรึกษา';
-  document.getElementById('tl-sub').textContent = `ให้คำปรึกษาแล้ว ${data.length} ครั้ง เรียงจากล่าสุด`;
+  document.getElementById('tl-sub').innerHTML = `ให้คำปรึกษาแล้ว ${esc(data.length)} ครั้ง เรียงจากล่าสุด · <a href="student-profile.html?id=${encodeURIComponent(studentId)}">👤 เปิดโปรไฟล์รวม</a>`;
 
   body.innerHTML = data.map((r, i) => {
     const lines = [];

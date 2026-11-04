@@ -1,0 +1,340 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>โปรไฟล์นักเรียนรวม · แนะให้แนว</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Mitr:wght@400;500;600&family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{
+  --ink:#22313A; --ink-soft:#5B6B72;
+  --board:#EFF3F1; --card:#FFFFFF;
+  --pine:#0F6B5C; --pine-deep:#0A4F44; --pine-tint:#E2F0EC;
+  --note:#FFD34D; --note-deep:#8A6D00;
+  --line:#DCE4E1; --danger:#C0392B;
+  --g1:#F28C6B; --g2:#F2B84B; --g3:#7FB069; --g4:#4E9BB9; --g5:#8E7CC3; --g6:#D96A9C;
+  --radius:14px; --shadow:0 2px 10px rgba(34,49,58,.08);
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:'Sarabun',sans-serif;background:var(--board);color:var(--ink);font-size:16px;line-height:1.55}
+h1,h2,h3,.brand{font-family:'Mitr',sans-serif;font-weight:600;margin:0}
+:focus-visible{outline:3px solid var(--note);outline-offset:2px;border-radius:6px}
+header.app{background:var(--pine);color:#fff;padding:12px 16px;display:flex;align-items:center;gap:12px;justify-content:space-between;flex-wrap:wrap}
+header.app .brand{font-size:18px}
+header.app small{display:block;opacity:.85;font-family:'Sarabun';font-weight:400;font-size:13px}
+header.app a{color:#fff}
+.userchip{background:rgba(255,255,255,.14);border-radius:999px;padding:4px 12px;font-size:14px}
+.userchip .role{background:var(--note);color:var(--ink);border-radius:999px;padding:0 8px;margin-left:6px;font-size:12px;font-weight:600}
+.wrap{max-width:1080px;margin:0 auto;padding:16px}
+.search{display:flex;align-items:center;gap:8px;background:#fff;border:1.5px solid var(--line);border-radius:999px;padding:8px 16px}
+.search input{border:0;outline:0;font:inherit;font-size:16px;flex:1;background:transparent;min-width:0}
+.results{margin:8px 0 12px;display:flex;flex-direction:column;gap:6px}
+.res{display:flex;justify-content:space-between;gap:8px;align-items:center;background:#fff;border:1.5px solid var(--line);border-radius:12px;padding:8px 14px;cursor:pointer;font:inherit;text-align:left;width:100%}
+.res:hover{border-color:var(--pine)}
+.res .m{color:var(--ink-soft);font-size:14px}
+.hero{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);border-left:6px solid var(--gc,var(--g4));padding:16px;display:flex;gap:16px;align-items:center;flex-wrap:wrap;margin-top:12px}
+.avatar{width:64px;height:64px;border-radius:50%;background:var(--pine-tint);display:flex;align-items:center;justify-content:center;font-size:30px;flex:none}
+.hero h1{font-size:22px}
+.hero .meta{color:var(--ink-soft);font-size:14px}
+.badge{display:inline-block;border-radius:999px;padding:1px 10px;font-size:12px;font-weight:600;background:var(--pine-tint);color:var(--pine-deep);margin-right:4px}
+.badge.warn{background:#FFF1C2;color:var(--note-deep)}
+.badge.red{background:#FBEAE7;color:var(--danger)}
+.badge.grade{background:var(--gc);color:#fff}
+.hero .grow{flex:1;min-width:200px}
+.rooms{font-size:13px;color:var(--ink-soft);margin-top:4px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin:12px 0}
+.stat{background:#fff;border-radius:12px;box-shadow:var(--shadow);padding:10px 12px;text-align:center;cursor:pointer;border:2px solid transparent;font:inherit;color:inherit}
+.stat:hover{border-color:var(--pine-tint)}
+.stat .n{font-family:'Mitr';font-size:24px;color:var(--pine);line-height:1.2;display:block}
+.stat .n.zero{color:#B5C0BC}
+.stat .l{font-size:13px;color:var(--ink-soft)}
+.alert{background:#FBEAE7;border:1.5px solid #EAC7C2;border-radius:12px;padding:10px 14px;margin:12px 0;font-size:15px}
+.alert.soft{background:#FFF8DB;border-color:#EBD58A}
+.alert b{color:var(--danger)}
+.alert.soft b{color:var(--note-deep)}
+.sec{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);margin:12px 0;overflow:hidden}
+.sec>h2{font-size:17px;padding:12px 16px;background:var(--board);display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.sec>h2 small{font-family:'Sarabun';font-weight:500;color:var(--ink-soft);font-size:13px}
+.sec .body{padding:6px 16px 12px}
+.row{padding:9px 0;border-bottom:1px dashed var(--line);display:flex;gap:10px;justify-content:space-between;flex-wrap:wrap}
+.row:last-child{border-bottom:0}
+.row .t{font-weight:600}
+.row .s{color:var(--ink-soft);font-size:14px}
+.row .r{text-align:right;font-size:14px;color:var(--ink-soft)}
+.empty{text-align:center;color:var(--ink-soft);padding:18px 0;font-size:15px}
+.empty .e{font-size:26px;display:block}
+.lock{background:var(--note);color:var(--ink);border-radius:999px;font-size:12px;font-weight:600;padding:1px 10px;font-family:'Sarabun'}
+.tl{border-left:3px solid var(--pine-tint);margin:8px 0 0 6px;padding-left:14px}
+.tl .it{margin-bottom:12px;position:relative}
+.tl .it:before{content:"";position:absolute;left:-21px;top:6px;width:11px;height:11px;border-radius:50%;background:var(--pine)}
+.tl .it.open:before{background:var(--note);outline:2px solid var(--note-deep)}
+.detail{background:var(--board);border-radius:10px;padding:8px 12px;margin-top:6px;font-size:15px;white-space:pre-wrap;word-break:break-word}
+.btn{font:inherit;font-weight:600;border-radius:9px;padding:6px 14px;border:1.5px solid var(--line);background:#fff;cursor:pointer;font-size:14px;color:var(--ink);text-decoration:none;display:inline-block}
+.btn.primary{background:var(--pine);border-color:var(--pine);color:#fff}
+.msg{border-radius:12px;padding:12px 16px;margin:12px 0}
+.msg.err{background:#FBEAE7;color:var(--danger)}
+.hint{color:var(--ink-soft);font-size:14px}
+@media(max-width:560px){.hero h1{font-size:19px}.row .r{text-align:left}}
+</style>
+</head>
+<body>
+<header class="app">
+  <div><div class="brand">🧭 โปรไฟล์นักเรียนรวม</div><small>แนะให้แนว · พูลเจริญวิทยาคม</small></div>
+  <div><a href="index.html" class="hint" style="color:#fff;margin-right:10px">← กลับคลังแนะแนว</a><span class="userchip" id="who">กำลังโหลด...</span></div>
+</header>
+
+<div class="wrap">
+  <div id="no-access" class="msg err" style="display:none"></div>
+  <div id="main" style="display:none">
+    <div class="search"><span>🔍</span><input id="q" placeholder="พิมพ์ชื่อ รหัสนักเรียน หรือห้อง (เช่น ม.6/3) อย่างน้อย 2 ตัวอักษร" aria-label="ค้นหานักเรียน" autocomplete="off"></div>
+    <div class="results" id="results"></div>
+    <div id="app"><div class="empty"><span class="e">🧭</span>ค้นหานักเรียนด้านบน แล้วกดที่ชื่อเพื่อดูข้อมูลทุกด้านในหน้าเดียว</div></div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://ikkhjslmtjwrxzxvtokb.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlra2hqc2xtdGp3cnh6eHZ0b2tiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM3NDMzNjksImV4cCI6MjA5OTMxOTM2OX0.3OR_9mEv82Ns1LLjx5nnRwJYzrtKFtWCWd1bPuQfNKU';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+const GC = {1:'--g1',2:'--g2',3:'--g3',4:'--g4',5:'--g5',6:'--g6'};
+const STALE_DAYS = 14;
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+// วันที่ไทย (เวลาไทย UTC+7) และแสดงเป็น พ.ศ.
+function todayStr(){ return new Date(Date.now() + 7*3600*1000).toISOString().slice(0,10); }
+function dayNum(d){ const [y,m,dd] = String(d).slice(0,10).split('-').map(Number); return Math.round(Date.UTC(y, m-1, dd) / 86400000); }
+const MONTHS = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+function fmtDate(d){
+  if (!d) return '';
+  const s = String(d).slice(0,10);
+  const [y,m,dd] = s.split('-').map(Number);
+  if (!y || !m || !dd) return esc(d);
+  return `${dd} ${MONTHS[m-1]} ${y + 543}`;
+}
+function fmtTs(t){ if (!t) return ''; return fmtDate(new Date(new Date(t).getTime() + 7*3600*1000).toISOString()); }
+function yearBE(y){ return y ? `ปี ${y}` : ''; }
+
+const LEVEL = { school:'ระดับโรงเรียน', district:'ระดับอำเภอ/เขต', area:'ระดับเขตพื้นที่', province:'ระดับจังหวัด', region:'ระดับภาค', national:'ระดับชาติ', international:'ระดับนานาชาติ' };
+const QSTATUS = { submitted:'ส่งใบสมัครแล้ว', under_review:'กำลังพิจารณา', withdrawn:'ถอนใบสมัคร' };
+const SSTATUS = { approved:'ได้รับทุน', shortlisted:'ผ่านเข้ารอบ' };
+
+function empty(icon, txt){ return `<div class="empty"><span class="e">${icon}</span>${esc(txt)}</div>`; }
+function sec(id, title, count, body, extra){
+  return `<section class="sec" id="s-${id}"><h2><span>${title}${extra || ''}</span><small>${esc(count)}</small></h2><div class="body">${body}</div></section>`;
+}
+function row(left, right){ return `<div class="row"><div>${left}</div>${right ? `<div class="r">${right}</div>` : ''}</div>`; }
+
+// ---------- เข้าสู่ระบบ + ตรวจสิทธิ์ ----------
+function showNoAccess(msg){
+  $('main').style.display = 'none';
+  const el = $('no-access');
+  el.style.display = 'block';
+  el.innerHTML = msg;
+}
+async function init(){
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session){
+    $('who').textContent = 'ยังไม่ได้เข้าสู่ระบบ';
+    showNoAccess('กรุณาเข้าสู่ระบบจากหน้า <a href="index.html">คลังแนะแนว</a> ก่อน แล้วกลับมาเปิดหน้านี้อีกครั้ง');
+    return;
+  }
+  const { data: profile } = await sb.from('profiles').select('display_name, role, is_guidance').eq('id', session.user.id).single();
+  const isStaff = !!profile && (profile.role === 'admin' || (profile.role === 'teacher' && profile.is_guidance === true));
+  $('who').innerHTML = `${esc(profile?.display_name || session.user.email)}<span class="role">${profile?.role === 'admin' ? 'ผู้ดูแล' : 'ครู'}</span>`;
+  if (!isStaff){
+    showNoAccess('<b>หน้านี้สำหรับครูแนะแนวเท่านั้น</b><br>บัญชีนี้ยังไม่มีสิทธิ์เปิดโปรไฟล์นักเรียนรวม หากคิดว่าควรมีสิทธิ์ กรุณาแจ้งผู้ดูแลระบบ');
+    return;
+  }
+  $('main').style.display = 'block';
+  bindSearch();
+  const id = new URLSearchParams(location.search).get('id');
+  if (id && /^[0-9a-f-]{36}$/i.test(id)) loadProfile(id);
+}
+
+// ---------- ค้นหา ----------
+let searchSeq = 0, searchTimer = null;
+function bindSearch(){
+  $('q').addEventListener('input', () => {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(runSearch, 300);
+  });
+}
+async function runSearch(){
+  const q = $('q').value.trim();
+  const box = $('results');
+  const seq = ++searchSeq;
+  if (q.length < 2){ box.innerHTML = ''; return; }
+  box.innerHTML = '<div class="hint">กำลังค้นหา...</div>';
+  const { data, error } = await sb.rpc('student_profile_search', { p_q: q });
+  if (seq !== searchSeq) return;
+  if (error){ box.innerHTML = `<div class="msg err">ค้นหาไม่สำเร็จ: ${esc(error.message)}</div>`; return; }
+  if (!data || data.length === 0){ box.innerHTML = '<div class="hint">ไม่พบนักเรียนที่ตรงกับคำค้น</div>'; return; }
+  box.innerHTML = data.map(s => `<button class="res" data-id="${esc(s.id)}"><span><b>${esc(s.display_name)}</b> <span class="m">รหัส ${esc(s.student_id || '-')}</span></span><span class="m">${esc(s.class_room || (s.graduated_year ? 'จบปี ' + s.graduated_year : '-'))}</span></button>`).join('')
+    + (data.length >= 20 ? '<div class="hint">แสดง 20 คนแรก พิมพ์เพิ่มเพื่อให้แคบลง</div>' : '');
+  box.querySelectorAll('.res').forEach(b => b.addEventListener('click', () => { box.innerHTML = ''; loadProfile(b.dataset.id); }));
+}
+
+// ---------- โหลดและแสดงโปรไฟล์ ----------
+let loadSeq = 0;
+async function loadProfile(id){
+  const seq = ++loadSeq;
+  $('app').innerHTML = '<div class="empty"><span class="e">⏳</span>กำลังโหลดข้อมูล...</div>';
+  const { data, error } = await sb.rpc('student_profile_360', { p_profile_id: id });
+  if (seq !== loadSeq) return;
+  if (error){ $('app').innerHTML = `<div class="msg err">โหลดข้อมูลไม่สำเร็จ: ${esc(error.message)}</div>`; return; }
+  if (!data){ $('app').innerHTML = empty('🔎', 'ไม่พบนักเรียนคนนี้'); return; }
+  render(data);
+  history.replaceState(null, '', '?id=' + encodeURIComponent(id));
+}
+
+function caseAlert(cases){
+  if (!cases.length) return '';
+  const latest = cases[0];            // เรียงใหม่สุดก่อน; สถานะของครั้งล่าสุดคือสถานะเคสปัจจุบัน
+  const today = dayNum(todayStr());
+  if (latest.status === 'นัดครั้งถัดไป' && latest.next_appointment_date && dayNum(latest.next_appointment_date) < today){
+    return `<div class="alert">⚠️ <b>ต้องติดตาม</b> เคสให้คำปรึกษาเลยวันนัดแล้ว (นัดไว้ ${fmtDate(latest.next_appointment_date)})</div>`;
+  }
+  if (latest.status === 'ติดตามต่อ' && today - dayNum(latest.session_date) > STALE_DAYS){
+    return `<div class="alert soft">🕑 <b>ควรติดตาม</b> เคส "ติดตามต่อ" ยังไม่มีบันทึกใหม่มากกว่า ${STALE_DAYS} วัน (ครั้งล่าสุด ${fmtDate(latest.session_date)})</div>`;
+  }
+  return '';
+}
+
+function admissionText(a){
+  return [a.institution, a.faculty, a.major].filter(Boolean).map(esc).join(' ') + (a.campus ? ` (${esc(a.campus)})` : '') + (a.admit_round ? ` · รอบ ${esc(a.admit_round)}` : '');
+}
+
+function render(d){
+  const s = d.student;
+  const lvl = parseInt(String(s.class_room || '').replace(/^ม\.?/, ''), 10);
+  const gc = `var(${GC[lvl] || '--g4'})`;
+  const cases = d.cases || [];
+  let h = '';
+
+  h += `<div class="hero" style="--gc:${gc}">
+    <div class="avatar">🎓</div>
+    <div class="grow"><h1>${esc(s.display_name)}${s.nickname ? ` <span class="meta">(${esc(s.nickname)})</span>` : ''}</h1>
+      <div class="meta">รหัสนักเรียน ${esc(s.student_id || '-')} · <span class="badge grade" style="--gc:${gc}">${esc(s.class_room || 'ไม่ระบุห้อง')}</span>${s.graduated_year ? `<span class="badge warn">จบปี ${esc(s.graduated_year)}</span>` : `<span class="badge">${esc(s.status === 'active' || !s.status ? 'กำลังเรียน' : s.status)}</span>`}${s.previous_school ? `ย้ายมาจาก ${esc(s.previous_school)}` : ''}</div>
+      ${d.year_rooms.length ? `<div class="rooms">ห้องย้อนหลัง: ${d.year_rooms.map(r => `ปี ${esc(r.academic_year)} = ${esc(r.class_room)}`).join(' · ')}</div>` : ''}
+    </div>
+    <div><a class="btn primary" href="counseling-log.html?student=${encodeURIComponent(s.id)}">📝 บันทึกให้คำปรึกษานักเรียนคนนี้</a></div>
+  </div>`;
+
+  h += caseAlert(cases);
+
+  // ที่เรียนต่อ: นับจากรายการ "ติด" ทั้งหมดในทุกแบบสำรวจ
+  const admitCount = (d.surveys || []).reduce((n, sv) => n + (sv.admissions || []).length, 0);
+  const stat = (n, label, id) => `<button class="stat" data-go="s-${id}"><span class="n ${n ? '' : 'zero'}">${n}</span><span class="l">${label}</span></button>`;
+  h += `<div class="stats">
+    ${stat(d.awards.length, 'ผลงาน/เกียรติบัตร', 'awards')}
+    ${stat(d.scholarships.filter(x => x.status === 'approved').length, 'ทุนที่ได้รับ', 'schol')}
+    ${stat(d.quotas.length + d.chang_phueak.length, 'โควตา/โครงการ', 'quota')}
+    ${stat(admitCount, 'ที่ติดแล้ว', 'survey')}
+    ${stat(cases.length, 'ครั้งที่ปรึกษา', 'cases')}
+  </div>`;
+
+  // ผลงาน
+  h += sec('awards', '🌟 ผลงานและเกียรติบัตร', d.awards.length ? `${d.awards.length} รายการ` : 'ยังไม่มี',
+    d.awards.length ? d.awards.map(a => row(
+      `<div class="t">${esc(a.title)}</div><div class="s">${[esc(a.prize_name), esc(a.category), yearBE(a.academic_year)].filter(Boolean).join(' · ')}</div>`,
+      a.level ? `<span class="badge">${esc(LEVEL[a.level] || a.level)}</span>` : '')).join('')
+    : empty('🌟', 'ยังไม่มีผลงานที่ครูยืนยันแล้ว'));
+
+  // ทุน
+  h += sec('schol', '💰 ทุนการศึกษา', d.scholarships.length ? `${d.scholarships.length} รายการ` : 'ยังไม่มี',
+    d.scholarships.length ? d.scholarships.map(x => row(
+      `<div class="t">${esc(x.name)}</div><div class="s">${[esc(x.provider), x.amount ? `${Number(x.amount).toLocaleString('th-TH')} บาท` : '', yearBE(x.academic_year)].filter(Boolean).join(' · ')}</div>`,
+      `<span class="badge ${x.status === 'approved' ? '' : 'warn'}">${esc(SSTATUS[x.status] || x.status)}</span>`)).join('')
+    : empty('💰', 'ยังไม่เคยได้รับทุนหรือผ่านเข้ารอบ'));
+
+  // โควตา + ช้างเผือก
+  const qn = d.quotas.length + d.chang_phueak.length;
+  h += sec('quota', '🏫 โควตาและโครงการพิเศษ', qn ? `${qn} รายการ` : 'ยังไม่มี',
+    qn ? d.quotas.map(q => row(
+      `<div class="t">${esc(q.name)}</div><div class="s">${[esc(q.university), esc(q.applied_faculty || q.faculty), esc(q.applied_major)].filter(Boolean).join(' · ')}</div>`,
+      `${esc(QSTATUS[q.status] || q.status)}${q.rank ? ` · อันดับ ${esc(q.rank)}` : ''}${q.disqualified ? ' <span class="badge red">ไม่ผ่านเกณฑ์</span>' : ''}`)).join('')
+      + d.chang_phueak.map(c => row(
+      `<div class="t">โครงการช้างเผือก ม.บูรพา ${yearBE(c.academic_year)}</div><div class="s">${['เลือก 1: ' + (c.major_choice_1 || '-'), c.major_choice_2 ? 'เลือก 2: ' + c.major_choice_2 : ''].filter(Boolean).map(esc).join(' · ')}</div>`,
+      esc(c.status || ''))).join('')
+    : empty('🏫', 'ยังไม่เคยสมัครโควตา'));
+
+  // เรียนต่อ
+  h += sec('survey', '🎓 การเรียนต่อ', '',
+    (d.surveys || []).length ? d.surveys.map(sv => {
+      const head = `<div class="s" style="margin:8px 0;color:var(--ink-soft);font-size:14px">${esc(sv.title)} ${yearBE(sv.academic_year)}${sv.submitted_at ? ' · ตอบเมื่อ ' + fmtTs(sv.submitted_at) : ''}</div>`;
+      const adm = (sv.admissions || []);
+      const body = adm.length
+        ? adm.map(a => row(`<span class="badge ${a.is_chosen ? '' : 'warn'}">${a.is_chosen ? 'ที่เลือกเรียน' : 'ติดแล้ว'}</span> ${admissionText(a)}`)).join('')
+        : row(`<span class="badge">${esc(sv.status || 'ตอบแล้ว')}</span> ${[esc(sv.institution), esc(sv.program)].filter(Boolean).join(' ')}${sv.tcas_round ? ` · รอบ ${esc(sv.tcas_round)}` : ''}`);
+      return head + body;
+    }).join('')
+    : empty('🎓', 'ยังไม่ได้ตอบแบบสำรวจเรียนต่อ (ใช้กับ ม.3 และ ม.6)'));
+
+  // งาน
+  const wn = d.work_permits.length + d.work_experiences.length;
+  h += sec('work', '💼 การทำงานและหนังสืออนุญาต', wn ? `${wn} รายการ` : 'ยังไม่มี',
+    wn ? d.work_permits.map(w => row(
+      `<div class="t">${esc(w.employer_name)}</div><div class="s">${[esc(w.job_description), (w.work_start_date ? fmtDate(w.work_start_date) : '') + (w.work_end_date ? ' – ' + fmtDate(w.work_end_date) : '')].filter(Boolean).join(' · ')}</div>`,
+      `<span class="badge">${esc(w.status === 'received' ? 'รับเรื่องแล้ว' : w.status)}</span>`)).join('')
+      + d.work_experiences.map(w => row(
+      `<div class="t">${esc(w.job_title)}</div><div class="s">ประสบการณ์ที่นักเรียนบันทึกเอง${w.start_date ? ' · ' + fmtDate(w.start_date) : ''}${w.end_date ? ' – ' + fmtDate(w.end_date) : ''}</div>`)).join('')
+    : empty('💼', 'ยังไม่เคยขอหนังสืออนุญาตทำงาน'));
+
+  // TGAT
+  h += sec('tgat', '📝 ฝึกข้อสอบ TGAT/TPAT', d.tgat.length ? `${d.tgat.length} ครั้ง` : 'ยังไม่มี',
+    d.tgat.length ? d.tgat.map((t, i) => row(
+      `<div class="t">ครั้งที่ ${d.tgat.length - i}</div>`,
+      `${t.percentage != null ? esc(Math.round(Number(t.percentage))) + '%' : ''}${t.question_count ? ` (${esc(t.correct_count)}/${esc(t.question_count)})` : ''} · ${fmtTs(t.completed_at)}`)).join('')
+    : empty('📝', 'ยังไม่เคยฝึกข้อสอบในระบบ'));
+
+  // งานที่มอบหมาย
+  const as = d.assignments || { total: 0, done: 0, late: [] };
+  h += sec('assign', '📚 งานที่ได้รับมอบหมาย', as.total ? `ส่งแล้ว ${as.done}/${as.total}` : 'ยังไม่มี',
+    as.total ? (as.late.length
+      ? as.late.map(l => row(`<span class="badge red">ค้างส่ง</span> ${esc(l.title)}`, 'เลยกำหนด ' + fmtTs(l.due_at))).join('')
+      : empty('✅', 'ส่งครบทุกงานที่เลยกำหนดแล้ว'))
+    : empty('📚', 'ยังไม่มีงานที่มอบหมายให้ห้องนี้'));
+
+  // บันทึกให้คำปรึกษา (เฉพาะครูแนะแนว)
+  h += sec('cases', '💬 บันทึกให้คำปรึกษา', cases.length ? `${cases.length} ครั้ง` : 'ยังไม่มี',
+    cases.length ? `<div class="tl">` + cases.map((c, i) => {
+      const closed = c.status === 'ปิดเคส';
+      const overdue = c.status === 'นัดครั้งถัดไป' && c.next_appointment_date && dayNum(c.next_appointment_date) < dayNum(todayStr());
+      const cats = (c.categories || []).join(', ');
+      return `<div class="it ${closed ? '' : 'open'}">
+        <div><span class="t" style="font-weight:600">${fmtDate(c.session_date)}</span> <span class="badge ${closed ? '' : 'warn'}">${esc(c.status)}</span>${overdue ? `<span class="badge red">เลยวันนัด ${fmtDate(c.next_appointment_date)}</span>` : ''}</div>
+        <div class="s" style="color:var(--ink-soft);font-size:14px">โดย ${esc(c.counselor)}${cats ? ' · ' + esc(cats) : ''}</div>
+        <button class="btn" data-case="${i}">ดูเนื้อหา</button><div class="detail" id="cd-${i}" style="display:none"></div>
+      </div>`;
+    }).join('') + `</div>`
+    : empty('💬', 'ยังไม่เคยมีบันทึกให้คำปรึกษา'),
+    ' <span class="lock">🔒 เฉพาะครูแนะแนว</span>');
+
+  $('app').innerHTML = h;
+
+  document.querySelectorAll('[data-go]').forEach(b => b.addEventListener('click', () => {
+    const t = $(b.dataset.go); if (t) t.scrollIntoView({ behavior: 'smooth' });
+  }));
+  document.querySelectorAll('[data-case]').forEach(b => b.addEventListener('click', () => {
+    const i = Number(b.dataset.case), c = cases[i], box = $('cd-' + i);
+    if (box.style.display === 'none'){
+      const lines = [];
+      if (c.note) lines.push(c.note);
+      if (c.other_detail) lines.push('รายละเอียดอื่น ๆ: ' + c.other_detail);
+      if (c.status === 'นัดครั้งถัดไป' && c.next_appointment_date) lines.push('นัดครั้งถัดไป: ' + fmtDate(c.next_appointment_date));
+      if (c.referral_to) lines.push('ส่งต่อไปที่: ' + c.referral_to + (c.referral_note ? ' — ' + c.referral_note : ''));
+      box.textContent = lines.join('\n') || '(ไม่มีรายละเอียด)';
+      box.style.display = 'block'; b.textContent = 'ซ่อนเนื้อหา';
+    } else { box.style.display = 'none'; b.textContent = 'ดูเนื้อหา'; }
+  }));
+}
+
+init();
+</script>
+</body>
+</html>
