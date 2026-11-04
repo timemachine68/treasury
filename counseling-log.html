@@ -232,12 +232,11 @@
     <div class="card">
       <h3 style="margin-top:0;">เคสตามสถานะ</h3>
       <div id="ov-statuses"></div>
-      <p class="privacy-note" id="ov-status-note"></p>
     </div>
     <div class="card">
       <h3 style="margin-top:0;">เคสตามห้อง/ระดับชั้น</h3>
       <div id="ov-rooms"></div>
-      <p class="privacy-note">🔒 ไม่แสดงชื่อนักเรียนหรือครูผู้บันทึก — และซ่อนห้องที่มีเคสน้อยกว่า 3 ราย เพื่อป้องกันการเดาตัวนักเรียน</p>
+      
     </div>
   </section>
 
@@ -1009,9 +1008,6 @@ async function loadOverview(){
         <span>${esc(s.total)}</span>
       </div>`;
   });
-  const hidden = (ov && ov.hidden_status_cases) || 0;
-  document.getElementById('ov-status-note').textContent = hidden > 0
-    ? `🔒 ไม่แสดงสถานะที่มีเคสน้อยกว่า 3 ราย (รวม ${hidden} เคส) เพื่อป้องกันการเดาตัวนักเรียน` : '';
 }
 
 // ============ แก้ไข / นำออก ============
@@ -1264,7 +1260,6 @@ function renderReport(d){
     <div class="card">
       <h3 style="margin-top:0;">จำแนกตามห้องเรียน</h3>
       ${rowsTable(['ห้อง','จำนวนครั้ง'], (d.by_room||[]).map(r => [r.room || 'ไม่ระบุ', r.total]))}
-      <p class="privacy-note">ไม่แสดงห้องที่มีเคสน้อยกว่า 3 ราย เพื่อป้องกันการระบุตัวนักเรียน จำนวนรวมของตารางนี้จึงอาจน้อยกว่าจำนวนครั้งทั้งหมด</p>
     </div>
 
     <div class="card">
