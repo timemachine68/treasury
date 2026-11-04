@@ -130,7 +130,7 @@ header.app .wrap{display:flex;align-items:center;gap:12px;padding-bottom:0;flex-
       <h2>ชื่อเล่นของฉัน</h2>
       <div class="field" style="margin-bottom:6px">
         <label for="nickInput">ชื่อเล่น</label>
-        <input id="nickInput" maxlength="20" placeholder="เช่น ต้นกล้า" autocomplete="off">
+        <input id="nickInput" type="text" inputmode="text" lang="th" placeholder="เช่น ต้นกล้า" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
         <div class="nick-meta"><span>เว้นว่างไว้ถ้าไม่ต้องการแสดงชื่อเล่น · ครูจะเห็นชื่อเล่นนี้ในหน้ารายชื่อ</span><span id="nickCount">0/20</span></div>
       </div>
       <div class="nick-actions">
@@ -143,7 +143,7 @@ header.app .wrap{display:flex;align-items:center;gap:12px;padding-bottom:0;flex-
       <h2>โรงเรียนเดิมของฉัน</h2>
       <div class="field" style="margin-bottom:6px">
         <label for="schInput">ชื่อโรงเรียนที่เคยเรียนก่อนมาพูลเจริญ</label>
-        <input id="schInput" maxlength="100" placeholder="เช่น โรงเรียนวัดบางพลีใหญ่กลาง" autocomplete="off">
+        <input id="schInput" type="text" inputmode="text" lang="th" placeholder="เช่น โรงเรียนวัดบางพลีใหญ่กลาง" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
         <div class="nick-meta"><span>ถ้าเรียนที่นี่มาตั้งแต่ ม.1 ให้เว้นว่างไว้ได้</span><span id="schCount">0/100</span></div>
       </div>
       <div class="nick-actions">
@@ -213,9 +213,10 @@ function renderInfo(){
   $("schInput").value = profile.previous_school || "";
   $("schCount").textContent = (profile.previous_school||"").length + "/100";
 }
-$("schInput").addEventListener("input", ()=>{ $("schCount").textContent = $("schInput").value.length + "/100"; });
+countBox("schInput","schCount",100);
 $("btnSaveSch").onclick = async ()=>{
   const v = $("schInput").value.trim();
+  if(v.length > 100) return toast("ชื่อโรงเรียนต้องไม่เกิน 100 ตัวอักษรนะคะ");
   $("btnSaveSch").disabled = true;
   const {error} = await sb.rpc("update_my_previous_school", {p_school: v});
   $("btnSaveSch").disabled = false;
@@ -234,7 +235,15 @@ function renderNick(){
   $("nickCount").textContent = nick.length + "/20";
   $("btnClearNick").classList.toggle("hidden", !nick);
 }
-$("nickInput").addEventListener("input", ()=>{ $("nickCount").textContent = $("nickInput").value.length + "/20"; });
+/* ไม่ใช้ maxlength เพราะคีย์บอร์ดไทยบน Android พิมพ์ไม่ได้/ตัวอักษรหาย — จำกัดความยาวตอนกดบันทึกแทน */
+function countBox(inputId, countId, max){
+  const el = $(inputId), c = $(countId);
+  const upd = ()=>{ const n = el.value.length; c.textContent = n + "/" + max; c.style.color = n>max ? "#c0392b" : ""; };
+  el.addEventListener("input", upd);
+  el.addEventListener("compositionend", upd);
+  return upd;
+}
+countBox("nickInput","nickCount",20);
 $("nickInput").addEventListener("keydown", e=>{ if(e.key==="Enter") $("btnSaveNick").click(); });
 async function saveNick(value){
   const v = value.trim();
