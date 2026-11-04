@@ -99,6 +99,16 @@ h1{margin:0;font-size:28px;color:var(--fern-deep);line-height:1.25}
 .pg .pnk.e{background:none}
 .pg .foot{position:absolute;left:15mm;right:15mm;bottom:10.5mm;display:flex;justify-content:space-between;font-size:8pt;color:var(--ink-soft)}
 @media (max-width:560px){ .grid{grid-template-columns:repeat(2,1fr);gap:12px} .av{width:92px;height:92px;font-size:38px} h1{font-size:24px} }
+
+/* แผงโปรไฟล์ซ้อนบนทำเนียบ */
+.pv{position:fixed;inset:0;z-index:60;background:var(--board);display:flex;flex-direction:column}
+.pv .pvbar{display:flex;align-items:center;gap:12px;background:var(--fern);color:#fff;padding:10px 16px}
+.pv .pvback{white-space:nowrap;flex:none;font:inherit;font-weight:600;font-size:15px;color:#fff;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.55);border-radius:999px;padding:6px 16px;cursor:pointer}
+.pv .pvback:hover{background:rgba(255,255,255,.28)}
+.pv .pvname{font-family:'Mitr',sans-serif;font-size:18px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pv .pvload{position:absolute;top:56px;left:0;right:0;text-align:center;color:var(--ink-soft);padding:24px;pointer-events:none}
+.pv iframe{flex:1;width:100%;border:0;background:var(--board)}
+body.pvopen{overflow:hidden}
 </style>
 </head>
 <body>
@@ -112,7 +122,7 @@ h1{margin:0;font-size:28px;color:var(--fern-deep);line-height:1.25}
   <div id="no-access" class="msg" hidden></div>
   <div id="main" hidden>
     <h1>ทำเนียบนักเรียน</h1>
-    <p class="lead">เลือกระดับชั้นและห้อง · แตะการ์ดเพื่อเปิดโปรไฟล์ของนักเรียนคนนั้น · แตะรูปเพื่อดูรูปขยาย</p>
+    <p class="lead">เลือกระดับชั้นและห้อง · แตะการ์ดเพื่อดูโปรไฟล์ของนักเรียนคนนั้น (ปิดแล้วกลับมาที่ห้องเดิม) · แตะรูปเพื่อดูรูปขยาย</p>
     <div class="levels" id="levels"></div>
     <div class="rooms" id="rooms"></div>
     <div class="bar">
@@ -126,6 +136,10 @@ h1{margin:0;font-size:28px;color:var(--fern-deep);line-height:1.25}
 </main>
 
 <div class="lb" id="lb"><img alt="รูปนักเรียน"><span class="cap" id="lbCap"></span><span>แตะที่ว่างเพื่อปิด</span></div>
+<div class="pv" id="pv" hidden role="dialog" aria-modal="true" aria-label="โปรไฟล์นักเรียน">
+  <div class="pvbar"><button class="pvback" id="pvBack" type="button">← กลับทำเนียบ</button><span class="pvname" id="pvName"></span></div>
+  <div class="pvload" id="pvLoad">กำลังเปิดโปรไฟล์...</div>
+</div>
 <div id="board"></div>
 
 <script>
@@ -286,6 +300,41 @@ function renderRoom(loading){
 }
 $('q').addEventListener('input', () => { if (curRoom) renderRoom(false); });
 
+// ---------- แผงโปรไฟล์ซ้อน (แตะการ์ดแล้วไม่ต้องเปลี่ยนหน้า) ----------
+let pvOpen = false, pvReturn = null, pvFrame = null;
+function openProfile(card){
+  const id = card.dataset.id;
+  const s = curList.find(x => String(x.id) === id);
+  pvReturn = card;
+  $('pvName').textContent = s ? s.display_name + (s.nickname ? ' (' + s.nickname + ')' : '') : 'โปรไฟล์นักเรียน';
+  $('pvLoad').hidden = false;
+  // สร้างกรอบใหม่ทุกครั้ง: ไม่เพิ่มประวัติเบราว์เซอร์ และไม่ค้างข้อมูลนักเรียนคนก่อน
+  pvFrame = document.createElement('iframe');
+  pvFrame.title = 'โปรไฟล์นักเรียน';
+  pvFrame.onload = () => { $('pvLoad').hidden = true; };
+  pvFrame.src = 'student-profile.html?id=' + encodeURIComponent(id) + '&embed=1';
+  $('pv').appendChild(pvFrame);
+  $('pv').hidden = false;
+  document.body.classList.add('pvopen');
+  history.pushState({ pv: 1 }, '');          // ปุ่มย้อนกลับของมือถือ/เบราว์เซอร์จะปิดแผงนี้
+  pvOpen = true;
+  $('pvBack').focus();
+}
+function hideProfile(){
+  if (!pvOpen) return;
+  pvOpen = false;
+  $('pv').hidden = true;
+  if (pvFrame){ pvFrame.remove(); pvFrame = null; }
+  document.body.classList.remove('pvopen');
+  if (pvReturn && document.contains(pvReturn)) pvReturn.focus();
+  pvReturn = null;
+}
+function closeProfile(){ if (pvOpen) history.back(); }   // ผ่าน popstate เพื่อให้ประวัติเบราว์เซอร์ตรงกันเสมอ
+window.addEventListener('popstate', hideProfile);
+window.addEventListener('message', e => { if (e.origin === location.origin && e.data && e.data.pv === 'close') closeProfile(); });
+if (history.state && history.state.pv) history.replaceState(null, '');   // กลับมาจากหน้าอื่นแล้วเหลือประวัติค้าง
+$('pvBack').addEventListener('click', closeProfile);
+
 // แตะการ์ด = เปิดโปรไฟล์ / แตะรูป = ขยาย
 $('out').addEventListener('click', e => {
   const img = e.target.closest('img[data-zoom]');
@@ -298,15 +347,19 @@ $('out').addEventListener('click', e => {
     return;
   }
   const card = e.target.closest('.card');
-  if (card) location.href = 'student-profile.html?id=' + encodeURIComponent(card.dataset.id);
+  if (card) openProfile(card);
 });
 $('out').addEventListener('keydown', e => {
   if (e.key !== 'Enter') return;
   const card = e.target.closest('.card');
-  if (card) location.href = 'student-profile.html?id=' + encodeURIComponent(card.dataset.id);
+  if (card) openProfile(card);
 });
 $('lb').addEventListener('click', () => $('lb').classList.remove('show'));
-document.addEventListener('keydown', e => { if (e.key === 'Escape') $('lb').classList.remove('show'); });
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Escape') return;
+  if ($('lb').classList.contains('show')) $('lb').classList.remove('show');
+  else closeProfile();
+});
 
 // ---------- พิมพ์ A4 แนวนอน ----------
 function boardHtml(){
