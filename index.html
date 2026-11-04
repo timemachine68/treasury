@@ -3,6 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0F6B5C">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="แนะให้แนว">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<script>if("serviceWorker" in navigator)window.addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){});});</script>
 <title>คลังแนะแนว | แนะให้แนว</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -266,6 +275,7 @@ textarea.csvbox{font-family:monospace;font-size:.82rem;min-height:120px}
       <div class="spacer"></div>
       <div class="userchip"><span id="uName"></span><span class="role" id="uRole"></span></div>
       <a class="iconbtn" href="profile.html" title="โปรไฟล์ของฉัน" style="text-decoration:none">🙂</a>
+      <button class="iconbtn hidden" id="btnInstall" title="ติดตั้งเป็นแอปบนเครื่อง">📲 ติดตั้งแอป</button>
       <button class="iconbtn" id="btnPw" title="เปลี่ยนรหัสผ่าน">🔑</button>
       <button class="iconbtn" id="btnLogout">ออกจากระบบ</button>
     </div>
@@ -1062,6 +1072,24 @@ async function callFn(action, payload={}){
 }
 
 /* ═══════════ เริ่มต้น ═══════════ */
+
+/* ═══════════ PWA: ติดตั้งเป็นแอป ═══════════ */
+let installEvt = null;
+const pwaStandalone = matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+const pwaIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+window.addEventListener("beforeinstallprompt", e=>{ e.preventDefault(); installEvt = e; if(!pwaStandalone) $("btnInstall").classList.remove("hidden"); });
+window.addEventListener("appinstalled", ()=>{ installEvt = null; $("btnInstall").classList.add("hidden"); toast("ติดตั้งแอปเรียบร้อยแล้ว ✅"); });
+if(pwaIOS && !pwaStandalone) $("btnInstall").classList.remove("hidden");
+$("btnInstall").onclick = async ()=>{
+  if(installEvt){
+    installEvt.prompt();
+    try{ await installEvt.userChoice; }catch(e){}
+    installEvt = null; $("btnInstall").classList.add("hidden");
+  } else {
+    alert("วิธีติดตั้งบน iPhone/iPad\n1) เปิดหน้านี้ใน Safari\n2) กดปุ่มแชร์ (สี่เหลี่ยมมีลูกศรชี้ขึ้น)\n3) เลือก \"เพิ่มลงหน้าจอโฮม\" แล้วกด \"เพิ่ม\"");
+  }
+};
+
 init();
 async function init(){
   const {data:{session:s}} = await sb.auth.getSession();
