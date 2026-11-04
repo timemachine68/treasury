@@ -802,7 +802,9 @@ textarea.csvbox{font-family:monospace;font-size:.82rem;min-height:120px}
       <div class="roomchecks" id="apVis">
         <label><input type="checkbox" value="teacher" checked>ครู</label>
         <label><input type="checkbox" value="student">นักเรียน</label>
+        <label><input type="checkbox" value="admin">🔒 แอดมินเท่านั้น</label>
       </div>
+      <p class="hint" style="margin:6px 0 0">ถ้าติ๊ก "แอดมินเท่านั้น" ครูและนักเรียนจะไม่เห็นลิงก์นี้เลย</p>
     </div>
     <div class="field" id="apGradesWrap" style="display:none"><label>นักเรียนระดับชั้นไหนเห็นบ้าง</label>
       <div class="roomchecks" id="apGrades">
@@ -2615,6 +2617,7 @@ async function loadApps(){
 }
 function renderAppChips(){
   const opts = [{key:"all",label:"ทั้งหมด"},{key:"teacher",label:"ครู"},{key:"student",label:"นักเรียน"}];
+  if(profile.role==="admin") opts.push({key:"admin",label:"🔒 แอดมิน"});
   const cats = [...new Set(visibleApps.map(a=>a.category).filter(Boolean))];
   cats.forEach(c=> opts.push({key:"cat:"+c, label:c}));
   $("appChips").innerHTML = opts.map(o=>`<button class="chip ${appFilter===o.key?"active":""}" data-af="${o.key}">${o.label}</button>`).join("");
@@ -2625,9 +2628,9 @@ function renderApps(){
     : appFilter.startsWith("cat:") ? visibleApps.filter(a=> a.category===appFilter.slice(4))
     : visibleApps.filter(a=> (a.visible_to||[]).includes(appFilter));
   $("appEmpty").classList.toggle("hidden", list.length>0);
-  $("appEmptyText") && ($("appEmptyText").textContent = appFilter==="all" ? "ยังไม่มีลิงก์ระบบ" : appFilter.startsWith("cat:") ? `ยังไม่มีลิงก์ระบบหมวด${appFilter.slice(4)}` : `ยังไม่มีลิงก์ระบบสำหรับ${appFilter==="teacher"?"ครู":"นักเรียน"}`);
+  $("appEmptyText") && ($("appEmptyText").textContent = appFilter==="all" ? "ยังไม่มีลิงก์ระบบ" : appFilter.startsWith("cat:") ? `ยังไม่มีลิงก์ระบบหมวด${appFilter.slice(4)}` : `ยังไม่มีลิงก์ระบบสำหรับ${appFilter==="teacher"?"ครู":appFilter==="admin"?"แอดมิน":"นักเรียน"}`);
   $("appGrid").innerHTML = list.map(a=>`<article class="rescard" style="--gc:var(--g5)">
-    <div class="top">${a.category?`<span class="badge link">${esc(a.category)}</span>`:""}${(a.visible_to||[]).map(v=>`<span class="badge type">${v==="teacher"?"ครู":"นักเรียน"+(profile.role==="admin"?gradesLabel(a.student_grades):"")}</span>`).join("")}</div>
+    <div class="top">${a.category?`<span class="badge link">${esc(a.category)}</span>`:""}${(a.visible_to||[]).map(v=>`<span class="badge type">${v==="teacher"?"ครู":v==="admin"?"🔒 แอดมินเท่านั้น":"นักเรียน"+(profile.role==="admin"?gradesLabel(a.student_grades):"")}</span>`).join("")}</div>
     <h3>${esc(a.icon||"🔗")} ${esc(a.title)}</h3>
     ${a.description?`<p class="desc">${esc(a.description)}</p>`:""}
     <div class="actions">
@@ -2648,7 +2651,16 @@ function gradesLabel(g){
   return " "+(contiguous && nums.length>1 ? `ม.${nums[0]}–${nums[nums.length-1]}` : nums.map(n=>"ม."+n).join(","));
 }
 function apGradesToggle(){ $("apGradesWrap").style.display = $("apVis").querySelector('input[value="student"]').checked ? "" : "none"; }
-$("apVis").addEventListener("change", apGradesToggle);
+// "แอดมินเท่านั้น" ใช้ร่วมกับกลุ่มอื่นไม่ได้ (ติ๊กอันใดอันหนึ่ง อีกฝั่งจะถูกยกเลิกให้)
+$("apVis").addEventListener("change", e=>{
+  const t = e.target;
+  if(t && t.checked){
+    $("apVis").querySelectorAll("input").forEach(i=>{
+      if(i!==t && ((t.value==="admin") || i.value==="admin")) i.checked = false;
+    });
+  }
+  apGradesToggle();
+});
 function openAppModal(id){
   editingAppId = id; msg("appMsg","");
   const a = id? extApps.find(x=>x.id===id) : null;
