@@ -49,7 +49,7 @@
   .status-นัดครั้งถัดไป{background:#fdf3d9;color:#854f0b;}
   .status-ส่งต่อ{background:#f0e6fb;color:#3c3489;}
   .status-ปิดเคส{background:#eaf3de;color:#27500a;}
-  .stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px;}
+  .stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:20px;}
   .stat-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;}
   .stat-card .num{font-family:'Kanit',sans-serif;font-size:26px;font-weight:600;}
   .stat-card .label{font-size:12.5px;color:var(--muted);}
@@ -59,6 +59,23 @@
   .bar-fill{height:100%;background:var(--gold);}
   .privacy-note{font-size:12px;color:var(--muted);margin-top:16px;}
   .empty{color:var(--muted);font-size:13.5px;padding:20px 0;text-align:center;}
+
+  .tab-badge{display:inline-block;min-width:18px;padding:0 6px;margin-left:6px;border-radius:10px;background:var(--danger);color:#fff;font-size:12px;line-height:18px;text-align:center;}
+  .tab-btn.active .tab-badge{background:var(--gold);color:var(--navy-dark);}
+  .filters{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;}
+  .filters > *{flex:1 1 170px;}
+  .status-pill.late{background:#fbe9e7;color:var(--danger);}
+  .detail-line{font-size:12.5px;color:var(--muted);margin-top:3px;}
+  .hint{font-size:12px;color:var(--muted);margin-top:4px;}
+  .todo-sec h3{margin:0 0 4px;font-size:16px;}
+  .todo-sec .sub{font-size:12.5px;color:var(--muted);margin:0 0 8px;}
+  td .btn-link + .btn-link{margin-left:10px;}
+  .modal.wide{max-width:640px;}
+  .tl-item{border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:10px;}
+  .tl-head{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:13px;margin-bottom:6px;}
+  .tl-note{white-space:pre-wrap;font-size:14px;margin-top:6px;}
+  .tl-photos{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;}
+  .tl-photos img{width:96px;height:96px;object-fit:cover;border-radius:8px;border:1px solid var(--border);}
 
   .other-detail{margin-top:8px;}
   input[type=file]{width:100%;padding:8px 0;font-size:13.5px;font-family:'Sarabun',sans-serif;}
@@ -106,9 +123,11 @@
 </header>
 
 <main>
+  <div class="card" id="no-access" style="display:none;"></div>
   <div class="tabs">
     <button class="tab-btn active" data-tab="new">บันทึกใหม่</button>
-    <button class="tab-btn" data-tab="mine">ประวัติของฉัน</button>
+    <button class="tab-btn" data-tab="todo">งานค้างของฉัน<span class="tab-badge" id="todo-badge" style="display:none;"></span></button>
+    <button class="tab-btn" data-tab="mine">ประวัติเคส</button>
     <button class="tab-btn" data-tab="overview">ภาพรวมทั้งหมด</button>
     <button class="tab-btn" data-tab="report">รายงานประจำปี</button>
   </div>
@@ -148,22 +167,53 @@
         <option>ส่งต่อ</option>
         <option>ปิดเคส</option>
       </select>
+      <div id="f-appt-wrap" style="display:none;">
+        <label style="margin-top:14px;">วันนัดครั้งถัดไป</label>
+        <input type="date" id="f-appt">
+      </div>
+      <div id="f-ref-wrap" style="display:none;">
+        <label style="margin-top:14px;">ส่งต่อไปที่</label>
+        <input type="text" id="f-ref-to" maxlength="120" placeholder="เช่น ครูประจำชั้น ฝ่ายปกครอง หน่วยงานภายนอก">
+        <label>เหตุผลที่ส่งต่อ (ไม่บังคับ)</label>
+        <textarea id="f-ref-note" maxlength="500" style="min-height:60px;" placeholder="เขียนเท่าที่จำเป็น ไม่ต้องใส่รายละเอียดส่วนตัวมากเกินไป"></textarea>
+      </div>
 
       <button class="btn-primary" id="btn-save">บันทึก</button>
       <div class="msg" id="save-msg"></div>
     </div>
   </section>
 
-  <!-- ================= ประวัติของฉัน ================= -->
+  <!-- ================= งานค้างของฉัน ================= -->
+  <section class="panel" id="panel-todo">
+    <div id="todo-body"><div class="card"><div class="empty">กำลังโหลด...</div></div></div>
+  </section>
+
+  <!-- ================= ประวัติเคส ================= -->
   <section class="panel" id="panel-mine">
     <div class="card">
+      <div class="filters">
+        <select id="m-scope" aria-label="ขอบเขตเคส">
+          <option value="mine">เฉพาะของฉัน</option>
+          <option value="all">เคสของครูแนะแนวทุกคน</option>
+        </select>
+        <select id="m-status" aria-label="กรองตามสถานะ">
+          <option value="">ทุกสถานะ</option>
+          <option>ติดตามต่อ</option>
+          <option>นัดครั้งถัดไป</option>
+          <option>ส่งต่อ</option>
+          <option>ปิดเคส</option>
+        </select>
+        <input type="text" id="m-search" placeholder="ค้นหาชื่อนักเรียนหรือห้อง" maxlength="60">
+      </div>
+      <p class="privacy-note" id="m-all-note" style="display:none;margin:0 0 12px;">🔒 เคสของครูท่านอื่นเห็นได้เฉพาะครูแนะแนวและผู้ดูแลระบบ ใช้เพื่อปรึกษาช่วยเหลือนักเรียนเท่านั้น และแก้ไขได้เฉพาะบันทึกของตัวเอง</p>
       <table>
         <thead>
-          <tr><th>วันที่</th><th>นักเรียน</th><th>หมวดปัญหา</th><th>สถานะ</th><th></th></tr>
+          <tr><th>วันที่</th><th>นักเรียน</th><th>หมวดปัญหา</th><th>สถานะ</th><th id="m-th-by" style="display:none;">ครูผู้บันทึก</th><th></th></tr>
         </thead>
         <tbody id="mine-tbody"></tbody>
       </table>
       <div class="empty" id="mine-empty" style="display:none;">ยังไม่มีบันทึกของคุณ</div>
+      <div class="hint" id="m-count"></div>
     </div>
   </section>
 
@@ -173,10 +223,16 @@
       <div class="stat-card"><div class="num" id="ov-total">–</div><div class="label">เคสทั้งหมด</div></div>
       <div class="stat-card"><div class="num" id="ov-month">–</div><div class="label">เดือนนี้</div></div>
       <div class="stat-card"><div class="num" id="ov-open">–</div><div class="label">ยังติดตามอยู่</div></div>
+      <div class="stat-card"><div class="num" id="ov-overdue">–</div><div class="label">เลยวันนัดแล้ว</div></div>
     </div>
     <div class="card">
       <h3 style="margin-top:0;">หมวดปัญหาที่พบบ่อย</h3>
       <div id="ov-categories"></div>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0;">เคสตามสถานะ</h3>
+      <div id="ov-statuses"></div>
+      <p class="privacy-note" id="ov-status-note"></p>
     </div>
     <div class="card">
       <h3 style="margin-top:0;">เคสตามห้อง/ระดับชั้น</h3>
@@ -231,6 +287,17 @@
         <option>ส่งต่อ</option>
         <option>ปิดเคส</option>
       </select>
+      <p class="hint" id="e-closed-hint" style="display:none;">เคสที่ปิดแล้วเปลี่ยนสถานะไม่ได้ ถ้าบันทึกผิดให้นำออกแล้วบันทึกใหม่</p>
+      <div id="e-appt-wrap" style="display:none;">
+        <label style="margin-top:14px;">วันนัดครั้งถัดไป</label>
+        <input type="date" id="e-appt">
+      </div>
+      <div id="e-ref-wrap" style="display:none;">
+        <label style="margin-top:14px;">ส่งต่อไปที่</label>
+        <input type="text" id="e-ref-to" maxlength="120" placeholder="เช่น ครูประจำชั้น ฝ่ายปกครอง หน่วยงานภายนอก">
+        <label>เหตุผลที่ส่งต่อ (ไม่บังคับ)</label>
+        <textarea id="e-ref-note" maxlength="500" style="min-height:60px;" placeholder="เขียนเท่าที่จำเป็น ไม่ต้องใส่รายละเอียดส่วนตัวมากเกินไป"></textarea>
+      </div>
 
       <div class="msg" id="edit-msg"></div>
 
@@ -240,6 +307,17 @@
       </div>
       <button class="btn-danger" id="btn-edit-remove">นำบันทึกนี้ออกจากรายการ</button>
       <p class="privacy-note">การนำออกเป็นการซ่อนจากหน้าจอและสถิติเท่านั้น ข้อมูลยังถูกเก็บไว้ในระบบตามระเบียบเอกสารของโรงเรียน</p>
+    </div>
+  </div>
+
+  <!-- ================= Modal ประวัตินักเรียน ================= -->
+  <div class="modal-backdrop" id="tl-modal">
+    <div class="modal wide">
+      <h3 style="margin-top:0;" id="tl-title">ประวัติการให้คำปรึกษา</h3>
+      <p class="hint" id="tl-sub" style="margin:0 0 12px;"></p>
+      <div id="tl-body"></div>
+      <button class="btn-secondary" id="btn-tl-close">ปิด</button>
+      <p class="privacy-note">🔒 ข้อมูลนี้เห็นได้เฉพาะครูแนะแนวและผู้ดูแลระบบ ใช้เพื่อปรึกษาช่วยเหลือนักเรียนเท่านั้น</p>
     </div>
   </div>
 </main>
@@ -253,7 +331,9 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 let currentUser = null;
 let mineNeedsRefresh = true;
-let myLogs = {};
+let logCache = {};          // id -> แถวบันทึกที่โหลดมาแล้ว (ใช้เปิดหน้าแก้ไข)
+let counselorNames = {};    // id ครู -> ชื่อ (หรือ null ถ้าอ่านไม่ได้)
+let caseRows = [], caseLatest = new Set(), caseSeq = 0, tlSeq = 0;
 let editingId = null;
 
 let fPhotoFiles = [];       // File[] รอบันทึกใหม่ (ยังไม่อัปโหลด)
@@ -265,6 +345,101 @@ function esc(str){
   const div = document.createElement('div');
   div.textContent = str ?? '';
   return div.innerHTML;
+}
+
+const STALE_DAYS = 14;   // เคส "ติดตามต่อ" ที่ไม่มีบันทึกใหม่เกินกี่วันให้ขึ้นเตือน
+const SOON_DAYS = 7;     // นัดภายในกี่วันข้างหน้าให้ขึ้น "นัดเร็ว ๆ นี้"
+const PAGE_SIZE = 1000;
+const LOG_COLS = 'id, session_date, categories, other_detail, status, note, photo_paths, student_id, counselor_id, created_at, next_appointment_date, referral_to, referral_note, profiles!student_id(display_name, class_room)';
+
+// วันนี้ตามเวลาไทย (YYYY-MM-DD) — คำนวณเองเพื่อให้ทำงานได้บนเครื่องรุ่นเก่า
+function todayStr(){ return new Date(Date.now() + 7 * 3600 * 1000).toISOString().slice(0, 10); }
+function dayNum(s){ return Math.round(Date.parse(s + 'T00:00:00Z') / 86400000); }
+function fmtDate(s){
+  if (!s) return '';
+  const p = String(s).split('-');
+  return `${parseInt(p[2], 10)}/${parseInt(p[1], 10)}/${parseInt(p[0], 10) + 543}`;
+}
+
+// ดึงแบบแบ่งหน้า (PostgREST ตัดผลลัพธ์ที่ 1,000 แถวโดยไม่แจ้ง error)
+async function fetchAllRows(build){
+  let all = [], from = 0;
+  while (true){
+    const { data, error } = await build().range(from, from + PAGE_SIZE - 1);
+    if (error) return { data: all, error };
+    all = all.concat(data || []);
+    if (!data || data.length < PAGE_SIZE) break;
+    from += PAGE_SIZE;
+  }
+  return { data: all, error: null };
+}
+
+function fetchLogs(scope){
+  return fetchAllRows(() => {
+    let q = sb.from('counseling_logs').select(LOG_COLS).is('deleted_at', null);
+    if (scope !== 'all') q = q.eq('counselor_id', currentUser.id);
+    return q.order('session_date', { ascending: false })
+            .order('created_at', { ascending: false })
+            .order('id', { ascending: true });
+  });
+}
+
+async function loadCounselorNames(rows){
+  const ids = [...new Set(rows.map(r => r.counselor_id)
+    .filter(id => id && id !== currentUser.id && !(id in counselorNames)))];
+  for (let i = 0; i < ids.length; i += 100){
+    const chunk = ids.slice(i, i + 100);
+    const { data } = await sb.from('profiles').select('id, display_name').in('id', chunk);
+    (data || []).forEach(p => { counselorNames[p.id] = p.display_name; });
+    chunk.forEach(id => { if (!(id in counselorNames)) counselorNames[id] = null; });
+  }
+}
+function counselorLabel(id){
+  if (id === currentUser.id) return 'ฉัน';
+  return counselorNames[id] || 'ครูท่านอื่น';
+}
+
+// แถวที่เรียงใหม่→เก่าแล้ว: แถวแรกของนักเรียนแต่ละคนคือครั้งล่าสุด
+function latestIdSet(rows){
+  const seen = new Set(), ids = new Set();
+  rows.forEach(r => { if (!seen.has(r.student_id)){ seen.add(r.student_id); ids.add(r.id); } });
+  return ids;
+}
+
+function logStudentLabel(r){
+  return r.profiles ? `${esc(r.profiles.display_name)} (${esc(r.profiles.class_room) || '-'})` : '-';
+}
+function logCategories(r){
+  return (r.categories || [])
+    .map(c => (c === 'อื่นๆ' && r.other_detail) ? `อื่นๆ: ${r.other_detail}` : c)
+    .join(', ');
+}
+function statusCell(r, isLatest){
+  let extra = '';
+  if (r.status === 'นัดครั้งถัดไป' && r.next_appointment_date){
+    const late = isLatest && r.next_appointment_date < todayStr();
+    extra = `<div class="detail-line">นัด ${esc(fmtDate(r.next_appointment_date))}${late ? ' <span class="status-pill late">เลยวันนัดแล้ว</span>' : ''}</div>`;
+  } else if (r.status === 'ส่งต่อ' && r.referral_to){
+    extra = `<div class="detail-line">ส่งต่อ: ${esc(r.referral_to)}</div>`;
+  }
+  return `<span class="status-pill status-${esc(r.status)}">${esc(r.status)}</span>${extra}`;
+}
+
+function syncStatusFields(prefix){
+  const st = document.getElementById(`${prefix}-status`).value;
+  const appt = document.getElementById(`${prefix}-appt`);
+  document.getElementById(`${prefix}-appt-wrap`).style.display = st === 'นัดครั้งถัดไป' ? 'block' : 'none';
+  document.getElementById(`${prefix}-ref-wrap`).style.display = st === 'ส่งต่อ' ? 'block' : 'none';
+  const d = document.getElementById(prefix === 'f' ? 'f-date' : 'e-date').value;
+  if (d) appt.min = d;
+}
+
+function showNoAccess(){
+  document.querySelector('.tabs').style.display = 'none';
+  document.querySelectorAll('.panel').forEach(p => { p.style.display = 'none'; });
+  const el = document.getElementById('no-access');
+  el.style.display = 'block';
+  el.innerHTML = '<h3 style="margin-top:0;">หน้านี้สำหรับครูแนะแนวเท่านั้น</h3><p>บัญชีนี้ยังไม่มีสิทธิ์ใช้บันทึกการให้คำปรึกษา หากคิดว่าควรมีสิทธิ์ กรุณาแจ้งผู้ดูแลระบบ</p>';
 }
 
 // ย่อรูปฝั่งเบราว์เซอร์ก่อนอัปโหลด (ด้านยาวสุดไม่เกิน maxDim, JPEG)
@@ -326,8 +501,12 @@ async function init(){
   }
   currentUser = session.user;
 
-  const { data: profile } = await sb.from('profiles').select('display_name').eq('id', currentUser.id).single();
+  const { data: profile } = await sb.from('profiles').select('display_name, role, is_guidance').eq('id', currentUser.id).single();
   document.getElementById('who-label').textContent = profile?.display_name ? `ครู: ${profile.display_name}` : currentUser.email;
+
+  // หน้านี้เปิดให้เฉพาะครูแนะแนวและผู้ดูแลระบบ (ฐานข้อมูลก็กันไว้เช่นกัน)
+  const isStaff = !!profile && (profile.role === 'admin' || (profile.role === 'teacher' && profile.is_guidance === true));
+  if (!isStaff){ showNoAccess(); return; }
 
   document.getElementById('f-date').valueAsDate = new Date();
   document.getElementById('f-date').max = new Date().toISOString().split('T')[0];
@@ -338,8 +517,10 @@ async function init(){
   bindEdit();
   bindOtherDetailToggle();
   bindPhotoInputs();
+  bindCases();
   initYearSelect();
   bindReport();
+  loadTodo();
 }
 
 function bindOtherDetailToggle(){
@@ -419,16 +600,16 @@ async function loadStudents(){
   });
 }
 
+function showTab(name){
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
+  document.querySelectorAll('.panel').forEach(p => p.classList.toggle('active', p.id === 'panel-' + name));
+  if (name === 'mine' && mineNeedsRefresh){ mineNeedsRefresh = false; loadCases(); }
+  if (name === 'overview') loadOverview();
+}
+
 function bindTabs(){
   document.querySelectorAll('.tab-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-      btn.classList.add('active');
-      document.getElementById('panel-' + btn.dataset.tab).classList.add('active');
-      if (btn.dataset.tab === 'mine' && mineNeedsRefresh){ loadMine(); mineNeedsRefresh = false; }
-      if (btn.dataset.tab === 'overview') loadOverview();
-    });
+    btn.addEventListener('click', () => showTab(btn.dataset.tab));
   });
 }
 
@@ -444,6 +625,9 @@ function bindSave(){
     const otherDetail = document.getElementById('f-other-detail').value.trim();
     const note = document.getElementById('f-note').value.trim();
     const status = document.getElementById('f-status').value;
+    const apptDate = document.getElementById('f-appt').value;
+    const refTo = document.getElementById('f-ref-to').value.trim();
+    const refNote = document.getElementById('f-ref-note').value.trim();
 
     if (!studentId){
       msgEl.classList.add('err'); msgEl.textContent = 'กรุณาเลือกนักเรียนก่อนบันทึก'; return;
@@ -457,6 +641,17 @@ function bindSave(){
     if (categories.includes('อื่นๆ') && !otherDetail){
       msgEl.classList.add('err'); msgEl.textContent = 'กรุณาระบุหัวข้อที่นักเรียนมาปรึกษา'; return;
     }
+    if (status === 'นัดครั้งถัดไป'){
+      if (!apptDate){
+        msgEl.classList.add('err'); msgEl.textContent = 'กรุณาใส่วันนัดครั้งถัดไป'; return;
+      }
+      if (apptDate < sessionDate){
+        msgEl.classList.add('err'); msgEl.textContent = 'วันนัดครั้งถัดไปต้องไม่ก่อนวันที่ให้คำปรึกษา'; return;
+      }
+    }
+    if (status === 'ส่งต่อ' && !refTo){
+      msgEl.classList.add('err'); msgEl.textContent = 'กรุณาบอกว่าส่งต่อไปที่ใด'; return;
+    }
 
     const btn = document.getElementById('btn-save');
     btn.disabled = true; btn.textContent = 'กำลังบันทึก...';
@@ -468,7 +663,10 @@ function bindSave(){
       categories,
       other_detail: categories.includes('อื่นๆ') ? otherDetail : null,
       note,
-      status
+      status,
+      next_appointment_date: status === 'นัดครั้งถัดไป' ? apptDate : null,
+      referral_to: status === 'ส่งต่อ' ? refTo : null,
+      referral_note: status === 'ส่งต่อ' ? (refNote || null) : null
     }).select('id').single();
 
     if (error){
@@ -507,59 +705,259 @@ function bindSave(){
     document.getElementById('f-other-detail').value = '';
     document.getElementById('f-other-detail').style.display = 'none';
     document.getElementById('f-status').value = 'ติดตามต่อ';
+    document.getElementById('f-appt').value = '';
+    document.getElementById('f-ref-to').value = '';
+    document.getElementById('f-ref-note').value = '';
+    syncStatusFields('f');
     fPhotoFiles = [];
     renderPhotoPreview('f');
     mineNeedsRefresh = true;
+    loadTodo();
   });
 }
 
-async function loadMine(){
-  const tbody = document.getElementById('mine-tbody');
+// ============ ประวัติเคส / งานค้าง / ประวัตินักเรียน ============
+async function loadCases(){
+  const seq = ++caseSeq;
+  const scope = document.getElementById('m-scope').value;
   const emptyEl = document.getElementById('mine-empty');
-  tbody.innerHTML = '';
+  document.getElementById('m-all-note').style.display = scope === 'all' ? 'block' : 'none';
+  document.getElementById('m-th-by').style.display = scope === 'all' ? '' : 'none';
+  document.getElementById('mine-tbody').innerHTML = '';
+  document.getElementById('m-count').textContent = '';
+  emptyEl.style.display = 'block';
+  emptyEl.textContent = 'กำลังโหลด...';
 
-  const { data, error } = await sb.from('counseling_logs')
-    .select('id, session_date, categories, other_detail, status, note, photo_paths, student_id, profiles!student_id(display_name, class_room)')
-    .eq('counselor_id', currentUser.id)
-    .is('deleted_at', null)
-    .order('session_date', { ascending: false })
-    .order('created_at', { ascending: false });
-
+  const { data, error } = await fetchLogs(scope);
+  if (seq !== caseSeq) return;
   if (error){
-    emptyEl.style.display = 'block';
     emptyEl.textContent = 'โหลดข้อมูลไม่สำเร็จ: ' + error.message;
     return;
   }
-  if (!data || data.length === 0){
+  data.forEach(r => { logCache[r.id] = r; });
+  if (scope === 'all') await loadCounselorNames(data);
+  if (seq !== caseSeq) return;
+  caseRows = data;
+  caseLatest = latestIdSet(data);
+  renderCases();
+}
+
+function renderCases(){
+  const scope = document.getElementById('m-scope').value;
+  const st = document.getElementById('m-status').value;
+  const q = document.getElementById('m-search').value.trim().toLowerCase();
+  const tbody = document.getElementById('mine-tbody');
+  const emptyEl = document.getElementById('mine-empty');
+  const countEl = document.getElementById('m-count');
+
+  const rows = caseRows.filter(r => {
+    if (st && r.status !== st) return false;
+    if (!q) return true;
+    const text = `${r.profiles?.display_name || ''} ${r.profiles?.class_room || ''}`.toLowerCase();
+    return text.includes(q);
+  });
+
+  tbody.innerHTML = '';
+  if (rows.length === 0){
     emptyEl.style.display = 'block';
-    emptyEl.textContent = 'ยังไม่มีบันทึกของคุณ';
+    emptyEl.textContent = caseRows.length === 0
+      ? (scope === 'all' ? 'ยังไม่มีบันทึกในระบบ' : 'ยังไม่มีบันทึกของคุณ')
+      : 'ไม่พบเคสที่ตรงกับตัวกรอง';
+    countEl.textContent = '';
     return;
   }
   emptyEl.style.display = 'none';
 
-  myLogs = {};
-  data.forEach(row => {
-    myLogs[row.id] = row;
-    const tr = document.createElement('tr');
-    const studentLabel = row.profiles ? `${esc(row.profiles.display_name)} (${esc(row.profiles.class_room) || '-'})` : '-';
-    const catDisplay = (row.categories || [])
-      .map(c => (c === 'อื่นๆ' && row.other_detail) ? `อื่นๆ: ${row.other_detail}` : c)
-      .join(', ');
-    const photoTag = (row.photo_paths && row.photo_paths.length)
-      ? ` <span class="photo-tag">📷${row.photo_paths.length}</span>` : '';
-    tr.innerHTML = `
-      <td>${esc(row.session_date)}</td>
-      <td>${studentLabel}</td>
-      <td>${esc(catDisplay)}${photoTag}</td>
-      <td><span class="status-pill status-${esc(row.status)}">${esc(row.status)}</span></td>
-      <td><button class="btn-link" data-edit="${esc(row.id)}">แก้ไข</button></td>
-    `;
-    tbody.appendChild(tr);
-  });
+  const MAX = 200;
+  tbody.innerHTML = rows.slice(0, MAX).map(r => {
+    const photoTag = (r.photo_paths && r.photo_paths.length)
+      ? ` <span class="photo-tag">📷${r.photo_paths.length}</span>` : '';
+    const mineRow = r.counselor_id === currentUser.id;
+    return `<tr>
+      <td>${esc(fmtDate(r.session_date))}</td>
+      <td>${logStudentLabel(r)}</td>
+      <td>${esc(logCategories(r))}${photoTag}</td>
+      <td>${statusCell(r, caseLatest.has(r.id))}</td>
+      ${scope === 'all' ? `<td>${esc(counselorLabel(r.counselor_id))}</td>` : ''}
+      <td>
+        <button class="btn-link" data-tl="${esc(r.student_id)}">ดูประวัติ</button>
+        ${mineRow ? `<button class="btn-link" data-edit="${esc(r.id)}">แก้ไข</button>` : ''}
+      </td>
+    </tr>`;
+  }).join('');
+  countEl.textContent = rows.length > MAX
+    ? `แสดง ${MAX} จาก ${rows.length} รายการ — พิมพ์ชื่อหรือห้องในช่องค้นหาเพื่อกรอง`
+    : `ทั้งหมด ${rows.length} รายการ`;
+}
 
-  tbody.querySelectorAll('[data-edit]').forEach(btn => {
-    btn.addEventListener('click', () => openEdit(btn.dataset.edit));
+function todoSection(title, sub, rows, kind, todayN){
+  if (rows.length === 0) return '';
+  const dueHead = kind === 'stale' ? 'ผ่านมาแล้ว' : 'วันนัด';
+  const body = rows.map(r => {
+    let due;
+    if (kind === 'stale'){
+      due = `${todayN - dayNum(r.session_date)} วัน`;
+    } else {
+      const diff = dayNum(r.next_appointment_date) - todayN;
+      due = esc(fmtDate(r.next_appointment_date)) +
+        (diff < 0 ? ` <span class="status-pill late">เลย ${-diff} วัน</span>` : (diff === 0 ? ' (วันนี้)' : ''));
+    }
+    return `<tr>
+      <td>${logStudentLabel(r)}</td>
+      <td>${esc(fmtDate(r.session_date))}</td>
+      <td>${due}</td>
+      <td>
+        <button class="btn-link" data-tl="${esc(r.student_id)}">ดูประวัติ</button>
+        <button class="btn-link" data-new="${esc(r.student_id)}">บันทึกครั้งใหม่</button>
+      </td>
+    </tr>`;
+  }).join('');
+  return `<div class="card todo-sec">
+    <h3>${esc(title)} (${rows.length} คน)</h3>
+    <p class="sub">${esc(sub)}</p>
+    <table><thead><tr><th>นักเรียน</th><th>ให้คำปรึกษาล่าสุด</th><th>${dueHead}</th><th></th></tr></thead>
+    <tbody>${body}</tbody></table>
+  </div>`;
+}
+
+// งานค้าง = ดูครั้งล่าสุดของนักเรียนแต่ละคนที่ฉันให้คำปรึกษา
+async function loadTodo(){
+  const body = document.getElementById('todo-body');
+  const badge = document.getElementById('todo-badge');
+  const { data, error } = await fetchLogs('mine');
+  if (error){
+    body.innerHTML = `<div class="card"><div class="empty">โหลดข้อมูลไม่สำเร็จ: ${esc(error.message)}</div></div>`;
+    return;
+  }
+  data.forEach(r => { logCache[r.id] = r; });
+
+  const todayN = dayNum(todayStr());
+  const latest = new Map();
+  data.forEach(r => { if (!latest.has(r.student_id)) latest.set(r.student_id, r); });
+
+  const overdue = [], soon = [], stale = [];
+  let waiting = 0;
+  latest.forEach(r => {
+    if (r.status === 'นัดครั้งถัดไป' && r.next_appointment_date){
+      const diff = dayNum(r.next_appointment_date) - todayN;
+      if (diff < 0) overdue.push(r);
+      else if (diff <= SOON_DAYS) soon.push(r);
+      else waiting++;
+    } else if (r.status === 'ติดตามต่อ' || r.status === 'นัดครั้งถัดไป'){
+      if (todayN - dayNum(r.session_date) > STALE_DAYS) stale.push(r);
+      else waiting++;
+    }
   });
+  const byNext = (a, b) => (a.next_appointment_date < b.next_appointment_date ? -1 : 1);
+  overdue.sort(byNext);
+  soon.sort(byNext);
+  stale.sort((a, b) => (a.session_date < b.session_date ? -1 : 1));
+
+  const urgent = overdue.length + stale.length;
+  badge.textContent = urgent;
+  badge.style.display = urgent > 0 ? 'inline-block' : 'none';
+
+  const html =
+    todoSection('เลยวันนัดแล้ว', 'นักเรียนที่นัดไว้แต่ยังไม่มีบันทึกครั้งใหม่หลังวันนัด', overdue, 'overdue', todayN) +
+    todoSection('นัดเร็ว ๆ นี้', `นัดภายใน ${SOON_DAYS} วันข้างหน้า`, soon, 'soon', todayN) +
+    todoSection('ติดตามต่อ แต่ยังไม่มีบันทึกใหม่', `ผ่านมาเกิน ${STALE_DAYS} วันแล้ว ลองทักนักเรียนหรือบันทึกผลติดตาม`, stale, 'stale', todayN);
+
+  body.innerHTML = (html || '<div class="card"><div class="empty">ตอนนี้ไม่มีเคสที่ต้องติดตามเร่งด่วน</div></div>') +
+    (waiting > 0 ? `<p class="privacy-note">เคสที่ยังเปิดอยู่แต่ยังไม่ถึงเวลาติดตาม: ${waiting} คน</p>` : '');
+}
+
+function startNewFor(studentId){
+  const sel = document.getElementById('f-student');
+  sel.value = studentId;
+  showTab('new');
+  window.scrollTo(0, 0);
+}
+
+function bindCases(){
+  document.getElementById('m-scope').addEventListener('change', loadCases);
+  document.getElementById('m-status').addEventListener('change', renderCases);
+  document.getElementById('m-search').addEventListener('input', renderCases);
+  const handler = e => {
+    const b = e.target.closest('button');
+    if (!b) return;
+    if (b.dataset.edit) openEdit(b.dataset.edit);
+    else if (b.dataset.tl) openTimeline(b.dataset.tl);
+    else if (b.dataset.new) startNewFor(b.dataset.new);
+  };
+  document.getElementById('mine-tbody').addEventListener('click', handler);
+  document.getElementById('todo-body').addEventListener('click', handler);
+  document.getElementById('btn-tl-close').addEventListener('click', closeTimeline);
+  ['f', 'e'].forEach(p => {
+    document.getElementById(`${p}-status`).addEventListener('change', () => syncStatusFields(p));
+    document.getElementById(`${p}-date`).addEventListener('change', () => syncStatusFields(p));
+  });
+}
+
+function closeTimeline(){
+  tlSeq++;
+  document.getElementById('tl-modal').classList.remove('open');
+}
+
+async function openTimeline(studentId){
+  const seq = ++tlSeq;
+  const body = document.getElementById('tl-body');
+  document.getElementById('tl-title').textContent = 'ประวัติการให้คำปรึกษา';
+  document.getElementById('tl-sub').textContent = '';
+  body.innerHTML = '<div class="empty">กำลังโหลด...</div>';
+  document.getElementById('tl-modal').classList.add('open');
+
+  const { data, error } = await fetchAllRows(() => sb.from('counseling_logs')
+    .select(LOG_COLS)
+    .eq('student_id', studentId)
+    .is('deleted_at', null)
+    .order('session_date', { ascending: false })
+    .order('created_at', { ascending: false })
+    .order('id', { ascending: true }));
+  if (seq !== tlSeq) return;
+  if (error){
+    body.innerHTML = `<div class="empty">โหลดข้อมูลไม่สำเร็จ: ${esc(error.message)}</div>`;
+    return;
+  }
+  if (data.length === 0){
+    body.innerHTML = '<div class="empty">ยังไม่มีบันทึกของนักเรียนคนนี้</div>';
+    return;
+  }
+  await loadCounselorNames(data);
+  if (seq !== tlSeq) return;
+
+  const p = data[0].profiles;
+  document.getElementById('tl-title').textContent = p ? `${p.display_name} (${p.class_room || '-'})` : 'ประวัติการให้คำปรึกษา';
+  document.getElementById('tl-sub').textContent = `ให้คำปรึกษาแล้ว ${data.length} ครั้ง เรียงจากล่าสุด`;
+
+  body.innerHTML = data.map((r, i) => {
+    const lines = [];
+    lines.push(`<div class="detail-line">หมวด: ${esc(logCategories(r))}</div>`);
+    if (r.status === 'นัดครั้งถัดไป' && r.next_appointment_date) lines.push(`<div class="detail-line">นัดครั้งถัดไป: ${esc(fmtDate(r.next_appointment_date))}</div>`);
+    if (r.referral_to) lines.push(`<div class="detail-line">ส่งต่อไปที่: ${esc(r.referral_to)}${r.referral_note ? ' — ' + esc(r.referral_note) : ''}</div>`);
+    const photos = (r.photo_paths && r.photo_paths.length) ? `<div class="tl-photos" data-idx="${i}"></div>` : '';
+    return `<div class="tl-item">
+      <div class="tl-head"><strong>${esc(fmtDate(r.session_date))}</strong>
+        <span class="status-pill status-${esc(r.status)}">${esc(r.status)}</span>
+        <span class="photo-tag">ครู: ${esc(counselorLabel(r.counselor_id))}</span></div>
+      ${lines.join('')}
+      <div class="tl-note">${esc(r.note)}</div>
+      ${photos}
+    </div>`;
+  }).join('');
+
+  const boxes = body.querySelectorAll('.tl-photos');
+  for (const box of boxes){
+    const row = data[parseInt(box.dataset.idx, 10)];
+    for (const path of (row.photo_paths || [])){
+      const { data: s, error: e2 } = await sb.storage.from('counseling-photos').createSignedUrl(path, 3600);
+      if (seq !== tlSeq) return;
+      if (!e2 && s && s.signedUrl){
+        const img = document.createElement('img');
+        img.src = s.signedUrl; img.alt = 'รูปแนบบันทึก';
+        box.appendChild(img);
+      }
+    }
+  }
 }
 
 async function loadOverview(){
@@ -568,6 +966,7 @@ async function loadOverview(){
   document.getElementById('ov-total').textContent = totals?.total_all_time ?? '0';
   document.getElementById('ov-month').textContent = totals?.total_this_month ?? '0';
   document.getElementById('ov-open').textContent = totals?.total_open ?? '0';
+  document.getElementById('ov-overdue').textContent = totals?.total_overdue ?? '0';
 
   const cats = (ov && ov.categories) || [];
   const catEl = document.getElementById('ov-categories');
@@ -596,12 +995,29 @@ async function loadOverview(){
         <span>${esc(r.total)}</span>
       </div>`;
   });
+
+  const sts = (ov && ov.statuses) || [];
+  const stEl = document.getElementById('ov-statuses');
+  stEl.innerHTML = '';
+  const maxSt = Math.max(1, ...sts.map(s => s.total));
+  sts.forEach(s => {
+    const pct = Math.round((s.total / maxSt) * 100);
+    stEl.innerHTML += `
+      <div class="bar-row">
+        <span class="bar-label">${esc(s.status)}</span>
+        <div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div>
+        <span>${esc(s.total)}</span>
+      </div>`;
+  });
+  const hidden = (ov && ov.hidden_status_cases) || 0;
+  document.getElementById('ov-status-note').textContent = hidden > 0
+    ? `🔒 ไม่แสดงสถานะที่มีเคสน้อยกว่า 3 ราย (รวม ${hidden} เคส) เพื่อป้องกันการเดาตัวนักเรียน` : '';
 }
 
 // ============ แก้ไข / นำออก ============
 async function openEdit(id){
-  const row = myLogs[id];
-  if (!row) return;
+  const row = logCache[id];
+  if (!row || row.counselor_id !== currentUser.id) return;
   editingId = id;
 
   document.getElementById('e-student-label').textContent =
@@ -609,7 +1025,15 @@ async function openEdit(id){
   document.getElementById('e-date').value = row.session_date;
   document.getElementById('e-date').max = new Date().toISOString().split('T')[0];
   document.getElementById('e-note').value = row.note || '';
-  document.getElementById('e-status').value = row.status;
+  const isClosed = row.status === 'ปิดเคส';
+  const eSel = document.getElementById('e-status');
+  eSel.value = row.status;
+  eSel.disabled = isClosed;
+  document.getElementById('e-closed-hint').style.display = isClosed ? 'block' : 'none';
+  document.getElementById('e-appt').value = row.next_appointment_date || '';
+  document.getElementById('e-ref-to').value = row.referral_to || '';
+  document.getElementById('e-ref-note').value = row.referral_note || '';
+  syncStatusFields('e');
   document.querySelectorAll('#e-categories input').forEach(c => {
     c.checked = (row.categories || []).includes(c.value);
   });
@@ -644,9 +1068,7 @@ function closeEdit(){
 
 function bindEdit(){
   document.getElementById('btn-edit-cancel').addEventListener('click', closeEdit);
-  document.getElementById('edit-modal').addEventListener('click', e => {
-    if (e.target.id === 'edit-modal') closeEdit();
-  });
+  // ไม่ปิดเมื่อคลิกพื้นหลัง (กันข้อมูลที่กรอกหาย) — ปิดได้เฉพาะปุ่มยกเลิก
 
   document.getElementById('btn-edit-save').addEventListener('click', async () => {
     const msg = document.getElementById('edit-msg');
@@ -659,6 +1081,25 @@ function bindEdit(){
     }
     if (categories.includes('อื่นๆ') && !otherDetail){
       msg.classList.add('err'); msg.textContent = 'กรุณาระบุหัวข้อที่นักเรียนมาปรึกษา'; return;
+    }
+    const eStatus = document.getElementById('e-status').value;
+    const eDate = document.getElementById('e-date').value;
+    const eAppt = document.getElementById('e-appt').value;
+    const eRefTo = document.getElementById('e-ref-to').value.trim();
+    const eRefNote = document.getElementById('e-ref-note').value.trim();
+    if (!eDate){
+      msg.classList.add('err'); msg.textContent = 'กรุณาระบุวันที่'; return;
+    }
+    if (eStatus === 'นัดครั้งถัดไป'){
+      if (!eAppt){
+        msg.classList.add('err'); msg.textContent = 'กรุณาใส่วันนัดครั้งถัดไป'; return;
+      }
+      if (eAppt < eDate){
+        msg.classList.add('err'); msg.textContent = 'วันนัดครั้งถัดไปต้องไม่ก่อนวันที่ให้คำปรึกษา'; return;
+      }
+    }
+    if (eStatus === 'ส่งต่อ' && !eRefTo){
+      msg.classList.add('err'); msg.textContent = 'กรุณาบอกว่าส่งต่อไปที่ใด'; return;
     }
 
     const btn = document.getElementById('btn-edit-save');
@@ -685,14 +1126,20 @@ function bindEdit(){
       nextNum++;
     }
 
-    const { error } = await sb.from('counseling_logs').update({
-      session_date: document.getElementById('e-date').value,
+    const payload = {
+      session_date: eDate,
       categories,
       other_detail: categories.includes('อื่นๆ') ? otherDetail : null,
       note: document.getElementById('e-note').value.trim(),
-      status: document.getElementById('e-status').value,
+      status: eStatus,
+      next_appointment_date: eStatus === 'นัดครั้งถัดไป' ? eAppt : null,
       photo_paths: finalPaths
-    }).eq('id', editingId);
+    };
+    if (eStatus === 'ส่งต่อ'){
+      payload.referral_to = eRefTo;
+      payload.referral_note = eRefNote || null;
+    }
+    const { error } = await sb.from('counseling_logs').update(payload).eq('id', editingId);
 
     btn.disabled = false; btn.textContent = 'บันทึกการแก้ไข';
 
@@ -705,7 +1152,8 @@ function bindEdit(){
     }
 
     mineNeedsRefresh = true;
-    loadMine();
+    loadCases();
+    loadTodo();
 
     if (photoWarning){
       msg.classList.add('err'); msg.textContent = 'บันทึกข้อมูลสำเร็จ แต่' + photoWarning.trim();
@@ -727,7 +1175,8 @@ function bindEdit(){
     }
     closeEdit();
     mineNeedsRefresh = true;
-    loadMine();
+    loadCases();
+    loadTodo();
   });
 }
 
