@@ -1,0 +1,345 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ทำเนียบนักเรียน · แนะให้แนว</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Mitr:wght@400;500;600&family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{
+  --ink:#2C3A2F; --ink-soft:#6A7466;
+  --board:#F5F3ED; --card:#FFFFFF;
+  --fern:#4A7C59; --fern-deep:#355A40; --fern-tint:#E6EFE4;
+  --marigold:#F9A620; --terra:#B7472A;
+  --line:#DDD8C8; --danger:#C0392B;
+  --radius:16px; --shadow:0 2px 10px rgba(44,58,47,.10);
+}
+*{box-sizing:border-box}
+[hidden]{display:none !important}
+body{margin:0;font-family:'Sarabun',sans-serif;background:var(--board);color:var(--ink);font-size:16px;line-height:1.5}
+h1,h2,h3,.brand{font-family:'Mitr',sans-serif;font-weight:600}
+:focus-visible{outline:3px solid var(--marigold);outline-offset:2px;border-radius:8px}
+.wrap{max-width:1180px;margin:0 auto;padding:0 16px}
+header.app{background:var(--fern);color:#fff;padding:12px 0}
+header.app .wrap{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.brand{font-size:20px}
+.who{margin-left:auto;font-size:14px;opacity:.9}
+.back{color:#fff;text-decoration:none;font-size:14px;opacity:.9;border:1px solid rgba(255,255,255,.5);border-radius:999px;padding:4px 12px}
+main.wrap{padding:20px 16px 48px}
+h1{margin:0;font-size:28px;color:var(--fern-deep);line-height:1.25}
+.lead{color:var(--ink-soft);margin:4px 0 16px}
+.btn{font-family:'Sarabun',sans-serif;font-weight:700;font-size:15px;border:1.5px solid var(--line);background:#fff;color:var(--fern-deep);border-radius:999px;padding:10px 18px;cursor:pointer}
+.btn.primary{background:var(--fern);border-color:var(--fern);color:#fff}
+.btn:disabled{opacity:.5;cursor:default}
+.levels{display:flex;gap:6px;flex-wrap:wrap}
+.lv{font-family:'Mitr',sans-serif;font-size:16px;border:none;background:transparent;color:var(--ink-soft);border-radius:999px;padding:7px 18px;cursor:pointer}
+.lv.on{background:var(--fern-deep);color:#fff}
+.rooms{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.rm{font-family:'Sarabun',sans-serif;font-weight:600;font-size:15px;min-width:64px;min-height:42px;padding:0 14px;border-radius:12px;background:#fff;border:1.5px solid var(--line);cursor:pointer;color:var(--ink)}
+.rm.on{background:var(--marigold);border-color:var(--ink);font-weight:700}
+.bar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:20px 0 14px}
+.bar .info{font-size:15px;color:var(--ink-soft)}
+.bar .info b{color:var(--fern-deep);font-size:17px}
+.bar .sp{flex:1}
+.search{width:260px;max-width:100%;min-height:44px;border:1.5px solid var(--line);border-radius:999px;padding:0 18px;font:inherit;background:#fff}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:16px}
+.card{position:relative;background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px 10px 16px;text-align:center;cursor:pointer;border:1.5px solid transparent;transition:transform .12s,border-color .12s;font:inherit;color:inherit;width:100%}
+.card:hover{transform:translateY(-2px);border-color:var(--fern)}
+.av{position:relative;width:112px;height:112px;margin:0 auto;border-radius:50%;box-shadow:0 0 0 4px #fff,0 0 0 6px var(--fern);display:grid;place-items:center;background:var(--fern);color:#fff;font-family:'Mitr',sans-serif;font-size:46px;font-weight:600}
+.av img{width:100%;height:100%;object-fit:cover;border-radius:50%;display:block;cursor:zoom-in;background:var(--fern-tint)}
+.av .no{position:absolute;left:50%;bottom:-12px;transform:translateX(-50%);min-width:26px;height:26px;border-radius:13px;background:var(--marigold);color:var(--ink);font-family:'Sarabun',sans-serif;font-size:13px;font-weight:700;display:grid;place-items:center;box-shadow:0 0 0 3px #fff;padding:0 6px}
+.fn{margin-top:22px;font-weight:700;font-size:17px;line-height:1.25}
+.sn{font-size:14px;color:var(--ink-soft);line-height:1.25;min-height:18px}
+.nk{display:inline-block;margin-top:8px;font-family:'Mitr',sans-serif;font-size:14px;background:var(--fern-tint);color:var(--fern-deep);border-radius:999px;padding:2px 14px;min-height:24px}
+.nk.e{background:none;color:transparent}
+.empty{text-align:center;color:var(--ink-soft);padding:48px 12px;background:#fff;border-radius:var(--radius)}
+.msg{background:#fff;border-radius:var(--radius);padding:24px;text-align:center}
+.lb{position:fixed;inset:0;z-index:50;background:rgba(30,45,34,.85);display:none;align-items:center;justify-content:center;flex-direction:column;gap:10px;padding:16px;cursor:zoom-out}
+.lb.show{display:flex}
+.lb img{max-width:min(92vw,560px);max-height:78vh;border-radius:16px;background:#fff}
+.lb span{color:#fff;font-size:14px}
+.lb .cap{font-family:'Mitr',sans-serif;font-size:18px}
+
+/* ===== ใบพิมพ์ (ซ่อนบนจอ) ===== */
+#board{display:none}
+@media print{
+  @page{size:297mm 210mm;margin:0}
+  html,body{width:297mm;height:210mm;background:#fff}
+  body > *:not(#board){display:none !important}
+  #board{display:block;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+.pg{position:relative;width:297mm;height:210mm;overflow:hidden;background:#FDFBF5;font-family:'Sarabun',sans-serif;color:var(--ink)}
+.pg .frame{position:absolute;inset:7mm;border:.5mm solid var(--fern);border-radius:6mm}
+.pg .frame:after{content:"";position:absolute;inset:1.6mm;border:.25mm solid var(--line);border-radius:4.6mm}
+.pg .head{position:absolute;left:15mm;right:15mm;top:13mm;height:28mm;display:flex;align-items:center;gap:8mm}
+.pg .room{flex:none;height:24mm;min-width:46mm;padding:0 8mm;border-radius:12mm;background:var(--fern);color:#fff;display:flex;align-items:center;justify-content:center;font-family:'Mitr',sans-serif;font-weight:600;font-size:34pt;line-height:1;box-shadow:0 0 0 1.4mm #FDFBF5,0 0 0 2mm var(--marigold)}
+.pg .ttl h1{font-size:25pt;color:var(--fern-deep)}
+.pg .ttl p{font-size:10.5pt;color:var(--ink-soft);margin:1mm 0 0}
+.pg .stat{margin-left:auto;text-align:right;font-size:10pt;color:var(--ink-soft);line-height:1.5}
+.pg .stat b{font-family:'Mitr',sans-serif;font-weight:600;font-size:21pt;color:var(--fern);display:block;line-height:1.1}
+.pg .rule{position:absolute;left:15mm;right:15mm;top:43mm;height:1.1mm;border-radius:1mm;background:linear-gradient(90deg,var(--fern) 0 30%,var(--marigold) 30% 36%,var(--line) 36% 100%)}
+.pg .pgrid{position:absolute;left:14mm;right:14mm;top:47mm;bottom:15mm;display:grid;grid-template-columns:repeat(10,1fr);gap:0 2mm;align-content:start}
+.pg .pgrid.r4{grid-template-rows:repeat(4,1fr)}
+.pg .pgrid.r5{grid-template-rows:repeat(5,1fr)}
+.pg .pc{display:flex;flex-direction:column;align-items:center;text-align:center;padding-top:1mm;min-width:0}
+.pg .pav{position:relative;width:17.5mm;height:17.5mm;border-radius:50%;box-shadow:0 0 0 .9mm #FDFBF5,0 0 0 1.5mm var(--fern);display:grid;place-items:center;background:var(--fern);color:#fff;font-family:'Mitr',sans-serif;font-weight:600;font-size:21pt}
+.pg .r5 .pav{width:12mm;height:12mm;font-size:15pt}
+.pg .r5 .pno{bottom:-2.4mm;min-width:4.8mm;height:4.8mm;font-size:7pt}
+.pg .r5 .pfn{margin-top:3.4mm;font-size:9.5pt}
+.pg .r5 .psn{font-size:8pt;min-height:3.2mm}
+.pg .r5 .pnk{font-size:8pt;padding:.6mm 2.6mm;min-height:3.8mm;margin-top:.5mm}
+.pg .pav img{width:100%;height:100%;object-fit:cover;border-radius:50%;display:block}
+.pg .pno{position:absolute;left:50%;bottom:-2.6mm;transform:translateX(-50%);min-width:5.4mm;height:5.4mm;border-radius:3mm;background:var(--marigold);color:var(--ink);font-weight:700;font-size:7.5pt;display:grid;place-items:center;box-shadow:0 0 0 .6mm #FDFBF5;padding:0 1mm}
+.pg .pfn{margin-top:4.2mm;font-weight:700;font-size:10.5pt;line-height:1.15;max-width:27mm;white-space:nowrap;overflow:hidden}
+.pg .psn{font-size:8.5pt;color:var(--ink-soft);line-height:1.2;max-width:27mm;white-space:nowrap;overflow:hidden;min-height:3.6mm}
+.pg .pnk{margin-top:.8mm;font-family:'Mitr',sans-serif;font-size:8.5pt;line-height:1;background:var(--fern-tint);color:var(--fern-deep);border-radius:3mm;padding:1mm 3mm;min-height:4.4mm;max-width:27mm;white-space:nowrap;overflow:hidden}
+.pg .pnk.e{background:none}
+.pg .foot{position:absolute;left:15mm;right:15mm;bottom:10.5mm;display:flex;justify-content:space-between;font-size:8pt;color:var(--ink-soft)}
+@media (max-width:560px){ .grid{grid-template-columns:repeat(2,1fr);gap:12px} .av{width:92px;height:92px;font-size:38px} h1{font-size:24px} }
+</style>
+</head>
+<body>
+<header class="app"><div class="wrap">
+  <span class="brand">แนะให้แนว</span>
+  <a class="back" href="index.html">← คลังแนะแนว</a>
+  <span class="who" id="who"></span>
+</div></header>
+
+<main class="wrap">
+  <div id="no-access" class="msg" hidden></div>
+  <div id="main" hidden>
+    <h1>ทำเนียบนักเรียน</h1>
+    <p class="lead">เลือกระดับชั้นและห้อง · แตะการ์ดเพื่อเปิดโปรไฟล์ของนักเรียนคนนั้น · แตะรูปเพื่อดูรูปขยาย</p>
+    <div class="levels" id="levels"></div>
+    <div class="rooms" id="rooms"></div>
+    <div class="bar">
+      <div class="info" id="info"></div>
+      <div class="sp"></div>
+      <input class="search" id="q" type="text" placeholder="ค้นหาชื่อหรือชื่อเล่นในห้องนี้" autocomplete="off" aria-label="ค้นหาในห้องนี้">
+      <button class="btn primary" id="btnPrint" disabled>🖨 พิมพ์ A4 ทั้งห้อง</button>
+    </div>
+    <div id="out"><div class="empty">เลือกระดับชั้นและห้องด้านบนได้เลยค่ะ</div></div>
+  </div>
+</main>
+
+<div class="lb" id="lb"><img alt="รูปนักเรียน"><span class="cap" id="lbCap"></span><span>แตะที่ว่างเพื่อปิด</span></div>
+<div id="board"></div>
+
+<script>
+const SUPABASE_URL = 'https://ikkhjslmtjwrxzxvtokb.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlra2hqc2xtdGp3cnh6eHZ0b2tiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM3NDMzNjksImV4cCI6MjA5OTMxOTM2OX0.3OR_9mEv82Ns1LLjx5nnRwJYzrtKFtWCWd1bPuQfNKU';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const BUCKET = 'profile-photos';
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+let ALL = [];            // นักเรียนทุกคน (เฉพาะคอลัมน์ที่ใช้)
+let ROOMS = {};          // { '2': ['ม.2/1', ...] }
+let curLevel = null, curRoom = null;
+let curList = [];        // นักเรียนห้องที่เลือก (เรียงตามรหัส) พร้อม url รูป
+let loadSeq = 0;
+
+// ---------- แยกคำนำหน้า / ชื่อ / นามสกุล ----------
+const PREFIX = /^(เด็กชาย|เด็กหญิง|นางสาว|นาย|นาง|ด\.ช\.|ด\.ญ\.)\s*/;
+function splitName(full){
+  const t = String(full || '').trim().replace(/\s+/g, ' ');
+  const rest = t.replace(PREFIX, '');
+  const i = rest.indexOf(' ');
+  let first = i < 0 ? rest : rest.slice(0, i);
+  let last = i < 0 ? '' : rest.slice(i + 1).trim();
+  if (/^[-–—.]+$/.test(last)) last = '';          // นามสกุลเป็นขีด = ไม่มีนามสกุล
+  return { first: first || t, last };
+}
+function roomKey(r){ const m = /^ม\.(\d)\/(\d+)$/.exec(r || ''); return m ? [+m[1], +m[2]] : [9, 0]; }
+function byRoom(a, b){ const x = roomKey(a), y = roomKey(b); return x[0] - y[0] || x[1] - y[1]; }
+function byCode(a, b){
+  const x = String(a.student_id || a.username || ''), y = String(b.student_id || b.username || '');
+  return x.localeCompare(y, 'en', { numeric: true }) || String(a.id).localeCompare(String(b.id));
+}
+function academicYearBE(){
+  const d = new Date(Date.now() + 7 * 3600 * 1000);
+  const y = d.getUTCFullYear(), m = d.getUTCMonth() + 1;
+  return (m >= 5 ? y : y - 1) + 543;
+}
+
+// ---------- เข้าสู่ระบบ + ตรวจสิทธิ์ ----------
+function showNoAccess(msg){ $('no-access').hidden = false; $('no-access').innerHTML = msg; }
+async function init(){
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session){
+    showNoAccess('กรุณาเข้าสู่ระบบจากหน้า <a href="index.html">คลังแนะแนว</a> ก่อน แล้วกลับมาเปิดหน้านี้อีกครั้งนะคะ');
+    return;
+  }
+  const { data: me } = await sb.from('profiles').select('display_name, role, is_guidance').eq('id', session.user.id).single();
+  const ok = !!me && (me.role === 'admin' || (me.role === 'teacher' && me.is_guidance === true));
+  $('who').textContent = me ? me.display_name : '';
+  if (!ok){
+    showNoAccess('<b>หน้านี้สำหรับครูแนะแนวและผู้ดูแลระบบเท่านั้น</b><br>ถ้าต้องใช้ ให้แจ้งครูแนะแนวเพื่อขอสิทธิ์นะคะ');
+    return;
+  }
+  $('main').hidden = false;
+  $('out').innerHTML = '<div class="empty">กำลังโหลดรายชื่อห้องเรียน...</div>';
+  await loadStudents();
+  buildLevels();
+  const want = new URLSearchParams(location.search).get('room');
+  if (want && /^ม\.[1-6]\/\d+$/.test(want) && ALL.some(s => s.class_room === want)){
+    pickLevel(want.charAt(2)); pickRoom(want);
+  } else {
+    $('out').innerHTML = '<div class="empty">เลือกระดับชั้นและห้องด้านบนได้เลยค่ะ</div>';
+  }
+}
+
+// ดึงทีละ 1,000 แถว (PostgREST ตัดที่ 1,000)
+async function loadStudents(){
+  let all = [], from = 0;
+  while (true){
+    const { data, error } = await sb.from('profiles')
+      .select('id,username,student_id,display_name,class_room,avatar_path,nickname')
+      .eq('role', 'student').eq('status', 'active')
+      .order('class_room').order('id').range(from, from + 999);
+    if (error){ $('out').innerHTML = `<div class="empty">โหลดรายชื่อไม่สำเร็จ: ${esc(error.message)}<br>ลองรีเฟรชหน้านี้อีกครั้งนะคะ</div>`; break; }
+    all = all.concat(data || []);
+    if (!data || data.length < 1000) break;
+    from += 1000;
+  }
+  ALL = all;
+  ROOMS = {};
+  const seen = new Set();
+  for (const s of ALL){
+    const r = s.class_room;
+    if (!r || seen.has(r)) continue;
+    seen.add(r);
+    const lv = (/^ม\.(\d)\//.exec(r) || [])[1];
+    if (!lv) continue;
+    (ROOMS[lv] = ROOMS[lv] || []).push(r);
+  }
+  for (const k in ROOMS) ROOMS[k].sort(byRoom);
+}
+
+function buildLevels(){
+  const lvs = Object.keys(ROOMS).sort();
+  $('levels').innerHTML = lvs.map(l => `<button class="lv" data-l="${l}">ม.${l}</button>`).join('');
+  $('levels').querySelectorAll('.lv').forEach(b => b.onclick = () => pickLevel(b.dataset.l));
+}
+function pickLevel(l){
+  curLevel = l;
+  $('levels').querySelectorAll('.lv').forEach(b => b.classList.toggle('on', b.dataset.l === l));
+  $('rooms').innerHTML = (ROOMS[l] || []).map(r => `<button class="rm" data-r="${esc(r)}">${esc(r)}</button>`).join('');
+  $('rooms').querySelectorAll('.rm').forEach(b => b.onclick = () => pickRoom(b.dataset.r));
+  if (curRoom && curRoom.charAt(2) !== l){ curRoom = null; curList = []; $('btnPrint').disabled = true; $('info').textContent = ''; $('out').innerHTML = '<div class="empty">เลือกห้องเรียนด้านบนได้เลยค่ะ</div>'; }
+  else if (curRoom) markRoom();
+}
+function markRoom(){ $('rooms').querySelectorAll('.rm').forEach(b => b.classList.toggle('on', b.dataset.r === curRoom)); }
+
+// ---------- โหลดห้อง + รูป ----------
+async function pickRoom(r){
+  const seq = ++loadSeq;
+  curRoom = r; markRoom();
+  $('q').value = '';
+  $('btnPrint').disabled = true;
+  history.replaceState(null, '', '?room=' + encodeURIComponent(r));
+  const list = ALL.filter(s => s.class_room === r).sort(byCode).map(s => Object.assign({}, s, { url: null }));
+  curList = list;
+  renderRoom(true);
+  const paths = list.filter(s => s.avatar_path).map(s => s.avatar_path);
+  if (paths.length){
+    const { data, error } = await sb.storage.from(BUCKET).createSignedUrls(paths, 3600);
+    if (seq !== loadSeq) return;               // เปลี่ยนห้องระหว่างโหลด
+    if (!error && data){
+      const m = {}; data.forEach(d => { if (d && d.path && d.signedUrl) m[d.path] = d.signedUrl; });
+      list.forEach(s => { s.url = s.avatar_path ? (m[s.avatar_path] || null) : null; });
+    }
+  }
+  renderRoom(false);
+  $('btnPrint').disabled = list.length === 0;
+}
+
+function matches(s, q){
+  if (!q) return true;
+  const t = (String(s.display_name || '') + ' ' + String(s.nickname || '')).toLowerCase();
+  return t.indexOf(q.toLowerCase()) >= 0;
+}
+function cardHtml(s, i){
+  const n = splitName(s.display_name);
+  const av = s.url
+    ? `<img src="${esc(s.url)}" alt="" data-zoom="${i}" loading="lazy">`
+    : esc(n.first.charAt(0));
+  return `<div class="card" role="link" tabindex="0" data-id="${esc(s.id)}">
+    <div class="av">${av}<span class="no">${i + 1}</span></div>
+    <div class="fn">${esc(n.first)}</div>
+    <div class="sn">${esc(n.last)}</div>
+    <span class="nk ${s.nickname ? '' : 'e'}">${s.nickname ? esc(s.nickname) : '&nbsp;'}</span>
+  </div>`;
+}
+function renderRoom(loading){
+  const total = curList.length;
+  const withPhoto = curList.filter(s => s.avatar_path).length;
+  $('info').innerHTML = `<b>${esc(curRoom)}</b> · ${total} คน · อัปโหลดรูปแล้ว <b>${withPhoto}</b> จาก ${total} คน`;
+  if (!total){ $('out').innerHTML = '<div class="empty">ห้องนี้ยังไม่มีนักเรียนในระบบ</div>'; return; }
+  const q = $('q').value.trim();
+  const shown = curList.map((s, i) => ({ s, i })).filter(x => matches(x.s, q));
+  if (!shown.length){ $('out').innerHTML = '<div class="empty">ไม่พบชื่อที่ค้นหาในห้องนี้</div>'; return; }
+  $('out').innerHTML = `<div class="grid">${shown.map(x => cardHtml(x.s, x.i)).join('')}</div>`;
+}
+$('q').addEventListener('input', () => { if (curRoom) renderRoom(false); });
+
+// แตะการ์ด = เปิดโปรไฟล์ / แตะรูป = ขยาย
+$('out').addEventListener('click', e => {
+  const img = e.target.closest('img[data-zoom]');
+  if (img){
+    e.stopPropagation();
+    const s = curList[+img.dataset.zoom];
+    $('lb').querySelector('img').src = img.src;
+    $('lbCap').textContent = s ? s.display_name + (s.nickname ? ' (' + s.nickname + ')' : '') : '';
+    $('lb').classList.add('show');
+    return;
+  }
+  const card = e.target.closest('.card');
+  if (card) location.href = 'student-profile.html?id=' + encodeURIComponent(card.dataset.id);
+});
+$('out').addEventListener('keydown', e => {
+  if (e.key !== 'Enter') return;
+  const card = e.target.closest('.card');
+  if (card) location.href = 'student-profile.html?id=' + encodeURIComponent(card.dataset.id);
+});
+$('lb').addEventListener('click', () => $('lb').classList.remove('show'));
+document.addEventListener('keydown', e => { if (e.key === 'Escape') $('lb').classList.remove('show'); });
+
+// ---------- พิมพ์ A4 แนวนอน ----------
+function boardHtml(){
+  const n = curList.length;
+  const rows = n > 40 ? 5 : 4;
+  const cells = curList.map((s, i) => {
+    const p = splitName(s.display_name);
+    const av = s.url ? `<img src="${esc(s.url)}" alt="">` : esc(p.first.charAt(0));
+    return `<div class="pc"><div class="pav">${av}<span class="pno">${i + 1}</span></div>
+      <div class="pfn">${esc(p.first)}</div><div class="psn">${esc(p.last)}</div>
+      <div class="pnk ${s.nickname ? '' : 'e'}">${s.nickname ? esc(s.nickname) : '&nbsp;'}</div></div>`;
+  }).join('');
+  return `<div class="pg"><div class="frame"></div>
+    <div class="head"><div class="room">${esc(curRoom)}</div>
+      <div class="ttl"><h1>ทำเนียบนักเรียน</h1><p>โรงเรียนพูลเจริญวิทยาคม · ปีการศึกษา ${academicYearBE()}</p></div>
+      <div class="stat"><b>${n}</b>นักเรียนในห้อง</div></div>
+    <div class="rule"></div>
+    <div class="pgrid r${rows}">${cells}</div>
+    <div class="foot"><span>งานแนะแนว โรงเรียนพูลเจริญวิทยาคม</span><span>พิมพ์จากระบบแนะให้แนว · ใช้ภายในโรงเรียนเท่านั้น</span></div></div>`;
+}
+$('btnPrint').addEventListener('click', async () => {
+  if (!curList.length) return;
+  if (curList.length > 50 && !confirm('ห้องนี้มีนักเรียนเกิน 50 คน ใบพิมพ์อาจแน่นมาก พิมพ์ต่อไหมคะ?')) return;
+  const btn = $('btnPrint'); btn.disabled = true; btn.textContent = 'กำลังเตรียมใบพิมพ์...';
+  $('board').innerHTML = boardHtml();
+  const imgs = Array.from($('board').querySelectorAll('img'));
+  await Promise.all(imgs.map(im => im.complete ? Promise.resolve() : new Promise(r => { im.onload = im.onerror = r; })));
+  if (document.fonts && document.fonts.ready) { try { await document.fonts.ready; } catch (e) {} }
+  btn.disabled = false; btn.textContent = '🖨 พิมพ์ A4 ทั้งห้อง';
+  window.print();
+});
+
+init();
+</script>
+</body>
+</html>
