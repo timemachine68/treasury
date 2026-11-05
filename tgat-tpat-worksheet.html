@@ -65,7 +65,13 @@ input[type=number]{font:inherit;font-size:16px;padding:8px;border:2px solid var(
 .foot{color:var(--ink-soft);font-size:14px;text-align:center;padding:8px 16px 28px}
 .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
 a{color:var(--pine-deep);font-weight:600}
-@media(max-width:640px){.grid2{grid-template-columns:1fr}.sumtable{font-size:14px}}
+.paths{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px}
+.paths label{display:flex;gap:8px;align-items:center;border:2px solid var(--line);background:#fff;border-radius:12px;padding:10px 12px;cursor:pointer;font-weight:600;line-height:1.3}
+.paths label:has(input:checked){border-color:var(--pine);background:var(--pine-tint)}
+.paths input{width:20px;height:20px;accent-color:var(--pine);flex:0 0 auto}
+.pathbox{background:var(--pine-tint);border-radius:12px;padding:12px 14px;margin-top:12px}
+.pathbox p{margin:0 0 8px}
+@media(max-width:640px){.paths{grid-template-columns:1fr}.grid2{grid-template-columns:1fr}.sumtable{font-size:14px}}
 @media print{
   header.app .sub,.chips,.actions,.noprint{display:none!important}
   body{background:#fff}.panel{box-shadow:none;border:1px solid var(--line);break-inside:avoid}
@@ -86,7 +92,21 @@ a{color:var(--pine-deep);font-weight:600}
     <div><label class="f" for="stName">ชื่อ-สกุล</label><input type="text" id="stName" maxlength="80"></div>
     <div><label class="f" for="stRoom">ห้อง</label><input type="text" id="stRoom" maxlength="20" placeholder="เช่น ม.6/1"></div>
   </div>
+  <label class="f" style="margin-top:14px">หลังจบ ม.6 ฉันวางแผนจะ</label>
+  <div class="paths" id="paths" role="radiogroup">
+    <label><input type="radio" name="path" value="uni"> เรียนต่อมหาวิทยาลัย (ต้องสอบ TCAS)</label>
+    <label><input type="radio" name="path" value="pvs"> เรียนต่อ ปวส.</label>
+    <label><input type="radio" name="path" value="work"> ทำงาน</label>
+    <label><input type="radio" name="path" value="unsure"> ยังไม่แน่ใจ / อย่างอื่น</label>
+  </div>
+  <div id="pathBox" class="pathbox" hidden>
+    <p id="pathText"></p>
+    <label class="f" for="pathDetail" id="pathLbl"></label>
+    <input type="text" id="pathDetail" maxlength="150">
+  </div>
 </div>
+
+<div id="uniFlow">
 
 <div class="panel">
   <h2><span class="step">2</span>เลือกคณะที่อยากเข้า (ใส่ได้ 3 อันดับ)</h2>
@@ -135,6 +155,8 @@ a{color:var(--pine-deep);font-weight:600}
     <button class="btn ghost" id="btnReset" type="button">ล้างทั้งหมด</button>
   </div>
   <div id="copyMsg" class="noprint" style="margin-top:8px"></div>
+</div>
+
 </div>
 
 <div class="panel noprint">
@@ -242,11 +264,35 @@ function renderSummary(){
   if(!tp&&!tpat1&&al)warn.push('ไม่มี TGAT/TPAT ในรายการนี้ ตรวจอีกครั้งว่าประกาศของคณะไม่ได้ใช้');
   box.innerHTML=h+(warn.length?'<div class="warn">'+esc(warn[0])+'</div>':'');
 }
-function renderAll(){renderTabs();loadFields();renderGroups();choiceWarn();renderSummary();}
+var PATHS={uni:'เรียนต่อมหาวิทยาลัย (ต้องสอบ TCAS)',pvs:'เรียนต่อ ปวส.',work:'ทำงาน',unsure:'ยังไม่แน่ใจ / อย่างอื่น'};
+var pathSel='';
+function skipExam(){return pathSel==='pvs'||pathSel==='work';}
+function renderPath(){
+  var b=$('pathBox');
+  $('uniFlow').hidden=skipExam();
+  if(!pathSel||pathSel==='uni'){b.hidden=true;return;}
+  b.hidden=false;
+  if(pathSel==='pvs'){
+    $('pathText').textContent='ไม่ต้องสอบ TGAT/TPAT ในขั้นตอนต่อไปข้ามได้เลย ถ้าเปลี่ยนใจอยากเข้ามหาวิทยาลัย ให้กดเลือก “เรียนต่อมหาวิทยาลัย” แล้วกรอกต่อได้';
+    $('pathLbl').textContent='สถานศึกษา / สาขาที่สนใจ (ไม่บังคับ)';
+    $('pathDetail').placeholder='เช่น วิทยาลัยเทคนิค... สาขาอิเล็กทรอนิกส์';
+  }else if(pathSel==='work'){
+    $('pathText').textContent='ไม่ต้องสอบ TGAT/TPAT ในขั้นตอนต่อไปข้ามได้เลย ถ้าเปลี่ยนใจอยากเรียนต่อ ให้กดเลือกเส้นทางใหม่แล้วกรอกต่อได้';
+    $('pathLbl').textContent='งานหรืออาชีพที่สนใจ (ไม่บังคับ)';
+    $('pathDetail').placeholder='เช่น ช่างยนต์ งานบริการ ธุรกิจที่บ้าน';
+  }else{
+    $('pathText').textContent='ยังไม่ต้องรีบตัดสินใจ ถ้ายังอยากเก็บทางเลือกเรียนต่อมหาวิทยาลัยไว้ ให้กรอกคณะที่สนใจด้านล่างได้เลย การสมัครสอบ TGAT/TPAT มีวันปิดรับ (ตรวจวันล่าสุดที่ mytcas.com)';
+    $('pathLbl').textContent='ตอนนี้คิดอะไรอยู่ (ไม่บังคับ)';
+    $('pathDetail').placeholder='เช่น ลังเลระหว่างเรียนต่อกับทำงาน';
+  }
+}
+function renderAll(){renderPath();renderTabs();loadFields();renderGroups();choiceWarn();renderSummary();}
 function textSummary(){
   var r=compute(),L=[];
   L.push('ใบงาน: คณะที่ฉันอยากเข้า ต้องสอบวิชาไหนบ้าง');
   L.push('ชื่อ: '+($('stName').value||'-')+'  ห้อง: '+($('stRoom').value||'-'));
+  L.push('แผนหลังจบ ม.6: '+(pathSel?PATHS[pathSel]:'-')+($('pathDetail').value&&pathSel&&pathSel!=='uni'?' — '+$('pathDetail').value:''));
+  if(skipExam()){L.push('');L.push('ไม่ต้องสมัครสอบ TGAT/TPAT');return L.join('\n');}
   ch.forEach(function(c,i){
     if(!hasData(c))return;
     L.push('');
@@ -291,9 +337,12 @@ $('groups').addEventListener('input',function(ev){
   }
 });
 $('btnPrint').addEventListener('click',function(){window.print();});
+$('paths').addEventListener('change',function(ev){
+  if(ev.target.name==='path'){pathSel=ev.target.value;$('pathDetail').value='';sendMsg('');renderPath();}
+});
 $('btnReset').addEventListener('click',function(){
   if(!window.confirm('ล้างข้อมูลทั้งหมดในหน้านี้ใช่ไหม')) return;
-  ch=[blank(),blank(),blank()];cur=0;$('stName').value='';$('stRoom').value='';renderAll();$('copyMsg').innerHTML='';
+  ch=[blank(),blank(),blank()];cur=0;$('stName').value='';$('stRoom').value='';$('pathDetail').value='';pathSel='';Array.prototype.forEach.call(document.getElementsByName('path'),function(r){r.checked=false;});renderAll();$('copyMsg').innerHTML='';
 });
 $('btnCopy').addEventListener('click',function(){
   var txt=textSummary(),m=$('copyMsg');
@@ -357,8 +406,11 @@ var UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 $('btnSend').addEventListener('click',async function(){
   var btn=this;
   var c0=ch[0],r=compute();
-  if(!c0.uni.trim()||!c0.fac.trim()){sendMsg('กรอกมหาวิทยาลัยและคณะของอันดับ 1 ก่อนนะ',true);return;}
-  if(!r.ids.length){sendMsg('ติ๊กวิชาที่คณะกำหนดอย่างน้อย 1 วิชาก่อนนะ',true);return;}
+  if(!pathSel){sendMsg('เลือกก่อนว่าหลังจบ ม.6 วางแผนจะทำอะไร (ขั้นตอนที่ 1)',true);return;}
+  if(pathSel==='uni'){
+    if(!c0.uni.trim()||!c0.fac.trim()){sendMsg('กรอกมหาวิทยาลัยและคณะของอันดับ 1 ก่อนนะ',true);return;}
+    if(!r.ids.length){sendMsg('ติ๊กวิชาที่คณะกำหนดอย่างน้อย 1 วิชาก่อนนะ',true);return;}
+  }
   var sb=getSb();
   if(!sb){sendMsg('ส่งไม่ได้ในตอนนี้ (ต่ออินเทอร์เน็ตไม่ได้) กด “คัดลอกสรุป” แล้วนำไปวางในงานที่ครูมอบหมายแทน',true);return;}
   btn.disabled=true;sendMsg('กำลังส่ง…');
