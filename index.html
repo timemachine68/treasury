@@ -84,6 +84,11 @@ header.app .wrap{display:flex;align-items:center;gap:12px;padding-bottom:0;flex-
 .badge.grade{background:color-mix(in srgb,var(--gc) 16%,#fff);color:var(--gc)}
 .badge.type{background:var(--pine-tint);color:var(--pine-deep)}
 .badge.link{background:#FFF3CE;color:var(--note-deep)}
+.navcount{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 5px;border-radius:10px;background:var(--danger);color:#fff;font-size:.78rem;font-weight:700;margin-left:6px;vertical-align:middle;box-sizing:border-box}
+.odbanner{display:flex;align-items:center;gap:10px;background:#FBEAE7;color:var(--danger);font-weight:700;border-radius:12px;padding:12px 14px;margin-bottom:14px}
+.odlist{display:flex;flex-direction:column;gap:8px;margin:12px 0 16px}
+.odlist .odrow{display:flex;justify-content:space-between;align-items:center;gap:10px;background:var(--board);border-radius:10px;padding:10px 12px;font-weight:600}
+.odlist .odrow span:last-child{color:var(--danger);font-size:.85rem;white-space:nowrap}
 .navdot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--danger);margin-left:5px;vertical-align:middle}
 .rescard h3{font-size:1.02rem;line-height:1.35;font-weight:500}
 .rescard .desc{font-size:.83rem;color:var(--ink-soft);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
@@ -284,7 +289,7 @@ textarea.csvbox{font-family:monospace;font-size:.82rem;min-height:120px}
   <div class="wrap">
     <div class="viewtabs">
       <button class="btn note" id="tabLibrary">📚 คลังสื่อ</button>
-      <button class="btn ghost" id="tabWork">📝 งานมอบหมาย</button>
+      <button class="btn ghost" id="tabWork">📝 งานมอบหมาย<span id="workDot" class="navcount hidden"></span></button>
       <button class="btn ghost" id="tabAnnounce">📢 ประชาสัมพันธ์<span id="annDot" class="navdot hidden"></span></button>
       <button class="btn ghost" id="tabSurvey">🎓 สำรวจเรียนต่อ</button>
       <button class="btn ghost" id="tabStrength">🌟 จุดแข็ง</button>
@@ -396,6 +401,7 @@ textarea.csvbox{font-family:monospace;font-size:.82rem;min-height:120px}
         <div class="spacer"></div>
         <button class="btn primary hidden" id="btnAddWork">➕ มอบหมายงานใหม่</button>
       </div>
+      <div id="odBanner" class="odbanner hidden" role="status"></div>
       <div id="workGrid" class="grid"></div>
       <div id="workEmpty" class="empty hidden"><div class="big">📭</div><span id="workEmptyText">ยังไม่มีงานมอบหมาย</span></div>
       <div id="workLoading" class="loading hidden">กำลังโหลด…</div>
@@ -517,6 +523,17 @@ textarea.csvbox{font-family:monospace;font-size:.82rem;min-height:120px}
       </div>
       <div id="ovLoading" class="loading hidden">กำลังโหลด…</div>
     </div>
+  </div>
+</div>
+
+<!-- ═══════════ โมดัล: เตือนงานเลยกำหนด (นักเรียน) ═══════════ -->
+<div class="modal-back" id="odModal" role="dialog" aria-modal="true" aria-labelledby="odTitle">
+  <div class="modal" style="max-width:420px;margin-top:auto;margin-bottom:auto">
+    <h2 id="odTitle" style="color:var(--danger)">⏰ มีงานเลยกำหนดแล้ว</h2>
+    <p style="color:var(--ink-soft)">ส่งตอนนี้ยังทันนะคะ ครูรอรับงานอยู่</p>
+    <div id="odList" class="odlist"></div>
+    <button class="btn primary" id="odGo" style="width:100%">ไปส่งงาน</button>
+    <button class="btn ghost" id="odLater" style="width:100%;margin-top:8px">ไว้ทีหลัง</button>
   </div>
 </div>
 
@@ -1165,6 +1182,7 @@ async function enterApp(){
   if(location.hash==="#apps") initial = "apps";           // จากปุ่ม "ระบบงานทั้งหมด" ในหน้าแรก
   switchView(initial);
   preloadAnnBadge();
+  if(profile.role==="student") checkOverdueOnEnter();
 }
 function computeMyPerms(){
   if(!profile) return {library:true, work:true, survey:true, strength:true, manage:true, overview:true};
@@ -1624,6 +1642,43 @@ function b64ToBlob(b64, mime){
 }
 
 function thDateTime(s){ try{ return new Date(s).toLocaleString("th-TH",{day:"numeric",month:"short",year:"2-digit",hour:"2-digit",minute:"2-digit"}); }catch{ return ""; } }
+/* ── เตือนงานเลยกำหนด (นักเรียน) ── */
+function lateDaysText(due){
+  const d = Math.floor((Date.now() - new Date(due).getTime())/86400000);
+  return d>=1 ? "เลยมา "+d+" วัน" : "เลยกำหนดวันนี้";
+}
+// รับรายการงาน + งานที่ส่งแล้ว → คืนเฉพาะงานที่มีกำหนด เลยกำหนดแล้ว และยังไม่ส่ง เรียงเลยมานานสุดก่อน
+function overdueOf(list, subMap){
+  const now = Date.now();
+  return (list||[]).filter(a=> a.due_at && new Date(a.due_at).getTime() < now && !subMap[a.id])
+    .sort((x,y)=> new Date(x.due_at) - new Date(y.due_at));
+}
+function showOverdueUI(od){
+  const n = od.length, dot = $("workDot"), bn = $("odBanner");
+  dot.textContent = n; dot.classList.toggle("hidden", n===0);
+  bn.classList.toggle("hidden", n===0);
+  bn.textContent = n ? "⏰ เลยกำหนด "+n+" งาน ส่งก่อนนะคะ" : "";
+}
+async function checkOverdueOnEnter(){
+  try{
+    const [{data:aData},{data:sData}] = await Promise.all([
+      sb.from("assignments").select("id,title,due_at").not("due_at","is",null),
+      sb.from("submissions").select("assignment_id").eq("student_id", profile.id)
+    ]);
+    const subMap = {}; (sData||[]).forEach(s=> subMap[s.assignment_id]=1);
+    const od = overdueOf(aData, subMap);
+    showOverdueUI(od);
+    if(!od.length) return;
+    const key = "od_seen_"+profile.id+"_"+new Date().toLocaleDateString("en-CA");
+    let seen = false; try{ seen = !!localStorage.getItem(key); }catch(e){}
+    if(seen) return;
+    $("odList").innerHTML = od.map(a=>`<div class="odrow"><span>${esc(a.title)}</span><span>${lateDaysText(a.due_at)}</span></div>`).join("");
+    $("odModal").classList.add("show");
+    const close = ()=>{ $("odModal").classList.remove("show"); try{ localStorage.setItem(key,"1"); }catch(e){} };
+    $("odLater").onclick = close;
+    $("odGo").onclick = ()=>{ close(); switchView("work"); };
+  }catch(e){ /* เตือนไม่ขึ้นก็ไม่กระทบการใช้งานหลัก */ }
+}
 function isLate(sub, a){ return !!(sub && a.due_at && new Date(sub.submitted_at) > new Date(a.due_at)); }
 
 // ดูงานที่นักเรียนส่งได้เฉพาะครูแนะแนว + แอดมิน (บัญชีกลุ่มสาระเห็นแค่รายการงาน — ฐานข้อมูลบังคับด้วย)
@@ -1658,6 +1713,12 @@ function renderWork(){
   const staff = ["teacher","admin"].includes(profile.role);
   $("workEmpty").classList.toggle("hidden", assignments.length>0);
   $("workEmptyText").textContent = staff? "ยังไม่มีงานมอบหมาย กดปุ่มด้านบนเพื่อสร้างงานแรกได้เลยค่ะ" : "ยังไม่มีงานสำหรับห้องของเรา 🎉";
+  if(!staff){
+    // งานที่เลยกำหนดและยังไม่ส่ง ขึ้นก่อน (เลยมานานสุดอยู่บนสุด)
+    const od = overdueOf(assignments, mySubs), ids = new Set(od.map(a=>a.id));
+    assignments = [...od, ...assignments.filter(a=> !ids.has(a.id))];
+    showOverdueUI(od);
+  }
   $("workGrid").innerHTML = assignments.map(a=> staff? teacherCard(a) : studentCard(a)).join("");
   bindWorkCards(staff);
 }
@@ -1677,7 +1738,7 @@ function studentCard(a){
   const sub = mySubs[a.id];
   let st = `<span class="status missing">ยังไม่ส่ง</span>`;
   if(sub) st = isLate(sub,a)? `<span class="status late">✅ ส่งแล้ว · ส่งช้า</span>` : `<span class="status sent">✅ ส่งแล้ว</span>`;
-  else if(a.due_at && new Date() > new Date(a.due_at)) st = `<span class="status overdue">⚠ เลยกำหนด ยังไม่ส่ง</span>`;
+  else if(a.due_at && new Date() > new Date(a.due_at)) st = `<span class="status overdue">⚠ เลยกำหนด ยังไม่ส่ง · ${lateDaysText(a.due_at)}</span>`;
   const submark = sub? (sub.file_name? "📎 "+esc(sub.file_name) : (sub.external_url? "🔗 ลิงก์" : (sub.text_answer? "📝 ข้อความ":""))) : "";
   const sent = sub ? `<div class="meta"><span>ส่งเมื่อ ${thDateTime(sub.submitted_at)}</span><span>${submark}</span></div>` : "";
   return `<article class="rescard" style="--gc:var(--note)">

@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ติดตามงานเลยกำหนด · แนะให้แนว</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Mitr:wght@400;500;600&family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--pine:#0F6B5C;--deep:#0A4F44;--tint:#E2F0EC;--note:#FFD34D;--ink:#22313A;--soft:#5B6B72;--board:#EFF3F1;--line:#DCE4E1;--danger:#B3261E;--dtint:#FDECEA}
+*{box-sizing:border-box}
+[hidden]{display:none !important}
+body{margin:0;font-family:'Sarabun',sans-serif;background:var(--board);color:var(--ink);font-size:16px;line-height:1.5}
+h1,h2,.brand{font-family:'Mitr',sans-serif;font-weight:500}
+:focus-visible{outline:3px solid var(--note);outline-offset:2px;border-radius:8px}
+.wrap{max-width:1160px;margin:0 auto;padding:0 16px}
+header.app{background:var(--pine);color:#fff;padding:12px 0}
+header.app .wrap{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.brand{font-size:20px}
+.who{margin-left:auto;font-size:14px;opacity:.9}
+.back{color:#fff;text-decoration:none;font-size:14px;border:1px solid rgba(255,255,255,.5);border-radius:999px;padding:4px 12px}
+main.wrap{padding:24px 16px 56px;display:flex;flex-direction:column;gap:20px}
+h1{margin:0;font-size:30px;line-height:1.3;color:var(--deep)}
+.lead{margin:4px 0 0;color:var(--soft)}
+.head{display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between;align-items:flex-end}
+.btn{font-family:'Sarabun',sans-serif;font-weight:600;font-size:16px;min-height:44px;padding:0 18px;border-radius:12px;border:1px solid var(--pine);background:#fff;color:var(--pine);cursor:pointer}
+.btn.primary{background:var(--pine);color:#fff}
+.btn:disabled{opacity:.5;cursor:default}
+.filters{display:flex;flex-wrap:wrap;gap:10px 12px;align-items:center}
+.filters label{color:var(--soft)}
+select{min-height:44px;padding:0 12px;border:1px solid var(--line);border-radius:12px;background:#fff;font:inherit;color:var(--ink);min-width:170px;max-width:100%}
+.tiles{display:flex;flex-wrap:wrap;gap:16px}
+.tile{flex:1 1 220px;background:#fff;border:1px solid var(--line);border-radius:16px;padding:16px 20px}
+.tile .k{color:var(--soft)}
+.tile .v{font-family:'Mitr',sans-serif;font-size:34px;line-height:1.3}
+.tile .s{font-size:14px;color:var(--soft)}
+.cols{display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+.panel{background:#fff;border:1px solid var(--line);border-radius:16px;padding:20px;min-width:0}
+.panel h2{margin:0 0 12px;font-size:19px;color:var(--deep)}
+.rooms{flex:1 1 340px;display:flex;flex-direction:column;gap:14px}
+.list{flex:2 1 520px}
+.rrow .t{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.bar{height:12px;border-radius:6px;background:var(--dtint);overflow:hidden;margin:6px 0 4px}
+.bar i{display:block;height:12px;background:var(--pine);border-radius:6px}
+.late{font-size:14px;font-weight:600;color:var(--danger)}
+.srow{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;justify-content:space-between;padding:12px 0;border-top:1px solid var(--line)}
+.srow .n{flex:1 1 220px;min-width:0}
+.srow .n b{font-size:17px}
+.srow .n div{font-size:14px;color:var(--soft)}
+.chip{background:var(--dtint);color:var(--danger);font-size:14px;font-weight:700;border-radius:999px;padding:4px 12px;white-space:nowrap}
+.open{min-height:44px;display:inline-flex;align-items:center;padding:0 14px;border-radius:12px;border:1px solid var(--line);color:var(--pine);font-weight:600;text-decoration:none}
+.empty{text-align:center;color:var(--soft);padding:36px 12px}
+.ok{background:var(--tint);color:var(--deep);border-radius:16px;padding:28px;text-align:center;font-family:'Mitr',sans-serif;font-size:20px}
+.note{font-size:14px;color:var(--soft)}
+.msg{background:#fff;border-radius:16px;padding:24px;text-align:center}
+@media print{header.app,.filters,.head .btns,.open,#more{display:none !important}body{background:#fff}.panel,.tile{border-color:#999}}
+</style>
+</head>
+<body>
+<header class="app"><div class="wrap">
+  <a class="back" href="index.html">← คลังแนะแนว</a>
+  <span class="brand">ติดตามงานเลยกำหนด</span>
+  <span class="who" id="who"></span>
+</div></header>
+<div class="wrap"><div class="msg" id="no-access" hidden></div></div>
+<main class="wrap" id="main" hidden>
+  <div class="head">
+    <div>
+      <h1>ติดตามงานที่เลยกำหนด</h1>
+      <p class="lead">นักเรียนเห็นเตือนเองตอนเปิดแอป หน้านี้ไว้ดูว่าใครยังค้างอยู่</p>
+    </div>
+    <div class="btns" style="display:flex;gap:10px;flex-wrap:wrap">
+      <button class="btn" id="btnCopy">คัดลอกรายชื่อ</button>
+      <button class="btn primary" id="btnPrint">พิมพ์รายชื่อ</button>
+    </div>
+  </div>
+  <div class="filters">
+    <label for="fA">งาน</label><select id="fA"></select>
+    <label for="fR">ห้อง</label><select id="fR"></select>
+  </div>
+  <div id="out"><div class="empty">กำลังโหลด...</div></div>
+</main>
+<script>
+const SUPABASE_URL = 'https://ikkhjslmtjwrxzxvtokb.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlra2hqc2xtdGp3cnh6eHZ0b2tiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM3NDMzNjksImV4cCI6MjA5OTMxOTM2OX0.3OR_9mEv82Ns1LLjx5nnRwJYzrtKFtWCWd1bPuQfNKU';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let ASSIGN = [], STUDENTS = [], SUBS = new Set(), skipped = 0, shown = 50, curRows = [];
+
+function roomKey(r){ const m = /^ม\.(\d)\/(\d+)$/.exec(r || ''); return m ? [+m[1], +m[2]] : [9, 0]; }
+function byRoom(a, b){ const x = roomKey(a), y = roomKey(b); return x[0] - y[0] || x[1] - y[1]; }
+function daysLate(due){ return Math.max(0, Math.floor((Date.now() - new Date(due).getTime()) / 86400000)); }
+function lateText(d){ return d >= 1 ? 'เลยมา ' + d + ' วัน' : 'เลยกำหนดวันนี้'; }
+
+async function pageAll(build){
+  let all = [], from = 0;
+  while (true){
+    const { data, error } = await build().range(from, from + 999);
+    if (error) throw error;
+    all = all.concat(data || []);
+    if (!data || data.length < 1000) break;
+    from += 1000;
+  }
+  return all;
+}
+function showNoAccess(m){ $('no-access').hidden = false; $('no-access').innerHTML = m; }
+
+async function init(){
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session){ showNoAccess('กรุณาเข้าสู่ระบบจากหน้า <a href="index.html">คลังแนะแนว</a> ก่อน แล้วกลับมาเปิดหน้านี้อีกครั้งนะคะ'); return; }
+  const { data: me } = await sb.from('profiles').select('display_name, role, is_guidance').eq('id', session.user.id).single();
+  const ok = !!me && (me.role === 'admin' || (me.role === 'teacher' && me.is_guidance === true));
+  $('who').textContent = me ? me.display_name : '';
+  if (!ok){ showNoAccess('<b>หน้านี้สำหรับครูแนะแนวและผู้ดูแลระบบเท่านั้น</b>'); return; }
+  $('main').hidden = false;
+  try{ await load(); }catch(e){ $('out').innerHTML = '<div class="empty">โหลดข้อมูลไม่สำเร็จ: ' + esc(e.message) + '<br>ลองรีเฟรชหน้านี้อีกครั้งนะคะ</div>'; return; }
+  buildFilters(); render();
+}
+
+async function load(){
+  const nowIso = new Date().toISOString();
+  const as = await pageAll(() => sb.from('assignments').select('id,title,class_rooms,due_at')
+    .not('due_at', 'is', null).lt('due_at', nowIso).order('due_at').order('id'));
+  // งานที่ไม่ได้เลือกห้อง นักเรียนมองไม่เห็นและส่งไม่ได้ จึงไม่นับเป็นค้าง
+  ASSIGN = as.filter(a => (a.class_rooms || []).length > 0);
+  skipped = as.length - ASSIGN.length;
+  STUDENTS = await pageAll(() => sb.from('profiles').select('id,display_name,class_room')
+    .eq('role', 'student').eq('status', 'active').order('class_room').order('id'));
+  SUBS = new Set();
+  if (ASSIGN.length){
+    const ids = ASSIGN.map(a => a.id);
+    const subs = await pageAll(() => sb.from('submissions').select('id,assignment_id,student_id').in('assignment_id', ids).order('id'));
+    subs.forEach(s => SUBS.add(s.assignment_id + '|' + s.student_id));
+  }
+}
+
+function buildFilters(){
+  $('fA').innerHTML = '<option value="all">ทุกงานที่เลยกำหนด</option>' +
+    ASSIGN.map(a => `<option value="${esc(a.id)}">${esc(a.title)}</option>`).join('');
+  const rooms = [...new Set(ASSIGN.flatMap(a => a.class_rooms))].sort(byRoom);
+  $('fR').innerHTML = '<option value="all">ทุกห้อง</option>' + rooms.map(r => `<option>${esc(r)}</option>`).join('');
+  $('fA').onchange = $('fR').onchange = () => { shown = 50; render(); };
+}
+
+function compute(){
+  const fa = $('fA').value, fr = $('fR').value;
+  const as = ASSIGN.filter(a => fa === 'all' || String(a.id) === fa);
+  const byStu = new Map();     // นักเรียนที่อยู่ในกลุ่มเป้าหมายของงานที่เลือก
+  const missing = new Map();   // นักเรียน -> งานที่ค้าง
+  for (const a of as){
+    const rooms = new Set(a.class_rooms);
+    for (const s of STUDENTS){
+      if (!rooms.has(s.class_room)) continue;
+      if (fr !== 'all' && s.class_room !== fr) continue;
+      byStu.set(s.id, s);
+      if (!SUBS.has(a.id + '|' + s.id)){
+        if (!missing.has(s.id)) missing.set(s.id, []);
+        missing.get(s.id).push({ title: a.title, days: daysLate(a.due_at) });
+      }
+    }
+  }
+  const rows = [...missing.entries()].map(([id, items]) => {
+    const s = byStu.get(id);
+    items.sort((x, y) => y.days - x.days);
+    return { id, name: s.display_name || '(ไม่มีชื่อ)', room: s.class_room || '-', items, max: items[0].days };
+  }).sort((x, y) => y.max - x.max || byRoom(x.room, y.room) || x.name.localeCompare(y.name, 'th'));
+  const roomStat = {};
+  byStu.forEach(s => { const r = s.class_room || '-'; (roomStat[r] = roomStat[r] || { total: 0, miss: 0 }).total++; if (missing.has(s.id)) roomStat[r].miss++; });
+  return { as, rows, total: byStu.size, roomStat };
+}
+
+function render(){
+  const out = $('out');
+  if (!ASSIGN.length){
+    out.innerHTML = '<div class="ok">ยังไม่มีงานที่เลยกำหนด</div>' + (skipped ? `<p class="note">มีงาน ${skipped} งานที่ยังไม่ได้เลือกห้อง จึงไม่นับ</p>` : '');
+    curRows = []; return;
+  }
+  const { as, rows, total, roomStat } = compute();
+  curRows = rows;
+  const rooms = Object.keys(roomStat).sort(byRoom);
+  const worst = rooms.slice().sort((a, b) => roomStat[b].miss - roomStat[a].miss)[0];
+  const maxDays = rows.length ? rows[0].max : 0;
+  let h = `<div class="tiles">
+    <div class="tile"><div class="k">นักเรียนที่ค้างส่ง</div><div class="v" style="color:${rows.length ? 'var(--danger)' : 'var(--pine)'}">${rows.length} คน</div><div class="s">จากทั้งหมด ${total} คน</div></div>
+    <div class="tile"><div class="k">งานที่เลยกำหนด</div><div class="v">${as.length} งาน</div><div class="s">${rows.length ? 'เลยมานานสุด ' + maxDays + ' วัน' : 'ส่งครบทุกคน'}</div></div>
+    <div class="tile"><div class="k">ห้องที่ค้างมากสุด</div><div class="v">${rows.length && worst ? esc(worst) : '-'}</div><div class="s">${rows.length && worst ? 'ค้าง ' + roomStat[worst].miss + ' คน' : 'ไม่มีห้องที่ค้าง'}</div></div>
+  </div>`;
+  if (!rows.length){
+    h += '<div class="ok">ทุกคนส่งครบแล้ว 🎉</div>';
+  } else {
+    h += '<div class="cols"><section class="panel rooms"><h2>แยกตามห้อง</h2>' + rooms.map(r => {
+      const st = roomStat[r], done = st.total - st.miss, pct = st.total ? Math.round(done * 100 / st.total) : 0;
+      return `<div class="rrow"><div class="t"><b>${esc(r)}</b><span style="color:var(--soft)">ส่งแล้ว ${done} จาก ${st.total} คน</span></div><div class="bar"><i style="width:${pct}%"></i></div><div class="late">${st.miss ? 'ค้าง ' + st.miss + ' คน' : 'ส่งครบ'}</div></div>`;
+    }).join('') + '</section>';
+    h += '<section class="panel list"><h2>รายชื่อที่ค้างส่ง เรียงจากเลยมานานสุด</h2>' +
+      rows.slice(0, shown).map(r => `<div class="srow"><div class="n"><b>${esc(r.name)}</b><div>${esc(r.room)} · ค้าง ${r.items.length === 1 ? esc(r.items[0].title) : r.items.length + ' งาน: ' + r.items.map(i => esc(i.title)).join(', ')}</div></div><span class="chip">${lateText(r.max)}</span><a class="open" href="student-profile.html?id=${encodeURIComponent(r.id)}">เปิดโปรไฟล์</a></div>`).join('') +
+      `<div class="note" style="padding-top:10px;border-top:1px solid var(--line)">แสดง ${Math.min(shown, rows.length)} จาก ${rows.length} คน</div>` +
+      (rows.length > shown ? '<p><button class="btn" id="more">แสดงเพิ่ม</button></p>' : '') + '</section></div>';
+  }
+  if (skipped) h += `<p class="note">มีงาน ${skipped} งานที่ยังไม่ได้เลือกห้อง จึงไม่นับ</p>`;
+  out.innerHTML = h;
+  const m = $('more'); if (m) m.onclick = () => { shown += 50; render(); };
+}
+
+$('btnPrint').onclick = () => { shown = 100000; render(); window.print(); };
+$('btnCopy').onclick = async () => {
+  if (!curRows.length) return alert('ไม่มีรายชื่อที่ค้างส่งค่ะ');
+  const txt = curRows.map(r => r.room + ' ' + r.name + ' — ' + r.items.map(i => i.title).join(', ') + ' (' + lateText(r.max) + ')').join('\n');
+  try{ await navigator.clipboard.writeText(txt); $('btnCopy').textContent = 'คัดลอกแล้ว'; setTimeout(() => $('btnCopy').textContent = 'คัดลอกรายชื่อ', 1800); }
+  catch(e){ prompt('คัดลอกข้อความนี้ได้เลยค่ะ', txt); }
+};
+init();
+</script>
+</body>
+</html>
