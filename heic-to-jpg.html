@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex">
+<title>แปลงรูป HEIC เป็น JPG | แนะให้แนว</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Mitr:wght@400;500;600&family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<style>
+:root{
+  --ink:#22313A; --ink-soft:#5B6B72; --board:#EFF3F1; --card:#FFFFFF;
+  --pine:#0F6B5C; --pine-deep:#0A4F44; --pine-tint:#E2F0EC;
+  --note:#FFD34D; --line:#DCE4E1; --danger:#C0392B; --danger-tint:#FBE9E6;
+  --radius:14px; --shadow:0 2px 10px rgba(34,49,58,.08);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Sarabun',sans-serif;background:var(--board);color:var(--ink);font-size:16px;line-height:1.55;min-height:100vh}
+h1,h2,.brand{font-family:'Mitr',sans-serif;font-weight:600}
+button{font-family:inherit;cursor:pointer}
+:focus-visible{outline:3px solid var(--note);outline-offset:2px;border-radius:6px}
+.wrap{max-width:860px;margin:0 auto;padding:0 16px}
+header.app{background:var(--pine);color:#fff;padding:14px 0}
+header.app .wrap{display:flex;align-items:center;gap:12px}
+.brand{font-size:1.15rem;display:flex;align-items:center;gap:10px}
+.brand .logo{width:34px;height:34px;border-radius:9px;background:var(--note);color:var(--pine-deep);display:grid;place-items:center;flex:none;font-size:.8rem}
+.brand small{display:block;font-family:'Sarabun';font-weight:400;font-size:.72rem;opacity:.85}
+main.wrap{padding-top:18px;padding-bottom:60px;display:grid;gap:16px}
+.card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px}
+
+.drop{display:grid;justify-items:center;gap:6px;text-align:center;padding:30px 16px;border:2.5px dashed var(--pine);border-radius:var(--radius);background:var(--pine-tint);cursor:pointer;transition:background .15s}
+.drop.over{background:#cfe7e0}
+.drop h1{font-size:1.25rem;color:var(--pine-deep)}
+.drop p{color:var(--ink-soft);font-size:.92rem}
+.drop input{position:absolute;width:1px;height:1px;opacity:0}
+.drop:focus-within{outline:3px solid var(--note);outline-offset:2px}
+.btn{border:none;border-radius:10px;padding:9px 16px;font-size:.95rem;font-weight:600;display:inline-flex;align-items:center;gap:6px;justify-content:center;min-height:44px;text-decoration:none}
+.btn.primary{background:var(--pine);color:#fff}
+.btn.ghost{background:#fff;color:var(--pine-deep);border:1.5px solid var(--pine)}
+.btn.plain{background:transparent;color:var(--ink-soft);border:1.5px solid var(--line)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px 22px}
+.opt label{display:flex;justify-content:space-between;font-weight:600;font-size:.92rem;margin-bottom:6px}
+.opt output{color:var(--pine);font-variant-numeric:tabular-nums}
+.opt select{width:100%;min-height:44px;border-radius:10px;border:1.5px solid var(--line);padding:0 10px;background:#fff;font:inherit;color:var(--ink)}
+.opt input[type=range]{width:100%;accent-color:var(--pine);height:32px}
+.opt small{display:block;color:var(--ink-soft);font-size:.8rem;line-height:1.4;margin-top:2px}
+
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.toolbar .sp{flex:1}
+.count{font-size:.9rem;color:var(--ink-soft)}
+.progress{height:8px;border-radius:99px;background:var(--line);overflow:hidden}
+.progress i{display:block;height:100%;width:0;background:var(--pine);transition:width .2s}
+
+.list{display:grid;gap:10px;margin-top:12px}
+.item{display:grid;grid-template-columns:76px 1fr;gap:12px;align-items:center;padding:10px;border:1.5px solid var(--line);border-radius:12px}
+.item.err{border-color:var(--danger);background:var(--danger-tint)}
+.thumb{width:76px;height:76px;border-radius:9px;background:var(--board);object-fit:cover;display:grid;place-items:center;color:var(--ink-soft);font-size:.75rem;overflow:hidden}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.meta{min-width:0}
+.name{font-weight:600;overflow-wrap:anywhere;line-height:1.3}
+.sub{font-size:.82rem;color:var(--ink-soft);font-variant-numeric:tabular-nums}
+.sub.bad{color:var(--danger)}
+.acts{display:flex;gap:8px;margin-top:6px;flex-wrap:wrap}
+.acts .btn{min-height:38px;padding:5px 12px;font-size:.85rem}
+.spin{display:inline-block;width:14px;height:14px;border:2.5px solid var(--line);border-top-color:var(--pine);border-radius:50%;animation:sp .8s linear infinite;vertical-align:-2px;margin-right:6px}
+@keyframes sp{to{transform:rotate(360deg)}}
+.tips{font-size:.88rem;color:var(--ink-soft);display:grid;gap:4px}
+.tips b{color:var(--ink)}
+.empty{text-align:center;color:var(--ink-soft);padding:18px 0 6px;font-size:.92rem}
+@media (prefers-reduced-motion:reduce){.spin{animation:none}.progress i{transition:none}}
+@media (max-width:420px){.item{grid-template-columns:60px 1fr}.thumb{width:60px;height:60px}}
+</style>
+</head>
+<body>
+<header class="app"><div class="wrap">
+  <div class="brand"><span class="logo" aria-hidden="true">JPG</span><span>แปลงรูป HEIC เป็น JPG<small>รูปจาก iPhone ลงโซเชียลได้เลย</small></span></div>
+</div></header>
+
+<main class="wrap">
+  <label class="drop" id="drop" for="file">
+    <h1>เลือกรูป HEIC ที่นี่</h1>
+    <p>แตะเพื่อเลือกรูป หรือลากรูปมาวางได้ ครั้งละหลายรูป</p>
+    <span class="btn primary" aria-hidden="true">เลือกรูปภาพ</span>
+    <input id="file" type="file" accept=".heic,.heif,image/heic,image/heif,image/*" multiple>
+  </label>
+
+  <section class="card" aria-label="ตั้งค่า">
+    <div class="opts">
+      <div class="opt">
+        <label for="size">ขนาดรูป</label>
+        <select id="size">
+          <option value="0">ขนาดเดิม (คมชัดที่สุด)</option>
+          <option value="2048" selected>กลาง 2048 พิกเซล (แนะนำสำหรับโซเชียล)</option>
+          <option value="1440">เล็ก 1440 พิกเซล</option>
+          <option value="1080">เล็กมาก 1080 พิกเซล (ส่งไว ไฟล์เบา)</option>
+        </select>
+        <small>นับด้านที่ยาวที่สุด รูปที่เล็กกว่านี้จะไม่ถูกขยาย</small>
+      </div>
+      <div class="opt">
+        <label for="q">คุณภาพ <output id="qv">90%</output></label>
+        <input id="q" type="range" min="50" max="100" step="5" value="90">
+        <small>90% คมชัดพอสำหรับโพสต์ ไฟล์ไม่ใหญ่เกินไป</small>
+      </div>
+    </div>
+  </section>
+
+  <section class="card" aria-live="polite">
+    <div class="toolbar">
+      <span class="count" id="count">ยังไม่มีรูป</span>
+      <span class="sp"></span>
+      <button class="btn ghost" id="shareAll" hidden>แชร์ / บันทึกลงอัลบั้ม</button>
+      <button class="btn primary" id="zipBtn" disabled>ดาวน์โหลดทั้งหมด (ZIP)</button>
+      <button class="btn plain" id="clear" disabled>ล้างรายการ</button>
+    </div>
+    <div class="progress" id="prog" hidden><i></i></div>
+    <div class="list" id="list"><p class="empty">เลือกรูปแล้วระบบจะแปลงให้อัตโนมัติ รูปไม่ถูกส่งออกจากเครื่องคุณครู</p></div>
+  </section>
+
+  <section class="card tips">
+    <div><b>บันทึกลงมือถือ:</b> กด "แชร์ / บันทึกลงอัลบั้ม" แล้วเลือก "บันทึกรูปภาพ" หรือเปิดโซเชียลต่อได้ทันที</div>
+    <div><b>ความเป็นส่วนตัว:</b> แปลงในเครื่องเอง ไม่อัปโหลดขึ้นเซิร์ฟเวอร์ และไฟล์ JPG ที่ได้ไม่มีพิกัด GPS ติดไปด้วย</div>
+    <div><b>รูปขึ้นตะแคง?</b> ปกติระบบหมุนให้ถูกแล้ว ถ้ายังผิดแจ้งหนูได้เลยค่ะ</div>
+  </section>
+</main>
+
+<script>
+(function(){
+  const $ = id => document.getElementById(id);
+  const drop=$('drop'), fileIn=$('file'), list=$('list'), count=$('count'), prog=$('prog'),
+        zipBtn=$('zipBtn'), clearBtn=$('clear'), shareAll=$('shareAll'),
+        sizeSel=$('size'), q=$('q'), qv=$('qv');
+  let items=[];            // {id,name,out:Blob,url,w,h,state:'wait'|'work'|'ok'|'err',msg}
+  let running=false, seq=0;
+
+  q.addEventListener('input',()=>qv.textContent=q.value+'%');
+
+  const fmt=b=>b>=1048576?(b/1048576).toFixed(1)+' MB':Math.max(1,Math.round(b/1024))+' KB';
+  const baseName=n=>(n.replace(/\.[^.]+$/,'')||'รูป').replace(/[\\/:*?"<>|]/g,'_');
+  const canShare = f => { try{ return !!(navigator.canShare && navigator.canShare({files:[f]})); }catch(e){ return false; } };
+
+  /* ตัวถอดรหัส HEIC (ไฟล์ใหญ่ ~2.5MB) โหลดเมื่อจำเป็นเท่านั้น */
+  let heicLoad=null;
+  function loadHeic(){
+    if(window.HeicTo) return Promise.resolve();
+    if(!heicLoad) heicLoad=new Promise((ok,no)=>{
+      const s=document.createElement('script');
+      s.src='https://cdn.jsdelivr.net/npm/heic-to@1.3.0/dist/iife/heic-to.js';
+      s.onload=ok; s.onerror=()=>{heicLoad=null;no(new Error('โหลดตัวแปลงไม่สำเร็จ ตรวจอินเทอร์เน็ตแล้วลองใหม่'));};
+      document.head.appendChild(s);
+    });
+    return heicLoad;
+  }
+
+  /* ถอดรหัสรูปเป็น bitmap: ลองของเบราว์เซอร์ก่อน (Safari/iPhone ทำได้) ไม่ได้ค่อยใช้ตัวแปลงเสริม */
+  async function decode(file, qual){
+    try{
+      return await createImageBitmap(file,{imageOrientation:'from-image'});
+    }catch(e){}
+    await loadHeic();
+    return await window.HeicTo({blob:file,type:'bitmap'});
+  }
+
+  async function convert(file){
+    const qual=+q.value/100, max=+sizeSel.value;
+    const bmp=await decode(file,qual);
+    let w=bmp.width,h=bmp.height;
+    if(max && Math.max(w,h)>max){ const r=max/Math.max(w,h); w=Math.round(w*r); h=Math.round(h*r); }
+    const c=document.createElement('canvas'); c.width=w; c.height=h;
+    const g=c.getContext('2d');
+    g.fillStyle='#fff'; g.fillRect(0,0,w,h);          // JPG ไม่มีความโปร่งใส
+    g.imageSmoothingQuality='high';
+    g.drawImage(bmp,0,0,w,h);
+    if(bmp.close) bmp.close();
+    const blob=await new Promise((ok,no)=>c.toBlob(b=>b?ok(b):no(new Error('สร้างไฟล์ JPG ไม่สำเร็จ')),'image/jpeg',qual));
+    c.width=c.height=0;
+    return {blob,w,h};
+  }
+
+  function add(files){
+    const ok=[...files].filter(f=>f.type.startsWith('image/')||/\.(heic|heif)$/i.test(f.name));
+    if(!ok.length){ toast('ไม่พบไฟล์รูปภาพ'); return; }
+    ok.forEach(f=>items.push({id:++seq,src:f,name:baseName(f.name)+'.jpg',state:'wait'}));
+    render(); run();
+  }
+
+  async function run(){
+    if(running) return; running=true;
+    for(;;){
+      const it=items.find(i=>i.state==='wait'); if(!it) break;
+      it.state='work'; render();
+      try{
+        const r=await convert(it.src);
+        it.out=r.blob; it.w=r.w; it.h=r.h; it.url=URL.createObjectURL(r.blob); it.state='ok';
+        it.file=new File([r.blob],it.name,{type:'image/jpeg'});
+      }catch(e){
+        it.state='err'; it.msg=(e&&e.message)||'แปลงไม่สำเร็จ ไฟล์อาจเสียหรือไม่ใช่รูป HEIC';
+      }
+      render();
+      await new Promise(r=>setTimeout(r,0));
+    }
+    running=false; render();
+  }
+
+  function render(){
+    const done=items.filter(i=>i.state==='ok').length, bad=items.filter(i=>i.state==='err').length;
+    const total=items.length, busy=items.some(i=>i.state==='wait'||i.state==='work');
+    count.textContent=total? `แปลงแล้ว ${done} จาก ${total} รูป`+(bad?` (ไม่สำเร็จ ${bad})`:'') : 'ยังไม่มีรูป';
+    prog.hidden=!busy; if(busy) prog.firstElementChild.style.width=((done+bad)/total*100)+'%';
+    zipBtn.disabled=done<2 || busy;
+    clearBtn.disabled=!total||busy;
+    const fileOK=items.filter(i=>i.file).map(i=>i.file);
+    shareAll.hidden=!(fileOK.length && canShare(fileOK[0]));
+    shareAll.disabled=busy;
+
+    if(!total){ list.innerHTML='<p class="empty">เลือกรูปแล้วระบบจะแปลงให้อัตโนมัติ รูปไม่ถูกส่งออกจากเครื่องคุณครู</p>'; return; }
+    list.textContent='';
+    items.forEach(it=>{
+      const row=document.createElement('div'); row.className='item'+(it.state==='err'?' err':'');
+      const th=document.createElement('div'); th.className='thumb';
+      if(it.url){ const im=new Image(); im.src=it.url; im.alt=it.name; th.appendChild(im); } else th.textContent = it.state==='err'?'ผิดพลาด':'รอ';
+      const m=document.createElement('div'); m.className='meta';
+      const n=document.createElement('div'); n.className='name'; n.textContent=it.name;
+      const s=document.createElement('div'); s.className='sub'+(it.state==='err'?' bad':'');
+      if(it.state==='ok') s.textContent=`${it.w}×${it.h} พิกเซล · ${fmt(it.out.size)} (เดิม ${fmt(it.src.size)})`;
+      else if(it.state==='err') s.textContent=it.msg;
+      else if(it.state==='work'){ s.innerHTML='<span class="spin"></span>กำลังแปลง…'; }
+      else s.textContent='รอคิว…';
+      m.append(n,s);
+      if(it.state==='ok'){
+        const a=document.createElement('div'); a.className='acts';
+        const d=document.createElement('a'); d.className='btn primary'; d.href=it.url; d.download=it.name; d.textContent='ดาวน์โหลด';
+        a.appendChild(d);
+        if(canShare(it.file)){
+          const sh=document.createElement('button'); sh.className='btn ghost'; sh.textContent='แชร์ / บันทึก';
+          sh.onclick=()=>share([it.file]); a.appendChild(sh);
+        }
+        const rm=document.createElement('button'); rm.className='btn plain'; rm.textContent='ลบ';
+        rm.onclick=()=>{ if(it.url) URL.revokeObjectURL(it.url); items=items.filter(x=>x!==it); render(); };
+        a.appendChild(rm); m.appendChild(a);
+      } else if(it.state==='err'){
+        const a=document.createElement('div'); a.className='acts';
+        const rm=document.createElement('button'); rm.className='btn plain'; rm.textContent='เอาออก';
+        rm.onclick=()=>{ items=items.filter(x=>x!==it); render(); }; a.appendChild(rm); m.appendChild(a);
+      }
+      row.append(th,m); list.appendChild(row);
+    });
+  }
+
+  async function share(files){
+    try{ await navigator.share({files}); }
+    catch(e){ if(e&&e.name!=='AbortError') toast('แชร์ไม่สำเร็จ ลองกดดาวน์โหลดแทนได้ค่ะ'); }
+  }
+  shareAll.onclick=()=>share(items.filter(i=>i.file).map(i=>i.file));
+
+  zipBtn.onclick=async()=>{
+    if(typeof JSZip==='undefined'){ toast('โหลดตัวสร้าง ZIP ไม่สำเร็จ ลองโหลดทีละรูปแทน'); return; }
+    zipBtn.disabled=true; const old=zipBtn.textContent; zipBtn.textContent='กำลังสร้าง ZIP…';
+    try{
+      const z=new JSZip(), used=new Set();
+      items.filter(i=>i.out).forEach(i=>{
+        let n=i.name,k=1; while(used.has(n)) n=i.name.replace(/\.jpg$/,'')+'_'+(++k)+'.jpg';
+        used.add(n); z.file(n,i.out);
+      });
+      const b=await z.generateAsync({type:'blob',compression:'STORE'});
+      const u=URL.createObjectURL(b), a=document.createElement('a');
+      a.href=u; a.download='รูป-jpg.zip'; document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(()=>URL.revokeObjectURL(u),4000);
+    }catch(e){ toast('สร้าง ZIP ไม่สำเร็จ'); }
+    zipBtn.textContent=old; render();
+  };
+
+  clearBtn.onclick=()=>{ items.forEach(i=>i.url&&URL.revokeObjectURL(i.url)); items=[]; render(); };
+
+  function toast(t){
+    const d=document.createElement('div'); d.textContent=t; d.setAttribute('role','status');
+    d.style.cssText='position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#22313A;color:#fff;padding:10px 18px;border-radius:99px;font-size:.92rem;z-index:9;max-width:90vw';
+    document.body.appendChild(d); setTimeout(()=>d.remove(),3200);
+  }
+
+  fileIn.addEventListener('change',()=>{ add(fileIn.files); fileIn.value=''; });
+  ['dragenter','dragover'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add('over');}));
+  ['dragleave','drop'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove('over');}));
+  drop.addEventListener('drop',e=>add(e.dataTransfer.files));
+  window.addEventListener('dragover',e=>e.preventDefault());
+  window.addEventListener('drop',e=>e.preventDefault());
+  render();
+})();
+</script>
+</body>
+</html>
