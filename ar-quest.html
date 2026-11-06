@@ -3,325 +3,591 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<title>ล่าสมบัติค้นหาตัวตน (AR) – แนะแนว ม.1</title>
+<title>มอนสเตอร์ใจป่วน AR – แนะแนว ม.1</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <style>
-  :root{--ink:#1d2340;--gold:#ffc93c;--pink:#ff6b9d;--mint:#3ddc97;--card:#fffdf7}
+  :root{--ink:#161a35;--glass:rgba(20,24,52,.72);--line:rgba(255,255,255,.16);--a:#8b7bff;--b:#ff6b9d;--c:#ffc93c;--ok:#3ddc97}
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-  html,body{margin:0;height:100%;overflow:hidden;background:#12162e;color:var(--ink);
-    font-family:"Sarabun","Noto Sans Thai",system-ui,sans-serif;touch-action:none;user-select:none}
-  #bg{position:fixed;inset:0;width:100%;height:100%;object-fit:cover;background:
-    radial-gradient(circle at 30% 20%,#3b4a9c,#12162e 70%)}
-  #cv{position:fixed;inset:0;width:100%;height:100%}
-  .hud{position:fixed;left:0;right:0;top:0;padding:calc(env(safe-area-inset-top) + 8px) 12px 8px;
-    display:flex;gap:8px;align-items:center;justify-content:space-between;pointer-events:none;z-index:5}
-  .pill{background:rgba(18,22,46,.78);color:#fff;border-radius:999px;padding:6px 14px;font-weight:700;font-size:15px}
-  .bar{flex:1;height:10px;background:rgba(255,255,255,.25);border-radius:9px;overflow:hidden}
-  .bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--gold),var(--pink));transition:width .4s}
-  #hint{position:fixed;bottom:calc(env(safe-area-inset-bottom) + 14px);left:50%;transform:translateX(-50%);
-    background:rgba(18,22,46,.78);color:#fff;padding:8px 16px;border-radius:999px;font-size:14px;z-index:5;
-    pointer-events:none;white-space:nowrap}
-  .screen{position:fixed;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;
-    padding:16px;background:rgba(10,12,30,.82);overflow:auto;touch-action:pan-y}
-  .card{background:var(--card);border-radius:22px;padding:20px 18px;max-width:440px;width:100%;
-    box-shadow:0 12px 40px rgba(0,0,0,.4);animation:pop .25s ease-out}
-  @keyframes pop{from{transform:scale(.9);opacity:0}to{transform:none;opacity:1}}
-  h1{margin:0 0 6px;font-size:26px;line-height:1.25}
-  h2{margin:0 0 8px;font-size:20px;line-height:1.3}
-  p{margin:6px 0;line-height:1.6;font-size:16px}
-  .tag{display:inline-block;font-size:13px;font-weight:700;background:#eef0ff;color:#4a55b5;border-radius:99px;padding:2px 10px;margin-bottom:6px}
   [hidden]{display:none!important}
-  button{font:inherit;cursor:pointer;border:0}
-  .btn{display:block;width:100%;margin-top:10px;padding:13px 14px;border-radius:14px;font-weight:700;font-size:17px;
-    background:var(--gold);color:var(--ink);box-shadow:0 3px 0 #d9a514}
-  .btn.alt{background:#e9ecff;box-shadow:0 3px 0 #c3c8ee}
-  .opt{display:block;width:100%;text-align:left;margin-top:9px;padding:12px 14px;border-radius:14px;
-    background:#fff;border:2px solid #dfe3f7;font-size:16px;line-height:1.45;color:var(--ink)}
-  .opt:active{transform:scale(.98)}
-  .opt.good{border-color:var(--mint);background:#e8fff4}
-  .opt.pick{border-color:#7a86e8;background:#eef0ff}
-  .fb{margin-top:10px;padding:10px 12px;border-radius:12px;background:#fff6dc;font-size:15px;line-height:1.55}
-  .small{font-size:13px;color:#6b7194}
-  .types{display:grid;gap:8px;margin:10px 0}
-  .t{display:flex;gap:10px;align-items:center}
-  .t b{width:92px;font-size:14px}
-  .t .tb{flex:1;height:12px;background:#e6e8f5;border-radius:9px;overflow:hidden}
-  .t .tb i{display:block;height:100%;background:linear-gradient(90deg,#7a86e8,var(--pink))}
-  input[type=text]{width:100%;padding:11px 12px;border:2px solid #dfe3f7;border-radius:12px;font:inherit;margin-top:6px}
+  html,body{margin:0;height:100%;overflow:hidden;background:#0d1030;color:#fff;touch-action:none;user-select:none;
+    font-family:"Prompt","Noto Sans Thai",system-ui,sans-serif}
+  #bg{position:fixed;inset:0;width:100%;height:100%;object-fit:cover;
+    background:radial-gradient(120% 90% at 30% 10%,#3a2f8f 0%,#171a4a 45%,#0a0c26 100%)}
+  #gl{position:fixed;inset:0;width:100%;height:100%}
+  .hud{position:fixed;left:0;right:0;top:0;z-index:5;padding:calc(env(safe-area-inset-top) + 10px) 12px 0;display:flex;
+    justify-content:space-between;align-items:flex-start;pointer-events:none}
+  .chip{background:var(--glass);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid var(--line);
+    border-radius:18px;padding:8px 12px;pointer-events:auto}
+  .slots{display:flex;gap:6px;margin-top:6px}
+  .slot{width:30px;height:30px;border-radius:10px;background:rgba(255,255,255,.1);display:grid;place-items:center;font-size:17px;filter:grayscale(1) opacity(.45)}
+  .slot.on{filter:none;background:linear-gradient(135deg,var(--a),var(--b));box-shadow:0 0 12px rgba(139,123,255,.8)}
+  .ttl{font-size:13px;font-weight:600;opacity:.9}
+  .side{display:flex;flex-direction:column;gap:8px;align-items:flex-end}
+  #radar{width:84px;height:84px;border-radius:50%;background:var(--glass);border:1px solid var(--line)}
+  .ib{width:44px;height:44px;border-radius:50%;border:1px solid var(--line);background:var(--glass);color:#fff;font-size:20px;pointer-events:auto}
+  #cross{position:fixed;left:50%;top:42%;width:92px;height:92px;margin:-46px 0 0 -46px;z-index:4;pointer-events:none;
+    border:3px dashed rgba(255,255,255,.55);border-radius:50%;transition:.18s;opacity:.7}
+  #cross.lock{border:4px solid var(--c);transform:scale(1.2);opacity:1;box-shadow:0 0 22px var(--c),inset 0 0 18px rgba(255,201,60,.5)}
+  #prompt{position:fixed;left:50%;top:calc(42% + 62px);transform:translateX(-50%);z-index:4;pointer-events:none;
+    background:var(--c);color:var(--ink);font-weight:700;padding:6px 16px;border-radius:99px;font-size:15px;white-space:nowrap}
+  #hint{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom) + 16px);transform:translateX(-50%);z-index:4;
+    background:var(--glass);border:1px solid var(--line);padding:9px 16px;border-radius:99px;font-size:14px;white-space:nowrap;pointer-events:none}
+  .full{position:fixed;inset:0;z-index:30;display:flex;align-items:center;justify-content:center;padding:18px;
+    background:radial-gradient(120% 90% at 50% 0%,rgba(80,60,200,.55),rgba(8,10,34,.94));overflow:auto;touch-action:pan-y}
+  .hero{max-width:430px;width:100%;text-align:center}
+  .hero h1{font-size:34px;line-height:1.15;margin:6px 0 4px;background:linear-gradient(90deg,#fff,#cdbfff,#ffc2dc);-webkit-background-clip:text;color:transparent}
+  .hero p{margin:6px 0;opacity:.9;line-height:1.6;font-size:15.5px}
+  .crew{font-size:44px;letter-spacing:6px;margin-top:6px;animation:bob 2.4s ease-in-out infinite}
+  @keyframes bob{50%{transform:translateY(-8px)}}
+  .how{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:14px 0;text-align:center}
+  .how div{background:rgba(255,255,255,.08);border:1px solid var(--line);border-radius:16px;padding:10px 6px;font-size:13px;line-height:1.4}
+  .how b{display:block;font-size:22px}
+  input[type=text]{width:100%;padding:13px 14px;border-radius:14px;border:1px solid var(--line);background:rgba(255,255,255,.1);
+    color:#fff;font:inherit;font-size:16px;text-align:center;outline:none;user-select:text}
+  input::placeholder{color:rgba(255,255,255,.55)}
+  .btn{display:block;width:100%;margin-top:10px;padding:14px;border-radius:16px;border:0;font:inherit;font-weight:700;font-size:17px;cursor:pointer;
+    color:var(--ink);background:linear-gradient(90deg,var(--c),#ffa94d);box-shadow:0 6px 18px rgba(255,170,60,.35)}
+  .btn.ghost{background:rgba(255,255,255,.1);color:#fff;border:1px solid var(--line);box-shadow:none;font-weight:500;font-size:15px}
+  .btn:active{transform:scale(.98)}
+  .tiny{font-size:12px;opacity:.7;margin-top:10px}
+  .sheet{position:fixed;left:0;right:0;bottom:0;z-index:20;max-height:64vh;overflow:auto;touch-action:pan-y;
+    padding:16px 16px calc(env(safe-area-inset-bottom) + 16px);border-radius:28px 28px 0 0;
+    background:linear-gradient(180deg,rgba(30,34,76,.92),rgba(14,16,44,.97));backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+    border-top:1px solid var(--line);animation:up .28s cubic-bezier(.2,.9,.3,1.1)}
+  @keyframes up{from{transform:translateY(60%);opacity:0}}
+  .sheet.tall{max-height:86vh}
+  .row{display:flex;align-items:center;gap:10px}
+  .badge{font-size:12.5px;font-weight:600;padding:4px 10px;border-radius:99px;background:rgba(255,255,255,.14);white-space:nowrap}
+  .pw{flex:1;height:10px;background:rgba(255,255,255,.15);border-radius:9px;overflow:hidden}
+  .pw i{display:block;height:100%;background:linear-gradient(90deg,#ff5a4e,#ffb84d);transition:width .6s}
+  .say{margin:12px 0 4px;padding:12px 14px;border-radius:18px 18px 18px 4px;background:rgba(255,255,255,.12);line-height:1.6;font-size:16px}
+  .opt{display:flex;gap:10px;width:100%;text-align:left;margin-top:9px;padding:12px 14px;border-radius:16px;font:inherit;font-size:15.5px;line-height:1.5;
+    color:#fff;background:rgba(255,255,255,.09);border:1.5px solid var(--line);cursor:pointer}
+  .opt:active{transform:scale(.985)}
+  .opt .k{flex:none;width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,var(--a),var(--b));display:grid;place-items:center;font-size:13px;font-weight:700}
+  .opt.great{border-color:var(--ok);background:rgba(61,220,151,.16)}
+  .opt.picked{border-color:var(--c)}
+  .opt.dim{opacity:.55}
+  .fb{margin-top:10px;padding:11px 13px;border-radius:14px;background:rgba(255,201,60,.14);border:1px solid rgba(255,201,60,.4);line-height:1.6;font-size:15px}
+  h2{margin:0;font-size:21px}
+  .card-img{width:100%;border-radius:18px;margin-top:10px;display:block}
+  .bars{display:grid;gap:7px;margin:10px 0}
+  .bars div{display:flex;gap:8px;align-items:center;font-size:13.5px}
+  .bars b{width:110px;font-weight:500}
+  .bars span{flex:1;height:10px;background:rgba(255,255,255,.15);border-radius:9px;overflow:hidden}
+  .bars i{display:block;height:100%;background:linear-gradient(90deg,var(--a),var(--b))}
+  .mc{display:flex;gap:12px;padding:10px;border-radius:16px;background:rgba(255,255,255,.08);margin-top:8px;font-size:14px;line-height:1.5}
+  .mc .e{font-size:30px;flex:none}
+  p{margin:6px 0;line-height:1.6}
 </style>
 </head>
 <body>
 <video id="bg" playsinline muted autoplay></video>
-<canvas id="cv"></canvas>
+<canvas id="gl"></canvas>
 
 <div class="hud" id="hud" hidden>
-  <div class="pill" id="pCount">0/10</div>
-  <div class="bar"><i id="barFill"></i></div>
-  <div class="pill" id="pStar">⭐ 0</div>
-</div>
-<div id="hint" hidden>📱 หมุนตัวช้า ๆ มองรอบห้อง แล้วแตะลูกแก้วที่ลอยอยู่</div>
-
-<div class="screen" id="scStart">
-  <div class="card">
-    <span class="tag">แนะแนว ม.1 • เกม AR</span>
-    <h1>🔮 ล่าสมบัติค้นหาตัวตน</h1>
-    <p>มีลูกแก้วลอยอยู่รอบตัวคุณทั้ง <b>10 ลูก</b> ใช้กล้องมือถือมองรอบห้องเพื่อตามหา แตะแต่ละลูกเพื่อเจอภารกิจ</p>
-    <p>🔎 6 ลูก = <b>ค้นหาตัวเอง</b> (ไม่มีถูกผิด เลือกสิ่งที่ใช่ที่สุด)<br>
-       💪 4 ลูก = <b>ด่านฝึกทักษะชีวิต</b> (เลือกวิธีที่ดีที่สุด รับดาว ⭐)</p>
-    <p>เก็บครบแล้วจะได้ <b>เข็มทิศตัวตน</b> บอกว่าคุณเป็นนักสำรวจแบบไหน</p>
-    <input type="text" id="nick" placeholder="ชื่อเล่นของคุณ" maxlength="20">
-    <button class="btn" id="btnStart">▶ เริ่มภารกิจ (เปิดกล้อง)</button>
-    <button class="btn alt" id="btnNoCam">เล่นโดยไม่ใช้กล้อง (ลากนิ้วเพื่อมองรอบ ๆ)</button>
-    <p class="small">🔒 กล้องใช้แสดงภาพสดเท่านั้น ไม่มีการบันทึกภาพ และคำตอบอยู่ในเครื่องของคุณ ไม่ส่งไปที่ใด</p>
+  <div class="chip"><div class="ttl" id="hello">นักล่า</div><div class="slots" id="slots"></div></div>
+  <div class="side">
+    <canvas id="radar" width="168" height="168"></canvas>
+    <button class="ib" id="btnBook" aria-label="สมุดมอนสเตอร์">📖</button>
+    <button class="ib" id="btnSnd" aria-label="เสียง">🔊</button>
   </div>
 </div>
+<div id="cross" hidden></div>
+<div id="prompt" hidden>แตะเพื่อท้าทาย!</div>
+<div id="hint" hidden></div>
 
-<div class="screen" id="scQ" hidden><div class="card" id="qCard"></div></div>
-<div class="screen" id="scEnd" hidden><div class="card" id="endCard"></div></div>
+<div class="full" id="intro">
+  <div class="hero">
+    <div class="crew">🔥💜🧡💚💙</div>
+    <h1>มอนสเตอร์ใจป่วน</h1>
+    <p>มอนสเตอร์อารมณ์ 5 ตัวหลุดเข้ามาในห้องเรียนของคุณ! ใช้กล้องตามหา แล้ว <b>"ปราบด้วยใจเย็น"</b> เพื่อให้พวกมันมาเป็นเพื่อนคุณ</p>
+    <div class="how">
+      <div><b>🔎</b>หมุนตัวหามอนสเตอร์</div>
+      <div><b>🪄</b>เลือกคาถาใจเย็น</div>
+      <div><b>🐾</b>ได้เพื่อนคู่ใจ + พลัง</div>
+    </div>
+    <input type="text" id="nick" placeholder="ชื่อเล่นของนักล่า" maxlength="16" autocomplete="off">
+    <button class="btn" id="btnStart">📷 เริ่มล่า (เปิดกล้อง)</button>
+    <button class="btn ghost" id="btnNoCam">เล่นแบบไม่ใช้กล้อง (ลากนิ้วเพื่อมอง)</button>
+    <div class="tiny">🔒 กล้องใช้แสดงภาพสดเท่านั้น ไม่บันทึกภาพ • คำตอบเก็บในเครื่องคุณเท่านั้น</div>
+  </div>
+</div>
+<div class="sheet" id="sheet" hidden></div>
 
 <script>
 "use strict";
-/* ============ เนื้อหาเกม ============ */
-const TYPES = {
-  R:{n:"สายลงมือทำ",   e:"🔧", d:"ชอบประกอบ ซ่อม สร้าง ลงมือทำจริง",       jobs:"ช่าง วิศวกร นักเกษตร นักกีฬา เชฟ"},
-  I:{n:"สายช่างสงสัย", e:"🔬", d:"ชอบตั้งคำถาม ทดลอง หาคำตอบด้วยเหตุผล",     jobs:"แพทย์ นักวิทยาศาสตร์ โปรแกรมเมอร์ นักวิจัย"},
-  A:{n:"สายสร้างสรรค์",e:"🎨", d:"มีความคิดใหม่ ๆ ชอบแสดงออกและออกแบบ",       jobs:"นักออกแบบ นักดนตรี ผู้สร้างคอนเทนต์ สถาปนิก"},
-  S:{n:"สายผู้ช่วยเหลือ",e:"🤝",d:"ใส่ใจคนอื่น ฟังเก่ง ชอบดูแลและช่วยเหลือ",  jobs:"ครู พยาบาล นักจิตวิทยา นักสังคมสงเคราะห์"},
-  E:{n:"สายผู้นำ",     e:"🚀", d:"กล้าตัดสินใจ ชอบชวนคน วางแผนนำทีม",         jobs:"ผู้ประกอบการ ผู้จัดการ ทนายความ นักการตลาด"},
-  C:{n:"สายเป็นระบบ",  e:"📊", d:"รอบคอบ เป็นระเบียบ ชอบจัดการข้อมูลให้ชัด",  jobs:"นักบัญชี นักวิเคราะห์ข้อมูล เลขานุการ นักตรวจสอบ"}
+if(typeof THREE==="undefined"){
+  document.getElementById("intro").innerHTML='<div class="hero"><h1>ต่ออินเทอร์เน็ตก่อนนะ</h1><p>เกมนี้ต้องโหลดไฟล์ 3 มิติจากอินเทอร์เน็ต ลองเชื่อมต่อแล้วรีเฟรชหน้าอีกครั้ง</p></div>';
+  throw new Error("three.js not loaded");
+}
+
+/* ================= เนื้อหา ================= */
+// r: 2 = ดีที่สุด, 1 = พอใช้, 0 = ยังไม่ดี
+const MON=[
+ {id:"anger",name:"กรุ๊มโบ้",feel:"ความโกรธ",emoji:"🔥",color:0xff5a4e,brow:-.5,trait:"ใจนักสู้",gift:"พลังปกป้องตัวเอง",
+  learn:"ความโกรธบอกว่า \"เรื่องนี้สำคัญกับเรา\" ถ้าหายใจให้นิ่งแล้วบอกด้วยคำพูดสุภาพ มันจะกลายเป็นพลังปกป้องตัวเองและความถูกต้อง",
+  rounds:[
+   {s:"เพื่อนล้อชื่อเธอกลางห้อง! หน้าร้อนผ่าว กำมือแน่น… \"ฉันจะระเบิดแล้ว!\"",o:[
+     {r:2,x:"หายใจลึก ๆ 3 ครั้ง แล้วบอกเพื่อนว่า \"ฉันไม่ชอบ ช่วยหยุดนะ\"",f:"สุดยอด! ใจนิ่งก่อนแล้วบอกความรู้สึกตรง ๆ นี่คือการปกป้องตัวเองแบบเท่ ๆ"},
+     {r:1,x:"เดินออกไปก่อน ไม่พูดอะไรเลย",f:"ถอยออกมาช่วยให้ใจเย็นลงได้ แต่อย่าลืมกลับมาบอกเพื่อนด้วยว่าเราไม่ชอบ"},
+     {r:0,x:"ตะโกนด่าแล้วผลักเพื่อน",f:"โกรธได้ แต่การตะโกนหรือผลักทำให้เรื่องใหญ่ขึ้น และเราเองก็เดือดร้อน"}]},
+   {s:"ทีมแพ้กีฬาสีเพราะเพื่อนพลาดจังหวะสำคัญ เธออยากโทษเขาให้รู้ไปเลย!",o:[
+     {r:2,x:"บอกเพื่อนว่า \"ไม่เป็นไร ครั้งหน้าซ้อมด้วยกันนะ\"",f:"เยี่ยม! ทีมที่ดีช่วยกันแก้ ไม่ใช่ช่วยกันโทษ"},
+     {r:1,x:"เงียบใส่ ไม่คุยกันทั้งวัน",f:"การเงียบทำให้บรรยากาศอึดอัดทั้งคู่ ลองพูดดี ๆ สักประโยคจะเบาใจกว่า"},
+     {r:0,x:"พูดต่อหน้าทุกคนว่า \"เพราะเธอคนเดียว!\"",f:"คำพูดแรง ๆ ต่อหน้าคนอื่นทำให้เพื่อนเสียใจและทีมแตกกัน"}]}]},
+ {id:"worry",name:"วอร์รี่",feel:"ความกังวล",emoji:"😰",color:0x9b7bff,brow:.4,trait:"รอบคอบ",gift:"พลังเตรียมพร้อม",
+  learn:"ความกังวลเตือนให้เรารอบคอบ ถ้าเปลี่ยนเป็นการเตรียมตัวทีละเรื่อง ความกังวลจะกลายเป็นพลังความพร้อม",
+  rounds:[
+   {s:"คืนก่อนสอบ นอนไม่หลับ ในหัววนอยู่ว่า \"ถ้าทำไม่ได้ล่ะ…\"",o:[
+     {r:2,x:"จดสิ่งที่ทบทวนแล้วไว้ ทำเท่าที่ทำได้ แล้วเข้านอนให้สมองพัก",f:"ถูกเลย! โฟกัสสิ่งที่ควบคุมได้ และการนอนช่วยให้สมองจำดีขึ้น"},
+     {r:1,x:"เปิดมือถือเล่นจนลืมเรื่องสอบ",f:"ช่วยให้ลืมชั่วคราว แต่ความกังวลจะกลับมาตอนเช้า และอาจนอนน้อยลง"},
+     {r:0,x:"ท่องทุกวิชาจนตีสาม",f:"ยิ่งอดนอนยิ่งจำได้น้อยลงและกังวลมากขึ้น"}]},
+   {s:"ครูเรียกออกไปพูดหน้าห้อง มือสั่น หัวใจเต้นแรง!",o:[
+     {r:2,x:"หายใจช้า ๆ แล้วเริ่มด้วยประโยคแรกที่เตรียมไว้",f:"ดีมาก! ประโยคแรกที่พร้อมช่วยให้ที่เหลือไหลตามมาเอง"},
+     {r:1,x:"ขอครูเปลี่ยนเป็นคนสุดท้าย",f:"ขอเวลาเตรียมใจได้ แต่ถ้าลองเริ่มเลยจะภูมิใจในตัวเองมากกว่า"},
+     {r:0,x:"บอกว่าป่วย แล้วไม่ไปเรียน",f:"การหลบทำให้กลัวครั้งหน้ามากขึ้น ลองค่อย ๆ เผชิญทีละนิดจะดีกว่า"}]}]},
+ {id:"shy",name:"ชายี่",feel:"ความอาย ไม่มั่นใจ",emoji:"😳",color:0xffa94d,brow:.2,trait:"ใส่ใจคน",gift:"พลังผู้ฟังที่ดี",
+  learn:"คนขี้อายมักสังเกตและใส่ใจคนอื่นเก่ง ถ้ากล้าก้าวทีละเล็ก ๆ ความอายจะกลายเป็นพลังของผู้ฟังที่ดีและเพื่อนที่อบอุ่น",
+  rounds:[
+   {s:"อยากเข้าชุมนุมดนตรีมาก แต่กลัวเพื่อนจะหัวเราะ…",o:[
+     {r:2,x:"ชวนเพื่อนไปดูชุมนุมก่อน 1 ครั้ง แล้วค่อยตัดสินใจ",f:"ฉลาดมาก! ก้าวเล็ก ๆ พร้อมเพื่อนช่วยให้กล้าขึ้นเยอะ"},
+     {r:1,x:"รอดูปีหน้าก่อน",f:"ไม่ผิดนะ แต่ความอยากลองมักไม่หายไปไหน ลองก้าวเล็ก ๆ ปีนี้ก็ได้"},
+     {r:0,x:"ไม่ไปเลย และไม่ลองอะไรใหม่อีก",f:"ถ้าไม่ลอง เราจะไม่รู้เลยว่าตัวเองเก่งอะไร"}]},
+   {s:"มีเรื่องที่ไม่เข้าใจในห้อง แต่ไม่กล้ายกมือถาม…",o:[
+     {r:2,x:"จดคำถามไว้ แล้วไปถามครูหลังคาบ",f:"เยี่ยม! ถามหลังคาบก็คือกล้าถามแล้ว และครูยินดีช่วยเสมอ"},
+     {r:1,x:"รอถามเพื่อนที่สนิทกัน",f:"ถามเพื่อนได้ แต่ถ้าเพื่อนก็ไม่แน่ใจ อาจเข้าใจผิดต่อ ลองถามครูด้วยนะ"},
+     {r:0,x:"ปล่อยผ่านไปเลย",f:"เรื่องที่ไม่เข้าใจจะสะสมเป็นภูเขา รีบถามตั้งแต่ตอนยังเล็กดีกว่า"}]}]},
+ {id:"lazy",name:"ลาซซี่",feel:"ความขี้เกียจ ผัดวันประกันพรุ่ง",emoji:"🥱",color:0x4cd694,brow:0,trait:"รู้จังหวะ",gift:"พลังจัดการเวลา",
+  learn:"บางครั้งความขี้เกียจคือสัญญาณว่าเราเหนื่อยหรืองานดูใหญ่เกินไป ถ้าแบ่งเป็นชิ้นเล็กและรู้จักพัก จะกลายเป็นพลังจัดการเวลา",
+  rounds:[
+   {s:"งานต้องส่งพรุ่งนี้ แต่เธอยังไม่ได้เริ่มเลย… \"ไว้ก่อนดีกว่า~\"",o:[
+     {r:2,x:"ตั้งเวลา 15 นาที ทำชิ้นเล็กก่อน แล้วค่อยพัก",f:"เทคนิคเยี่ยม! การเริ่มเล็ก ๆ คือประตูที่ทำให้ทำต่อได้ง่ายขึ้น"},
+     {r:1,x:"ไว้ตื่นมาทำตอนเช้าก่อนส่ง",f:"เสี่ยงมากนะ ถ้าตื่นสายหรือมีเรื่องแทรก งานจะไม่ทัน"},
+     {r:0,x:"ขอลอกงานเพื่อน",f:"การลอกทำให้เราไม่ได้เรียนรู้ และอาจทำให้เพื่อนเดือดร้อนด้วย"}]},
+   {s:"\"เล่นเกมอีกตาเดียว!\" … ผ่านไปสองชั่วโมงแล้ว",o:[
+     {r:2,x:"ตั้งนาฬิกาปลุกก่อนเริ่มเล่น หมดเวลาแล้วปิดทันที",f:"ใช่เลย! ตั้งกติกากับตัวเองก่อนเริ่ม ได้ทั้งความสนุกและงานที่เสร็จ"},
+     {r:1,x:"บอกตัวเองว่าอีก 10 นาที",f:"\"อีก 10 นาที\" มักกลายเป็นอีกชั่วโมง ลองตั้งนาฬิกาจะช่วยได้"},
+     {r:0,x:"เล่นต่อจนเที่ยงคืน",f:"พรุ่งนี้จะง่วงและเรียนไม่รู้เรื่อง ลองแบ่งเวลาเล่นให้พอดี"}]}]},
+ {id:"sad",name:"บลูบี้",feel:"ความเหงา เศร้า",emoji:"😢",color:0x4dabf7,brow:.45,trait:"เข้าใจคน",gift:"พลังเห็นใจผู้อื่น",
+  learn:"คนที่เคยเหงาและเศร้ามักเข้าใจหัวใจคนอื่นได้ลึกซึ้ง การเล่าให้คนที่ไว้ใจฟังช่วยให้ใจเบาลง และทำให้เราเป็นเพื่อนที่ดีของคนอื่น",
+  rounds:[
+   {s:"เพื่อนสนิทไปนั่งกับกลุ่มใหม่ เธอเหงามากจนอยากร้องไห้…",o:[
+     {r:2,x:"ชวนเพื่อนคุยตรง ๆ และทักเพื่อนอีกคนที่นั่งคนเดียว",f:"เก่งมาก! พูดความรู้สึกออกมา และเปิดโอกาสให้มิตรภาพใหม่"},
+     {r:1,x:"นั่งเงียบ ๆ รอให้เขากลับมา",f:"รอได้ แต่บางครั้งเพื่อนไม่รู้ว่าเรารู้สึกแบบไหน ลองทักก่อนก็ได้"},
+     {r:0,x:"ตัดสินใจว่าจะไม่คุยกับใครอีก",f:"การตัดใจจากทุกคนทำให้เหงามากกว่าเดิม คนดี ๆ ยังมีอีกเยอะ"}]},
+   {s:"วันนี้รู้สึกแย่มาก ไม่อยากทำอะไรเลย…",o:[
+     {r:2,x:"เล่าให้คนที่ไว้ใจฟัง เช่น ผู้ปกครอง หรือครูแนะแนว",f:"ถูกต้อง! การเล่าให้ใครสักคนฟังไม่ใช่ความอ่อนแอ แต่คือความกล้า"},
+     {r:1,x:"นอนฟังเพลงคนเดียว",f:"เพลงช่วยปลอบได้ แต่ถ้ายังไม่ดีขึ้นหลายวัน ให้บอกคนที่ไว้ใจนะ"},
+     {r:0,x:"เก็บไว้คนเดียวทุกอย่าง",f:"ความรู้สึกที่เก็บไว้คนเดียวจะหนักขึ้นเรื่อย ๆ ครูและผู้ปกครองพร้อมช่วยเสมอ"}]}]}
+];
+const TYPES={
+ R:{n:"นักสร้าง",   a:"ลงมือสร้าง ซ่อม ประดิษฐ์",e:"🔧",c:0xff9f1c,jobs:"ช่าง วิศวกร เกษตรกร เชฟ นักกีฬา"},
+ I:{n:"นักสำรวจ",   a:"ทดลอง ไขปริศนา หาคำตอบ",e:"🔬",c:0x2ec4b6,jobs:"แพทย์ นักวิทยาศาสตร์ โปรแกรมเมอร์ นักวิจัย"},
+ A:{n:"นักสร้างสรรค์",a:"ออกแบบ แสดง สร้างผลงาน",e:"🎨",c:0xff6b9d,jobs:"นักออกแบบ นักดนตรี ผู้สร้างคอนเทนต์ สถาปนิก"},
+ S:{n:"นักช่วยเหลือ",a:"ดูแล สอน ช่วยเหลือผู้คน",e:"🤝",c:0x7bd88f,jobs:"ครู พยาบาล นักจิตวิทยา นักสังคมสงเคราะห์"},
+ E:{n:"ผู้นำ",      a:"นำทีม ขายไอเดีย ตัดสินใจ",e:"🚀",c:0xa06cd5,jobs:"ผู้ประกอบการ ผู้จัดการ ทนายความ นักการตลาด"},
+ C:{n:"นักวางแผน",  a:"จัดระบบ วางแผน ดูแลข้อมูล",e:"📊",c:0x4dabf7,jobs:"นักบัญชี นักวิเคราะห์ข้อมูล เลขานุการ นักตรวจสอบ"}
 };
 
-// kind:"i" = ค้นหาตัวเอง (option.t = ประเภท) | kind:"s" = ทักษะชีวิต (option.best = ดีที่สุด)
-const ORBS = [
- {k:"i",icon:"🏆",title:"งานกีฬาสี",q:"โรงเรียนจัดงานกีฬาสี ถ้าเลือกหน้าที่ได้ คุณอยากทำอะไร?",
-  o:[{t:"R",x:"สร้างฉากเชียร์ ซ่อมอุปกรณ์ ลงมือประกอบ"},{t:"A",x:"ออกแบบโปสเตอร์และการแสดงเปิดงาน"},{t:"E",x:"เป็นหัวหน้าสี วางแผนและนำทีม"}]},
- {k:"s",icon:"📝",title:"สอบได้น้อย",q:"สอบกลางภาคได้คะแนนน้อยกว่าที่หวังไว้ คุณจะทำอย่างไร?",
-  o:[{x:"ดูว่าผิดข้อไหน ถามครูหรือเพื่อน แล้ววางแผนทบทวนใหม่",best:1,f:"ใช่เลย! มองความผิดพลาดเป็นข้อมูลให้พัฒนา คนเก่งขึ้นได้ด้วยวิธีนี้"},
-     {x:"คิดว่าเราไม่เก่งวิชานี้ เลิกพยายามดีกว่า",f:"เข้าใจว่าท้อ แต่ 'ยังทำไม่ได้' ไม่ได้แปลว่า 'ทำไม่ได้ตลอดไป' ลองกลับมามองหาจุดที่แก้ได้"},
-     {x:"โทษข้อสอบว่ายากเกินไป",f:"บางครั้งข้อสอบก็ยากจริง แต่ถ้าหาจุดที่เราปรับได้ จะเก่งขึ้นเร็วกว่า"}]},
- {k:"i",icon:"🌈",title:"วันว่างสุดสัปดาห์",q:"วันว่างหนึ่งวัน คุณอยากใช้เวลาแบบไหนมากที่สุด?",
-  o:[{t:"I",x:"ทดลองวิทยาศาสตร์ หรือดูสารคดีที่อยากรู้"},{t:"S",x:"ไปช่วยงานจิตอาสา หรือติวหนังสือให้เพื่อน"},{t:"C",x:"จัดห้อง จัดตารางสัปดาห์หน้าให้เรียบร้อย"}]},
- {k:"s",icon:"😤",title:"โดนเพื่อนล้อ",q:"เพื่อนล้อชื่อหรือรูปร่างของคุณต่อหน้าคนอื่น คุณจะทำอย่างไร?",
-  o:[{x:"บอกเพื่อนตรง ๆ ว่าไม่ชอบ ขอให้หยุด ถ้ายังไม่หยุดให้บอกครูแนะแนว",best:1,f:"ถูกต้อง! การบอกอย่างหนักแน่นและขอความช่วยเหลือเป็นความกล้าหาญ"},
-     {x:"ล้อกลับให้แรงกว่าเดิม",f:"ความโกรธเป็นเรื่องปกติ แต่การล้อกลับจะทำให้เรื่องบานปลาย ลองหายใจลึก ๆ แล้วใช้วิธีอื่น"},
-     {x:"เก็บไว้คนเดียว ไม่บอกใคร",f:"การเก็บไว้คนเดียวทำให้หนักใจ ครูและผู้ปกครองพร้อมช่วยเสมอนะ"}]},
- {k:"i",icon:"📁",title:"โปรเจกต์กลุ่ม",q:"ทำโปรเจกต์กลุ่ม คุณถนัดหน้าที่ไหน?",
-  o:[{t:"A",x:"ออกแบบสไลด์ ทำคลิป หรือตกแต่งงานให้สวย"},{t:"C",x:"จดรายละเอียด ตรวจความถูกต้อง ดูเรื่องเวลา"},{t:"I",x:"ค้นคว้าข้อมูลให้ลึกและหาคำตอบที่ยังไม่มีใครรู้"}]},
- {k:"s",icon:"🏫",title:"เพื่อนใหม่ ม.1",q:"วันแรก ๆ ของ ม.1 ยังไม่รู้จักใครเลย คุณจะทำอย่างไร?",
-  o:[{x:"ทักคนข้างเคียง แนะนำตัว และชวนคุยเรื่องที่ชอบเหมือนกัน",best:1,f:"เยี่ยม! เรื่องที่ชอบเหมือนกันเป็นประตูสู่มิตรภาพ ลองสมัครชุมนุมเพิ่มด้วยนะ"},
-     {x:"นั่งเงียบ ๆ รอให้ใครมาทัก",f:"ไม่ผิดนะ แต่ถ้าลองทักก่อนสักประโยค เพื่อนหลายคนก็รออยู่เหมือนกัน"},
-     {x:"ไปอยู่กับเพื่อนเก่าจากประถมเท่านั้น",f:"เพื่อนเก่าสำคัญ แต่การเปิดใจรู้จักคนใหม่ทำให้โลกเรากว้างขึ้น"}]},
- {k:"i",icon:"🎪",title:"ชุมนุมในฝัน",q:"ถ้าต้องเลือกชุมนุม 1 ชุมนุม คุณอยากเข้าชุมนุมไหน?",
-  o:[{t:"R",x:"หุ่นยนต์ / งานช่าง / ทำอาหาร"},{t:"E",x:"ธุรกิจน้อย / โต้วาที / สภานักเรียน"},{t:"A",x:"ดนตรี / ศิลปะ / การแสดง"}]},
- {k:"s",icon:"⏰",title:"งานเยอะมาก",q:"ครูสั่งงาน 3 วิชา ส่งพร้อมกันพรุ่งนี้ ทำไม่ทันทั้งหมด คุณจะทำอย่างไร?",
-  o:[{x:"จดรายการงาน เรียงตามความด่วนและความสำคัญ แล้วทำทีละอย่าง",best:1,f:"ดีมาก! การเรียงลำดับความสำคัญคือทักษะที่คนทำงานเก่งใช้ทุกวัน"},
-     {x:"เล่นเกมก่อนให้หายเครียด แล้วค่อยทำ",f:"พักได้ แต่ควรกำหนดเวลาพักก่อน ไม่งั้นเวลาจะหมดไปเอง"},
-     {x:"ทำทุกอย่างพร้อมกัน สลับไปมา",f:"การสลับงานบ่อย ๆ ทำให้ช้าลงและผิดพลาดง่าย ลองทำทีละอย่างจะเร็วกว่า"}]},
- {k:"i",icon:"🎁",title:"ของขวัญที่อยากได้",q:"ถ้าเลือกของขวัญจากกล่องลึกลับได้ 1 อย่าง คุณจะเลือกอะไร?",
-  o:[{t:"S",x:"ชุดปฐมพยาบาล ไว้ดูแลคนที่เรารัก"},{t:"E",x:"ชุดสร้างธุรกิจเล็ก ๆ ของตัวเอง"},{t:"R",x:"กล่องเครื่องมือครบชุด"}]},
- {k:"i",icon:"🧑‍💼",title:"ฝึกงาน 1 วัน",q:"ถ้าไปฝึกงาน 1 วัน คุณอยากไปที่ไหน?",
-  o:[{t:"I",x:"ห้องแล็บวิทยาศาสตร์"},{t:"S",x:"โรงพยาบาล ช่วยดูแลผู้ป่วย"},{t:"C",x:"สำนักงานบัญชี จัดการตัวเลขและเอกสาร"}]}
-];
-// 6 ลูกค้นหาตัวเองเลือกประเภทละ 3 ครั้งทั้งหมด → ตรวจในสคริปต์ทดสอบ
-
-/* ============ สถานะ ============ */
-const S = {done:new Set(), score:{R:0,I:0,A:0,S:0,E:0,C:0}, stars:0, name:"", cam:false, gyro:false};
-const N = ORBS.length;
-// ตำแหน่งลูกแก้วรอบตัว (องศา) – สลับสูงต่ำให้ต้องมองหา
-const ELEV = [8,28,-12,18,-6,32,0,-18,22,12];
-ORBS.forEach((o,i)=>{o.az=(i*360/N + (i%2?6:-6)+360)%360; o.el=ELEV[i]; o.ph=Math.random()*6.28;});
-
+/* ================= สถานะ ================= */
 const $=id=>document.getElementById(id);
-const cv=$("cv"), ctx=cv.getContext("2d");
-let W=0,H=0,DPR=1;
-function resize(){DPR=Math.min(devicePixelRatio||1,2);W=innerWidth;H=innerHeight;cv.width=W*DPR;cv.height=H*DPR;ctx.setTransform(DPR,0,0,DPR,0,0);}
+const G={state:"intro",name:"",gyro:false,cam:false,snd:true,tamed:{},picks:[],round:0,score:0,cur:null,lock:null,orderTamed:[]};
+const KEY="monquest_v2";
+function save(){try{localStorage.setItem(KEY,JSON.stringify({t:G.tamed,o:G.orderTamed,n:G.name}));}catch(e){}}
+function load(){try{const j=JSON.parse(localStorage.getItem(KEY)||"null");if(j){G.tamed=j.t||{};G.orderTamed=j.o||[];G.name=j.n||"";}}catch(e){}}
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]];}return a;};
+
+/* ================= เสียง + สั่น ================= */
+let AC=null;
+function tone(f,d=.12,type="sine",delay=0,vol=.12){
+  if(!G.snd||!AC) return;
+  const o=AC.createOscillator(),g=AC.createGain(),t=AC.currentTime+delay;
+  o.type=type;o.frequency.setValueAtTime(f,t);g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(.001,t+d);
+  o.connect(g).connect(AC.destination);o.start(t);o.stop(t+d+.02);
+}
+function vib(p){try{navigator.vibrate&&navigator.vibrate(p);}catch(e){}}
+const sfx={
+  tap:()=>tone(660,.08,"triangle"),
+  great:()=>{[784,988,1318].forEach((f,i)=>tone(f,.14,"triangle",i*.08));vib(30);},
+  ok:()=>{tone(520,.12,"triangle");tone(620,.12,"triangle",.09);},
+  bad:()=>{tone(220,.22,"sawtooth",0,.07);vib([60,40,60]);},
+  tame:()=>{[523,659,784,1046,1318].forEach((f,i)=>tone(f,.2,"triangle",i*.09));vib([40,30,80]);},
+  lock:()=>tone(900,.05,"square",0,.05)
+};
+
+/* ================= Three.js ================= */
+const renderer=new THREE.WebGLRenderer({canvas:$("gl"),alpha:true,antialias:true});
+renderer.setClearColor(0,0);
+const scene=new THREE.Scene();
+const camera=new THREE.PerspectiveCamera(68,1,.05,60);
+scene.add(camera);
+scene.add(new THREE.HemisphereLight(0xffffff,0x6a5acd,1.05));
+const sun=new THREE.DirectionalLight(0xffffff,.9);sun.position.set(2,4,3);scene.add(sun);
+function resize(){const w=innerWidth,h=innerHeight;renderer.setPixelRatio(Math.min(devicePixelRatio||1,2));renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();}
 addEventListener("resize",resize);resize();
 
-/* ============ มุมมองกล้อง ============ */
-let yaw=0,pitch=0,tYaw=0,tPitch=0, dragYaw=0,dragPitch=0, alpha0=null, playing=false;
-const FOV=64; // องศาตามแนวนอน
-const wrap=a=>((a+540)%360)-180;
+const texCache={};
+function emojiTex(e){
+  if(texCache[e]) return texCache[e];
+  const c=document.createElement("canvas");c.width=c.height=128;const x=c.getContext("2d");
+  x.font="96px system-ui,'Apple Color Emoji','Noto Color Emoji'";x.textAlign="center";x.textBaseline="middle";x.fillText(e,64,70);
+  return texCache[e]=new THREE.CanvasTexture(c);
+}
+function emojiSprite(e,s){s=s||.5;const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:emojiTex(e),transparent:true,depthTest:false}));sp.scale.set(s,s,s);return sp;}
+function labelSprite(t,col){
+  const c=document.createElement("canvas");c.width=512;c.height=128;const x=c.getContext("2d");
+  x.font="600 46px Prompt,'Noto Sans Thai',sans-serif";const w=Math.min(500,x.measureText(t).width+48);
+  x.fillStyle="rgba(15,18,44,.85)";x.beginPath();if(x.roundRect)x.roundRect(256-w/2,20,w,88,44);else x.rect(256-w/2,20,w,88);x.fill();
+  x.strokeStyle=col;x.lineWidth=5;x.stroke();
+  x.fillStyle="#fff";x.textAlign="center";x.textBaseline="middle";x.fillText(t,256,66);
+  const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),transparent:true,depthTest:false}));
+  sp.scale.set(1.6,.4,1);return sp;
+}
+const OUTLINE=new THREE.MeshBasicMaterial({color:0x161a35,side:THREE.BackSide});
+const SADLIKE={anger:1,sad:1,worry:1};
 
+function buildMonster(def){
+  const g=new THREE.Group(),tone=new THREE.Color(def.color);
+  const mat=new THREE.MeshToonMaterial({color:tone});
+  const body=new THREE.Mesh(new THREE.SphereGeometry(.5,32,24),mat);body.scale.set(1,.92,1);g.add(body);
+  const ol=new THREE.Mesh(body.geometry,OUTLINE);ol.scale.setScalar(1.07);body.add(ol);
+  const belly=new THREE.Mesh(new THREE.SphereGeometry(.27,24,16),new THREE.MeshToonMaterial({color:tone.clone().lerp(new THREE.Color(0xffffff),.55)}));
+  belly.position.set(0,-.2,.24);belly.scale.set(1,.9,.5);body.add(belly);
+  const eyeM=new THREE.MeshToonMaterial({color:0xffffff}),pupM=new THREE.MeshBasicMaterial({color:0x161a35});
+  const eyes=[],brows=[];
+  [-1,1].forEach(s=>{
+    const eye=new THREE.Mesh(new THREE.SphereGeometry(.14,20,16),eyeM);eye.position.set(s*.17,.13,.4);
+    const pup=new THREE.Mesh(new THREE.SphereGeometry(.07,16,12),pupM);pup.position.set(0,0,.11);eye.add(pup);body.add(eye);eyes.push(eye);
+    const br=new THREE.Mesh(new THREE.BoxGeometry(.16,.035,.03),pupM);br.position.set(s*.17,.32,.44);br.rotation.z=s*def.brow*-1;body.add(br);brows.push(br);
+  });
+  if(def.id==="lazy") eyes.forEach(e=>e.scale.y=.45);
+  const mouth=new THREE.Mesh(new THREE.TorusGeometry(.09,.022,8,20,Math.PI),pupM);
+  mouth.position.set(0,-.1,.47);mouth.rotation.z=SADLIKE[def.id]?0:Math.PI;body.add(mouth);
+  [-1,1].forEach(s=>{const f=new THREE.Mesh(new THREE.SphereGeometry(.13,12,10),mat);f.position.set(s*.22,-.47,.12);f.scale.set(1,.6,1.3);g.add(f);});
+  if(def.id==="anger"){[-1,1].forEach(s=>{const h=new THREE.Mesh(new THREE.ConeGeometry(.1,.26,12),new THREE.MeshToonMaterial({color:0xffe08a}));
+    h.position.set(s*.26,.46,0);h.rotation.z=-s*.5;body.add(h);});}
+  if(def.id==="shy"){[-1,1].forEach(s=>{const c=new THREE.Mesh(new THREE.CircleGeometry(.08,16),new THREE.MeshBasicMaterial({color:0xff7a9c,transparent:true,opacity:.8}));
+    c.position.set(s*.3,-.02,.43);c.rotation.y=s*.5;body.add(c);});}
+  if(def.id==="worry"){const d=emojiSprite("💦",.3);d.position.set(.45,.4,.3);g.add(d);}
+  if(def.id==="lazy"){const z=emojiSprite("💤",.34);z.position.set(.4,.6,.2);g.add(z);}
+  if(def.id==="sad"){const d=emojiSprite("💧",.24);d.position.set(-.2,-.02,.5);g.add(d);}
+  const hit=new THREE.Mesh(new THREE.SphereGeometry(.85,8,8),new THREE.MeshBasicMaterial({visible:false}));g.add(hit);
+  g.userData={def:def,body:body,mat:mat,mouth:mouth,eyes:eyes,brows:brows,hit:hit,ph:Math.random()*6.28,orig:tone.clone(),calm:false,fx:null,az:0,d:3,y:0,ang:0};
+  return g;
+}
+function setCalm(g,on){
+  const u=g.userData;u.calm=on;
+  u.mat.color.copy(u.orig).lerp(new THREE.Color(0xffffff),on?.45:0);
+  u.mouth.rotation.z=on?Math.PI:(SADLIKE[u.def.id]?0:Math.PI);
+  if(on){u.brows.forEach(b=>{b.rotation.z=0;});u.eyes.forEach(e=>e.scale.y=1);}
+}
+
+const monsters=[],pets=[],crystals=[],fxs=[];
+function polar(az,d,y){return new THREE.Vector3(Math.sin(az)*d,y,-Math.cos(az)*d);}
+function spawnMonster(def,az){
+  const g=buildMonster(def),u=g.userData;
+  u.az=az;u.d=3.0+Math.random()*1.2;u.y=-.1+Math.random()*.8;
+  g.position.copy(polar(az,u.d,u.y));scene.add(g);monsters.push(g);return g;
+}
+function burst(pos,emojis,n){
+  for(let i=0;i<n;i++){
+    const s=emojiSprite(emojis[i%emojis.length],.28+Math.random()*.2);s.position.copy(pos);
+    s.userData={v:new THREE.Vector3((Math.random()-.5)*2.2,Math.random()*2+.6,(Math.random()-.5)*2.2),life:1.2};
+    scene.add(s);fxs.push(s);
+  }
+}
+
+/* ================= การหมุนกล้อง ================= */
+const zee=new THREE.Vector3(0,0,1),q1=new THREE.Quaternion(-Math.sqrt(.5),0,0,Math.sqrt(.5));
+const eul=new THREE.Euler(),q0=new THREE.Quaternion();
+let alpha0=null,dYaw=0,dPitch=0;
 function onOri(e){
   if(e.alpha==null||e.beta==null) return;
-  S.gyro=true;
-  if(alpha0===null) alpha0=e.alpha;          // ปรับให้ลูกแก้วลูกแรกอยู่ตรงหน้า
-  tYaw = -(e.alpha-alpha0);
-  tPitch = Math.max(-80,Math.min(80,e.beta-90));
+  G.gyro=true;
+  if(alpha0===null) alpha0=e.alpha;
+  const D=Math.PI/180,orient=((screen.orientation&&screen.orientation.angle)||window.orientation||0)*D;
+  eul.set(e.beta*D,(e.alpha-alpha0)*D,-e.gamma*D,"YXZ");
+  camera.quaternion.setFromEuler(eul);camera.quaternion.multiply(q1);camera.quaternion.multiply(q0.setFromAxisAngle(zee,-orient));
 }
-// ลากนิ้วเพื่อมองรอบ ๆ (ใช้เมื่อไม่มีเซนเซอร์ หรือปรับเพิ่มได้)
-let drag=null, moved=0;
-cv.addEventListener("pointerdown",e=>{drag={x:e.clientX,y:e.clientY};moved=0;cv.setPointerCapture(e.pointerId);});
-cv.addEventListener("pointermove",e=>{
-  if(!drag) return;
-  const dx=e.clientX-drag.x, dy=e.clientY-drag.y; moved+=Math.abs(dx)+Math.abs(dy);
-  const k=FOV/W; dragYaw-=dx*k; dragPitch+=dy*k; dragPitch=Math.max(-70,Math.min(70,dragPitch));
+let drag=null,moved=0;
+const glc=$("gl");
+glc.addEventListener("pointerdown",e=>{drag={x:e.clientX,y:e.clientY};moved=0;glc.setPointerCapture(e.pointerId);});
+glc.addEventListener("pointermove",e=>{
+  if(!drag) return;const dx=e.clientX-drag.x,dy=e.clientY-drag.y;moved+=Math.abs(dx)+Math.abs(dy);
+  if(!G.gyro){dYaw+=dx*.005;dPitch=Math.max(-1.3,Math.min(1.3,dPitch+dy*.005));camera.rotation.set(dPitch,dYaw,0,"YXZ");}
   drag={x:e.clientX,y:e.clientY};
 });
-cv.addEventListener("pointerup",e=>{
-  if(moved<10 && playing) tap(e.clientX,e.clientY);
-  drag=null;
-});
+glc.addEventListener("pointerup",e=>{drag=null;if(moved<12) onTap(e.clientX,e.clientY);});
 
-/* ============ วาด ============ */
-let proj=[], openedAt=0;
-function project(az,el){
-  const dx=wrap(az-yaw), dy=el-pitch, k=W/FOV;
-  return {x:W/2+dx*k, y:H/2-dy*k, dx, dy};
+/* ================= เป้าหมาย / แตะ ================= */
+const ray=new THREE.Raycaster(),v3=new THREE.Vector3(),fwd=new THREE.Vector3();
+function targets(){return G.state==="hunt"?monsters:G.state==="crystals"?crystals:[];}
+function onTap(x,y){
+  if(G.state!=="hunt"&&G.state!=="crystals") return;
+  scene.updateMatrixWorld(true);
+  ray.setFromCamera({x:x/innerWidth*2-1,y:-(y/innerHeight)*2+1},camera);
+  const hits=ray.intersectObjects(targets().map(m=>m.userData.hit),false);
+  const t=hits.length?hits[0].object.parent:G.lock;
+  if(t){sfx.tap();if(G.state==="hunt")startBattle(t);else pickCrystal(t);}
 }
-function frame(t){
-  requestAnimationFrame(frame);
-  yaw += wrap(tYaw+dragYaw-yaw)*0.2;                 // ทำให้ภาพนิ่มขึ้น
-  pitch += ((tPitch+dragPitch)-pitch)*0.2;
-  ctx.clearRect(0,0,W,H);
-  if(!playing) return;
-  proj=[];
-  let nearest=null;
-  ORBS.forEach((o,i)=>{
-    const p=project(o.az,o.el+Math.sin(t/700+o.ph)*1.2);
-    const done=S.done.has(i);
-    const visible=Math.abs(p.dx)<FOV/2+8 && Math.abs(p.dy)<(FOV*H/W)/2+8;
-    if(!done){const d=Math.hypot(p.dx,p.dy); if(!nearest||d<nearest.d) nearest={d,p,i};}
-    if(visible){
-      const r=Math.max(34,Math.min(W,H)*0.095);
-      proj.push({i,x:p.x,y:p.y,r});
-      drawOrb(o,p.x,p.y,r,done,t);
-    }
+function updateLock(){
+  camera.getWorldDirection(fwd);let best=null,ba=.17;
+  targets().forEach(m=>{v3.copy(m.position).normalize();const a=Math.acos(Math.max(-1,Math.min(1,fwd.dot(v3))));if(a<ba){ba=a;best=m;}});
+  if(best&&best!==G.lock) sfx.lock();
+  G.lock=best;
+  const on=!!best&&(G.state==="hunt"||G.state==="crystals");
+  $("cross").classList.toggle("lock",on);$("prompt").hidden=!on;
+  if(on) $("prompt").textContent=G.state==="hunt"?"แตะเพื่อท้าทาย "+best.userData.def.emoji:"แตะเพื่อเลือก ✨";
+}
+function updateRadar(){
+  const c=$("radar").getContext("2d"),S=168,R=76;c.clearRect(0,0,S,S);
+  c.strokeStyle="rgba(255,255,255,.25)";c.lineWidth=2;c.beginPath();c.arc(S/2,S/2,R,0,7);c.stroke();c.beginPath();c.arc(S/2,S/2,R/2,0,7);c.stroke();
+  camera.getWorldDirection(fwd);const yaw=Math.atan2(fwd.x,-fwd.z);
+  c.fillStyle="#fff";c.beginPath();c.moveTo(S/2,S/2-10);c.lineTo(S/2-7,S/2+7);c.lineTo(S/2+7,S/2+7);c.fill();
+  targets().forEach(m=>{
+    const az=Math.atan2(m.position.x,-m.position.z),rel=az-yaw,d=m.userData.d||2.5;
+    const r=Math.min(R,18+d*13),px=S/2+Math.sin(rel)*r,py=S/2-Math.cos(rel)*r;
+    const col=m.userData.def?m.userData.def.color:m.userData.col;
+    c.fillStyle="#"+col.toString(16).padStart(6,"0");
+    c.beginPath();c.arc(px,py,8+Math.sin(performance.now()/250)*1.5,0,7);c.fill();
   });
-  if(nearest) drawArrow(nearest);
-}
-function drawOrb(o,x,y,r,done,t){
-  const pulse=1+Math.sin(t/400+o.ph)*0.05;
-  ctx.save();ctx.translate(x,y);ctx.scale(pulse,pulse);
-  const col=done?["#9fe8c3","#2fa56f"]:(o.k==="i"?["#ffe9a0","#ff9f1c"]:["#ffc2dc","#e8457f"]);
-  ctx.shadowColor=done?"#3ddc97":col[1];ctx.shadowBlur=26;
-  const g=ctx.createRadialGradient(-r*.3,-r*.35,r*.1,0,0,r);
-  g.addColorStop(0,"#fff");g.addColorStop(.35,col[0]);g.addColorStop(1,col[1]);
-  ctx.fillStyle=g;ctx.globalAlpha=done?.8:.95;
-  ctx.beginPath();ctx.arc(0,0,r,0,7);ctx.fill();
-  ctx.shadowBlur=0;ctx.globalAlpha=1;
-  ctx.font=`${r*.95}px system-ui,"Apple Color Emoji","Noto Color Emoji"`;
-  ctx.textAlign="center";ctx.textBaseline="middle";
-  ctx.fillText(done?"✅":o.icon,0,r*.04);
-  ctx.restore();
-  ctx.font="700 14px Sarabun,system-ui,sans-serif";ctx.textAlign="center";ctx.textBaseline="top";
-  const label=done?"เก็บแล้ว":(o.k==="i"?"ค้นหาตัวเอง":"ด่านทักษะ");
-  const w=ctx.measureText(label).width+18;
-  ctx.fillStyle="rgba(18,22,46,.78)";rr(x-w/2,y+r+6,w,24,12);ctx.fill();
-  ctx.fillStyle="#fff";ctx.fillText(label,x,y+r+10);
-}
-function rr(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
-// ลูกศรบอกทิศไปยังลูกแก้วที่ใกล้ที่สุดที่ยังไม่เก็บ (เมื่อมองไม่เห็น)
-function drawArrow(n){
-  const off=Math.abs(n.p.dx)>FOV/2||Math.abs(n.p.dy)>(FOV*H/W)/2; if(!off) return;
-  const ang=Math.atan2(-n.p.dy,n.p.dx);
-  const R=Math.min(W,H)*0.36;
-  ctx.save();ctx.translate(W/2+Math.cos(ang)*R,H/2+Math.sin(ang)*R);ctx.rotate(ang);
-  ctx.fillStyle="rgba(255,201,60,.95)";ctx.shadowColor="#000";ctx.shadowBlur=8;
-  ctx.beginPath();ctx.moveTo(24,0);ctx.lineTo(-14,-18);ctx.lineTo(-6,0);ctx.lineTo(-14,18);ctx.closePath();ctx.fill();
-  ctx.restore();
 }
 
-/* ============ แตะลูกแก้ว / ภารกิจ ============ */
-function tap(x,y){
-  let best=null;
-  proj.forEach(p=>{const d=Math.hypot(p.x-x,p.y-y); if(d<p.r*1.3&&(!best||d<best.d)) best={d,i:p.i};});
-  if(best) openQ(best.i);
-}
-function openQ(i){
-  const o=ORBS[i]; playing=false; $("scQ").hidden=false; openedAt=Date.now();
-  const done=S.done.has(i);
-  const card=$("qCard");
-  const opts=o.o.map((op,j)=>[op,j]).sort(()=>Math.random()-.5);   // สลับลำดับตัวเลือก
-  card.innerHTML=`<span class="tag">${o.k==="i"?"🔎 ค้นหาตัวเอง • ไม่มีถูกผิด":"💪 ด่านทักษะชีวิต • เลือกวิธีที่ดีที่สุด"}</span>
-    <h2>${o.icon} ${o.title}</h2><p>${o.q}</p>
-    <div id="opts">${opts.map(([op,j])=>`<button class="opt" data-j="${j}">${op.x}</button>`).join("")}</div>
-    <div id="fb"></div>`;
-  if(done){card.insertAdjacentHTML("afterbegin",`<p class="small">✅ คุณเก็บลูกนี้แล้ว (เล่นซ้ำได้ แต่ไม่นับคะแนนเพิ่ม)</p>`);}
-  card.querySelectorAll(".opt").forEach(b=>b.onclick=()=>answer(i,+b.dataset.j,b,done));
-}
-function answer(i,j,btn,already){
-  if(Date.now()-openedAt<450) return;   // กันแตะซ้ำ (ghost click) หลังเปิดการ์ด
-  const o=ORBS[i], op=o.o[j];
-  card_lock();
-  btn.classList.add("pick");
-  let msg="";
-  if(o.k==="i"){
-    if(!already) S.score[op.t]++;
-    msg=`${TYPES[op.t].e} คำตอบนี้บอกว่าคุณมีมุม <b>${TYPES[op.t].n}</b> – ${TYPES[op.t].d}`;
-  }else{
-    const best=o.o.find(x=>x.best);
-    if(op.best){ btn.classList.add("good"); if(!already) S.stars++; msg=`⭐ ${op.f}`; }
-    else{
-      document.querySelectorAll(".opt").forEach(b=>{ if(o.o[+b.dataset.j].best) b.classList.add("good"); });
-      msg=`${op.f}<br><br>💡 <b>วิธีที่ดีที่สุด:</b> ${best.x}`;
+/* ================= วนเฟรม ================= */
+let tPrev=performance.now();
+function frame(now){
+  requestAnimationFrame(frame);
+  const dt=Math.min(.05,(now-tPrev)/1000);tPrev=now;const t=now/1000;
+  if(G.state==="intro") return;
+  monsters.forEach(m=>{
+    if(m===G.cur) return;
+    const u=m.userData;u.az+=Math.sin(t*.3+u.ph)*.0015;
+    m.position.copy(polar(u.az,u.d,u.y+Math.sin(t*1.6+u.ph)*.09));
+    u.body.scale.set(1,.92+Math.sin(t*3+u.ph)*.035,1);
+    m.rotation.y=Math.atan2(-m.position.x,-m.position.z);
+  });
+  if(G.cur){
+    const m=G.cur,u=m.userData;let dy=Math.sin(t*2)*.05,dx=0;
+    if(u.fx&&now<u.fx.until){
+      if(u.fx.t==="great") dy+=Math.abs(Math.sin((u.fx.until-now)/110))*.28;
+      if(u.fx.t==="bad") dx=Math.sin(now/22)*.07;
+      if(u.fx.t==="ok") dy+=Math.abs(Math.sin((u.fx.until-now)/150))*.1;
     }
+    m.position.set(dx,.8+dy,-2.5);m.scale.setScalar(.8);u.body.scale.set(1,.92+Math.sin(t*3)*.04,1);
   }
-  if(!already) S.done.add(i);
-  save();updateHud();
-  $("fb").innerHTML=`<div class="fb">${msg}</div><button class="btn" id="btnNext">${S.done.size>=N?"🧭 ดูเข็มทิศตัวตน":"ไปหาลูกแก้วต่อ ➜"}</button>`;
-  $("btnNext").onclick=()=>{ $("scQ").hidden=true; if(S.done.size>=N) showEnd(); else playing=true; };
-}
-function card_lock(){document.querySelectorAll(".opt").forEach(b=>b.disabled=true);}
-
-function updateHud(){
-  $("pCount").textContent=`${S.done.size}/${N}`;
-  $("pStar").textContent=`⭐ ${S.stars}`;
-  $("barFill").style.width=(S.done.size/N*100)+"%";
+  pets.forEach((p,i)=>{const u=p.userData;u.ang+=dt*.45;
+    p.position.set(Math.sin(u.ang)*1.6,.2+Math.sin(t*1.5+i)*.25+(i%2)*.4,-Math.cos(u.ang)*1.6);
+    p.rotation.y=Math.atan2(-p.position.x,-p.position.z);});
+  crystals.forEach((c,i)=>{c.userData.core.rotation.y+=dt*.8;c.userData.core.position.y=Math.sin(t*1.8+i)*.06;});
+  for(let i=fxs.length-1;i>=0;i--){const s=fxs[i],u=s.userData;u.life-=dt;u.v.y-=2.4*dt;s.position.addScaledVector(u.v,dt);
+    s.material.opacity=Math.max(0,u.life);if(u.life<=0){scene.remove(s);fxs.splice(i,1);}}
+  updateLock();updateRadar();
+  renderer.render(scene,camera);
 }
 
-/* ============ สรุปผล ============ */
-function showEnd(){
-  playing=false;
-  const arr=Object.entries(S.score).sort((a,b)=>b[1]-a[1]);
-  const max=arr[0][1], tops=arr.filter(a=>a[1]===max&&max>0).slice(0,2);
-  const sTotal=ORBS.filter(o=>o.k==="s").length;
-  const nm=S.name?`${S.name}`:"นักสำรวจ";
-  const bars=arr.map(([k,v])=>`<div class="t"><b>${TYPES[k].e} ${TYPES[k].n}</b><div class="tb"><i style="width:${v/3*100}%"></i></div><span>${v}</span></div>`).join("");
-  const skill=S.stars===sTotal?"ทักษะชีวิตครบทุกด่าน เก่งมาก! 🌟":S.stars>=2?"ทักษะชีวิตดีทีเดียว ลองทบทวนด่านที่พลาดอีกครั้ง":"ทักษะชีวิตยังพัฒนาได้อีก ลองคุยกับครูแนะแนวเพิ่มเติมนะ";
-  $("endCard").innerHTML=`<span class="tag">🧭 เข็มทิศตัวตนของ ${esc(nm)}</span>
-    <h1>${tops.map(t=>TYPES[t[0]].e+" "+TYPES[t[0]].n).join(" + ")||"นักสำรวจรอบด้าน"}</h1>
-    ${tops.map(t=>`<p><b>${TYPES[t[0]].n}:</b> ${TYPES[t[0]].d}<br><span class="small">อาชีพที่อาจเหมาะ: ${TYPES[t[0]].jobs}</span></p>`).join("")}
-    <div class="types">${bars}</div>
-    <p>💪 ด่านทักษะชีวิต: <b>${S.stars}/${sTotal} ดาว</b> – ${skill}</p>
-    <p class="small">ผลนี้เป็นเพียงจุดเริ่มต้นของการรู้จักตัวเอง ความสนใจเปลี่ยนได้เมื่อเราได้ลองสิ่งใหม่ ๆ
-    ไม่ได้ตัดสินว่าต้องเป็นอาชีพไหน<br>📸 แคปหน้าจอนี้ไปคุยกับครูแนะแนวได้เลย</p>
-    <button class="btn" id="btnAgain">🔄 เล่นใหม่</button>`;
-  $("scEnd").hidden=false;
-  $("btnAgain").onclick=()=>{ resetAll(); $("scEnd").hidden=true; $("scStart").hidden=false; };
+/* ================= UI ================= */
+function showSheet(html,tall){const s=$("sheet");s.className="sheet"+(tall?" tall":"");s.innerHTML=html;s.hidden=false;s.scrollTop=0;}
+function hideSheet(){$("sheet").hidden=true;}
+function hint(t){const h=$("hint");h.textContent=t;h.hidden=!t;}
+function renderSlots(){
+  $("slots").innerHTML=MON.map(m=>`<div class="slot ${G.tamed[m.id]?"on":""}">${m.emoji}</div>`).join("");
+  $("hello").textContent="นักล่า "+(G.name?esc(G.name)+" ":"")+"• "+Object.keys(G.tamed).length+"/5";
 }
-const esc=s=>s.replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+let openedAt=0;
+function guard(){return Date.now()-openedAt<450;}   // กันแตะซ้ำ (ghost click) หลังเปิดการ์ด
 
-/* ============ บันทึกในเครื่อง (ไม่ส่งออก) ============ */
-const KEY="arquest_v1";
-function save(){try{localStorage.setItem(KEY,JSON.stringify({d:[...S.done],s:S.score,st:S.stars,n:S.name}));}catch(e){}}
-function load(){try{const j=JSON.parse(localStorage.getItem(KEY)||"null"); if(j){S.done=new Set(j.d);S.score=j.s;S.stars=j.st;S.name=j.n||"";}}catch(e){}}
-function resetAll(){S.done=new Set();S.score={R:0,I:0,A:0,S:0,E:0,C:0};S.stars=0;try{localStorage.removeItem(KEY);}catch(e){}updateHud();}
+/* ===== ต่อสู้ ===== */
+function startBattle(m){
+  G.state="battle";G.cur=m;G.round=0;G.score=0;
+  scene.remove(m);camera.add(m);m.rotation.set(0,0,0);
+  $("cross").hidden=true;$("prompt").hidden=true;hint("");
+  openedAt=Date.now();vib(20);
+  renderRound(true);
+}
+function renderRound(first){
+  const d=G.cur.userData.def,r=d.rounds[G.round];
+  const left=Math.max(0,4-G.score)/4*100;
+  showSheet(`
+    <div class="row"><span class="badge">${d.emoji} ${d.name} • ${d.feel}</span><span class="pw"><i style="width:${left}%"></i></span><span class="badge">รอบ ${G.round+1}/2</span></div>
+    <div class="say">${first&&G.round===0?`<b>${d.name}:</b> "โฮ่ง! ฉันคือ${d.feel}! เธอจะเอาชนะฉันได้เหรอ?"<br><br>`:""}${r.s}</div>
+    <div id="opts">${shuffle(r.o).map((o,i)=>`<button class="opt" data-r="${o.r}"><span class="k">${"ABC"[i]}</span><span>🪄 ${o.x}</span></button>`).join("")}</div>
+    <div id="fbx"></div>`);
+  document.querySelectorAll(".opt").forEach(b=>b.onclick=()=>answer(b,d,r));
+}
+function answer(btn,d,r){
+  if(guard()) return;
+  const rr=+btn.dataset.r,o=r.o.find(x=>x.r===rr);
+  document.querySelectorAll(".opt").forEach(b=>{b.disabled=true;if(+b.dataset.r===2)b.classList.add("great");if(b!==btn&&+b.dataset.r!==2)b.classList.add("dim");});
+  btn.classList.add("picked");
+  G.score+=rr;const m=G.cur,now=performance.now();
+  scene.updateMatrixWorld(true);const wp=new THREE.Vector3();m.getWorldPosition(wp);
+  if(rr===2){sfx.great();m.userData.fx={t:"great",until:now+900};burst(wp,["⭐","💖","✨"],12);}
+  else if(rr===1){sfx.ok();m.userData.fx={t:"ok",until:now+600};burst(wp,["✨"],5);}
+  else{sfx.bad();m.userData.fx={t:"bad",until:now+700};burst(wp,["💢"],4);}
+  const last=G.round>=1,tamed=G.score>=3;
+  document.querySelector(".pw i").style.width=(tamed&&last?0:Math.max(0,4-G.score)/4*100)+"%";
+  const lbl=rr===2?"✨ คาถาได้ผลสุด ๆ":rr===1?"🙂 ได้ผลบ้าง":"🌀 ยังไม่ค่อยได้ผล";
+  $("fbx").innerHTML=`<div class="fb"><b>${lbl}</b><br>${o.f}</div>
+    <button class="btn" id="nx">${last?(tamed?"🎉 ดูผลการปราบ":"ดูผลรอบนี้"):"ไปรอบต่อไป ➜"}</button>`;
+  openedAt=Date.now();
+  $("nx").onclick=()=>{if(guard())return;openedAt=Date.now();if(!last){G.round++;renderRound(false);}else finishBattle(tamed);};
+  $("sheet").scrollTop=$("sheet").scrollHeight;
+}
+function finishBattle(tamed){
+  const m=G.cur,d=m.userData.def,stars=G.score>=4?2:1;
+  openedAt=Date.now();
+  if(tamed){
+    sfx.tame();setCalm(m,true);scene.updateMatrixWorld(true);const wp=new THREE.Vector3();m.getWorldPosition(wp);burst(wp,["⭐","💖","🎉","✨"],22);
+    G.tamed[d.id]=stars;if(!G.orderTamed.includes(d.id))G.orderTamed.push(d.id);save();renderSlots();
+    showSheet(`<div style="text-align:center"><div style="font-size:46px">${d.emoji}</div>
+      <h2>ปราบ${d.name}สำเร็จ! ${"⭐".repeat(stars)}</h2>
+      <p>${d.name} สงบลงแล้ว และขอเป็นเพื่อนคู่ใจของเธอ 💖</p></div>
+      <div class="mc"><div class="e">🎁</div><div><b>ได้รับ: ${d.gift}</b><br>${d.learn}</div></div>
+      <button class="btn" id="go">${Object.keys(G.tamed).length>=5?"🔮 ไปห้องปลดล็อกตัวตน":"ออกล่าตัวต่อไป ➜"}</button>`);
+    $("go").onclick=()=>{if(guard())return;releaseTamed(m);};
+  }else{
+    showSheet(`<div style="text-align:center"><div style="font-size:46px">💨</div><h2>${d.name}หนีไปได้!</h2>
+      <p>ไม่เป็นไรนะ นักล่าเก่ง ๆ ก็พลาดได้ ${d.name}ซ่อนตัวอยู่ใกล้ ๆ ลองกลับไปท้าทายใหม่ แล้วเลือกคาถาที่ <b>ใจเย็นและพูดดี ๆ</b> ดูนะ</p></div>
+      <button class="btn" id="go">ลองใหม่อีกครั้ง ➜</button>`);
+    $("go").onclick=()=>{if(guard())return;releaseEscaped(m);};
+  }
+}
+function leaveCamera(m){camera.remove(m);m.userData.fx=null;m.rotation.set(0,0,0);}
+function releaseTamed(m){
+  leaveCamera(m);const i=monsters.indexOf(m);if(i>=0)monsters.splice(i,1);
+  m.scale.setScalar(.38);m.userData.ang=Math.random()*6.28;scene.add(m);pets.push(m);
+  G.cur=null;hideSheet();
+  if(Object.keys(G.tamed).length>=5) startCrystals();
+  else{G.state="hunt";$("cross").hidden=false;hint("หมุนตัวหามอนสเตอร์ตัวต่อไป • ดูทิศบนเรดาร์");}
+}
+function releaseEscaped(m){
+  leaveCamera(m);setCalm(m,false);m.userData.az=Math.random()*6.28;m.scale.setScalar(1);scene.add(m);G.cur=null;
+  G.state="hunt";$("cross").hidden=false;hideSheet();hint("หามอนสเตอร์ที่หนีไป แล้วท้าทายใหม่!");
+}
 
-/* ============ เริ่มเกม ============ */
+/* ===== ห้องปลดล็อกตัวตน (คริสตัล) ===== */
+function startCrystals(){
+  G.state="crystals";G.picks=[];
+  Object.keys(TYPES).forEach((k,i)=>{
+    const T=TYPES[k],az=i/6*Math.PI*2+.3,g=new THREE.Group();
+    const core=new THREE.Mesh(new THREE.OctahedronGeometry(.4),new THREE.MeshToonMaterial({color:T.c,emissive:T.c,emissiveIntensity:.35}));
+    const ol=new THREE.Mesh(core.geometry,OUTLINE);ol.scale.setScalar(1.08);core.add(ol);g.add(core);
+    const em=emojiSprite(T.e,.42);em.position.y=.8;g.add(em);
+    const lb=labelSprite(T.a,"#"+T.c.toString(16).padStart(6,"0"));lb.position.y=-.7;g.add(lb);
+    const hit=new THREE.Mesh(new THREE.SphereGeometry(.8,8,8),new THREE.MeshBasicMaterial({visible:false}));g.add(hit);
+    g.position.copy(polar(az,2.8,.25+(i%3)*.35-.3));g.userData={key:k,core:core,hit:hit,d:2.8,col:T.c,badge:null};
+    scene.add(g);crystals.push(g);
+  });
+  $("cross").hidden=false;
+  showSheet(`<div style="text-align:center"><div style="font-size:40px">🔮</div><h2>ห้องปลดล็อกตัวตน</h2>
+    <p>เพื่อนทั้ง 5 มอบพลังให้แล้ว! ตอนนี้มีคริสตัล 6 ลูกลอยอยู่รอบตัว แต่ละลูกคือ "สิ่งที่คนเราชอบทำ"<br>
+    แตะเลือก <b>3 ลูกที่อยากลองมากที่สุด</b> ตามลำดับ (ลูกแรก = อยากที่สุด)</p>
+    <p style="font-size:13px;opacity:.75">ไม่มีถูกผิด เลือกตามใจจริง ๆ นะ</p></div>
+    <button class="btn" id="go">เริ่มเลือกคริสตัล</button>`);
+  $("go").onclick=()=>{if(guard())return;hideSheet();hint("แตะคริสตัล 3 ลูก • แตะซ้ำเพื่อยกเลิก");};
+  openedAt=Date.now();
+}
+function pickCrystal(c){
+  const u=c.userData,i=G.picks.indexOf(u.key);
+  if(i>=0){G.picks.splice(i,1);}else{if(G.picks.length>=3)return;G.picks.push(u.key);burst(c.position,["✨"],6);sfx.great();}
+  crystals.forEach(k=>{const n=G.picks.indexOf(k.userData.key);
+    if(k.userData.badge){k.remove(k.userData.badge);k.userData.badge=null;}
+    k.scale.setScalar(n>=0?1.3:1);
+    if(n>=0){const b=emojiSprite(["🥇","🥈","🥉"][n],.45);b.position.set(.55,.5,0);k.add(b);k.userData.badge=b;}});
+  hint(G.picks.length<3?"เลือกแล้ว "+G.picks.length+"/3":"");
+  if(G.picks.length===3){G.state="result";$("cross").hidden=true;$("prompt").hidden=true;hint("");setTimeout(showResult,700);}
+}
+
+/* ===== ผลลัพธ์ + การ์ด ===== */
+function computeResult(){
+  const w={R:0,I:0,A:0,S:0,E:0,C:0};G.picks.forEach((k,i)=>w[k]+=3-i);
+  const main=G.picks[0],second=G.picks[1];
+  let bestId=G.orderTamed[0],bs=-1;
+  G.orderTamed.forEach(id=>{if((G.tamed[id]||0)>bs){bs=G.tamed[id];bestId=id;}});
+  const mon=MON.find(m=>m.id===bestId)||MON[0];
+  return {w:w,main:main,second:second,mon:mon,title:TYPES[main].n+"สาย"+mon.trait};
+}
+function drawCard(res){
+  const W=1080,H=1350,c=document.createElement("canvas");c.width=W;c.height=H;const x=c.getContext("2d");
+  const hex=n=>"#"+n.toString(16).padStart(6,"0");
+  const g=x.createLinearGradient(0,0,W,H);g.addColorStop(0,"#241b6b");g.addColorStop(.6,"#4b2a8f");g.addColorStop(1,hex(TYPES[res.main].c));
+  x.fillStyle=g;x.fillRect(0,0,W,H);
+  x.fillStyle="rgba(255,255,255,.07)";for(let i=0;i<24;i++){x.beginPath();x.arc((i*197)%W,(i*311)%H,30+(i*13)%60,0,7);x.fill();}
+  const F="Prompt,'Noto Sans Thai',sans-serif",EM="system-ui,'Apple Color Emoji','Noto Color Emoji'";
+  x.textAlign="center";x.fillStyle="#fff";
+  x.font="600 40px "+F;x.fillText("การ์ดนักล่ามอนสเตอร์ใจป่วน",W/2,110);
+  x.font="500 34px "+F;x.globalAlpha=.8;x.fillText("ของ "+(G.name||"นักล่านิรนาม"),W/2,162);x.globalAlpha=1;
+  x.font="220px "+EM;x.fillText(TYPES[res.main].e,W/2,420);
+  x.font="700 80px "+F;x.fillText(res.title,W/2,545);
+  x.font="500 38px "+F;x.globalAlpha=.9;x.fillText(TYPES[res.main].a,W/2,605);x.globalAlpha=1;
+  x.font="76px "+EM;x.fillText(MON.map(m=>m.emoji).join("   "),W/2,730);
+  x.font="500 32px "+F;x.fillText("เพื่อนคู่ใจ 5 ตัว ปราบด้วยใจเย็น",W/2,785);
+  Object.entries(res.w).sort((a,b)=>b[1]-a[1]).forEach(([k,v],i)=>{
+    const y=850+i*58;x.textAlign="left";x.font="500 30px "+F;x.fillStyle="#fff";x.fillText(TYPES[k].e+" "+TYPES[k].n,150,y);
+    x.fillStyle="rgba(255,255,255,.2)";x.fillRect(450,y-24,480,24);x.fillStyle=hex(TYPES[k].c);x.fillRect(450,y-24,480*v/6,24);});
+  x.fillStyle="#fff";x.textAlign="center";x.font="500 32px "+F;x.fillText("พลังพิเศษ: "+res.mon.gift,W/2,1245);
+  x.font="400 26px "+F;x.globalAlpha=.75;x.fillText("โรงเรียนพูลเจริญวิทยาคม • กิจกรรมแนะแนว ม.1",W/2,1305);x.globalAlpha=1;
+  return c;
+}
+function showResult(){
+  const res=computeResult(),url=drawCard(res).toDataURL("image/png"),T=TYPES[res.main],T2=TYPES[res.second];
+  const bars=Object.entries(res.w).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<div><b>${TYPES[k].e} ${TYPES[k].n}</b><span><i style="width:${v/6*100}%"></i></span></div>`).join("");
+  openedAt=Date.now();
+  showSheet(`<div style="text-align:center"><span class="badge">🧭 ผลของ ${esc(G.name||"นักล่า")}</span><h2 style="margin-top:8px">${T.e} ${res.title}</h2></div>
+    <img class="card-img" src="${url}" alt="การ์ดตัวตน">
+    <p><b>${T.n}:</b> ชอบ${T.a}<br><span style="opacity:.8">อาชีพที่อาจเหมาะ: ${T.jobs}</span></p>
+    <p>เสริมด้วย <b>${T2.n}</b> • พลังพิเศษ <b>${res.mon.gift}</b> จาก${res.mon.name}</p>
+    <div class="bars">${bars}</div>
+    <p style="font-size:13.5px;opacity:.8">ผลนี้เป็นแค่จุดเริ่มต้นของการรู้จักตัวเอง ความสนใจเปลี่ยนได้เมื่อเราลองสิ่งใหม่ ๆ ไม่ได้ตัดสินว่าต้องเป็นอาชีพไหน — เอาการ์ดไปคุยกับครูแนะแนวได้เลย</p>
+    <a id="dl" class="btn" download="monster-quest-card.png" href="${url}" style="text-decoration:none;text-align:center">💾 บันทึกการ์ด</a>
+    <button class="btn ghost" id="again">🔄 เริ่มเล่นใหม่</button>`,true);
+  $("again").onclick=()=>{try{localStorage.removeItem(KEY);}catch(e){}location.reload();};sfx.tame();
+}
+
+/* ===== สมุดมอนสเตอร์ ===== */
+function openBook(){
+  if(G.state!=="hunt"&&G.state!=="crystals") return;
+  const prev=G.state;G.state="book";openedAt=Date.now();
+  showSheet(`<h2>📖 สมุดมอนสเตอร์</h2>`+MON.map(m=>G.tamed[m.id]?
+    `<div class="mc"><div class="e">${m.emoji}</div><div><b>${m.name}</b> ${"⭐".repeat(G.tamed[m.id])}<br>${m.learn}</div></div>`:
+    `<div class="mc"><div class="e">❓</div><div><b>ยังไม่เจอ</b><br>ตามหาตัวนี้ในห้องแล้วปราบให้ได้!</div></div>`).join("")+
+    `<button class="btn ghost" id="cl">ปิด</button>`,true);
+  $("cl").onclick=()=>{if(guard())return;hideSheet();G.state=prev;};
+}
+
+/* ================= เริ่มเกม ================= */
 async function start(useCam){
-  S.name=$("nick").value.trim();
-  if(S.done.size>=N) resetAll();
+  G.name=$("nick").value.trim();save();
+  try{AC=new (window.AudioContext||window.webkitAudioContext)();}catch(e){}
   if(useCam){
-    try{
-      const st=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:"environment"}},audio:false});
-      $("bg").srcObject=st; S.cam=true;
-    }catch(e){ alert("เปิดกล้องไม่ได้ ระบบจะเปลี่ยนเป็นโหมดไม่ใช้กล้องให้นะ"); }
+    try{const st=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:"environment"}},audio:false});$("bg").srcObject=st;G.cam=true;}
+    catch(e){alert("เปิดกล้องไม่ได้ ระบบจะเปลี่ยนเป็นโหมดไม่ใช้กล้องให้นะ");}
   }
-  // iOS ต้องขอสิทธิ์เซนเซอร์หลังผู้ใช้แตะปุ่ม
   try{
-    if(typeof DeviceOrientationEvent!=="undefined" && typeof DeviceOrientationEvent.requestPermission==="function"){
-      const r=await DeviceOrientationEvent.requestPermission();
-      if(r==="granted") addEventListener("deviceorientation",onOri);
+    if(typeof DeviceOrientationEvent!=="undefined"&&typeof DeviceOrientationEvent.requestPermission==="function"){
+      const r=await DeviceOrientationEvent.requestPermission();if(r==="granted")addEventListener("deviceorientation",onOri);
     }else addEventListener("deviceorientation",onOri);
   }catch(e){}
-  $("scStart").hidden=true;$("hud").hidden=false;$("hint").hidden=false;
-  updateHud();playing=true;
-  setTimeout(()=>{ if(!S.gyro) $("hint").textContent="👆 ลากนิ้วบนจอเพื่อมองรอบห้อง แล้วแตะลูกแก้ว"; },1500);
-  setTimeout(()=>{$("hint").hidden=true;},9000);
+  $("intro").hidden=true;$("hud").hidden=false;$("cross").hidden=false;
+  const rest=MON.filter(m=>!G.tamed[m.id]);
+  MON.filter(m=>G.tamed[m.id]).forEach(m=>{const p=buildMonster(m);setCalm(p,true);p.scale.setScalar(.38);p.userData.ang=Math.random()*6.28;scene.add(p);pets.push(p);});
+  rest.forEach((m,i)=>spawnMonster(m,(i/rest.length)*Math.PI*2+Math.random()*.7+.4));
+  renderSlots();
+  G.state="hunt";
+  if(!rest.length) startCrystals();
+  else{hint("📱 หมุนตัวช้า ๆ หามอนสเตอร์ • ดูทิศบนเรดาร์");
+    setTimeout(()=>{if(!G.gyro&&G.state==="hunt") hint("👆 ลากนิ้วบนจอเพื่อมองรอบห้อง");},1500);}
 }
 $("btnStart").onclick=()=>start(true);
 $("btnNoCam").onclick=()=>start(false);
-load();
+$("btnBook").onclick=openBook;
+$("btnSnd").onclick=e=>{G.snd=!G.snd;e.currentTarget.textContent=G.snd?"🔊":"🔇";};
+load();if(G.name)$("nick").value=G.name;
+if(Object.keys(G.tamed).length) $("btnStart").textContent="📷 เล่นต่อ ("+Object.keys(G.tamed).length+"/5)";
 requestAnimationFrame(frame);
 </script>
 </body>
