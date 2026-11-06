@@ -5,6 +5,7 @@
  * เปลี่ยน VERSION เมื่อแก้ไฟล์นี้หรือเปลี่ยนไอคอน
  */
 const VERSION = 'pcw-v1';
+const AR = 'pcw-ar-v1';   // เกม AR แนะแนว: แคชไว้เล่นออฟไลน์ (ไม่มีข้อมูลนักเรียนในหน้านี้)
 const SHELL = ['offline.html', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/apple-touch-icon.png', 'manifest.webmanifest'];
 
 self.addEventListener('install', e => {
@@ -13,7 +14,7 @@ self.addEventListener('install', e => {
 
 self.addEventListener('activate', e => {
   e.waitUntil(
-    caches.keys().then(keys => Promise.all(keys.filter(k => k !== VERSION).map(k => caches.delete(k))))
+    caches.keys().then(keys => Promise.all(keys.filter(k => k !== VERSION && k !== AR).map(k => caches.delete(k))))
       .then(() => self.clients.claim())
   );
 });
@@ -24,6 +25,13 @@ self.addEventListener('fetch', e => {
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return;          // Supabase, ฟอนต์, CDN: ไม่ยุ่ง
 
+  if (req.mode === 'navigate' && url.pathname.endsWith('/ar-quest.html')) {   // เกม AR: เน็ตก่อน ถ้าหลุดใช้ที่แคชไว้
+    e.respondWith(fetch(req).then(res => {
+      if (res.ok) { const copy = res.clone(); caches.open(AR).then(c => c.put('ar-quest.html', copy)); }
+      return res;
+    }).catch(() => caches.match('ar-quest.html').then(hit => hit || caches.match('offline.html'))));
+    return;
+  }
   if (req.mode === 'navigate') {                            // หน้าเว็บ: เน็ตก่อน
     e.respondWith(fetch(req).catch(() => caches.match('offline.html')));
     return;
