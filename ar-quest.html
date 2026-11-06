@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>ล่าสมบัติค้นหาตัวตน (AR) – แนะแนว ม.1</title>
+<style>
+  :root{--ink:#1d2340;--gold:#ffc93c;--pink:#ff6b9d;--mint:#3ddc97;--card:#fffdf7}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;height:100%;overflow:hidden;background:#12162e;color:var(--ink);
+    font-family:"Sarabun","Noto Sans Thai",system-ui,sans-serif;touch-action:none;user-select:none}
+  #bg{position:fixed;inset:0;width:100%;height:100%;object-fit:cover;background:
+    radial-gradient(circle at 30% 20%,#3b4a9c,#12162e 70%)}
+  #cv{position:fixed;inset:0;width:100%;height:100%}
+  .hud{position:fixed;left:0;right:0;top:0;padding:calc(env(safe-area-inset-top) + 8px) 12px 8px;
+    display:flex;gap:8px;align-items:center;justify-content:space-between;pointer-events:none;z-index:5}
+  .pill{background:rgba(18,22,46,.78);color:#fff;border-radius:999px;padding:6px 14px;font-weight:700;font-size:15px}
+  .bar{flex:1;height:10px;background:rgba(255,255,255,.25);border-radius:9px;overflow:hidden}
+  .bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--gold),var(--pink));transition:width .4s}
+  #hint{position:fixed;bottom:calc(env(safe-area-inset-bottom) + 14px);left:50%;transform:translateX(-50%);
+    background:rgba(18,22,46,.78);color:#fff;padding:8px 16px;border-radius:999px;font-size:14px;z-index:5;
+    pointer-events:none;white-space:nowrap}
+  .screen{position:fixed;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;
+    padding:16px;background:rgba(10,12,30,.82);overflow:auto;touch-action:pan-y}
+  .card{background:var(--card);border-radius:22px;padding:20px 18px;max-width:440px;width:100%;
+    box-shadow:0 12px 40px rgba(0,0,0,.4);animation:pop .25s ease-out}
+  @keyframes pop{from{transform:scale(.9);opacity:0}to{transform:none;opacity:1}}
+  h1{margin:0 0 6px;font-size:26px;line-height:1.25}
+  h2{margin:0 0 8px;font-size:20px;line-height:1.3}
+  p{margin:6px 0;line-height:1.6;font-size:16px}
+  .tag{display:inline-block;font-size:13px;font-weight:700;background:#eef0ff;color:#4a55b5;border-radius:99px;padding:2px 10px;margin-bottom:6px}
+  [hidden]{display:none!important}
+  button{font:inherit;cursor:pointer;border:0}
+  .btn{display:block;width:100%;margin-top:10px;padding:13px 14px;border-radius:14px;font-weight:700;font-size:17px;
+    background:var(--gold);color:var(--ink);box-shadow:0 3px 0 #d9a514}
+  .btn.alt{background:#e9ecff;box-shadow:0 3px 0 #c3c8ee}
+  .opt{display:block;width:100%;text-align:left;margin-top:9px;padding:12px 14px;border-radius:14px;
+    background:#fff;border:2px solid #dfe3f7;font-size:16px;line-height:1.45;color:var(--ink)}
+  .opt:active{transform:scale(.98)}
+  .opt.good{border-color:var(--mint);background:#e8fff4}
+  .opt.pick{border-color:#7a86e8;background:#eef0ff}
+  .fb{margin-top:10px;padding:10px 12px;border-radius:12px;background:#fff6dc;font-size:15px;line-height:1.55}
+  .small{font-size:13px;color:#6b7194}
+  .types{display:grid;gap:8px;margin:10px 0}
+  .t{display:flex;gap:10px;align-items:center}
+  .t b{width:92px;font-size:14px}
+  .t .tb{flex:1;height:12px;background:#e6e8f5;border-radius:9px;overflow:hidden}
+  .t .tb i{display:block;height:100%;background:linear-gradient(90deg,#7a86e8,var(--pink))}
+  input[type=text]{width:100%;padding:11px 12px;border:2px solid #dfe3f7;border-radius:12px;font:inherit;margin-top:6px}
+</style>
+</head>
+<body>
+<video id="bg" playsinline muted autoplay></video>
+<canvas id="cv"></canvas>
+
+<div class="hud" id="hud" hidden>
+  <div class="pill" id="pCount">0/10</div>
+  <div class="bar"><i id="barFill"></i></div>
+  <div class="pill" id="pStar">⭐ 0</div>
+</div>
+<div id="hint" hidden>📱 หมุนตัวช้า ๆ มองรอบห้อง แล้วแตะลูกแก้วที่ลอยอยู่</div>
+
+<div class="screen" id="scStart">
+  <div class="card">
+    <span class="tag">แนะแนว ม.1 • เกม AR</span>
+    <h1>🔮 ล่าสมบัติค้นหาตัวตน</h1>
+    <p>มีลูกแก้วลอยอยู่รอบตัวคุณทั้ง <b>10 ลูก</b> ใช้กล้องมือถือมองรอบห้องเพื่อตามหา แตะแต่ละลูกเพื่อเจอภารกิจ</p>
+    <p>🔎 6 ลูก = <b>ค้นหาตัวเอง</b> (ไม่มีถูกผิด เลือกสิ่งที่ใช่ที่สุด)<br>
+       💪 4 ลูก = <b>ด่านฝึกทักษะชีวิต</b> (เลือกวิธีที่ดีที่สุด รับดาว ⭐)</p>
+    <p>เก็บครบแล้วจะได้ <b>เข็มทิศตัวตน</b> บอกว่าคุณเป็นนักสำรวจแบบไหน</p>
+    <input type="text" id="nick" placeholder="ชื่อเล่นของคุณ" maxlength="20">
+    <button class="btn" id="btnStart">▶ เริ่มภารกิจ (เปิดกล้อง)</button>
+    <button class="btn alt" id="btnNoCam">เล่นโดยไม่ใช้กล้อง (ลากนิ้วเพื่อมองรอบ ๆ)</button>
+    <p class="small">🔒 กล้องใช้แสดงภาพสดเท่านั้น ไม่มีการบันทึกภาพ และคำตอบอยู่ในเครื่องของคุณ ไม่ส่งไปที่ใด</p>
+  </div>
+</div>
+
+<div class="screen" id="scQ" hidden><div class="card" id="qCard"></div></div>
+<div class="screen" id="scEnd" hidden><div class="card" id="endCard"></div></div>
+
+<script>
+"use strict";
+/* ============ เนื้อหาเกม ============ */
+const TYPES = {
+  R:{n:"สายลงมือทำ",   e:"🔧", d:"ชอบประกอบ ซ่อม สร้าง ลงมือทำจริง",       jobs:"ช่าง วิศวกร นักเกษตร นักกีฬา เชฟ"},
+  I:{n:"สายช่างสงสัย", e:"🔬", d:"ชอบตั้งคำถาม ทดลอง หาคำตอบด้วยเหตุผล",     jobs:"แพทย์ นักวิทยาศาสตร์ โปรแกรมเมอร์ นักวิจัย"},
+  A:{n:"สายสร้างสรรค์",e:"🎨", d:"มีความคิดใหม่ ๆ ชอบแสดงออกและออกแบบ",       jobs:"นักออกแบบ นักดนตรี ผู้สร้างคอนเทนต์ สถาปนิก"},
+  S:{n:"สายผู้ช่วยเหลือ",e:"🤝",d:"ใส่ใจคนอื่น ฟังเก่ง ชอบดูแลและช่วยเหลือ",  jobs:"ครู พยาบาล นักจิตวิทยา นักสังคมสงเคราะห์"},
+  E:{n:"สายผู้นำ",     e:"🚀", d:"กล้าตัดสินใจ ชอบชวนคน วางแผนนำทีม",         jobs:"ผู้ประกอบการ ผู้จัดการ ทนายความ นักการตลาด"},
+  C:{n:"สายเป็นระบบ",  e:"📊", d:"รอบคอบ เป็นระเบียบ ชอบจัดการข้อมูลให้ชัด",  jobs:"นักบัญชี นักวิเคราะห์ข้อมูล เลขานุการ นักตรวจสอบ"}
+};
+
+// kind:"i" = ค้นหาตัวเอง (option.t = ประเภท) | kind:"s" = ทักษะชีวิต (option.best = ดีที่สุด)
+const ORBS = [
+ {k:"i",icon:"🏆",title:"งานกีฬาสี",q:"โรงเรียนจัดงานกีฬาสี ถ้าเลือกหน้าที่ได้ คุณอยากทำอะไร?",
+  o:[{t:"R",x:"สร้างฉากเชียร์ ซ่อมอุปกรณ์ ลงมือประกอบ"},{t:"A",x:"ออกแบบโปสเตอร์และการแสดงเปิดงาน"},{t:"E",x:"เป็นหัวหน้าสี วางแผนและนำทีม"}]},
+ {k:"s",icon:"📝",title:"สอบได้น้อย",q:"สอบกลางภาคได้คะแนนน้อยกว่าที่หวังไว้ คุณจะทำอย่างไร?",
+  o:[{x:"ดูว่าผิดข้อไหน ถามครูหรือเพื่อน แล้ววางแผนทบทวนใหม่",best:1,f:"ใช่เลย! มองความผิดพลาดเป็นข้อมูลให้พัฒนา คนเก่งขึ้นได้ด้วยวิธีนี้"},
+     {x:"คิดว่าเราไม่เก่งวิชานี้ เลิกพยายามดีกว่า",f:"เข้าใจว่าท้อ แต่ 'ยังทำไม่ได้' ไม่ได้แปลว่า 'ทำไม่ได้ตลอดไป' ลองกลับมามองหาจุดที่แก้ได้"},
+     {x:"โทษข้อสอบว่ายากเกินไป",f:"บางครั้งข้อสอบก็ยากจริง แต่ถ้าหาจุดที่เราปรับได้ จะเก่งขึ้นเร็วกว่า"}]},
+ {k:"i",icon:"🌈",title:"วันว่างสุดสัปดาห์",q:"วันว่างหนึ่งวัน คุณอยากใช้เวลาแบบไหนมากที่สุด?",
+  o:[{t:"I",x:"ทดลองวิทยาศาสตร์ หรือดูสารคดีที่อยากรู้"},{t:"S",x:"ไปช่วยงานจิตอาสา หรือติวหนังสือให้เพื่อน"},{t:"C",x:"จัดห้อง จัดตารางสัปดาห์หน้าให้เรียบร้อย"}]},
+ {k:"s",icon:"😤",title:"โดนเพื่อนล้อ",q:"เพื่อนล้อชื่อหรือรูปร่างของคุณต่อหน้าคนอื่น คุณจะทำอย่างไร?",
+  o:[{x:"บอกเพื่อนตรง ๆ ว่าไม่ชอบ ขอให้หยุด ถ้ายังไม่หยุดให้บอกครูแนะแนว",best:1,f:"ถูกต้อง! การบอกอย่างหนักแน่นและขอความช่วยเหลือเป็นความกล้าหาญ"},
+     {x:"ล้อกลับให้แรงกว่าเดิม",f:"ความโกรธเป็นเรื่องปกติ แต่การล้อกลับจะทำให้เรื่องบานปลาย ลองหายใจลึก ๆ แล้วใช้วิธีอื่น"},
+     {x:"เก็บไว้คนเดียว ไม่บอกใคร",f:"การเก็บไว้คนเดียวทำให้หนักใจ ครูและผู้ปกครองพร้อมช่วยเสมอนะ"}]},
+ {k:"i",icon:"📁",title:"โปรเจกต์กลุ่ม",q:"ทำโปรเจกต์กลุ่ม คุณถนัดหน้าที่ไหน?",
+  o:[{t:"A",x:"ออกแบบสไลด์ ทำคลิป หรือตกแต่งงานให้สวย"},{t:"C",x:"จดรายละเอียด ตรวจความถูกต้อง ดูเรื่องเวลา"},{t:"I",x:"ค้นคว้าข้อมูลให้ลึกและหาคำตอบที่ยังไม่มีใครรู้"}]},
+ {k:"s",icon:"🏫",title:"เพื่อนใหม่ ม.1",q:"วันแรก ๆ ของ ม.1 ยังไม่รู้จักใครเลย คุณจะทำอย่างไร?",
+  o:[{x:"ทักคนข้างเคียง แนะนำตัว และชวนคุยเรื่องที่ชอบเหมือนกัน",best:1,f:"เยี่ยม! เรื่องที่ชอบเหมือนกันเป็นประตูสู่มิตรภาพ ลองสมัครชุมนุมเพิ่มด้วยนะ"},
+     {x:"นั่งเงียบ ๆ รอให้ใครมาทัก",f:"ไม่ผิดนะ แต่ถ้าลองทักก่อนสักประโยค เพื่อนหลายคนก็รออยู่เหมือนกัน"},
+     {x:"ไปอยู่กับเพื่อนเก่าจากประถมเท่านั้น",f:"เพื่อนเก่าสำคัญ แต่การเปิดใจรู้จักคนใหม่ทำให้โลกเรากว้างขึ้น"}]},
+ {k:"i",icon:"🎪",title:"ชุมนุมในฝัน",q:"ถ้าต้องเลือกชุมนุม 1 ชุมนุม คุณอยากเข้าชุมนุมไหน?",
+  o:[{t:"R",x:"หุ่นยนต์ / งานช่าง / ทำอาหาร"},{t:"E",x:"ธุรกิจน้อย / โต้วาที / สภานักเรียน"},{t:"A",x:"ดนตรี / ศิลปะ / การแสดง"}]},
+ {k:"s",icon:"⏰",title:"งานเยอะมาก",q:"ครูสั่งงาน 3 วิชา ส่งพร้อมกันพรุ่งนี้ ทำไม่ทันทั้งหมด คุณจะทำอย่างไร?",
+  o:[{x:"จดรายการงาน เรียงตามความด่วนและความสำคัญ แล้วทำทีละอย่าง",best:1,f:"ดีมาก! การเรียงลำดับความสำคัญคือทักษะที่คนทำงานเก่งใช้ทุกวัน"},
+     {x:"เล่นเกมก่อนให้หายเครียด แล้วค่อยทำ",f:"พักได้ แต่ควรกำหนดเวลาพักก่อน ไม่งั้นเวลาจะหมดไปเอง"},
+     {x:"ทำทุกอย่างพร้อมกัน สลับไปมา",f:"การสลับงานบ่อย ๆ ทำให้ช้าลงและผิดพลาดง่าย ลองทำทีละอย่างจะเร็วกว่า"}]},
+ {k:"i",icon:"🎁",title:"ของขวัญที่อยากได้",q:"ถ้าเลือกของขวัญจากกล่องลึกลับได้ 1 อย่าง คุณจะเลือกอะไร?",
+  o:[{t:"S",x:"ชุดปฐมพยาบาล ไว้ดูแลคนที่เรารัก"},{t:"E",x:"ชุดสร้างธุรกิจเล็ก ๆ ของตัวเอง"},{t:"R",x:"กล่องเครื่องมือครบชุด"}]},
+ {k:"i",icon:"🧑‍💼",title:"ฝึกงาน 1 วัน",q:"ถ้าไปฝึกงาน 1 วัน คุณอยากไปที่ไหน?",
+  o:[{t:"I",x:"ห้องแล็บวิทยาศาสตร์"},{t:"S",x:"โรงพยาบาล ช่วยดูแลผู้ป่วย"},{t:"C",x:"สำนักงานบัญชี จัดการตัวเลขและเอกสาร"}]}
+];
+// 6 ลูกค้นหาตัวเองเลือกประเภทละ 3 ครั้งทั้งหมด → ตรวจในสคริปต์ทดสอบ
+
+/* ============ สถานะ ============ */
+const S = {done:new Set(), score:{R:0,I:0,A:0,S:0,E:0,C:0}, stars:0, name:"", cam:false, gyro:false};
+const N = ORBS.length;
+// ตำแหน่งลูกแก้วรอบตัว (องศา) – สลับสูงต่ำให้ต้องมองหา
+const ELEV = [8,28,-12,18,-6,32,0,-18,22,12];
+ORBS.forEach((o,i)=>{o.az=(i*360/N + (i%2?6:-6)+360)%360; o.el=ELEV[i]; o.ph=Math.random()*6.28;});
+
+const $=id=>document.getElementById(id);
+const cv=$("cv"), ctx=cv.getContext("2d");
+let W=0,H=0,DPR=1;
+function resize(){DPR=Math.min(devicePixelRatio||1,2);W=innerWidth;H=innerHeight;cv.width=W*DPR;cv.height=H*DPR;ctx.setTransform(DPR,0,0,DPR,0,0);}
+addEventListener("resize",resize);resize();
+
+/* ============ มุมมองกล้อง ============ */
+let yaw=0,pitch=0,tYaw=0,tPitch=0, dragYaw=0,dragPitch=0, alpha0=null, playing=false;
+const FOV=64; // องศาตามแนวนอน
+const wrap=a=>((a+540)%360)-180;
+
+function onOri(e){
+  if(e.alpha==null||e.beta==null) return;
+  S.gyro=true;
+  if(alpha0===null) alpha0=e.alpha;          // ปรับให้ลูกแก้วลูกแรกอยู่ตรงหน้า
+  tYaw = -(e.alpha-alpha0);
+  tPitch = Math.max(-80,Math.min(80,e.beta-90));
+}
+// ลากนิ้วเพื่อมองรอบ ๆ (ใช้เมื่อไม่มีเซนเซอร์ หรือปรับเพิ่มได้)
+let drag=null, moved=0;
+cv.addEventListener("pointerdown",e=>{drag={x:e.clientX,y:e.clientY};moved=0;cv.setPointerCapture(e.pointerId);});
+cv.addEventListener("pointermove",e=>{
+  if(!drag) return;
+  const dx=e.clientX-drag.x, dy=e.clientY-drag.y; moved+=Math.abs(dx)+Math.abs(dy);
+  const k=FOV/W; dragYaw-=dx*k; dragPitch+=dy*k; dragPitch=Math.max(-70,Math.min(70,dragPitch));
+  drag={x:e.clientX,y:e.clientY};
+});
+cv.addEventListener("pointerup",e=>{
+  if(moved<10 && playing) tap(e.clientX,e.clientY);
+  drag=null;
+});
+
+/* ============ วาด ============ */
+let proj=[], openedAt=0;
+function project(az,el){
+  const dx=wrap(az-yaw), dy=el-pitch, k=W/FOV;
+  return {x:W/2+dx*k, y:H/2-dy*k, dx, dy};
+}
+function frame(t){
+  requestAnimationFrame(frame);
+  yaw += wrap(tYaw+dragYaw-yaw)*0.2;                 // ทำให้ภาพนิ่มขึ้น
+  pitch += ((tPitch+dragPitch)-pitch)*0.2;
+  ctx.clearRect(0,0,W,H);
+  if(!playing) return;
+  proj=[];
+  let nearest=null;
+  ORBS.forEach((o,i)=>{
+    const p=project(o.az,o.el+Math.sin(t/700+o.ph)*1.2);
+    const done=S.done.has(i);
+    const visible=Math.abs(p.dx)<FOV/2+8 && Math.abs(p.dy)<(FOV*H/W)/2+8;
+    if(!done){const d=Math.hypot(p.dx,p.dy); if(!nearest||d<nearest.d) nearest={d,p,i};}
+    if(visible){
+      const r=Math.max(34,Math.min(W,H)*0.095);
+      proj.push({i,x:p.x,y:p.y,r});
+      drawOrb(o,p.x,p.y,r,done,t);
+    }
+  });
+  if(nearest) drawArrow(nearest);
+}
+function drawOrb(o,x,y,r,done,t){
+  const pulse=1+Math.sin(t/400+o.ph)*0.05;
+  ctx.save();ctx.translate(x,y);ctx.scale(pulse,pulse);
+  const col=done?["#9fe8c3","#2fa56f"]:(o.k==="i"?["#ffe9a0","#ff9f1c"]:["#ffc2dc","#e8457f"]);
+  ctx.shadowColor=done?"#3ddc97":col[1];ctx.shadowBlur=26;
+  const g=ctx.createRadialGradient(-r*.3,-r*.35,r*.1,0,0,r);
+  g.addColorStop(0,"#fff");g.addColorStop(.35,col[0]);g.addColorStop(1,col[1]);
+  ctx.fillStyle=g;ctx.globalAlpha=done?.8:.95;
+  ctx.beginPath();ctx.arc(0,0,r,0,7);ctx.fill();
+  ctx.shadowBlur=0;ctx.globalAlpha=1;
+  ctx.font=`${r*.95}px system-ui,"Apple Color Emoji","Noto Color Emoji"`;
+  ctx.textAlign="center";ctx.textBaseline="middle";
+  ctx.fillText(done?"✅":o.icon,0,r*.04);
+  ctx.restore();
+  ctx.font="700 14px Sarabun,system-ui,sans-serif";ctx.textAlign="center";ctx.textBaseline="top";
+  const label=done?"เก็บแล้ว":(o.k==="i"?"ค้นหาตัวเอง":"ด่านทักษะ");
+  const w=ctx.measureText(label).width+18;
+  ctx.fillStyle="rgba(18,22,46,.78)";rr(x-w/2,y+r+6,w,24,12);ctx.fill();
+  ctx.fillStyle="#fff";ctx.fillText(label,x,y+r+10);
+}
+function rr(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
+// ลูกศรบอกทิศไปยังลูกแก้วที่ใกล้ที่สุดที่ยังไม่เก็บ (เมื่อมองไม่เห็น)
+function drawArrow(n){
+  const off=Math.abs(n.p.dx)>FOV/2||Math.abs(n.p.dy)>(FOV*H/W)/2; if(!off) return;
+  const ang=Math.atan2(-n.p.dy,n.p.dx);
+  const R=Math.min(W,H)*0.36;
+  ctx.save();ctx.translate(W/2+Math.cos(ang)*R,H/2+Math.sin(ang)*R);ctx.rotate(ang);
+  ctx.fillStyle="rgba(255,201,60,.95)";ctx.shadowColor="#000";ctx.shadowBlur=8;
+  ctx.beginPath();ctx.moveTo(24,0);ctx.lineTo(-14,-18);ctx.lineTo(-6,0);ctx.lineTo(-14,18);ctx.closePath();ctx.fill();
+  ctx.restore();
+}
+
+/* ============ แตะลูกแก้ว / ภารกิจ ============ */
+function tap(x,y){
+  let best=null;
+  proj.forEach(p=>{const d=Math.hypot(p.x-x,p.y-y); if(d<p.r*1.3&&(!best||d<best.d)) best={d,i:p.i};});
+  if(best) openQ(best.i);
+}
+function openQ(i){
+  const o=ORBS[i]; playing=false; $("scQ").hidden=false; openedAt=Date.now();
+  const done=S.done.has(i);
+  const card=$("qCard");
+  const opts=o.o.map((op,j)=>[op,j]).sort(()=>Math.random()-.5);   // สลับลำดับตัวเลือก
+  card.innerHTML=`<span class="tag">${o.k==="i"?"🔎 ค้นหาตัวเอง • ไม่มีถูกผิด":"💪 ด่านทักษะชีวิต • เลือกวิธีที่ดีที่สุด"}</span>
+    <h2>${o.icon} ${o.title}</h2><p>${o.q}</p>
+    <div id="opts">${opts.map(([op,j])=>`<button class="opt" data-j="${j}">${op.x}</button>`).join("")}</div>
+    <div id="fb"></div>`;
+  if(done){card.insertAdjacentHTML("afterbegin",`<p class="small">✅ คุณเก็บลูกนี้แล้ว (เล่นซ้ำได้ แต่ไม่นับคะแนนเพิ่ม)</p>`);}
+  card.querySelectorAll(".opt").forEach(b=>b.onclick=()=>answer(i,+b.dataset.j,b,done));
+}
+function answer(i,j,btn,already){
+  if(Date.now()-openedAt<450) return;   // กันแตะซ้ำ (ghost click) หลังเปิดการ์ด
+  const o=ORBS[i], op=o.o[j];
+  card_lock();
+  btn.classList.add("pick");
+  let msg="";
+  if(o.k==="i"){
+    if(!already) S.score[op.t]++;
+    msg=`${TYPES[op.t].e} คำตอบนี้บอกว่าคุณมีมุม <b>${TYPES[op.t].n}</b> – ${TYPES[op.t].d}`;
+  }else{
+    const best=o.o.find(x=>x.best);
+    if(op.best){ btn.classList.add("good"); if(!already) S.stars++; msg=`⭐ ${op.f}`; }
+    else{
+      document.querySelectorAll(".opt").forEach(b=>{ if(o.o[+b.dataset.j].best) b.classList.add("good"); });
+      msg=`${op.f}<br><br>💡 <b>วิธีที่ดีที่สุด:</b> ${best.x}`;
+    }
+  }
+  if(!already) S.done.add(i);
+  save();updateHud();
+  $("fb").innerHTML=`<div class="fb">${msg}</div><button class="btn" id="btnNext">${S.done.size>=N?"🧭 ดูเข็มทิศตัวตน":"ไปหาลูกแก้วต่อ ➜"}</button>`;
+  $("btnNext").onclick=()=>{ $("scQ").hidden=true; if(S.done.size>=N) showEnd(); else playing=true; };
+}
+function card_lock(){document.querySelectorAll(".opt").forEach(b=>b.disabled=true);}
+
+function updateHud(){
+  $("pCount").textContent=`${S.done.size}/${N}`;
+  $("pStar").textContent=`⭐ ${S.stars}`;
+  $("barFill").style.width=(S.done.size/N*100)+"%";
+}
+
+/* ============ สรุปผล ============ */
+function showEnd(){
+  playing=false;
+  const arr=Object.entries(S.score).sort((a,b)=>b[1]-a[1]);
+  const max=arr[0][1], tops=arr.filter(a=>a[1]===max&&max>0).slice(0,2);
+  const sTotal=ORBS.filter(o=>o.k==="s").length;
+  const nm=S.name?`${S.name}`:"นักสำรวจ";
+  const bars=arr.map(([k,v])=>`<div class="t"><b>${TYPES[k].e} ${TYPES[k].n}</b><div class="tb"><i style="width:${v/3*100}%"></i></div><span>${v}</span></div>`).join("");
+  const skill=S.stars===sTotal?"ทักษะชีวิตครบทุกด่าน เก่งมาก! 🌟":S.stars>=2?"ทักษะชีวิตดีทีเดียว ลองทบทวนด่านที่พลาดอีกครั้ง":"ทักษะชีวิตยังพัฒนาได้อีก ลองคุยกับครูแนะแนวเพิ่มเติมนะ";
+  $("endCard").innerHTML=`<span class="tag">🧭 เข็มทิศตัวตนของ ${esc(nm)}</span>
+    <h1>${tops.map(t=>TYPES[t[0]].e+" "+TYPES[t[0]].n).join(" + ")||"นักสำรวจรอบด้าน"}</h1>
+    ${tops.map(t=>`<p><b>${TYPES[t[0]].n}:</b> ${TYPES[t[0]].d}<br><span class="small">อาชีพที่อาจเหมาะ: ${TYPES[t[0]].jobs}</span></p>`).join("")}
+    <div class="types">${bars}</div>
+    <p>💪 ด่านทักษะชีวิต: <b>${S.stars}/${sTotal} ดาว</b> – ${skill}</p>
+    <p class="small">ผลนี้เป็นเพียงจุดเริ่มต้นของการรู้จักตัวเอง ความสนใจเปลี่ยนได้เมื่อเราได้ลองสิ่งใหม่ ๆ
+    ไม่ได้ตัดสินว่าต้องเป็นอาชีพไหน<br>📸 แคปหน้าจอนี้ไปคุยกับครูแนะแนวได้เลย</p>
+    <button class="btn" id="btnAgain">🔄 เล่นใหม่</button>`;
+  $("scEnd").hidden=false;
+  $("btnAgain").onclick=()=>{ resetAll(); $("scEnd").hidden=true; $("scStart").hidden=false; };
+}
+const esc=s=>s.replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+/* ============ บันทึกในเครื่อง (ไม่ส่งออก) ============ */
+const KEY="arquest_v1";
+function save(){try{localStorage.setItem(KEY,JSON.stringify({d:[...S.done],s:S.score,st:S.stars,n:S.name}));}catch(e){}}
+function load(){try{const j=JSON.parse(localStorage.getItem(KEY)||"null"); if(j){S.done=new Set(j.d);S.score=j.s;S.stars=j.st;S.name=j.n||"";}}catch(e){}}
+function resetAll(){S.done=new Set();S.score={R:0,I:0,A:0,S:0,E:0,C:0};S.stars=0;try{localStorage.removeItem(KEY);}catch(e){}updateHud();}
+
+/* ============ เริ่มเกม ============ */
+async function start(useCam){
+  S.name=$("nick").value.trim();
+  if(S.done.size>=N) resetAll();
+  if(useCam){
+    try{
+      const st=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:"environment"}},audio:false});
+      $("bg").srcObject=st; S.cam=true;
+    }catch(e){ alert("เปิดกล้องไม่ได้ ระบบจะเปลี่ยนเป็นโหมดไม่ใช้กล้องให้นะ"); }
+  }
+  // iOS ต้องขอสิทธิ์เซนเซอร์หลังผู้ใช้แตะปุ่ม
+  try{
+    if(typeof DeviceOrientationEvent!=="undefined" && typeof DeviceOrientationEvent.requestPermission==="function"){
+      const r=await DeviceOrientationEvent.requestPermission();
+      if(r==="granted") addEventListener("deviceorientation",onOri);
+    }else addEventListener("deviceorientation",onOri);
+  }catch(e){}
+  $("scStart").hidden=true;$("hud").hidden=false;$("hint").hidden=false;
+  updateHud();playing=true;
+  setTimeout(()=>{ if(!S.gyro) $("hint").textContent="👆 ลากนิ้วบนจอเพื่อมองรอบห้อง แล้วแตะลูกแก้ว"; },1500);
+  setTimeout(()=>{$("hint").hidden=true;},9000);
+}
+$("btnStart").onclick=()=>start(true);
+$("btnNoCam").onclick=()=>start(false);
+load();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
