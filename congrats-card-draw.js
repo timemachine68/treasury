@@ -165,8 +165,25 @@ var __UNI=[
     var sc = Math.max(w / img.width, h / img.height), iw = img.width * sc, ih = img.height * sc;
     c.drawImage(img, x + (w - iw) / 2, y - (ih - h) * fy, iw, ih);
   }
+  // จัดกรอบตามใบหน้า (ค่าจาก card-photo-fx.js): หน้าสูง ~30% ของกรอบ อยู่กึ่งกลาง ห่างขอบบน ~36%
+  function drawFaceFit(c, d, x, y, w, h) {
+    var img = d.photo, f = d.photoFace, z = d.photoZoom || 1, IW = img.width, IH = img.height, bg = d.photoBg;
+    var s = (h * 0.30 * z) / Math.max(1, f.h * IH), cover = Math.max(w / IW, h / IH);
+    if (!bg && s < cover) { s = cover; }
+    var iw = IW * s, ih = IH * s;
+    var ix = x + w * (0.5 + (d.photoDx || 0)) - f.cx * iw;
+    var iy = y + h * (0.36 + (d.photoDy || 0)) - f.cy * ih;
+    if (iw >= w) { ix = Math.min(x, Math.max(x + w - iw, ix)); } else if (!bg) { ix = x + (w - iw) / 2; }
+    if (bg) { iy = Math.max(iy, y + h - ih); c.fillStyle = bg; c.fillRect(x, y, w, h); }   // ตัวคนต้องยาวถึงขอบล่าง ไม่ลอย
+    else if (ih >= h) { iy = Math.min(y, Math.max(y + h - ih, iy)); } else { iy = y + (h - ih) / 2; }
+    c.drawImage(img, ix, iy, iw, ih);
+  }
   function drawPhotoBlock(c, d, x, y, w, h, T, fy) {
-    if (d.photo && d.photo !== 'sample' && d.photo.width) { drawCover(c, d.photo, x, y, w, h, fy); }
+    if (d.photo && d.photo !== 'sample' && d.photo.width && d.photoFace) { drawFaceFit(c, d, x, y, w, h); }
+    else if (d.photo && d.photo !== 'sample' && d.photo.width) {
+      if (d.photoBg) { c.fillStyle = d.photoBg; c.fillRect(x, y, w, h); }
+      drawCover(c, d.photo, x, y, w, h, fy);
+    }
     else if (d.photo === 'sample') { drawStudent(c, x, y, w, h, T); }
     else {
       var g = c.createLinearGradient(0, y, 0, y + h); g.addColorStop(0, T.mid); g.addColorStop(1, T.deep);
