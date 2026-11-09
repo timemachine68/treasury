@@ -60,6 +60,7 @@ header.app .wrap{display:flex;align-items:center;gap:12px;padding-bottom:0;flex-
 /* ---------- แท็บแฟ้ม (signature) ---------- */
 .folder-tabs{display:flex;gap:4px;overflow-x:auto;padding:22px 2px 0;scrollbar-width:none}
 .folder-tabs::-webkit-scrollbar{display:none}
+.folder-tabs #btnPeerLink{flex:none;align-self:center;margin-left:12px;white-space:nowrap;position:relative;top:2px}
 .ftab{flex:none;border:none;background:#fff;color:var(--ink-soft);font-family:'Mitr';font-size:.92rem;font-weight:500;
   padding:9px 18px 12px;border-radius:12px 12px 0 0;border:1px solid var(--line);border-bottom:none;
   position:relative;top:4px;opacity:.82;transition:top .15s}
@@ -301,13 +302,12 @@ textarea.csvbox{font-family:monospace;font-size:.82rem;min-height:120px}
       <button class="btn ghost" id="tabApps">🧭 ระบบของเรา</button>
       <button class="btn ghost hidden" id="tabManage">👥 จัดการบัญชี</button>
       <div class="spacer"></div>
-      <button class="btn ghost hidden" id="btnPeerLink">🤝 ลิงก์สำหรับเพื่อนครู</button>
       <button class="btn primary hidden" id="btnAdd">➕ เพิ่มสื่อ/แผน</button>
     </div>
 
     <!-- ── มุมมองคลังสื่อ ── -->
     <div id="viewLibrary">
-      <nav class="folder-tabs" id="gradeTabs" aria-label="เลือกระดับชั้น"></nav>
+      <nav class="folder-tabs" id="gradeTabs" aria-label="เลือกระดับชั้น"><button class="btn ghost hidden" id="btnPeerLink">🤝 ลิงก์สำหรับเพื่อนครู</button></nav>
       <div class="folder-body">
         <div class="toolbar">
           <div class="search"><input id="q" placeholder="ค้นหาชื่อ/คำอธิบาย…" aria-label="ค้นหา"></div>
@@ -1298,9 +1298,11 @@ function switchView(v){
 
 /* ═══════════ คลังสื่อ ═══════════ */
 function renderGradeTabs(){
+  const peerBtn = $("btnPeerLink"); // เก็บไว้ก่อน ไม่ให้หายตอนวาดแท็บใหม่
   $("gradeTabs").innerHTML = GRADES.map(g=>
     `<button class="ftab ${f.grade===g.key?"active":""}" style="--tabc:${g.color}" data-g="${g.key}"><span class="dot"></span>${g.label}</button>`
   ).join("");
+  if(peerBtn) $("gradeTabs").appendChild(peerBtn); // ปุ่มลิงก์สำหรับเพื่อนครู อยู่ต่อท้าย ม.6
   $("gradeTabs").querySelectorAll(".ftab").forEach(b=> b.onclick = ()=>{ f.grade=b.dataset.g; renderGradeTabs(); renderResources(); });
 }
 function renderTypeChips(){
