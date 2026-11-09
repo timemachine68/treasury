@@ -130,9 +130,10 @@ header.app .wrap{display:flex;align-items:center;gap:12px;padding-bottom:0;flex-
       <h2>ชื่อเล่นของฉัน</h2>
       <div class="field" style="margin-bottom:6px">
         <label for="nickInput">ชื่อเล่น</label>
-        <input id="nickInput" type="text" inputmode="text" lang="th" placeholder="เช่น ต้นกล้า" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+        <input id="nickInput" type="text" placeholder="เช่น ต้นกล้า">
         <div class="nick-meta"><span>เว้นว่างไว้ถ้าไม่ต้องการแสดงชื่อเล่น · ครูจะเห็นชื่อเล่นนี้ในหน้ารายชื่อ</span><span id="nickCount">0/20</span></div>
       </div>
+      <button type="button" class="btn ghost sm" id="btnNickPrompt" style="margin-bottom:10px">พิมพ์ในช่องไม่ได้? กดตรงนี้</button>
       <div class="nick-actions">
         <button class="btn primary" id="btnSaveNick" style="flex:1 1 auto">บันทึกชื่อเล่น</button>
         <button class="btn ghost hidden" id="btnClearNick">ลบชื่อเล่น</button>
@@ -143,9 +144,10 @@ header.app .wrap{display:flex;align-items:center;gap:12px;padding-bottom:0;flex-
       <h2>โรงเรียนเดิมของฉัน</h2>
       <div class="field" style="margin-bottom:6px">
         <label for="schInput">ชื่อโรงเรียนที่เคยเรียนก่อนมาพูลเจริญ</label>
-        <input id="schInput" type="text" inputmode="text" lang="th" placeholder="เช่น โรงเรียนวัดบางพลีใหญ่กลาง" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+        <input id="schInput" type="text" placeholder="เช่น โรงเรียนวัดบางพลีใหญ่กลาง">
         <div class="nick-meta"><span>ถ้าเรียนที่นี่มาตั้งแต่ ม.1 ให้เว้นว่างไว้ได้</span><span id="schCount">0/100</span></div>
       </div>
+      <button type="button" class="btn ghost sm" id="btnSchPrompt" style="margin-bottom:10px">พิมพ์ในช่องไม่ได้? กดตรงนี้</button>
       <div class="nick-actions">
         <button class="btn primary" id="btnSaveSch" style="flex:1 1 auto">บันทึกโรงเรียนเดิม</button>
       </div>
@@ -213,7 +215,7 @@ function renderInfo(){
   $("schInput").value = profile.previous_school || "";
   $("schCount").textContent = (profile.previous_school||"").length + "/100";
 }
-countBox("schInput","schCount",100);
+const updSch = countBox("schInput","schCount",100);
 $("btnSaveSch").onclick = async ()=>{
   const v = $("schInput").value.trim();
   if(v.length > 100) return toast("ชื่อโรงเรียนต้องไม่เกิน 100 ตัวอักษรนะคะ");
@@ -243,7 +245,15 @@ function countBox(inputId, countId, max){
   el.addEventListener("compositionend", upd);
   return upd;
 }
-countBox("nickInput","nickCount",20);
+const updNick = countBox("nickInput","nickCount",20);
+// ทางสำรอง: บางเครื่อง/คีย์บอร์ดพิมพ์ไทยในช่องไม่ได้ → ใช้กล่องพิมพ์ของระบบมือถือแทน แล้วใส่ค่าลงช่องให้
+function promptInto(inputId, title, upd){
+  let v; try{ v = window.prompt(title, $(inputId).value); }catch(e){ return toast("เครื่องนี้เปิดกล่องพิมพ์ไม่ได้ ลองเปิดหน้านี้ด้วย Chrome นะคะ"); }
+  if(v===null) return;
+  $(inputId).value = v; upd();
+}
+$("btnNickPrompt").onclick = ()=> promptInto("nickInput","พิมพ์ชื่อเล่นของหนู (ไม่เกิน 20 ตัวอักษร)", updNick);
+$("btnSchPrompt").onclick = ()=> promptInto("schInput","พิมพ์ชื่อโรงเรียนเดิม (ไม่เกิน 100 ตัวอักษร)", updSch);
 $("nickInput").addEventListener("keydown", e=>{ if(e.key==="Enter") $("btnSaveNick").click(); });
 async function saveNick(value){
   const v = value.trim();
