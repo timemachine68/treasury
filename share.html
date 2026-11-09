@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0F6B5C">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<title>คลังสื่อแนะแนว (สำหรับเพื่อนครู) · โรงเรียนพูลเจริญวิทยาคม</title>
+<meta name="description" content="แผนการสอน ใบงาน และสื่อแนะแนว ที่งานแนะแนว โรงเรียนพูลเจริญวิทยาคม แบ่งปันให้เพื่อนครูแนะแนว">
+<!-- พรีวิวตอนส่งใน LINE -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="แนะให้แนว · งานแนะแนว โรงเรียนพูลเจริญวิทยาคม">
+<meta property="og:title" content="คลังสื่อแนะแนว สำหรับเพื่อนครูแนะแนว">
+<meta property="og:description" content="แผนการสอน ใบงาน และสื่อแนะแนว จากงานแนะแนว โรงเรียนพูลเจริญวิทยาคม เปิดดูและดาวน์โหลดได้เลย ไม่ต้องสมัครสมาชิก">
+<meta property="og:image" content="https://timemachine68.github.io/treasury/icons/og-share.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:locale" content="th_TH">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Mitr:wght@400;500;600&family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#22313A;--ink-soft:#5B6B72;--board:#EFF3F1;--card:#FFFFFF;
+  --pine:#0F6B5C;--pine-deep:#0A4F44;--pine-tint:#E2F0EC;
+  --note:#FFD34D;--note-deep:#8A6D00;--line:#DCE4E1;--danger:#C0392B;
+  --g1:#F28C6B;--g2:#F2B84B;--g3:#7FB069;--g4:#4E9BB9;--g5:#8E7CC3;--g6:#D96A9C;
+  --radius:14px;--shadow:0 2px 10px rgba(34,49,58,.08);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{font-family:'Sarabun',sans-serif;font-size:16px;line-height:1.6;color:var(--ink);background:var(--board);min-height:100vh}
+h1,h2,h3,.brand{font-family:'Mitr',sans-serif}
+.hidden{display:none!important}
+header{background:var(--pine);color:#fff}
+.top{max-width:1040px;margin:0 auto;padding:14px 16px;display:flex;align-items:center;gap:12px}
+.logo{width:42px;height:42px;border-radius:12px;background:var(--note);color:var(--pine-deep);display:grid;place-items:center;font-family:'Mitr';font-weight:600;font-size:1.15rem;flex:none}
+.brand{line-height:1.25;min-width:0}
+.brand b{display:block;font-weight:500;font-size:1.1rem}
+.brand span{font-size:.82rem;opacity:.85;font-family:'Sarabun'}
+.hero{max-width:1040px;margin:0 auto;padding:4px 16px 20px}
+.hero h1{font-size:1.45rem;font-weight:500}
+.hero p{opacity:.9;font-size:.95rem}
+.pill{display:inline-block;background:var(--note);color:var(--pine-deep);font-weight:700;font-size:.78rem;border-radius:99px;padding:2px 12px;margin-bottom:6px}
+
+main{max-width:1040px;margin:0 auto;padding:18px 16px 40px}
+.tools{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
+.search{flex:1 1 240px;font:inherit;border:1.5px solid var(--line);background:#fff;border-radius:99px;padding:9px 16px;min-height:44px}
+.search:focus{outline:none;border-color:var(--pine)}
+.filters{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px}
+.chip{font:inherit;font-size:.86rem;font-weight:600;border-radius:99px;padding:5px 14px;border:1.5px solid var(--line);background:#fff;color:var(--ink);cursor:pointer;min-height:36px;display:inline-flex;align-items:center;gap:6px}
+.chip i{width:10px;height:10px;border-radius:50%;background:var(--gc,var(--pine));display:inline-block}
+.chip.on{background:var(--pine);border-color:var(--pine);color:#fff}
+.count{font-size:.85rem;color:var(--ink-soft);margin:6px 0 12px}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:14px}
+.card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);border-left:5px solid var(--gc,var(--pine));padding:14px 16px;display:flex;flex-direction:column}
+.card .tags{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:4px}
+.badge{display:inline-block;font-size:.75rem;font-weight:700;border-radius:99px;padding:1px 10px;background:var(--pine-tint);color:var(--pine-deep)}
+.badge.grade{background:var(--gc,var(--pine));color:#fff}
+.badge.warn{background:#FFF3C4;color:var(--note-deep)}
+.card h2{font-size:1.06rem;font-weight:500;line-height:1.45;color:var(--pine-deep)}
+.card .desc{font-size:.92rem;color:var(--ink-soft);margin-top:4px;white-space:pre-line;overflow-wrap:anywhere}
+.card .acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:auto;padding-top:12px}
+.btn{font:inherit;font-weight:600;font-size:.86rem;border-radius:99px;padding:6px 14px;border:1.5px solid var(--line);background:#fff;color:var(--ink);cursor:pointer;display:inline-flex;align-items:center;gap:6px;text-decoration:none;min-height:38px}
+.btn:hover{border-color:var(--pine)}
+.btn.primary{background:var(--pine);border-color:var(--pine);color:#fff}
+.btn[disabled]{opacity:.55;cursor:wait}
+.card .foot{margin-top:10px;padding-top:8px;border-top:1px dashed var(--line);font-size:.78rem;color:var(--ink-soft)}
+
+.state{text-align:center;color:var(--ink-soft);padding:56px 12px}
+.state .big{font-size:2.4rem;margin-bottom:6px}
+.state h2{font-family:'Mitr';font-weight:500;color:var(--pine-deep);font-size:1.2rem;margin-bottom:4px}
+footer{text-align:center;color:var(--ink-soft);font-size:.82rem;padding:0 16px 30px}
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 18px;border-radius:99px;font-size:.9rem;box-shadow:0 6px 20px rgba(0,0,0,.25);z-index:9;max-width:calc(100% - 32px);text-align:center}
+@media (max-width:520px){.hero h1{font-size:1.2rem}.brand span{display:none}}
+</style>
+</head>
+<body>
+<header>
+  <div class="top">
+    <div class="logo" aria-hidden="true">แ</div>
+    <div class="brand"><b>แนะให้แนว</b><span>งานแนะแนว โรงเรียนพูลเจริญวิทยาคม</span></div>
+  </div>
+  <div class="hero">
+    <span class="pill">สำหรับเพื่อนครูแนะแนว</span>
+    <h1>คลังสื่อแนะแนว</h1>
+    <p>เปิดดูและดาวน์โหลดได้เลย ไม่ต้องสมัครสมาชิก · กรุณาอย่าส่งลิงก์นี้ต่อในที่สาธารณะ</p>
+  </div>
+</header>
+
+<main>
+  <div id="state" class="state"><div class="big">⏳</div>กำลังโหลด…</div>
+  <div id="wrap" class="hidden">
+    <div class="tools"><input class="search" id="q" type="search" placeholder="ค้นหาชื่อสื่อ หรือคำอธิบาย" aria-label="ค้นหา"></div>
+    <div class="filters" id="fGrade"></div>
+    <div class="filters" id="fType"></div>
+    <p class="count" id="count"></p>
+    <div class="grid" id="grid"></div>
+  </div>
+</main>
+<footer>แบ่งปันโดยงานแนะแนว โรงเรียนพูลเจริญวิทยาคม · นำไปใช้ในห้องเรียนได้ กรุณาให้เครดิตเมื่อเผยแพร่ต่อ</footer>
+<div class="toast hidden" id="toast" role="status"></div>
+
+<script>
+(function(){
+'use strict';
+var SUPABASE_URL='https://ikkhjslmtjwrxzxvtokb.supabase.co';
+var SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlra2hqc2xtdGp3cnh6eHZ0b2tiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM3NDMzNjksImV4cCI6MjA5OTMxOTM2OX0.3OR_9mEv82Ns1LLjx5nnRwJYzrtKFtWCWd1bPuQfNKU';
+var OUR_SITE='https://timemachine68.github.io/treasury/';
+var MON=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+var TYPES=[['full_plan','แผนการสอนฉบับเต็ม'],['one_page','แผนการสอนหน้าเดียว'],['media','สื่อการสอน'],['worksheet','ใบงาน'],['webapp','เว็บแอป/อื่นๆ']];
+var TYPE_LABEL={}; TYPES.forEach(function(t){TYPE_LABEL[t[0]]=t[1];});
+var GRADES=['ม.1','ม.2','ม.3','ม.4','ม.5','ม.6','ทุกระดับ'];
+var GRADE_COLOR={'ม.1':'var(--g1)','ม.2':'var(--g2)','ม.3':'var(--g3)','ม.4':'var(--g4)','ม.5':'var(--g5)','ม.6':'var(--g6)','ทุกระดับ':'var(--pine)'};
+var $=function(id){return document.getElementById(id);};
+var items=[], f={grade:'all',type:'all',q:''}, token='';
+
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+function safeUrl(u){u=String(u||'').trim();return /^https?:\/\//i.test(u)?u:'';}
+function toast(m){var t=$('toast');t.textContent=m;t.classList.remove('hidden');clearTimeout(toast._t);toast._t=setTimeout(function(){t.classList.add('hidden');},2800);}
+function thDate(s){var d=new Date(s);return isNaN(d)?'':d.getDate()+' '+MON[d.getMonth()]+' '+(d.getFullYear()+543);}
+function needLogin(u){return u.indexOf(OUR_SITE)===0;}
+function extraLinks(r){
+  var a=Array.isArray(r.extra_links)?r.extra_links:[];
+  return a.filter(function(x){return x&&safeUrl(x.url);}).map(function(x,i){return {url:safeUrl(x.url),label:String(x.label||'').trim()||('ลิงก์ที่ '+(i+2))};});
+}
+function showState(icon,title,text){
+  $('wrap').classList.add('hidden');
+  $('state').innerHTML='<div class="big">'+icon+'</div>'+(title?'<h2>'+esc(title)+'</h2>':'')+'<p>'+esc(text||'')+'</p>';
+  $('state').classList.remove('hidden');
+}
+
+function readToken(){
+  var m=(location.hash||'').match(/k=([A-Za-z0-9]{40,128})/);
+  if(!m){ m=(location.search||'').match(/[?&]k=([A-Za-z0-9]{40,128})/); }
+  return m?m[1]:'';
+}
+
+function renderFilters(){
+  var g={},t={}; items.forEach(function(r){g[r.grade_level]=1;t[r.resource_type]=1;});
+  var gs=['all'].concat(GRADES.filter(function(x){return g[x];}));
+  var ts=['all'].concat(TYPES.map(function(x){return x[0];}).filter(function(x){return t[x];}));
+  $('fGrade').innerHTML=gs.length>2?gs.map(function(k){return '<button type="button" class="chip'+(f.grade===k?' on':'')+'" data-g="'+esc(k)+'" style="--gc:'+(GRADE_COLOR[k]||'var(--pine)')+'">'+(k==='all'?'ทุกชั้น':'<i></i>'+esc(k))+'</button>';}).join(''):'';
+  $('fType').innerHTML=ts.length>2?ts.map(function(k){return '<button type="button" class="chip'+(f.type===k?' on':'')+'" data-t="'+esc(k)+'">'+(k==='all'?'ทุกประเภท':esc(TYPE_LABEL[k]||k))+'</button>';}).join(''):'';
+}
+function render(){
+  renderFilters();
+  var list=items.filter(function(r){
+    if(f.grade!=='all'&&r.grade_level!==f.grade&&r.grade_level!=='ทุกระดับ') return false;
+    if(f.type!=='all'&&r.resource_type!==f.type) return false;
+    if(f.q&&((r.title||'')+' '+(r.description||'')).toLowerCase().indexOf(f.q)<0) return false;
+    return true;
+  });
+  $('count').textContent='พบ '+list.length+' รายการ'+(list.length!==items.length?' (จากทั้งหมด '+items.length+')':'');
+  if(!list.length){$('grid').innerHTML='<div class="state" style="grid-column:1/-1;padding:30px"><div class="big">🔍</div>ไม่พบรายการที่ตรงกับที่เลือก</div>';return;}
+  $('grid').innerHTML=list.map(function(r){
+    var gc=GRADE_COLOR[r.grade_level]||'var(--pine)', url=safeUrl(r.external_url), xs=extraLinks(r);
+    var locked=(url&&needLogin(url))||xs.some(function(x){return needLogin(x.url);});
+    var acts='';
+    if(r.has_file) acts+='<button type="button" class="btn primary" data-dl="'+esc(r.id)+'">⬇ ดาวน์โหลด</button>';
+    if(url) acts+='<a class="btn primary" href="'+esc(url)+'" target="_blank" rel="noopener noreferrer">🔗 เปิดลิงก์</a>';
+    xs.forEach(function(x){acts+='<a class="btn" href="'+esc(x.url)+'" target="_blank" rel="noopener noreferrer">🔗 '+esc(x.label)+'</a>';});
+    return '<article class="card" style="--gc:'+gc+'">'+
+      '<div class="tags"><span class="badge grade">'+esc(r.grade_level||'-')+'</span><span class="badge">'+esc(TYPE_LABEL[r.resource_type]||r.resource_type||'')+'</span>'+(locked?'<span class="badge warn">ต้องมีบัญชีของโรงเรียน</span>':'')+'</div>'+
+      '<h2>'+esc(r.title)+'</h2>'+
+      (r.description?'<p class="desc">'+esc(r.description)+'</p>':'')+
+      '<div class="acts">'+(acts||'<span class="badge warn">ไม่มีไฟล์หรือลิงก์</span>')+'</div>'+
+      '<div class="foot">เพิ่มเมื่อ '+esc(thDate(r.created_at))+'</div>'+
+    '</article>';
+  }).join('');
+}
+$('fGrade').addEventListener('click',function(e){var b=e.target.closest('[data-g]');if(!b)return;f.grade=b.dataset.g;render();});
+$('fType').addEventListener('click',function(e){var b=e.target.closest('[data-t]');if(!b)return;f.type=b.dataset.t;render();});
+$('q').addEventListener('input',function(){f.q=this.value.trim().toLowerCase();render();});
+$('grid').addEventListener('click',async function(e){
+  var b=e.target.closest('[data-dl]'); if(!b) return;
+  var w=window.open('about:blank','_blank'); b.disabled=true;
+  try{
+    var r=await fetch(SUPABASE_URL+'/functions/v1/public-file',{method:'POST',headers:{apikey:SUPABASE_KEY,'Content-Type':'application/json'},body:JSON.stringify({kind:'peer',id:b.dataset.dl,token:token})});
+    var j=null; try{j=await r.json();}catch(_){}
+    if(!r.ok||!j||!j.url) throw new Error((j&&j.error)||'เปิดไฟล์ไม่สำเร็จ');
+    if(w) w.location.href=j.url; else location.href=j.url;
+  }catch(err){ if(w) w.close(); toast(err.message); if(/ลิงก์ใช้ไม่ได้/.test(err.message)) load(); }
+  b.disabled=false;
+});
+
+async function load(){
+  token=readToken();
+  if(!token) return showState('🔒','ลิงก์ไม่ครบ','กรุณาเปิดจากลิงก์เต็มที่ครูแนะแนวส่งให้ (คัดลอกให้ครบทั้งบรรทัด)');
+  try{
+    var r=await fetch(SUPABASE_URL+'/rest/v1/rpc/peer_shared_resources',{method:'POST',headers:{apikey:SUPABASE_KEY,Authorization:'Bearer '+SUPABASE_KEY,'Content-Type':'application/json'},body:JSON.stringify({p_token:token})});
+    var j=null; try{j=await r.json();}catch(_){}
+    if(!r.ok){
+      if(j&&/invalid_link/.test(j.message||'')) return showState('🔒','ลิงก์นี้ใช้ไม่ได้แล้ว','ครูผู้แชร์อาจเปลี่ยนลิงก์ใหม่ ขอลิงก์ล่าสุดจากงานแนะแนว โรงเรียนพูลเจริญวิทยาคม');
+      throw new Error('HTTP '+r.status);
+    }
+    items=j||[];
+    if(!items.length) return showState('📭','ยังไม่มีสื่อที่แชร์','ตอนนี้ยังไม่มีสื่อในลิงก์นี้ ลองกลับมาดูใหม่ภายหลัง');
+    $('state').classList.add('hidden'); $('wrap').classList.remove('hidden'); render();
+  }catch(err){ showState('⚠️','โหลดไม่สำเร็จ','ตรวจสอบอินเทอร์เน็ตแล้วรีเฟรชหน้าอีกครั้ง'); }
+}
+window.addEventListener('hashchange',load);
+load();
+})();
+</script>
+</body>
+</html>

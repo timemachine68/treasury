@@ -301,6 +301,7 @@ textarea.csvbox{font-family:monospace;font-size:.82rem;min-height:120px}
       <button class="btn ghost" id="tabApps">🧭 ระบบของเรา</button>
       <button class="btn ghost hidden" id="tabManage">👥 จัดการบัญชี</button>
       <div class="spacer"></div>
+      <button class="btn ghost hidden" id="btnPeerLink">🤝 ลิงก์สำหรับเพื่อนครู</button>
       <button class="btn primary hidden" id="btnAdd">➕ เพิ่มสื่อ/แผน</button>
     </div>
 
@@ -415,6 +416,7 @@ textarea.csvbox{font-family:monospace;font-size:.82rem;min-height:120px}
     <div id="viewAnnounce" class="hidden">
       <div class="toolbar">
         <div class="spacer"></div>
+        <a class="btn ghost hidden" id="btnPublicNews" href="news.html" target="_blank" rel="noopener">🌐 หน้าข่าวสาธารณะ</a>
         <button class="btn primary hidden" id="btnAddAnn">➕ ประกาศข่าวใหม่</button>
       </div>
       <div id="annGrid" class="grid"></div>
@@ -585,6 +587,9 @@ textarea.csvbox{font-family:monospace;font-size:.82rem;min-height:120px}
       <div id="extraList"></div>
       <button type="button" class="btn ghost sm" id="btnAddExtra">➕ เพิ่มลิงก์</button>
     </div>
+    <label style="display:flex;align-items:flex-start;gap:8px;font-size:.85rem;color:var(--ink-soft);margin-top:2px">
+      <input type="checkbox" id="rPeer" style="margin-top:4px"> <span><b style="color:var(--ink)">แชร์ให้เพื่อนครูแนะแนว</b> — ใส่ไว้ในลิงก์ลับสำหรับครูโรงเรียนอื่น (ห้ามมีชื่อหรือข้อมูลนักเรียน)</span>
+    </label>
     <div class="foot">
       <button class="btn ghost" id="btnResCancel">ยกเลิก</button>
       <button class="btn primary" id="btnResSave">บันทึก</button>
@@ -649,9 +654,30 @@ textarea.csvbox{font-family:monospace;font-size:.82rem;min-height:120px}
     <label style="display:flex;align-items:center;gap:8px;font-size:.85rem;color:var(--ink-soft);margin-top:2px">
       <input type="checkbox" id="annActive" checked> เผยแพร่ทันที (ถ้าไม่ติ๊ก จะซ่อนจากนักเรียนไว้ก่อน)
     </label>
+    <label style="display:flex;align-items:flex-start;gap:8px;font-size:.85rem;color:var(--ink-soft);margin-top:6px">
+      <input type="checkbox" id="annPublic" style="margin-top:4px"> <span><b style="color:var(--ink)">เผยแพร่สาธารณะ</b> — คนนอกเห็นได้ที่หน้าข่าวสาธารณะ และแชร์ไป Facebook ได้ (ห้ามมีรหัสผ่าน ชื่อ หรือคะแนนนักเรียน)</span>
+    </label>
     <div class="foot">
       <button class="btn ghost" id="btnAnnCancel">ยกเลิก</button>
       <button class="btn primary" id="btnAnnSave">บันทึก</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ โมดัล: ลิงก์คลังสื่อสำหรับเพื่อนครู ═══════════ -->
+<div class="modal-back" id="peerModal">
+  <div class="modal">
+    <h2>🤝 ลิงก์คลังสื่อสำหรับเพื่อนครู</h2>
+    <div id="peerMsg" class="msg"></div>
+    <p style="font-size:.88rem;color:var(--ink-soft);margin-bottom:10px">ใครมีลิงก์นี้ก็เปิดดูและดาวน์โหลดสื่อที่ติ๊ก "แชร์ให้เพื่อนครูแนะแนว" ได้ โดยไม่ต้องมีบัญชี ส่งในกลุ่มไลน์ครูแนะแนวได้เลย ถ้าลิงก์หลุดออกนอกกลุ่ม กด "เปลี่ยนลิงก์ใหม่" ลิงก์เก่าจะใช้ไม่ได้ทันที</p>
+    <div class="field"><label for="peerUrl">ลิงก์ปัจจุบัน</label><input id="peerUrl" readonly placeholder="ยังไม่มีลิงก์ กด สร้างลิงก์"></div>
+    <p id="peerInfo" style="font-size:.82rem;color:var(--ink-soft);margin-top:-4px"></p>
+    <div class="foot" style="flex-wrap:wrap">
+      <button class="btn danger" id="btnPeerOff">ปิดลิงก์</button>
+      <button class="btn ghost" id="btnPeerRotate">เปลี่ยนลิงก์ใหม่</button>
+      <div class="spacer"></div>
+      <button class="btn ghost" id="btnPeerClose">ปิด</button>
+      <button class="btn primary" id="btnPeerCopy">คัดลอกลิงก์</button>
     </div>
   </div>
 </div>
@@ -1255,6 +1281,7 @@ function switchView(v){
     $(id).className = "btn " + (v===key?"note":"ghost") + (hid?" hidden":"");
   });
   $("btnAdd").classList.toggle("hidden", v!=="library" || !(profile && ["teacher","admin"].includes(profile.role)));
+  $("btnPeerLink").classList.toggle("hidden", v!=="library" || !canSeeSubs());
   // #6 fix: โหลดซ้ำก็ต่อเมื่อเปลี่ยน view จริงๆ (กด tab เดิมซ้ำ = ไม่ยิง network อีกรอบ)
   if(v === _currentView) return;
   _currentView = v;
@@ -1310,6 +1337,7 @@ function renderResources(){
         <span class="badge grade">${esc(r.grade_level)}</span>
         <span class="badge type">${esc(TYPE_LABEL[r.resource_type]||r.resource_type)}</span>
         ${isLink?'<span class="badge link">🔗 ลิงก์</span>':""}
+        ${staff && r.share_with_peers?'<span class="badge link" title="อยู่ในลิงก์สำหรับเพื่อนครู">🤝 แชร์ให้เพื่อนครู</span>':""}
       </div>
       <h3>${esc(r.title)}</h3>
       ${r.description?`<p class="desc">${esc(r.description)}</p>`:""}
@@ -1393,6 +1421,7 @@ function openResModal(id){
   $("rTitle").value = r?.title||""; $("rDesc").value = r?.description||"";
   $("rGrade").value = r?.grade_level||"ม.1"; $("rType").value = r?.resource_type||"full_plan";
   $("rFile").value = ""; $("rUrl").value = r?.external_url||"";
+  $("rPeer").checked = !!r?.share_with_peers;
   $("extraList").innerHTML = "";
   (Array.isArray(r?.extra_links)?r.extra_links:[]).forEach(x=>addExtraRow(x.label||"", x.url||""));
   setSrc(r ? (r.external_url? "link":"file") : "file");
@@ -1407,7 +1436,7 @@ $("btnResSave").onclick = async ()=>{
   if(!title) return msg("resMsg","ใส่ชื่อรายการก่อนนะคะ","err");
   $("btnResSave").disabled = true;
   try{
-    const base = { title, description:$("rDesc").value.trim()||null, grade_level:$("rGrade").value, resource_type:$("rType").value, extra_links:readExtraRows() };
+    const base = { title, description:$("rDesc").value.trim()||null, grade_level:$("rGrade").value, resource_type:$("rType").value, extra_links:readExtraRows(), share_with_peers:$("rPeer").checked };
     if(editingId){
       const r = resources.find(x=>x.id===editingId);
       const upd = {...base};
@@ -2192,6 +2221,7 @@ async function loadAnnounce(){
 function renderAnnounce(){
   const manage = canManageAnnounce();
   $("btnAddAnn").classList.toggle("hidden", !manage);
+  $("btnPublicNews").classList.toggle("hidden", !manage);
   $("annEmpty").classList.toggle("hidden", announcements.length>0);
   $("annGrid").innerHTML = announcements.map(a=> annCard(a, manage)).join("");
   bindAnnCards(manage);
@@ -2210,6 +2240,7 @@ function annCard(a, manage){
     <div class="top">
       ${unread?'<span class="badge" style="background:#FDEBEA;color:var(--danger)">🔴 ใหม่</span>':""}
       ${!a.is_active?'<span class="badge type">ซ่อนอยู่ (ยังไม่เผยแพร่)</span>':""}
+      ${manage && a.is_public && a.is_active?'<span class="badge link" title="คนนอกเห็นได้ที่หน้าข่าวสาธารณะ">🌐 สาธารณะ</span>':""}
     </div>
     <h3>${esc(a.title)}</h3>
     ${a.content?`<p class="desc">${esc(a.content)}</p>`:""}
@@ -2249,7 +2280,9 @@ async function openAnnAttach(aid, btn){
 /* ── ข้อความโพสต์ Facebook (ครูคัดลอกไปวางในเพจเอง) ── */
 function fbCaption(a){
   const FB_MAX = 1100;                         // เกินนี้ Facebook จะพับ "ดูเพิ่มเติม" ตัดที่ท้ายบรรทัดให้อ่านรู้เรื่อง
-  const url = (a.external_url||"").trim();
+  const ext = (a.external_url||"").trim();
+  // ข่าวที่เผยแพร่สาธารณะ ใช้ลิงก์หน้าข่าวสาธารณะ (คนนอกเปิดได้ มีไฟล์แนบ/ลิงก์ครบ)
+  const url = (a.is_public && a.is_active) ? PUBLIC_NEWS_URL + "#n=" + a.id : ext;
   const ok = /^https?:\/\//i.test(url);
   let body = String(a.content||"").replace(/\r/g,"").replace(/\n{3,}/g,"\n\n").trim();
   if(body.length > FB_MAX){
@@ -2267,8 +2300,9 @@ function fbCaption(a){
 function openFbModal(id){
   const a = announcements.find(x=>x.id===id); if(!a) return;
   $("fbText").value = fbCaption(a);
-  const ok = /^https?:\/\//i.test((a.external_url||"").trim());
-  $("fbHint").textContent = (ok ? "" : "ข่าวนี้ไม่มีลิงก์ภายนอก (ลิงก์คลังต้อง login จึงไม่ใส่ให้) ")
+  const pub = a.is_public && a.is_active;
+  const ok = pub || /^https?:\/\//i.test((a.external_url||"").trim());
+  $("fbHint").textContent = (pub ? "ใส่ลิงก์หน้าข่าวสาธารณะให้แล้ว คนนอกกดเปิดอ่านได้ " : ok ? "ข่าวนี้ยังไม่ได้ติ๊ก \"เผยแพร่สาธารณะ\" จึงใส่เฉพาะลิงก์ภายนอก " : "ข่าวนี้ไม่มีลิงก์ภายนอก (ติ๊ก \"เผยแพร่สาธารณะ\" เพื่อใส่ลิงก์หน้าข่าวให้) ")
     + "ตรวจก่อนโพสต์: Facebook เป็นพื้นที่สาธารณะ ห้ามมีชื่อ คะแนน หรือผลงานของนักเรียนรายคน";
   $("fbModal").classList.add("show");
 }
@@ -2301,6 +2335,7 @@ function openAnnModal(id){
   $("annTitle").value = a?.title||""; $("annContent").value = a?.content||"";
   $("annFile").value = ""; $("annUrl").value = a?.external_url||"";
   $("annActive").checked = a? a.is_active : true;
+  $("annPublic").checked = !!a?.is_public;
   setAnnAttach(a? (a.file_path? "file" : (a.external_url? "link":"none")) : "none");
   if(a && a.file_path){ $("annFileWrap").classList.add("hidden"); } // แก้ไข: เปลี่ยนไฟล์แนบเดิมไม่ได้ (ลบแล้วสร้างใหม่ถ้าจำเป็น)
   $("annModal").classList.add("show");
@@ -2313,7 +2348,9 @@ $("btnAnnSave").onclick = async ()=>{
   session = freshSession;
   const title = $("annTitle").value.trim();
   if(!title) return msg("annMsg","ใส่หัวข้อข่าวก่อนนะคะ","err");
-  const base = { title, content:$("annContent").value.trim()||null, is_active:$("annActive").checked };
+  const base = { title, content:$("annContent").value.trim()||null, is_active:$("annActive").checked, is_public:$("annPublic").checked };
+  if(base.is_public && /รหัสผ่าน|password|pass\s*:/i.test(title+" "+(base.content||""))
+     && !confirm("ข่าวนี้มีคำว่า \"รหัสผ่าน\" ถ้าเผยแพร่สาธารณะ คนนอกจะเห็นด้วย\nยืนยันจะเผยแพร่สาธารณะไหมคะ?")) return;
   $("btnAnnSave").disabled = true;
   try{
     if(editingAnnId){
@@ -2356,6 +2393,47 @@ $("btnAnnSave").onclick = async ()=>{
   }catch(e){ msg("annMsg", e.message, "err"); }
   $("btnAnnSave").disabled = false;
 };
+/* ── ลิงก์คลังสื่อสำหรับเพื่อนครู (ครูแนะแนว/admin) ── */
+const PUBLIC_NEWS_URL = "https://timemachine68.github.io/treasury/news.html";
+const PEER_PAGE_URL = "https://timemachine68.github.io/treasury/share.html";
+let peerToken = "";
+function peerLinkOf(t){ return t ? PEER_PAGE_URL + "#k=" + t : ""; }
+async function loadPeerLink(){
+  msg("peerMsg","");
+  const {data, error} = await sb.from("peer_share_links").select("token,updated_at").eq("id",1).maybeSingle();
+  if(error){ msg("peerMsg","โหลดลิงก์ไม่สำเร็จ: "+error.message,"err"); return; }
+  peerToken = data?.token || "";
+  $("peerUrl").value = peerLinkOf(peerToken);
+  const n = resources.filter(r=>r.share_with_peers).length;
+  $("peerInfo").textContent = (peerToken ? "สร้าง/เปลี่ยนล่าสุด "+thDate(data.updated_at)+" · " : "ยังไม่มีลิงก์ · ")
+    + "สื่อที่แชร์อยู่ "+n+" รายการ" + (n? "" : " (ติ๊ก \"แชร์ให้เพื่อนครูแนะแนว\" ในหน้าแก้ไขสื่อ)");
+  $("btnPeerRotate").textContent = peerToken ? "เปลี่ยนลิงก์ใหม่" : "สร้างลิงก์";
+  $("btnPeerOff").classList.toggle("hidden", !peerToken);
+  $("btnPeerCopy").disabled = !peerToken;
+}
+$("btnPeerLink").onclick = async ()=>{ $("peerModal").classList.add("show"); await loadPeerLink(); };
+$("btnPeerClose").onclick = ()=> $("peerModal").classList.remove("show");
+$("btnPeerCopy").onclick = async ()=>{
+  const t = $("peerUrl").value; if(!t) return;
+  try{ await navigator.clipboard.writeText(t); }
+  catch(e){ $("peerUrl").select(); try{ document.execCommand("copy"); }catch(_){ return toast("คัดลอกไม่สำเร็จ ลองลากเลือกลิงก์แล้วคัดลอกเอง"); } }
+  toast("คัดลอกลิงก์แล้ว ไปวางในกลุ่มไลน์ได้เลย");
+};
+$("btnPeerRotate").onclick = async ()=>{
+  if(peerToken && !confirm("เปลี่ยนลิงก์ใหม่ใช่ไหมคะ?\nลิงก์เดิมที่ส่งไปแล้วจะใช้ไม่ได้ทันที ต้องส่งลิงก์ใหม่ให้เพื่อนครูอีกครั้ง")) return;
+  $("btnPeerRotate").disabled = true;
+  const {error} = await sb.rpc("peer_share_rotate");
+  $("btnPeerRotate").disabled = false;
+  if(error) return msg("peerMsg","ทำไม่สำเร็จ: "+error.message,"err");
+  await loadPeerLink(); msg("peerMsg", "ได้ลิงก์ใหม่แล้ว กด คัดลอกลิงก์ เพื่อส่งต่อ", "ok");
+};
+$("btnPeerOff").onclick = async ()=>{
+  if(!confirm("ปิดลิงก์ใช่ไหมคะ?\nเพื่อนครูจะเปิดคลังสื่อไม่ได้จนกว่าจะสร้างลิงก์ใหม่")) return;
+  const {error} = await sb.rpc("peer_share_disable");
+  if(error) return msg("peerMsg","ทำไม่สำเร็จ: "+error.message,"err");
+  await loadPeerLink(); msg("peerMsg","ปิดลิงก์แล้ว","ok");
+};
+
 async function delAnn(id){
   const a = announcements.find(x=>x.id===id); if(!a) return;
   if(!confirm(`ลบข่าว "${a.title}" ใช่ไหมคะ?`)) return;
