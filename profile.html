@@ -286,12 +286,16 @@ function openPhoto(url){
 
 /* ═══════════ รูปโปรไฟล์ ═══════════ */
 async function loadAvatar(){
-  if(!profile.avatar_path){ $("btnRemovePhoto").classList.add("hidden"); return; }
-  const {data, error} = await sb.storage.from(BUCKET).createSignedUrl(profile.avatar_path, 3600);
-  if(error) return; // ไม่มีรูปหรือดึงไม่สำเร็จ ปล่อยเป็นตัวอักษรย่อไป
-  $("avatarImg").innerHTML = `<img src="${data.signedUrl}" style="width:100%;height:100%;border-radius:50%;object-fit:cover" class="zoomable" title="แตะเพื่อดูรูปขยาย">`;
+  // รูปที่นักเรียนอัปโหลดเองมาก่อน ถ้าไม่มีใช้รูปถ่ายของโรงเรียน (อ่านได้เฉพาะรูปของตัวเอง)
+  const ownPhoto = !!profile.avatar_path;
+  const path = profile.avatar_path || profile.school_photo_path;
+  if(!ownPhoto) $("btnRemovePhoto").classList.add("hidden");   // ลบได้เฉพาะรูปที่ตัวเองอัปโหลด
+  if(!path) return;
+  const {data, error} = await sb.storage.from(BUCKET).createSignedUrl(path, 3600);
+  if(error || !data) return; // ไม่มีรูปหรือดึงไม่สำเร็จ ปล่อยเป็นตัวอักษรย่อไป
+  $("avatarImg").innerHTML = `<img src="${data.signedUrl}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;object-position:50% 20%" class="zoomable" title="แตะเพื่อดูรูปขยาย">`;
   $("avatarImg").querySelector("img").onclick = ()=> openPhoto(data.signedUrl);
-  $("btnRemovePhoto").classList.remove("hidden");
+  if(ownPhoto) $("btnRemovePhoto").classList.remove("hidden");
 }
 
 // ครอปเป็นสี่เหลี่ยมจัตุรัส (กลางภาพ) แล้วย่อเหลือ size×size ก่อนอัปโหลด
@@ -363,6 +367,7 @@ $("btnRemovePhoto").onclick = async ()=>{
   profile.avatar_path = null;
   renderInfo();
   $("btnRemovePhoto").classList.add("hidden");
+  loadAvatar();   // ถ้ามีรูปโรงเรียน จะกลับไปแสดงรูปนั้นแทน
   toast("ลบรูปโปรไฟล์แล้ว");
 };
 
