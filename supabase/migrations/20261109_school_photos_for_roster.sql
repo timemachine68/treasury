@@ -45,3 +45,6 @@ create policy "school photo read own" on storage.objects for select to authentic
     and (storage.foldername(name))[1] = 'school'
     and name = 'school/' || (select p.student_id from public.profiles p where p.id = (select auth.uid())) || '.jpg'
   );
+
+-- 2026-11-09 (ภายหลัง): หน้าโปรไฟล์ใช้รูปที่นักเรียนอัปโหลดเองอย่างเดียว จึงไม่ให้นักเรียนอ่านโฟลเดอร์ school/ อีก
+-- drop policy if exists "school photo read own" on storage.objects;

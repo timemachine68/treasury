@@ -50,6 +50,8 @@ h1{margin:0;font-size:28px;color:var(--fern-deep);line-height:1.25}
 .card:hover{transform:translateY(-2px);border-color:var(--fern)}
 .av{position:relative;width:112px;height:112px;margin:0 auto;border-radius:50%;box-shadow:0 0 0 4px #fff,0 0 0 6px var(--fern);display:grid;place-items:center;background:var(--fern);color:#fff;font-family:'Mitr',sans-serif;font-size:46px;font-weight:600}
 .av img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 20%;border-radius:50%;display:block;cursor:zoom-in;background:var(--fern-tint)}
+.av .chg{position:absolute;right:-6px;top:-6px;z-index:2;width:36px;height:36px;padding:0;border-radius:50%;border:2px solid #fff;background:var(--fern-deep);color:#fff;font-size:16px;line-height:1;cursor:pointer;display:grid;place-items:center;box-shadow:0 1px 4px rgba(0,0,0,.25)}
+.av .chg:disabled{opacity:.6;cursor:wait}
 .av .no{position:absolute;left:50%;bottom:-12px;transform:translateX(-50%);min-width:26px;height:26px;border-radius:13px;background:var(--marigold);color:var(--ink);font-family:'Sarabun',sans-serif;font-size:13px;font-weight:700;display:grid;place-items:center;box-shadow:0 0 0 3px #fff;padding:0 6px}
 .fn{margin-top:22px;font-weight:700;font-size:17px;line-height:1.25}
 .sn{font-size:14px;color:var(--ink-soft);line-height:1.25;min-height:18px}
@@ -136,6 +138,7 @@ body.pvopen{overflow:hidden}
   </div>
 </main>
 
+<input type="file" id="chgIn" accept="image/*" hidden>
 <div class="lb" id="lb"><img alt="รูปนักเรียน"><span class="cap" id="lbCap"></span><span>แตะที่ว่างเพื่อปิด</span></div>
 <div class="pv" id="pv" hidden role="dialog" aria-modal="true" aria-label="โปรไฟล์นักเรียน">
   <div class="pvbar"><button class="pvback" id="pvBack" type="button">← กลับทำเนียบ</button><span class="pvname" id="pvName"></span></div>
@@ -286,7 +289,7 @@ function cardHtml(s, i){
     ? `<img src="${esc(s.url)}" alt="" data-zoom="${i}" loading="lazy">`
     : esc(n.first.charAt(0));
   return `<div class="card" role="link" tabindex="0" data-id="${esc(s.id)}">
-    <div class="av">${av}<span class="no">${i + 1}</span></div>
+    <div class="av">${av}<button class="chg" type="button" data-chg="${i}" title="เปลี่ยนรูป" aria-label="เปลี่ยนรูปของ ${esc(s.display_name)}">📷</button><span class="no">${i + 1}</span></div>
     <div class="fn">${esc(n.first)}</div>
     <div class="sn">${esc(n.last)}</div>
     <span class="nk ${s.nickname ? '' : 'e'}">${s.nickname ? esc(s.nickname) : '&nbsp;'}</span>
@@ -303,6 +306,56 @@ function renderRoom(loading){
   $('out').innerHTML = `<div class="grid">${shown.map(x => cardHtml(x.s, x.i)).join('')}</div>`;
 }
 $('q').addEventListener('input', () => { if (curRoom) renderRoom(false); });
+
+// ---------- ครูเปลี่ยนรูปนักเรียน (เปลี่ยนเฉพาะรูปในทำเนียบ ไม่แตะรูปโปรไฟล์ที่นักเรียนอัปโหลดเอง) ----------
+let chgIndex = -1;
+function pickPhoto(i){
+  const s = curList[i];
+  if (!s) return;
+  if (!/^\d{5}$/.test(String(s.student_id || ''))){ alert('นักเรียนคนนี้ยังไม่มีรหัสนักเรียน 5 หลัก เปลี่ยนรูปไม่ได้ค่ะ'); return; }
+  chgIndex = i;
+  $('chgIn').click();
+}
+async function makeThumb(file, w0){
+  let bmp;
+  try { bmp = await createImageBitmap(file, { imageOrientation: 'from-image' }); }
+  catch (e){ try { bmp = await createImageBitmap(file); } catch (e2){ return null; } }
+  try {
+    const sc = Math.min(1, w0 / bmp.width);
+    const w = Math.max(1, Math.round(bmp.width * sc)), h = Math.max(1, Math.round(bmp.height * sc));
+    const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+    const ctx = cv.getContext('2d');
+    ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, h);
+    ctx.drawImage(bmp, 0, 0, w, h);
+    return await new Promise(r => cv.toBlob(r, 'image/jpeg', 0.82));
+  } finally { if (bmp.close) bmp.close(); }
+}
+$('chgIn').addEventListener('change', async e => {
+  const file = e.target.files[0]; e.target.value = '';
+  const s = curList[chgIndex], idx = chgIndex; chgIndex = -1;
+  if (!file || !s) return;
+  if (!/^image\//.test(file.type)){ alert('ไฟล์นี้ไม่ใช่รูปภาพ เลือกไฟล์ JPG หรือ PNG นะคะ'); return; }
+  const btn = $('out').querySelector('[data-chg="' + idx + '"]');
+  if (btn){ btn.disabled = true; btn.textContent = '⏳'; }
+  const restore = () => { const b = $('out').querySelector('[data-chg="' + idx + '"]'); if (b){ b.disabled = false; b.textContent = '📷'; } };
+  try {
+    const blob = await makeThumb(file, 480);
+    if (!blob){ alert('เปิดไฟล์รูปนี้ไม่ได้ ลองใช้รูป JPG หรือ PNG อีกครั้งค่ะ'); restore(); return; }
+    const code = String(s.student_id), path = 'school/' + code + '.jpg';
+    const up = await sb.storage.from(BUCKET).upload(path, blob, { contentType: 'image/jpeg', upsert: true, cacheControl: '3600' });
+    if (up.error) throw up.error;
+    const rp = await sb.rpc('set_school_photos', { p_ids: [code] });
+    if (rp.error) throw rp.error;
+    const sg = await sb.storage.from(BUCKET).createSignedUrl(path, 3600);
+    s.school_photo_path = path;
+    s.url = sg.data ? sg.data.signedUrl : s.url;
+    const orig = ALL.find(x => x.id === s.id); if (orig) orig.school_photo_path = path;
+    renderRoom(false);
+  } catch (err){
+    alert('เปลี่ยนรูปไม่สำเร็จ: ' + (err && err.message ? err.message : err) + '\nรูปเดิมยังอยู่ ลองใหม่อีกครั้งได้ค่ะ');
+    restore();
+  }
+});
 
 // ---------- แผงโปรไฟล์ซ้อน (แตะการ์ดแล้วไม่ต้องเปลี่ยนหน้า) ----------
 let pvOpen = false, pvReturn = null, pvFrame = null;
@@ -341,6 +394,8 @@ $('pvBack').addEventListener('click', closeProfile);
 
 // แตะการ์ด = เปิดโปรไฟล์ / แตะรูป = ขยาย
 $('out').addEventListener('click', e => {
+  const chg = e.target.closest('[data-chg]');
+  if (chg){ e.stopPropagation(); pickPhoto(+chg.dataset.chg); return; }
   const img = e.target.closest('img[data-zoom]');
   if (img){
     e.stopPropagation();
@@ -354,7 +409,7 @@ $('out').addEventListener('click', e => {
   if (card) openProfile(card);
 });
 $('out').addEventListener('keydown', e => {
-  if (e.key !== 'Enter') return;
+  if (e.key !== 'Enter' || e.target.closest('[data-chg]')) return;
   const card = e.target.closest('.card');
   if (card) openProfile(card);
 });
