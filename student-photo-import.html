@@ -1,0 +1,396 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>นำเข้ารูปถ่ายนักเรียน · แนะให้แนว</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Mitr:wght@400;500;600&family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{
+  --ink:#2C3A2F; --ink-soft:#6A7466;
+  --board:#F5F3ED; --card:#FFFFFF;
+  --fern:#4A7C59; --fern-deep:#355A40; --fern-tint:#E6EFE4;
+  --marigold:#F9A620; --terra:#B7472A;
+  --line:#DDD8C8; --danger:#C0392B; --warn-bg:#FFF4DC;
+  --radius:16px; --shadow:0 2px 10px rgba(44,58,47,.10);
+}
+*{box-sizing:border-box}
+[hidden]{display:none !important}
+body{margin:0;font-family:'Sarabun',sans-serif;background:var(--board);color:var(--ink);font-size:16px;line-height:1.5}
+h1,h2,h3,.brand{font-family:'Mitr',sans-serif;font-weight:600}
+:focus-visible{outline:3px solid var(--marigold);outline-offset:2px;border-radius:8px}
+.wrap{max-width:980px;margin:0 auto;padding:0 16px}
+header.app{background:var(--fern);color:#fff;padding:12px 0}
+header.app .wrap{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.brand{font-size:20px}
+.who{margin-left:auto;font-size:14px;opacity:.9}
+.back{color:#fff;text-decoration:none;font-size:14px;opacity:.9;border:1px solid rgba(255,255,255,.5);border-radius:999px;padding:4px 12px}
+main.wrap{padding:20px 16px 64px}
+h1{margin:0;font-size:28px;color:var(--fern-deep);line-height:1.25}
+.lead{color:var(--ink-soft);margin:4px 0 16px}
+.msg{background:#fff;border:1.5px solid var(--line);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow)}
+.btn{font-family:'Sarabun',sans-serif;font-weight:700;font-size:15px;border:1.5px solid var(--line);background:#fff;color:var(--fern-deep);border-radius:999px;padding:10px 18px;cursor:pointer}
+.btn.primary{background:var(--fern);border-color:var(--fern);color:#fff}
+.btn:disabled{opacity:.5;cursor:default}
+.drop{background:#fff;border:2.5px dashed var(--fern);border-radius:var(--radius);padding:26px 18px;text-align:center}
+.drop.over{background:var(--fern-tint)}
+.drop .big{font-family:'Mitr',sans-serif;font-size:20px;color:var(--fern-deep)}
+.drop .hint{color:var(--ink-soft);margin:6px 0 14px}
+.drop .row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.sum{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:18px 0}
+.sum .c{background:#fff;border-radius:14px;padding:12px 14px;box-shadow:var(--shadow);border-left:6px solid var(--fern)}
+.sum .c b{display:block;font-size:26px;font-family:'Mitr',sans-serif;line-height:1.1}
+.sum .c span{font-size:14px;color:var(--ink-soft)}
+.sum .c.warn{border-left-color:var(--marigold)}
+.sum .c.bad{border-left-color:var(--danger)}
+.bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:6px 0 12px}
+.bar .sp{flex:1}
+select{font:inherit;min-height:42px;border:1.5px solid var(--line);border-radius:999px;padding:0 14px;background:#fff}
+.prog{height:14px;background:#E8E4D6;border-radius:999px;overflow:hidden;margin:8px 0}
+.prog>i{display:block;height:100%;width:0;background:var(--fern);transition:width .15s}
+.list{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
+.it{display:flex;gap:12px;align-items:center;padding:8px 14px;border-bottom:1px solid #EFEBDD}
+.it:last-child{border-bottom:none}
+.it input[type=checkbox]{width:22px;height:22px;flex:none}
+.it img,.it .ph{width:48px;height:64px;border-radius:8px;object-fit:cover;object-position:50% 20%;background:var(--fern-tint);flex:none}
+.it .t{flex:1;min-width:0}
+.it .t b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.it .t small{color:var(--ink-soft);display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tag{font-size:13px;font-weight:700;border-radius:999px;padding:2px 10px;background:var(--fern-tint);color:var(--fern-deep);flex:none}
+.tag.warn{background:var(--warn-bg);color:#8A5A00}
+.tag.bad{background:#FBE3DF;color:var(--danger)}
+.more{text-align:center;padding:12px}
+.note{background:var(--warn-bg);border-radius:12px;padding:10px 14px;margin:10px 0;font-size:15px}
+.done{background:var(--fern-tint);border-radius:var(--radius);padding:16px;margin:14px 0}
+.done h3{margin:0 0 6px;color:var(--fern-deep)}
+.fail{color:var(--danger)}
+</style>
+</head>
+<body>
+<header class="app"><div class="wrap">
+  <a class="back" href="student-roster.html">← ทำเนียบนักเรียน</a>
+  <span class="brand">นำเข้ารูปถ่ายนักเรียน</span>
+  <span class="who" id="who"></span>
+</div></header>
+
+<main class="wrap">
+  <div id="no-access" class="msg" hidden></div>
+  <div id="main" hidden>
+    <h1>นำเข้ารูปถ่ายนักเรียน</h1>
+    <p class="lead">เลือกไฟล์รูปถ่ายของโรงเรียนได้ทีละหลายร้อยรูป ระบบจะย่อรูปให้เล็กและจับคู่กับนักเรียนจากชื่อไฟล์ให้เอง ชื่อไฟล์ต้องเป็นรหัสนักเรียน 5 หลัก เช่น <b>12345.jpg</b></p>
+
+    <div class="drop" id="drop">
+      <div class="big">📷 เลือกรูปถ่าย หรือลากมาวางตรงนี้</div>
+      <div class="hint">ใช้ได้ทั้งไฟล์ JPG และ PNG · ไฟล์เดิมในเครื่องไม่ถูกแก้ไข · ถ้าเลือกรอบใหม่ รายการรอบก่อนจะถูกล้าง (รูปที่บันทึกไปแล้วไม่หาย)</div>
+      <div class="row">
+        <button class="btn primary" id="btnPick" type="button">เลือกไฟล์รูป</button>
+        <button class="btn" id="btnFolder" type="button">เลือกทั้งโฟลเดอร์</button>
+      </div>
+      <input type="file" id="fileIn" accept="image/*" multiple hidden>
+      <input type="file" id="dirIn" webkitdirectory multiple hidden>
+    </div>
+
+    <div id="work" hidden>
+      <div id="procBox" hidden>
+        <div id="procTxt"></div>
+        <div class="prog"><i id="procBar"></i></div>
+      </div>
+
+      <div class="sum" id="sum"></div>
+      <div class="note" id="tips" hidden></div>
+
+      <div class="bar">
+        <select id="flt" aria-label="กรองรายการ">
+          <option value="all">แสดงทั้งหมด</option>
+          <option value="check">เฉพาะที่ต้องตรวจ</option>
+          <option value="ok">เฉพาะที่พร้อมบันทึก</option>
+        </select>
+        <button class="btn" id="btnAll" type="button">เลือกที่พร้อมทั้งหมด</button>
+        <button class="btn" id="btnNone" type="button">ไม่เลือกเลย</button>
+        <div class="sp"></div>
+        <button class="btn primary" id="btnSave" type="button" disabled>บันทึกรูปที่เลือก</button>
+      </div>
+
+      <div id="saveBox" hidden>
+        <div id="saveTxt"></div>
+        <div class="prog"><i id="saveBar"></i></div>
+      </div>
+      <div id="result"></div>
+
+      <div class="list" id="list"></div>
+      <div class="more" id="more" hidden><button class="btn" id="btnMore" type="button">แสดงเพิ่ม</button></div>
+    </div>
+  </div>
+</main>
+
+<script>
+const SUPABASE_URL = 'https://ikkhjslmtjwrxzxvtokb.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlra2hqc2xtdGp3cnh6eHZ0b2tiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM3NDMzNjksImV4cCI6MjA5OTMxOTM2OX0.3OR_9mEv82Ns1LLjx5nnRwJYzrtKFtWCWd1bPuQfNKU';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const BUCKET = 'profile-photos';
+const THUMB_W = 480;            // ย่อให้กว้าง 480 พิกเซล (ประมาณ 20-30 KB ต่อรูป)
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+let BY_CODE = {};     // รหัสนักเรียน -> นักเรียน
+let ITEMS = [];       // รายการรูปที่เลือกมา
+let shown = 0, busy = false, runId = 0;
+const PAGE = 100;
+
+function showNoAccess(msg){ $('no-access').hidden = false; $('no-access').innerHTML = msg; }
+
+async function init(){
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session){
+    showNoAccess('กรุณาเข้าสู่ระบบจากหน้า <a href="index.html">คลังแนะแนว</a> ก่อน แล้วกลับมาเปิดหน้านี้อีกครั้ง');
+    return;
+  }
+  const { data: me } = await sb.from('profiles').select('display_name, role, is_guidance').eq('id', session.user.id).single();
+  const ok = !!me && (me.role === 'admin' || (me.role === 'teacher' && me.is_guidance === true));
+  $('who').textContent = me ? me.display_name : '';
+  if (!ok){
+    showNoAccess('<b>หน้านี้สำหรับครูแนะแนวและผู้ดูแลระบบเท่านั้น</b>');
+    return;
+  }
+  $('main').hidden = false;
+  await loadStudents();
+}
+
+// ดึงทีละ 1,000 แถว (PostgREST ตัดที่ 1,000)
+async function loadStudents(){
+  let all = [], from = 0;
+  while (true){
+    const { data, error } = await sb.from('profiles')
+      .select('id,student_id,display_name,class_room,school_photo_path')
+      .eq('role', 'student').eq('status', 'active')
+      .order('id').range(from, from + 999);
+    if (error){ showNoAccess('โหลดรายชื่อนักเรียนไม่สำเร็จ: ' + esc(error.message) + '<br>ลองรีเฟรชหน้านี้อีกครั้ง'); return; }
+    all = all.concat(data || []);
+    if (!data || data.length < 1000) break;
+    from += 1000;
+  }
+  BY_CODE = {};
+  all.forEach(s => { if (s.student_id) BY_CODE[String(s.student_id).trim()] = s; });
+}
+
+// ---------- อ่านรหัสจากชื่อไฟล์ ----------
+function parseName(fileName){
+  const base = fileName.replace(/\.[^.]+$/, '').trim();
+  if (/^\d{5}$/.test(base)) return { code: base, exact: true };
+  const m = base.match(/(?<!\d)\d{5}(?!\d)/g);
+  if (m && m.length === 1) return { code: m[0], exact: false };
+  return { code: null, exact: false };
+}
+
+// ---------- ย่อรูป ----------
+async function makeThumb(file){
+  let bmp;
+  try { bmp = await createImageBitmap(file, { imageOrientation: 'from-image' }); }
+  catch (e){ try { bmp = await createImageBitmap(file); } catch (e2){ return null; } }
+  try {
+    const sc = Math.min(1, THUMB_W / bmp.width);
+    const w = Math.max(1, Math.round(bmp.width * sc)), h = Math.max(1, Math.round(bmp.height * sc));
+    const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+    const ctx = cv.getContext('2d');
+    ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, h);      // กันพื้นหลังดำเมื่อเป็น PNG โปร่งใส
+    ctx.drawImage(bmp, 0, 0, w, h);
+    const blob = await new Promise(r => cv.toBlob(r, 'image/jpeg', 0.82));
+    return blob ? { blob, w, h } : null;
+  } finally { if (bmp.close) bmp.close(); }
+}
+
+async function pool(list, n, fn){
+  let i = 0;
+  await Promise.all(Array.from({ length: Math.min(n, list.length) }, async () => {
+    while (i < list.length){ const k = i++; await fn(list[k], k); }
+  }));
+}
+
+// ---------- รับไฟล์ ----------
+async function takeFiles(fileList){
+  if (busy) return;
+  const files = Array.from(fileList || []).filter(f => /^image\//.test(f.type) || /\.(jpe?g|png|webp)$/i.test(f.name));
+  if (!files.length){ alert('ไม่พบไฟล์รูปในที่เลือก ลองเลือกไฟล์ JPG หรือ PNG อีกครั้งค่ะ'); return; }
+  busy = true; const my = ++runId;
+  ITEMS.forEach(it => { if (it.url) URL.revokeObjectURL(it.url); });
+  ITEMS = files.map((f, i) => {
+    const p = parseName(f.name);
+    return { key: i, file: f, name: f.name, code: p.code, exact: p.exact, student: p.code ? (BY_CODE[p.code] || null) : null,
+             blob: null, url: null, state: 'wait', checked: false, saved: false };
+  });
+  $('work').hidden = false; $('result').innerHTML = ''; $('saveBox').hidden = true;
+  $('procBox').hidden = false;
+  let done = 0;
+  const total = ITEMS.length;
+  const tick = () => { $('procTxt').textContent = 'กำลังย่อรูป ' + done + ' จาก ' + total + ' รูป'; $('procBar').style.width = (done / total * 100) + '%'; };
+  tick();
+  await pool(ITEMS, 4, async it => {
+    if (it.student){
+      const t = await makeThumb(it.file);
+      if (t){ it.blob = t.blob; it.url = URL.createObjectURL(t.blob); it.state = 'ready'; }
+      else it.state = 'unreadable';
+    } else {
+      it.state = it.code ? 'nomatch' : 'badname';
+    }
+    done++; if (done % 5 === 0 || done === total) tick();
+  });
+  // รหัสซ้ำในรอบนี้
+  const cnt = {};
+  ITEMS.forEach(it => { if (it.state === 'ready') cnt[it.code] = (cnt[it.code] || 0) + 1; });
+  ITEMS.forEach(it => {
+    if (it.state === 'ready' && cnt[it.code] > 1) it.state = 'dup';
+    it.checked = it.state === 'ready' && it.exact;       // ติ๊กให้เฉพาะที่ชื่อไฟล์ตรงเป๊ะ
+  });
+  ITEMS.sort((a, b) => rank(a) - rank(b) || String(a.code || a.name).localeCompare(String(b.code || b.name), 'en', { numeric: true }));
+  $('procBox').hidden = true;
+  busy = false;
+  render(true);
+}
+function rank(it){ return ({ dup: 0, nomatch: 1, badname: 2, unreadable: 3, ready: it.exact ? 5 : 4 })[it.state] ?? 9; }
+
+// ---------- แสดงผล ----------
+function stat(){
+  const s = { ready: 0, replace: 0, loose: 0, dup: 0, nomatch: 0, badname: 0, unreadable: 0, saved: 0, sel: 0 };
+  ITEMS.forEach(it => {
+    if (it.saved){ s.saved++; return; }
+    if (it.state === 'ready'){ s.ready++; if (it.student.school_photo_path) s.replace++; if (!it.exact) s.loose++; }
+    else s[it.state]++;
+    if (it.checked) s.sel++;
+  });
+  return s;
+}
+function render(reset){
+  const s = stat();
+  const ids = new Set(ITEMS.filter(i => i.checked).map(i => i.code));
+  const missingAfter = Object.values(BY_CODE).filter(st => !st.school_photo_path && !ids.has(String(st.student_id))).length;
+  $('sum').innerHTML =
+    (s.saved ? card('บันทึกแล้ว', s.saved, '') : '') +
+    card('พร้อมบันทึก', s.ready, '') +
+    card('มีรูปอยู่แล้ว (จะแทนที่)', s.replace, s.replace ? 'warn' : '') +
+    card('รหัสซ้ำกัน', s.dup, s.dup ? 'warn' : '') +
+    card('ไม่พบรหัสในระบบ', s.nomatch, s.nomatch ? 'bad' : '') +
+    card('ชื่อไฟล์ไม่ใช่รหัส', s.badname, s.badname ? 'bad' : '') +
+    card('เปิดไฟล์ไม่ได้', s.unreadable, s.unreadable ? 'bad' : '') +
+    card('นักเรียนที่ยังไม่มีรูปโรงเรียน (หลังบันทึกที่ติ๊กไว้)', missingAfter, 'warn');
+  const tips = [];
+  if (s.dup) tips.push('มี ' + s.dup + ' รูปที่รหัสซ้ำกัน ระบบยังไม่ติ๊กให้ เลือกเองว่าจะใช้รูปไหน (อย่าติ๊กทั้งสองรูป เพราะรูปหลังจะทับรูปแรก)');
+  if (s.loose) tips.push('มี ' + s.loose + ' รูปที่ชื่อไฟล์มีตัวอักษรอื่นปนอยู่ ระบบเดาจากเลข 5 หลักและยังไม่ติ๊กให้ กรุณาดูชื่อให้ตรงก่อนติ๊ก');
+  $('tips').hidden = !tips.length; $('tips').innerHTML = tips.map(esc).join('<br>');
+  $('btnSave').disabled = busy || s.sel === 0;
+  $('btnSave').textContent = 'บันทึกรูปที่เลือก (' + s.sel + ' รูป)';
+  if (reset) shown = PAGE;
+  drawList();
+}
+function card(t, n, cls){ return '<div class="c ' + cls + '"><b>' + n.toLocaleString('th-TH') + '</b><span>' + t + '</span></div>'; }
+function visible(){
+  const f = $('flt').value;
+  return ITEMS.filter(it => f === 'all' ? true : f === 'ok' ? (it.state === 'ready' && it.exact) : !(it.state === 'ready' && it.exact));
+}
+function tagOf(it){
+  if (it.saved) return '<span class="tag">บันทึกแล้ว</span>';
+  switch (it.state){
+    case 'ready':
+      if (!it.exact) return '<span class="tag warn">ชื่อไฟล์ไม่ตรงเป๊ะ</span>';
+      return it.student && it.student.school_photo_path ? '<span class="tag warn">แทนที่รูปเดิม</span>' : '<span class="tag">พร้อม</span>';
+    case 'dup': return '<span class="tag warn">รหัสซ้ำ</span>';
+    case 'nomatch': return '<span class="tag bad">ไม่พบรหัสนี้</span>';
+    case 'badname': return '<span class="tag bad">ชื่อไฟล์ไม่ใช่รหัส</span>';
+    case 'unreadable': return '<span class="tag bad">เปิดไฟล์ไม่ได้</span>';
+    default: return '';
+  }
+}
+function drawList(){
+  const vis = visible();
+  const part = vis.slice(0, shown);
+  $('list').innerHTML = part.length ? part.map(it => {
+    const canTick = it.state === 'ready' || it.state === 'dup';
+    const nm = it.student ? esc(it.student.display_name) + ' · ' + esc(it.student.class_room || '-') : (it.code ? 'ไม่พบรหัส ' + esc(it.code) + ' ในระบบ' : 'อ่านรหัสจากชื่อไฟล์ไม่ได้');
+    return '<label class="it">' +
+      '<input type="checkbox" data-k="' + it.key + '"' + (it.checked ? ' checked' : '') + (canTick && !it.saved ? '' : ' disabled') + '>' +
+      (it.url ? '<img src="' + it.url + '" alt="" loading="lazy">' : '<span class="ph"></span>') +
+      '<span class="t"><b>' + nm + '</b><small>ไฟล์ ' + esc(it.name) + '</small></span>' + tagOf(it) + '</label>';
+  }).join('') : '<div class="msg">ไม่มีรายการในหมวดนี้</div>';
+  $('more').hidden = vis.length <= shown;
+}
+$('list').addEventListener('change', e => {
+  const k = e.target && e.target.dataset && e.target.dataset.k;
+  if (k == null) return;
+  const it = ITEMS.find(x => String(x.key) === k);
+  if (it){ it.checked = e.target.checked; render(false); }
+});
+$('btnMore').onclick = () => { shown += PAGE; drawList(); };
+$('flt').onchange = () => render(true);
+$('btnAll').onclick = () => {
+  ITEMS.forEach(it => { if (it.state === 'ready' && it.exact && !it.saved){ it.checked = true; } });
+  render(false);
+};
+$('btnNone').onclick = () => { ITEMS.forEach(it => it.checked = false); render(false); };
+
+// ---------- บันทึก ----------
+window.addEventListener('beforeunload', e => { if (busy){ e.preventDefault(); e.returnValue = ''; } });
+$('btnSave').onclick = async () => {
+  if (busy) return;
+  const sel = ITEMS.filter(it => it.checked && !it.saved && it.blob);
+  // กันรหัสซ้ำที่ถูกติ๊กทั้งคู่
+  const byCode = {};
+  sel.forEach(it => (byCode[it.code] = byCode[it.code] || []).push(it));
+  const twice = Object.keys(byCode).filter(c => byCode[c].length > 1);
+  if (twice.length){
+    alert('รหัส ' + twice.slice(0, 5).join(', ') + (twice.length > 5 ? ' ...' : '') + ' ถูกติ๊กมากกว่า 1 รูป กรุณาเลือกให้เหลือรูปเดียวต่อรหัสก่อนบันทึกค่ะ');
+    return;
+  }
+  if (!sel.length) return;
+  busy = true; $('btnSave').disabled = true;
+  $('saveBox').hidden = false; $('result').innerHTML = '';
+  let done = 0; const ok = [], bad = [];
+  const tick = () => { $('saveTxt').textContent = 'กำลังบันทึก ' + done + ' จาก ' + sel.length + ' รูป (อย่าปิดหน้านี้)'; $('saveBar').style.width = (done / sel.length * 100) + '%'; };
+  tick();
+  await pool(sel, 4, async it => {
+    const path = 'school/' + it.code + '.jpg';
+    let err = null;
+    for (let a = 0; a < 2; a++){
+      const r = await sb.storage.from(BUCKET).upload(path, it.blob, { contentType: 'image/jpeg', upsert: true, cacheControl: '3600' });
+      err = r.error; if (!err) break;
+    }
+    if (err) bad.push({ it, msg: err.message || String(err) }); else ok.push(it);
+    done++; if (done % 3 === 0 || done === sel.length) tick();
+  });
+  // จดลงฐานข้อมูลว่านักเรียนคนไหนมีรูปแล้ว (ทีละ 500 รหัส)
+  let dbFail = null, marked = 0;
+  for (let i = 0; i < ok.length; i += 500){
+    const chunk = ok.slice(i, i + 500);
+    const { data, error } = await sb.rpc('set_school_photos', { p_ids: chunk.map(x => x.code) });
+    if (error){ dbFail = error.message; break; }
+    marked += data || 0;
+    chunk.forEach(x => { x.saved = true; x.checked = false; x.student.school_photo_path = 'school/' + x.code + '.jpg'; });
+  }
+  busy = false; $('saveBox').hidden = true;
+  let h = '<div class="done"><h3>บันทึกเสร็จแล้ว ' + ok.length + ' รูป</h3>';
+  if (dbFail) h += '<p class="fail">อัปโหลดรูปแล้ว แต่จดผลลงระบบไม่สำเร็จ: ' + esc(dbFail) + '<br>กดบันทึกซ้ำอีกครั้งได้เลย รูปเดิมจะถูกแทนที่ด้วยรูปเดียวกัน ไม่ซ้ำซ้อน</p>';
+  if (bad.length){
+    h += '<p class="fail">บันทึกไม่สำเร็จ ' + bad.length + ' รูป (ยังติ๊กไว้ให้ กดบันทึกอีกครั้งเพื่อลองใหม่เฉพาะรูปเหล่านี้):</p><ul>' +
+      bad.slice(0, 10).map(b => '<li>' + esc(b.it.name) + ' — ' + esc(b.msg) + '</li>').join('') + (bad.length > 10 ? '<li>และอื่น ๆ อีก ' + (bad.length - 10) + ' รูป</li>' : '') + '</ul>';
+    bad.forEach(b => { b.it.checked = true; });
+  }
+  h += '<p>เปิด <a href="student-roster.html">ทำเนียบนักเรียน</a> เพื่อดูรูปในห้องเรียนได้เลย</p></div>';
+  $('result').innerHTML = h;
+  render(false);
+};
+
+// ---------- ปุ่มเลือกไฟล์ / ลากวาง ----------
+$('btnPick').onclick = () => $('fileIn').click();
+$('btnFolder').onclick = () => $('dirIn').click();
+$('fileIn').onchange = e => { takeFiles(e.target.files); e.target.value = ''; };
+$('dirIn').onchange = e => { takeFiles(e.target.files); e.target.value = ''; };
+const dz = $('drop');
+['dragenter', 'dragover'].forEach(ev => dz.addEventListener(ev, e => { e.preventDefault(); dz.classList.add('over'); }));
+['dragleave', 'drop'].forEach(ev => dz.addEventListener(ev, e => { e.preventDefault(); dz.classList.remove('over'); }));
+dz.addEventListener('drop', e => takeFiles(e.dataTransfer.files));
+
+init();
+</script>
+</body>
+</html>
