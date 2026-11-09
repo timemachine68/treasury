@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Mitr:wght@400;500;600&family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
 <style>
 :root{
   --ink:#22313A; --ink-soft:#5B6B72;
@@ -106,6 +107,11 @@ td.cell.editable:hover{background:var(--pine-tint)}
 .wkbox{margin-bottom:12px}
 .wkrow{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:8px;background:#fff}
 .wkrow .rooms{margin-top:6px;font-size:15px;color:var(--pine-deep);font-weight:600}
+#capArea{background:#fff;padding:4px 0}
+.capTitle{font-weight:700;font-size:18px;color:var(--pine-deep);margin:2px 0 10px}
+.capTitle small{display:block;font-weight:400;font-size:14px;color:var(--ink-soft)}
+.allbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+.allbar .sp{flex:1}
 .chk{display:flex;gap:8px;align-items:center;font-size:15px;margin-bottom:12px}
 @media (max-width:560px){.row2{grid-template-columns:1fr}.vrow{flex-wrap:wrap}.vp{min-width:100%}
   table.grid th.pcell{width:84px}table.grid th.ph{min-width:104px}}
@@ -156,7 +162,7 @@ const DAYS = ['จันทร์','อังคาร','พุธ','พฤห�
 const MON = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
 const LV = {m3:'ม.3', m6:'ม.6'};
 const S = {level:'m3', tab:'weeks', canEdit:false, myRoom:'', tok:0,
-           weeks:[], periods:[], cls:[], visits:[], periodsAll:[], clsAll:[], settings:{}, weeksAll:[], visitsAll:[], wk:null,
+           weeks:[], periods:[], cls:[], visits:[], periodsAll:[], clsAll:[], settings:{}, weeksAll:[], visitsAll:[], wk:null, fl:'all',
            modal:null, returnTo:null, pick:false, add:false, busy:false};
 let saveFn = null;
 
@@ -526,37 +532,53 @@ function renderGrid() {
 }
 
 /* ---------- แท็บ: ตารางรวม ม.3 + ม.6 (ดูอย่างเดียว) ---------- */
-function renderAll() {
-  if (S.wk === null) S.wk = currentWeekKey();
-  const sel = weekSelectHtml();
-  if (S.wk) { renderWeekAll(sel); return; }
-  const n3 = S.clsAll.filter(c => c.level === 'm3').length;
-  const n6 = S.clsAll.filter(c => c.level === 'm6').length;
-  const head = sel + `<div class="toolbar"><span class="hint">ดูอย่างเดียว · ม.3 ${n3} ห้อง · ม.6 ${n6} ห้อง · ถ้าจะแก้ไขให้เลือกแท็บ ม.3 หรือ ม.6</span></div>`;
-  if (!S.periodsAll.length) {
-    $('#view').innerHTML = head + `<div class="empty">ยังไม่มีข้อมูลคาบ</div>`;
-    return;
-  }
+function flLevels() { return S.fl === 'all' ? ['m3', 'm6'] : [S.fl]; }
+function flName() { return S.fl === 'all' ? 'ม.3 + ม.6' : LV[S.fl]; }
+function allBar() {
+  const c = (v, t) => `<button class="chip ${S.fl === v ? 'active' : ''}" data-act="setFl" data-v="${v}">${t}</button>`;
+  return `<div class="allbar"><b class="hint">แสดง:</b>${c('all', 'ม.3 + ม.6')}${c('m3', 'เฉพาะ ม.3')}${c('m6', 'เฉพาะ ม.6')}
+    <span class="sp"></span><button class="btn primary sm" data-act="saveImg">บันทึกเป็นรูปภาพ</button></div>`;
+}
+function colsOf(lvls) {
   const byNo = new Map();
-  for (const p of S.periodsAll) {
+  for (const p of S.periodsAll.filter(x => lvls.includes(x.level))) {
     if (!byNo.has(p.period_no)) byNo.set(p.period_no, []);
     byNo.get(p.period_no).push(p);
   }
+  return [...byNo.keys()].sort((a, b) => a - b).map(no => {
+    const list = byNo.get(no);
+    return {no, p: list.find(x => x.label) || list[0], brk: list.every(x => x.is_break)};
+  });
+}
+function colsHead(cols) {
+  let h = `<th class="pcell">วัน</th>`;
+  for (const c of cols) {
+    h += `<th class="ph ${c.brk ? 'brk' : ''}"><span class="linkish" style="cursor:default">${esc(c.p.label)}</span><div class="time">${esc(c.p.time_text || '')}</div></th>`;
+  }
+  return h;
+}
+function renderAll() {
+  if (S.wk === null) S.wk = currentWeekKey();
+  const lvls = flLevels();
+  if (S.wk && !weekGroups(lvls).some(g => g.key === S.wk)) S.wk = '';
+  const sel = allBar() + weekSelectHtml();
+  if (S.wk) { renderWeekAll(sel); return; }
+  const cls = S.clsAll.filter(c => lvls.includes(c.level));
+  const counts = lvls.map(L => `${LV[L]} ${cls.filter(c => c.level === L).length} ห้อง`).join(' · ');
+  const head = sel + `<div class="toolbar"><span class="hint">ดูอย่างเดียว · ${counts} · ถ้าจะแก้ไขให้เลือกแท็บ ม.3 หรือ ม.6</span></div>`;
+  const cols = colsOf(lvls);
+  if (!cols.length) {
+    $('#view').innerHTML = head + `<div class="empty">ยังไม่มีข้อมูลคาบ</div>`;
+    return;
+  }
   const map = new Map();
-  for (const c of S.clsAll) {
+  for (const c of cls) {
     const k = c.day_no + '-' + c.period_no;
     if (!map.has(k)) map.set(k, []);
     map.get(k).push(c);
   }
-  const cols = [...byNo.keys()].sort((a, b) => a - b).map(no => {
-    const list = byNo.get(no);
-    return {no, p: list.find(x => x.label) || list[0], brk: list.every(x => x.is_break)};
-  });
-  let h = head + `<div class="tbl-wrap"><table class="grid"><thead><tr><th class="pcell">วัน</th>`;
-  for (const c of cols) {
-    h += `<th class="ph ${c.brk ? 'brk' : ''}"><span class="linkish" style="cursor:default">${esc(c.p.label)}</span><div class="time">${esc(c.p.time_text || '')}</div></th>`;
-  }
-  h += `</tr></thead><tbody>`;
+  let h = head + `<div id="capArea"><div class="capTitle">ตารางแนะแนวรายคาบ ${flName()}<small>ตารางคาบปกติ · โรงเรียนพูลเจริญวิทยาคม</small></div>`
+    + `<div class="tbl-wrap"><table class="grid"><thead><tr>${colsHead(cols)}</tr></thead><tbody>`;
   for (let d = 1; d <= 5; d++) {
     h += `<tr><th class="pcell">${DAYS[d - 1]}</th>`;
     for (const c of cols) {
@@ -565,7 +587,7 @@ function renderAll() {
     }
     h += `</tr>`;
   }
-  h += `</tbody></table></div>`;
+  h += `</tbody></table></div></div>`;
   $('#view').innerHTML = h;
 }
 
@@ -576,9 +598,10 @@ function currentWeekKey() {
   const w = S.weeksAll.find(x => x.date_start <= today && today <= x.date_end);
   return w ? weekKey(w) : '';
 }
-function weekGroups() {
+function weekGroups(lvls) {
   const m = new Map();
   for (const w of S.weeksAll) {
+    if (lvls && !lvls.includes(w.level)) continue;
     const k = weekKey(w);
     if (!m.has(k)) m.set(k, {key: k, ds: w.date_start, de: w.date_end, weeks: []});
     m.get(k).weeks.push(w);
@@ -587,7 +610,7 @@ function weekGroups() {
 }
 function weekSelectHtml() {
   const cur = currentWeekKey();
-  const opts = weekGroups().map(g => {
+  const opts = weekGroups(flLevels()).map(g => {
     const nums = [...g.weeks].sort((a, b) => a.level.localeCompare(b.level))
       .map(w => `${LV[w.level]} ที่ ${w.week_no}`).join(' · ');
     return `<option value="${esc(g.key)}" ${g.key === S.wk ? 'selected' : ''}>${thDate(g.ds)} – ${thDate(g.de)} (${nums})${g.key === cur ? ' · สัปดาห์นี้' : ''}</option>`;
@@ -598,12 +621,13 @@ function weekSelectHtml() {
     </select></div>`;
 }
 function renderWeekAll(sel) {
-  const g = weekGroups().find(x => x.key === S.wk);
+  const lvls = flLevels();
+  const g = weekGroups(lvls).find(x => x.key === S.wk);
   if (!g) { S.wk = ''; renderAll(); return; }
   const levelOf = new Map(g.weeks.map(w => [w.id, w.level]));
   const vs = S.visitsAll.filter(v => levelOf.has(v.week_id)).map(v => ({...v, level: levelOf.get(v.week_id)}));
   let info = '';
-  for (const L of ['m3', 'm6']) {
+  for (const L of lvls) {
     const w = g.weeks.find(x => x.level === L);
     if (!w) { info += `<div class="wkrow"><b>${LV[L]}</b> · ไม่มีสัปดาห์นี้ในระบบ</div>`; continue; }
     const rooms = [...new Set(vs.filter(v => v.level === L).map(v => v.class_room))].sort(roomCmp);
@@ -620,21 +644,11 @@ function renderWeekAll(sel) {
     if (!map.has(k)) map.set(k, []);
     map.get(k).push(v);
   }
-  const byNo = new Map();
-  for (const p of S.periodsAll) {
-    if (!byNo.has(p.period_no)) byNo.set(p.period_no, []);
-    byNo.get(p.period_no).push(p);
-  }
-  const cols = [...byNo.keys()].sort((a, b) => a - b).map(no => {
-    const list = byNo.get(no);
-    return {no, p: list.find(x => x.label) || list[0], brk: list.every(x => x.is_break)};
-  });
-  let h = sel + `<div class="wkbox">${info}</div>`
-    + `<div class="tbl-wrap"><table class="grid"><thead><tr><th class="pcell">วัน</th>`;
-  for (const c of cols) {
-    h += `<th class="ph ${c.brk ? 'brk' : ''}"><span class="linkish" style="cursor:default">${esc(c.p.label)}</span><div class="time">${esc(c.p.time_text || '')}</div></th>`;
-  }
-  h += `</tr></thead><tbody>`;
+  const cols = colsOf(lvls);
+  let h = sel + `<div id="capArea"><div class="capTitle">ตารางแนะแนว ${flName()} · ${thDate(g.ds)} – ${thDate(g.de)}`
+    + `<small>สถาบันที่เข้าแนะแนวและห้องที่เข้า · โรงเรียนพูลเจริญวิทยาคม</small></div>`
+    + `<div class="wkbox">${info}</div>`
+    + `<div class="tbl-wrap"><table class="grid"><thead><tr>${colsHead(cols)}</tr></thead><tbody>`;
   for (let d = 1; d <= 5; d++) {
     h += `<tr><th class="pcell">${DAYS[d - 1]}<div class="time">${dayDate({date_start: g.ds, date_end: g.de}, d).text}</div></th>`;
     for (const c of cols) {
@@ -643,8 +657,42 @@ function renderWeekAll(sel) {
     }
     h += `</tr>`;
   }
-  h += `</tbody></table></div>`;
+  h += `</tbody></table></div></div>`;
   $('#view').innerHTML = h;
+}
+async function saveImg() {
+  const el = $('#capArea');
+  if (!el) return;
+  if (!window.html2canvas) { msg('ตัวช่วยบันทึกรูปยังโหลดไม่เสร็จ ลองกดอีกครั้ง หรือรีเฟรชหน้า', true); return; }
+  try {
+    if (document.fonts && document.fonts.ready) await document.fonts.ready;
+    const tbl = el.querySelector('table');
+    const w = Math.max(el.scrollWidth, (tbl ? tbl.scrollWidth : 0) + 24) + 8;
+    const canvas = await html2canvas(el, {
+      scale: 2, backgroundColor: '#ffffff', useCORS: true, width: w, windowWidth: w + 40,
+      onclone: doc => {
+        const c = doc.getElementById('capArea');
+        c.style.width = w + 'px'; c.style.padding = '12px'; c.style.boxSizing = 'border-box';
+        c.querySelectorAll('.cc').forEach(x => {
+          x.style.display = 'block'; x.style.width = 'max-content'; x.style.margin = '2px auto'; x.style.textAlign = 'center';
+        });
+        c.querySelectorAll('.tbl-wrap').forEach(x => { x.style.overflow = 'visible'; });
+      }
+    });
+    const name = 'guidance-schedule-' + (S.fl === 'all' ? 'm3-m6' : S.fl) + (S.wk ? '-' + S.wk.split('|')[0] : '-normal') + '.png';
+    await new Promise((ok, no) => canvas.toBlob(b => {
+      if (!b) { no(new Error('toBlob')); return; }
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(b); a.download = name;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+      ok();
+    }, 'image/png'));
+    msg('บันทึกรูปแล้ว (ดูในโฟลเดอร์ดาวน์โหลด)');
+  } catch (err) {
+    console.error(err);
+    msg('บันทึกรูปไม่สำเร็จ ลองใหม่อีกครั้ง', true);
+  }
 }
 document.addEventListener('change', e => {
   if (e.target.id !== 'wkSel') return;
@@ -686,6 +734,8 @@ function weekIdOpen() { return S.modal && S.modal.kind === 'week' ? S.modal.id :
 
 function handle(act, t) {
   switch (act) {
+    case 'setFl': S.fl = t.dataset.v; renderAll(); break;
+    case 'saveImg': saveImg(); break;
     case 'openWeek': S.pick = false; S.add = false; openView('week', {id: t.dataset.id}); break;
 
     case 'addWeek':
