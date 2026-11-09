@@ -35,3 +35,13 @@ end;
 $$;
 revoke all on function public.set_school_photos(text[]) from public, anon;
 grant execute on function public.set_school_photos(text[]) to authenticated;
+
+-- (รันแล้วเมื่อ 2026-11-09: school_photo_student_read_own)
+-- นักเรียนอ่านได้เฉพาะรูปโรงเรียนของตัวเอง (school/<รหัสนักเรียนของตัวเอง>.jpg) คนอื่นอ่านไม่ได้
+drop policy if exists "school photo read own" on storage.objects;
+create policy "school photo read own" on storage.objects for select to authenticated
+  using (
+    bucket_id = 'profile-photos'
+    and (storage.foldername(name))[1] = 'school'
+    and name = 'school/' || (select p.student_id from public.profiles p where p.id = (select auth.uid())) || '.jpg'
+  );
