@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ใกล้บ้าน vs ไกลบ้าน (ครู) | แนะให้แนว</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Mitr:wght@400;500;600&family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="cost-game-data.js"></script>
+<style>
+/* หน้าครู: แถบบนเขียวสน เนื้อหา max 1240px  ฝั่งเอกชน = ส้ม  ฝั่งรัฐ = ฟ้า */
+:root{
+  --pine:#1E5F4A; --pine-d:#123D2F; --pine-soft:#E3F1EA; --ink:#1B2A24; --muted:#4F5F57; --ground:#F3F7F2;
+  --line:#E1E8E4; --input:#C9D4CE; --amber:#E89A2C; --warn:#9A4309; --warn-line:#C2570C; --warn-soft:#FCEBDD;
+  --priv:#C2570C; --pub:#2F6FB3; --same:#8A9A92;
+  --display:'Mitr','Sarabun',sans-serif; --body:'Sarabun',sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);font:16px/1.55 var(--body)}
+h1,h2,h3{font-family:var(--display);font-weight:500;margin:0;line-height:1.35}
+p{margin:6px 0}
+a{color:var(--pine)}
+.top{background:var(--pine);color:#fff}
+.top .in{max-width:1240px;margin:0 auto;padding:12px 20px;display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
+main{max-width:1240px;margin:0 auto;padding:20px;display:flex;flex-direction:column;gap:16px}
+.card{background:#fff;border-radius:16px;padding:18px}
+.stack{display:flex;flex-direction:column;gap:12px}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.grow{flex:1 1 auto}
+.muted{color:var(--muted);font-size:14px}
+.btn{min-height:44px;padding:0 16px;border-radius:10px;border:1px solid var(--pine);background:#fff;color:var(--pine);font:15px var(--body);cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.btn.fill{background:var(--pine);color:#fff}
+.btn.amber{background:var(--amber);border-color:var(--amber);color:var(--ink);font-family:var(--display);font-size:16px}
+.btn.plain{border-color:var(--input);color:#33473F;background:#fff}
+.btn.danger{border-color:var(--warn-line);color:var(--warn)}
+.btn.sm{min-height:36px;padding:0 10px;font-size:14px;white-space:nowrap}
+.btn.onTop{border-color:#fff;color:#fff;background:transparent}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:14px;color:var(--muted)}
+input,select{min-height:44px;font:16px var(--body);padding:0 12px;border-radius:10px;border:1px solid var(--input);color:var(--ink);background:#fff}
+.note{background:var(--warn-soft);color:var(--warn);border-radius:12px;padding:10px 14px}
+.ok{background:var(--pine-soft);color:var(--pine);border-radius:12px;padding:10px 14px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px}
+.tile{background:#fff;border-radius:16px;padding:14px 18px}
+.tile b{display:block;font-family:var(--display);font-weight:500;font-size:30px}
+.tw{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:15px;min-width:760px}
+th{text-align:left;color:var(--muted);font-weight:500;font-size:14px;padding:8px 6px;border-bottom:1px solid var(--line)}
+td{padding:8px 6px;border-bottom:1px solid #EEF2EF;vertical-align:middle;font-variant-numeric:tabular-nums}
+tr.sel td{background:var(--pine-soft)}
+.stk{display:flex;height:16px;border-radius:999px;overflow:hidden;background:#EEF2EF;min-width:120px}
+.stk i{display:block;height:100%}
+.stk .p{background:var(--priv)} .stk .b{background:var(--pub)} .stk .s{background:var(--same)}
+.key{display:inline-flex;align-items:center;gap:4px;font-size:13px;color:var(--muted)} .key i{width:12px;height:12px;border-radius:3px;display:inline-block}
+.roomgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(76px,1fr));gap:8px}
+.roomgrid button{min-height:44px;border-radius:10px;border:2px solid #D5DED9;background:#fff;font:15px var(--body);cursor:pointer;color:var(--ink)}
+.roomgrid button[aria-pressed="true"]{background:var(--pine);border-color:var(--pine);color:#fff}
+.pill{display:inline-block;padding:2px 10px;border-radius:999px;font-size:13px}
+.pill.on{background:var(--pine-soft);color:var(--pine);font-weight:600}
+.pill.off{background:#EEF2EF;color:#33473F}
+.proj{position:fixed;inset:0;background:var(--pine-d);color:#fff;z-index:50;overflow:auto;padding:32px}
+.proj h1{font-size:40px}
+.proj .big{font-family:var(--display);font-size:64px;line-height:1.05}
+.proj .stk{height:34px}
+.proj .lab{font-size:22px}
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 16px;border-radius:12px;max-width:90vw;opacity:0;pointer-events:none;transition:opacity .2s;z-index:60}
+#toast.show{opacity:1}
+</style>
+</head>
+<body>
+<div class="top"><div class="in">
+  <span style="font-family:var(--display);font-size:18px">แนะให้แนว · ใกล้บ้าน vs ไกลบ้าน (ครู)</span>
+  <div class="row" id="topBtns"></div>
+</div></div>
+<main id="app"><p class="muted">กำลังโหลด…</p></main>
+<div id="layer"></div>
+<div id="toast" role="status"></div>
+<script>
+const SUPABASE_URL = "https://ikkhjslmtjwrxzxvtokb.supabase.co";
+const ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlra2hqc2xtdGp3cnh6eHZ0b2tiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM3NDMzNjksImV4cCI6MjA5OTMxOTM2OX0.3OR_9mEv82Ns1LLjx5nnRwJYzrtKFtWCWd1bPuQfNKU";
+const EMAIL_DOMAIN = "guidance-pcw.local";
+const sb = supabase.createClient(SUPABASE_URL, ANON_KEY);
+const C = window.CG, baht = C.baht;
+const esc=t=>String(t??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const $=id=>document.getElementById(id);
+function toast(t){const el=$("toast");el.textContent=t;el.classList.add("show");clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove("show"),3800)}
+function errText(e){const m=(e&&e.message)||"";if(/Failed to fetch|NetworkError/i.test(m))return "เชื่อมต่อไม่ได้ ตรวจเน็ตแล้วลองใหม่";if(/row-level security|permission denied/i.test(m))return "ไม่มีสิทธิ์ทำรายการนี้";return m||"เกิดข้อผิดพลาด"}
+const GUESS={private:"เอกชนถูกกว่า",public:"รัฐถูกกว่า",same:"พอ ๆ กัน"};
+const POST={private:"เลือกเอกชน",public:"เลือกรัฐ",unsure:"ยังไม่แน่ใจ"};
+const TALK={yes:"คุยแน่นอน",maybe:"อาจจะ",no:"ไม่คุย"};
+const n0=v=>v||0;
+let me=null, rooms=[], V={room:null,list:null,proj:false}, pollId=null;
+
+async function boot(){
+  const {data:{session}}=await sb.auth.getSession();
+  if(!session)return loginView();
+  const {data:p}=await sb.from("profiles").select("id,display_name,role").eq("id",session.user.id).maybeSingle();
+  if(!p){await sb.auth.signOut();return loginView("ไม่พบข้อมูลผู้ใช้")}
+  me=p;
+  const ok=await loadSummary();
+  if(!ok)return;
+  $("topBtns").innerHTML=`<a class="btn sm onTop" href="cost-game.html?demo=1" target="_blank" rel="noopener">โหมดสาธิต (ไม่บันทึก)</a><a class="btn sm onTop" href="cost-game-cards.html" target="_blank" rel="noopener">การ์ดกระดาษสำรอง</a><button class="btn sm onTop" onclick="logout()">ออกจากระบบ</button>`;
+  clearInterval(pollId);pollId=setInterval(()=>{if(!document.hidden)refresh(true)},20000);
+}
+function loginView(msg){
+  $("topBtns").innerHTML="";
+  $("app").innerHTML=`<form class="card stack" style="max-width:420px;margin:24px auto" id="liForm"><h1 style="font-size:24px">เข้าสู่ระบบครู</h1><p class="muted">ใช้บัญชีเดียวกับแนะให้แนว</p>${msg?`<div class="note">${esc(msg)}</div>`:""}
+  <label class="f">ชื่อผู้ใช้<input id="liUser" autocomplete="username" required></label><label class="f">รหัสผ่าน<input id="liPass" type="password" autocomplete="current-password" required></label><button class="btn fill" type="submit">เข้าสู่ระบบ</button></form>`;
+  $("liForm").onsubmit=async ev=>{ev.preventDefault();const {error}=await sb.auth.signInWithPassword({email:$("liUser").value.trim()+"@"+EMAIL_DOMAIN,password:$("liPass").value});if(error)return loginView("ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง");boot()};
+}
+async function logout(){await sb.auth.signOut();location.reload()}
+async function loadSummary(quiet){
+  const {data,error}=await sb.rpc("cost_game_summary",{p_year:C.YEAR});
+  if(error){
+    if(quiet)return false;
+    $("app").innerHTML=`<div class="card stack"><h1 style="font-size:22px">หน้านี้สำหรับครูแนะแนว</h1><p>${me.role==="student"?"นักเรียนเล่นเกมได้ที่หน้านักเรียน":/เฉพาะครู/.test(error.message)?"บัญชีนี้ยังไม่มีสิทธิ์ครูแนะแนว ติดต่อแอดมินระบบ":esc(errText(error))}</p><div class="row">${me.role==="student"?`<a class="btn fill" href="cost-game.html">ไปหน้านักเรียน</a>`:`<a class="btn fill" href="cost-game.html?demo=1">เปิดโหมดสาธิต</a>`}<button class="btn plain" onclick="logout()">ออกจากระบบ</button></div></div>`;
+    return false;
+  }
+  rooms=data||[];
+  if(!V.room||!rooms.find(r=>r.room===V.room)){const best=rooms.slice().sort((a,b)=>n0(b.started)-n0(a.started))[0];V.room=best?best.room:null}
+  await loadRoom();render();return true;
+}
+async function loadRoom(){
+  if(!V.room){V.list=[];return}
+  const {data,error}=await sb.rpc("cost_game_room",{p_room:V.room,p_year:C.YEAR});
+  if(error){toast(errText(error));V.list=[];return}
+  V.list=data||[];
+}
+async function refresh(quiet){await loadSummary(quiet);if(V.proj)drawProj()}
+async function pickRoom(r){V.room=r;V.list=null;render();await loadRoom();render()}
+
+/* ---------- วาดหน้า ---------- */
+function stack3(p,b,s,labels){const t=p+b+s;if(!t)return `<span class="muted">ยังไม่มีข้อมูล</span>`;
+  const w=x=>(x/t*100).toFixed(1)+"%";
+  return `<div class="stk" role="img" aria-label="${labels[0]} ${p} ${labels[1]} ${b} ${labels[2]} ${s}"><i class="p" style="width:${w(p)}"></i><i class="b" style="width:${w(b)}"></i><i class="s" style="width:${w(s)}"></i></div><span class="muted">${labels[0]} ${p} · ${labels[1]} ${b} · ${labels[2]} ${s}</span>`}
+function totalsAll(){const z={};rooms.forEach(r=>Object.keys(r).forEach(k=>{if(typeof r[k]==="number")z[k]=(z[k]||0)+r[k]}));return z}
+function render(){
+  const T=totalsAll(),fin=n0(T.finished);
+  const surprisedBase=rooms.reduce((s,r)=>s+n0(r.pre_private),0);
+  const sel=rooms.find(r=>r.room===V.room);
+  $("app").innerHTML=`
+  <div class="row"><div class="grow"><h1 style="font-size:24px">ผลรวมทุกห้อง ม.6 · ปีการศึกษา ${C.YEAR}</h1><p class="muted" style="margin:0">อัปเดตเองทุก 20 วินาที · ข้อมูลเกมตรวจเมื่อ ${C.CHECKED}</p></div>
+    <button class="btn plain" onclick="refresh()">รีเฟรช</button><button class="btn amber" onclick="openProj()">ฉายขึ้นจอ</button></div>
+  <div class="tiles">
+    <div class="tile"><span class="muted">เล่นจบแล้ว</span><b>${fin} / ${n0(T.students)}</b><span class="muted">เริ่มแล้ว ${n0(T.started)} คน</span></div>
+    <div class="tile"><span class="muted">ตอนแรกทายว่า "เอกชนถูกกว่า"</span><b>${n0(T.pre_private)} คน</b><span class="muted">จากที่โหวตก่อนเล่น ${n0(T.started)} คน</span></div>
+    <div class="tile"><span class="muted">ผลจริง: ทางรัฐจ่ายน้อยกว่า</span><b>${n0(T.found_public_cheaper)} / ${fin}</b><span class="muted">ทางเอกชนจ่ายน้อยกว่าหรือเท่ากัน ${n0(T.found_private_cheaper)}</span></div>
+    <div class="tile"><span class="muted">ทายเอกชนแต่ผลออกรัฐถูกกว่า</span><b>${n0(T.surprised)} คน</b><span class="muted">"เปลี่ยนความเชื่อ" จาก ${surprisedBase} คน</span></div>
+    <div class="tile"><span class="muted">จะเอาการ์ดไปคุยกับบ้าน</span><b>${n0(T.talk_yes)} คน</b><span class="muted">อาจจะ ${n0(T.talk_maybe)} · ไม่คุย ${n0(T.talk_no)}</span></div>
+  </div>
+  <section class="card stack">
+    <div class="row"><h2 class="grow" style="font-size:19px">สรุปรายห้อง</h2>
+      <span class="key"><i style="background:var(--priv)"></i>เอกชน</span><span class="key"><i style="background:var(--pub)"></i>รัฐ</span><span class="key"><i style="background:var(--same)"></i>พอ ๆ กัน / ยังไม่แน่ใจ</span></div>
+    <div class="tw"><table><thead><tr><th>ห้อง</th><th>เล่นจบ</th><th>ทายก่อนเล่น</th><th>เลือกหลังเล่น</th><th>ส่วนต่างเฉลี่ย (เอกชน − รัฐ)</th><th></th></tr></thead><tbody>
+    ${rooms.length?rooms.map(r=>`<tr class="${r.room===V.room?"sel":""}"><td><b>${esc(r.room)}</b></td><td>${n0(r.finished)} / ${n0(r.students)}</td>
+      <td>${stack3(n0(r.pre_private),n0(r.pre_public),n0(r.pre_same),["เอกชน","รัฐ","พอ ๆ กัน"])}</td>
+      <td>${stack3(n0(r.post_private),n0(r.post_public),n0(r.post_unsure),["เอกชน","รัฐ","ยังไม่แน่ใจ"])}</td>
+      <td>${r.avg_diff==null?"-":(r.avg_diff>0?"+":"")+baht(r.avg_diff)+" บาท"}</td>
+      <td><button class="btn sm plain" onclick="pickRoom('${esc(r.room)}')">ดูรายชื่อ</button></td></tr>`).join(""):`<tr><td colspan="6" class="muted">ยังไม่พบห้อง ม.6 ในระบบ</td></tr>`}
+    </tbody></table></div>
+    <p class="muted" style="margin:0">ส่วนต่างเฉลี่ยเป็นบวก = ทางเอกชนแพงกว่าโดยเฉลี่ย · คำทายก่อนเล่นเก็บครั้งแรกครั้งเดียว เล่นซ้ำไม่ทับ</p>
+  </section>
+  <section class="card stack">
+    <div class="row"><h2 class="grow" style="font-size:19px">รายชื่อห้อง ${esc(V.room||"-")}</h2></div>
+    <div class="roomgrid">${rooms.map(r=>`<button aria-pressed="${r.room===V.room}" onclick="pickRoom('${esc(r.room)}')">${esc(r.room)}</button>`).join("")}</div>
+    ${roomTable(sel)}
+  </section>
+  <section class="card stack"><h2 style="font-size:19px">ข้อมูลที่ใช้ในเกม (ตรวจเมื่อ ${C.CHECKED})</h2>
+    <p class="muted" style="margin:0">แก้ตัวเลขได้ที่ไฟล์ cost-game-data.js ไฟล์เดียว · รายชื่อมหาวิทยาลัยรัฐมาจากไฟล์ผลการคัดเลือก TCAS ปี 2569 ของพูลเจริญฯ</p>
+    <div class="tw"><table><thead><tr><th>มหาวิทยาลัย</th><th>หลักสูตร</th><th>ค่าเทอม/ภาค</th><th>ที่พัก</th><th>รุ่นพี่ติดปี 69</th></tr></thead><tbody>
+    ${Object.entries(C.P).map(([k,p])=>{const u=C.U[p.u];return `<tr><td>${esc(u.short)}</td><td>${esc(p.name)}${p.note?`<br><span class="muted">${esc(p.note)}</span>`:""}</td><td>${baht(p.sem)}</td><td>${u.housing.map(h=>h==="home"?"ไป-กลับ":h==="dorm_in"?"หอใน "+baht(u.dormIn.fee)+"/เทอม":"หอนอก ~"+baht(u.rent)+"/เดือน").join("<br>")}</td><td>${u.seniors}</td></tr>`}).join("")}
+    </tbody></table></div>
+    <ul class="muted" style="margin:0;padding-left:18px">${Object.values(C.SRC).map(s=>`<li><a href="${s.u}" target="_blank" rel="noopener">${esc(s.t)}</a></li>`).join("")}</ul>
+  </section>`;
+}
+function roomTable(sel){
+  if(V.list===null)return `<p class="muted">กำลังโหลด…</p>`;
+  if(!V.list.length)return `<p class="muted">ห้องนี้ยังไม่มีรายชื่อนักเรียนในระบบ</p>`;
+  const notYet=V.list.filter(x=>!x.pre_guess).length;
+  return `<p class="muted" style="margin:0">ยังไม่เริ่ม ${notYet} คน · เริ่มแล้วแต่ยังไม่จบ ${V.list.filter(x=>x.pre_guess&&!x.finished).length} คน</p>
+  <div class="tw"><table><thead><tr><th>เลขประจำตัว</th><th>ชื่อ</th><th>สถานะ</th><th>ทายก่อน</th><th>คู่ที่เทียบ</th><th>ผล 4 ปี (A / B)</th><th>เลือกหลังเล่น</th><th>คุยกับบ้าน</th><th></th></tr></thead><tbody>
+  ${V.list.map(x=>{const pa=C.P[x.private_prog],pb=C.P[x.public_prog];return `<tr><td>${esc(x.student_id||"-")}</td><td>${esc(x.name||"")}</td>
+    <td>${x.finished?`<span class="pill on">จบแล้ว${x.play_count>1?" ("+x.play_count+" รอบ)":""}</span>`:x.pre_guess?`<span class="pill off">กำลังเล่น</span>`:`<span class="muted">ยังไม่เริ่ม</span>`}</td>
+    <td>${x.pre_guess?GUESS[x.pre_guess]:"-"}</td>
+    <td>${pa&&pb?`${esc(C.U[pa.u].short)} ${esc(pa.name)}<br><span class="muted">vs ${esc(C.U[pb.u].short)} ${esc(pb.name)} · ${esc(C.HOUSING[x.housing]||"")}</span>`:"-"}</td>
+    <td>${x.finished?`${baht(x.total_private)} / ${baht(x.total_public)}`:"-"}</td>
+    <td>${x.post_choice?POST[x.post_choice]:"-"}</td><td>${x.talk_home?TALK[x.talk_home]:"-"}</td>
+    <td>${x.pre_guess?`<button class="btn sm danger" onclick="resetOne('${esc(x.pid)}')">ล้างผล</button>`:""}</td></tr>`}).join("")}
+  </tbody></table></div>`;
+}
+async function resetOne(pid){
+  const row=(V.list||[]).find(x=>x.pid===pid);
+  if(!row)return;
+  if(V.confirm!==pid){V.confirm=pid;toast("กด \"ล้างผล\" อีกครั้งเพื่อยืนยัน ("+(row.name||"")+")");setTimeout(()=>{if(V.confirm===pid)V.confirm=null},5000);return}
+  V.confirm=null;
+  const {error}=await sb.from("cost_game_plays").delete().eq("student_id",pid).eq("academic_year",C.YEAR);
+  if(error)return toast(errText(error));
+  toast("ล้างผลของ "+(row.name||"")+" แล้ว ให้เริ่มเล่นใหม่ได้");await refresh();
+}
+
+/* ---------- ฉายขึ้นจอ ---------- */
+function openProj(){V.proj=true;V.projRoom=V.projRoom||"__all";drawProj()}
+function closeProj(){V.proj=false;$("layer").innerHTML=""}
+function drawProj(){
+  if(!V.proj)return;
+  const pr=V.projRoom||"__all", r=pr==="__all"?totalsAll():(rooms.find(x=>x.room===pr)||{}), name=pr==="__all"?"ทุกห้อง":pr;
+  const fin=n0(r.finished);
+  $("layer").innerHTML=`<div class="proj" role="dialog" aria-label="หน้าจอฉายขึ้นโปรเจกเตอร์"><div style="max-width:1100px;margin:0 auto;display:flex;flex-direction:column;gap:28px">
+    <div class="row"><h1 class="grow">ใกล้บ้าน vs ไกลบ้าน · ${esc(name||"")}</h1>
+      <select aria-label="เลือกห้อง" onchange="V.projRoom=this.value;drawProj()" style="font-size:18px"><option value="__all" ${pr==="__all"?"selected":""}>ทุกห้อง</option>${rooms.map(x=>`<option ${x.room===pr?"selected":""}>${esc(x.room)}</option>`).join("")}</select>
+      <button class="btn amber" onclick="refresh().then(drawProj)">รีเฟรช</button><button class="btn amber" onclick="closeProj()">ปิด</button></div>
+    <div class="row" style="gap:40px"><div><div class="big">${fin}</div><div class="lab">คนเล่นจบ</div></div>
+      <div><div class="big">${n0(r.found_public_cheaper)}</div><div class="lab">คนที่ผลออกว่ารัฐจ่ายน้อยกว่า</div></div>
+      <div><div class="big">${n0(r.surprised)}</div><div class="lab">ทายเอกชน แต่ผลออกรัฐ</div></div></div>
+    <div class="stack"><div class="lab">ก่อนเล่น ทายว่า…</div>${stack3(n0(r.pre_private),n0(r.pre_public),n0(r.pre_same),["เอกชนถูกกว่า","รัฐถูกกว่า","พอ ๆ กัน"]).replace(/class="muted"/,'class="lab"')}</div>
+    <div class="stack"><div class="lab">หลังเล่น ถ้าเลือกวันนี้…</div>${stack3(n0(r.post_private),n0(r.post_public),n0(r.post_unsure),["เอกชน","รัฐ","ยังไม่แน่ใจ"]).replace(/class="muted"/,'class="lab"')}</div>
+    <p class="lab" style="opacity:.9">คำถามชวนคิด: "ถ้าสองทางต่างกันไม่มาก เราจะใช้อะไรตัดสินใจ?"</p>
+  </div></div>`;
+}
+boot();
+</script>
+</body>
+</html>

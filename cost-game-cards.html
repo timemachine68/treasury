@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>การ์ดกระดาษ ใกล้บ้าน vs ไกลบ้าน | แนะให้แนว</title>
+<link href="https://fonts.googleapis.com/css2?family=Mitr:wght@400;500&family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="cost-game-data.js"></script>
+<style>
+/* ชุดสำรองออฟไลน์: พิมพ์ A4 ตัดเป็นการ์ด ใช้เมื่อเน็ตไม่พอหรือมือถือไม่ครบ */
+:root{--pine:#1E5F4A;--ink:#1B2A24;--muted:#4F5F57;--priv:#C2570C;--pub:#2F6FB3;--display:'Mitr','Sarabun',sans-serif;--body:'Sarabun',sans-serif}
+*{box-sizing:border-box}
+body{margin:0;background:#F3F7F2;color:var(--ink);font:15px/1.5 var(--body)}
+.wrap{max-width:900px;margin:0 auto;padding:16px}
+h1,h2,h3{font-family:var(--display);font-weight:500;margin:0 0 6px}
+.bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+.btn{min-height:44px;padding:0 16px;border-radius:10px;border:0;background:var(--pine);color:#fff;font:15px var(--body);cursor:pointer}
+.page{background:#fff;padding:14mm;margin:0 auto 16px;max-width:210mm}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.cd{border:2px solid var(--ink);border-radius:10px;padding:10px;page-break-inside:avoid;min-height:42mm}
+.cd.a{border-color:var(--priv)} .cd.b{border-color:var(--pub)}
+.cd .t{font-family:var(--display);font-size:16px}
+.cd .n{font-family:var(--display);font-size:20px}
+.muted{color:var(--muted);font-size:12px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{border:1px solid #999;padding:4px 6px;text-align:right}
+th:first-child,td:first-child{text-align:left}
+.src{font-size:11px;color:var(--muted)}
+@media print{body{background:#fff}.bar{display:none}.page{margin:0;padding:10mm;max-width:none;page-break-after:always}}
+@media (max-width:600px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="bar"><h1 style="flex:1">ชุดการ์ดกระดาษสำรอง</h1><button class="btn" onclick="print()">พิมพ์ (A4)</button></div>
+  <p class="muted">ใช้แทนเกมบนมือถือ: กลุ่มละ 1 ชุด · ผลโหวตแบบกระดาษไม่เข้าระบบ ให้ครูนับยกมือแล้วจดบนกระดาน</p>
+  <div id="out"></div>
+</div>
+<script>
+const C=window.CG,b=C.baht,esc=t=>String(t??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const d=C.DEFAULTS;
+function pairRows(t){
+  const rows=[];
+  t.priv.forEach(pk=>{const A=C.calc(pk,"home",d);
+    t.pub.forEach(qk=>{const u=C.U[C.P[qk].u];u.housing.forEach(h=>{const B=C.calc(qk,h,d);
+      rows.push(`<tr><td>${esc(C.P[pk].name)}</td><td>${esc(u.short)} ${esc(C.P[qk].name)}<br><span class="muted">${C.HOUSING[h]}</span></td><td>${b(A.tuition)}</td><td>${b(A.total)}</td><td>${b(B.tuition)}</td><td>${b(B.stay)}</td><td>${b(B.total)}</td><td><b>${b(A.total-B.total)}</b></td></tr>`)})})});
+  return rows.join("");
+}
+let html=`<section class="page"><h2>1) ตารางเฉลย: คู่เทียบ 4 ปี (ใช้ค่าตั้งต้น)</h2>
+<p class="muted">ค่าตั้งต้น: ค่ารถไป-กลับ ${d.commute} บาท/วัน · ข้าวที่มหาวิทยาลัย ${d.lunch}/วัน · ค่ากินตอนอยู่หอ ${d.dormFood}/วัน · กับข้าวที่บ้าน ${d.homeFood}/วัน · เรียน ${C.K.studyDays} วัน/ปี · อยู่หอ ${C.K.dormMonths} เดือน/ปี · ตรวจข้อมูลเมื่อ ${C.CHECKED}</p>`;
+Object.values(C.TRACKS).forEach(t=>{html+=`<h3 style="margin-top:10px">${t.icon} ${esc(t.name)}</h3><table><thead><tr><th>A หัวเฉียวฯ (ไป-กลับ)</th><th>B มหาวิทยาลัยรัฐ</th><th>A ค่าเทอม</th><th>A รวม</th><th>B ค่าเทอม</th><th>B ที่พัก</th><th>B รวม</th><th>A − B</th></tr></thead><tbody>${pairRows(t)}</tbody></table>`});
+html+=`<p class="src">ที่มา: ${Object.values(C.SRC).map(s=>esc(s.t)).join(" · ")}</p></section>`;
+
+html+=`<section class="page"><h2>2) การ์ดหมวดค่าใช้จ่าย (เปิดทีละใบ ทายก่อนเปิด)</h2><div class="grid">
+${[["📚 ค่าเทอม","ค่าเทอมต่อภาค × 8 เทอม (+ ภาคฤดูร้อนถ้าบังคับ)"],["🛏️ ค่าที่พัก","หอใน: ค่าหอ/เทอม × 8 · หอนอก: ค่าเช่า/เดือน × "+C.K.dormMonths+" เดือน × 4 ปี + ค่าน้ำไฟ ~"+C.K.utilOut+"/เดือน"],["🍚 ค่ากิน","ไป-กลับ: ข้าวที่มหาวิทยาลัย × "+C.K.studyDays+" วัน + กับข้าวที่บ้าน × 365 วัน · อยู่หอ: 3 มื้อ × "+C.K.dormDays+" วัน + กับข้าวที่บ้าน × "+(365-C.K.dormDays)+" วัน"],["🚌 ค่าเดินทาง","ไป-กลับ: ค่ารถ/วัน × "+C.K.studyDays+" วัน · อยู่หอชลบุรี: กลับบ้านเดือนละ "+C.K.tripMidPerMonth+" ครั้ง ครั้งละ ~"+C.K.tripMid+" · อยู่หอเชียงราย: ปีละ "+C.K.tripFarPerYear+" ครั้ง ครั้งละ ~"+b(C.K.tripFar)]].map(([t,x])=>`<div class="cd"><div class="t">${t}</div><p>${esc(x)}</p><p class="muted">ทายก่อนเปิด: ทางไหนจ่ายมากกว่า?  ☐ A เอกชน  ☐ พอ ๆ กัน  ☐ B รัฐ</p></div>`).join("")}
+</div></section>`;
+
+html+=`<section class="page"><h2>3) การ์ดเหตุการณ์สุ่ม (ตัดแยก คว่ำหน้า ให้กลุ่มจับ 3 ใบ: ไป-กลับ 1 · อยู่หอ 1 · เท่ากัน 1)</h2><div class="grid">
+${C.EVENTS.map(e=>`<div class="cd ${e.side==="home"?"a":e.side==="dorm"?"b":""}"><div class="t">${e.icon} ${esc(e.t)}</div><p>${esc(e.d)}</p><p class="muted">${e.side==="home"?"โดนคนไป-กลับ":e.side==="dorm"?"โดนคนอยู่หอ":"เท่ากันทั้งสองทาง"}</p></div>`).join("")}
+</div></section>`;
+document.getElementById("out").innerHTML=html;
+</script>
+</body>
+</html>
