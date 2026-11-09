@@ -9,6 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Chonburi&family=Mitr:wght@400;500;600&family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="congrats-card-draw.js"></script>
+<script src="card-photo-fx.js"></script>
 <style>
 :root{
   --ink:#22313A; --ink-soft:#5B6B72; --board:#EFF3F1; --card:#FFFFFF;
@@ -215,6 +216,29 @@ async function reloadMine(){
     const {data:a} = await sb.from("survey_admissions").select("*").eq("response_id", resp.id).order("created_at").order("id");
     adms = a || [];
   }
+  await loadFx();
+}
+/* รูปที่ครูแนะแนวปรับให้ (จัดกรอบหน้า/แสง/พื้นหลัง) ใช้เฉพาะเมื่อยังเป็นรูปเดิม */
+let fxRow = null, fxMask = null, fxPrep = null, fxPrepKey = "";
+async function loadFx(){
+  fxRow = null; fxMask = null; fxPrep = null; fxPrepKey = "";
+  if(!resp?.photo_path || !window.PCWPhoto) return;
+  const {data} = await sb.from("survey_card_photo_fx").select("photo_path,fx,mask_path,updated_at").eq("response_id", resp.id).maybeSingle();
+  if(!data || data.photo_path !== resp.photo_path) return;
+  fxRow = data;
+  if(data.mask_path && data.fx?.bg && data.fx.bg !== "keep"){
+    const {data:blob} = await sb.storage.from("survey-photos").download(data.mask_path);
+    if(blob){ const u = URL.createObjectURL(blob); fxMask = await new Promise(ok=>{ const i=new Image(); i.onload=()=>ok(i); i.onerror=()=>ok(null); i.src=u; }); }
+  }
+}
+function fxFields(base){
+  if(!fxRow || photoFile || !photoImg || resp?.photo_path !== fxRow.photo_path) return {};
+  if(fxRow.fx?.bg && fxRow.fx.bg !== "keep" && !fxMask) return {};
+  const key = photoImgSrc + "|" + fxRow.updated_at;
+  try{
+    if(fxPrepKey !== key){ fxPrep = PCWPhoto.render(photoImg, fxRow.fx, fxMask, PCWCard.color(base)); fxPrepKey = key; }
+    return PCWPhoto.cardFields(fxPrep, fxRow.fx);
+  }catch(e){ return {}; }
 }
 async function loadUnis(){
   if(unis) return unis;
@@ -378,8 +402,9 @@ async function drawCard(){
 }
 function cardData(){
   const c = chosen();
-  return { name: profile.display_name||"", cls: profile.class_room||"", inst: c.institution, campus: c.campus||"",
+  const base = { name: profile.display_name||"", cls: profile.class_room||"", inst: c.institution, campus: c.campus||"",
     prog: [c.faculty, c.major].filter(Boolean).join(" ") || " ", round: PCWCard.roundShort(c.admit_round), photo: photoImg };
+  return Object.assign(base, fxFields(base));
 }
 
 /* ── ปุ่มต่าง ๆ ── */

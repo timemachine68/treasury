@@ -11,6 +11,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
 <script src="congrats-card-draw.js"></script>
+<script src="card-photo-fx.js"></script>
 <style>
 :root{
   --ink:#22313A; --ink-soft:#5B6B72; --board:#EFF3F1; --card:#FFFFFF;
@@ -75,6 +76,24 @@ select.sel{min-height:40px;border-radius:999px;border:1.5px solid var(--line);pa
 #toast{position:fixed;bottom:84px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:11px 20px;border-radius:999px;font-size:.9rem;opacity:0;pointer-events:none;transition:opacity .25s;z-index:99;max-width:92vw;text-align:center}
 #toast.show{opacity:1}
 .hidden{display:none!important}
+.modal.wide{max-width:1000px}
+@media (min-width:780px){
+  .vgrid{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:18px;align-items:start}
+  .vleft{position:sticky;top:0}
+  .vright .fxpanel{margin-top:8px}
+  #viewCv{max-height:calc(92vh - 130px);width:auto;max-width:100%;margin:8px auto}
+}
+.fxline{font-size:.8rem;color:var(--ink-soft);min-height:1.2em}
+.fxline.warn{color:var(--note-deep);font-weight:600}
+.fxline.done{color:var(--pine-deep);font-weight:600}
+.fxpanel{border:1.5px solid var(--line);border-radius:12px;padding:12px 14px;margin-top:10px;background:#FAFCFB}
+.fxpanel h3{font-size:.98rem;color:var(--pine-deep);margin-bottom:6px}
+.fxrow{display:grid;grid-template-columns:118px 1fr 44px;align-items:center;gap:8px;font-size:.88rem;margin:6px 0}
+.fxrow input[type=range]{width:100%;accent-color:var(--pine);min-height:30px}
+.fxrow output{text-align:right;color:var(--ink-soft);font-variant-numeric:tabular-nums}
+.fxbg{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:6px 0}
+.fxbg .chip{min-height:36px;font-size:.84rem}
+.fxbg .chip:disabled{opacity:.45;cursor:not-allowed}
 </style>
 </head>
 <body>
@@ -95,12 +114,31 @@ select.sel{min-height:40px;border-radius:999px;border:1.5px solid var(--line);pa
   <button class="btn note" id="btnApproveSel">อนุมัติทั้งหมดที่เลือก</button>
 </div></div>
 
-<div class="modal-back" id="viewModal"><div class="modal">
+<div class="modal-back" id="viewModal"><div class="modal wide">
   <h2 id="viewTitle">การ์ด</h2>
+  <div class="vgrid"><div class="vleft">
   <canvas id="viewCv"></canvas>
   <div class="bar" style="margin:8px 0 0">
     <span class="hint">ขนาด</span>
     <button class="chip active" data-r="4:5">แนวตั้ง 4:5</button><button class="chip" data-r="1:1">จัตุรัส 1:1</button><button class="chip" data-r="9:16">สตอรี่ 9:16</button>
+  </div>
+  </div><div class="vright">
+  <div class="fxpanel" id="fxPanel">
+    <h3>ปรับรูป</h3>
+    <label style="display:flex;align-items:center;gap:8px;font-size:.9rem;font-weight:600"><input type="checkbox" id="fxAuto" style="width:20px;height:20px;accent-color:var(--pine)"> ปรับแสงและสีอัตโนมัติ</label>
+    <div class="fxbg"><span class="hint">พื้นหลัง</span>
+      <button class="chip" data-bg="keep">เดิม</button><button class="chip" data-bg="uni">สีมหาวิทยาลัย</button><button class="chip" data-bg="white">ขาวสะอาด</button>
+    </div>
+    <div class="fxrow"><label for="fxZoom">ขนาดหน้า</label><input type="range" id="fxZoom" min="50" max="200" step="5"><output id="oZoom"></output></div>
+    <div class="fxrow"><label for="fxDx">เลื่อนซ้าย-ขวา</label><input type="range" id="fxDx" min="-35" max="35" step="1"><output id="oDx"></output></div>
+    <div class="fxrow"><label for="fxDy">เลื่อนขึ้น-ลง</label><input type="range" id="fxDy" min="-35" max="35" step="1"><output id="oDy"></output></div>
+    <div class="fxrow"><label for="fxBright">ความสว่าง</label><input type="range" id="fxBright" min="-40" max="40" step="1"><output id="oBright"></output></div>
+    <div class="fxrow"><label for="fxContrast">ความคมชัด</label><input type="range" id="fxContrast" min="-40" max="40" step="1"><output id="oContrast"></output></div>
+    <p class="hint" id="fxHint"></p>
+    <div class="acts" style="margin-top:8px">
+      <button class="btn ghost sm" id="btnFxReset">คืนค่าอัตโนมัติ</button>
+      <button class="btn primary sm" id="btnFxSave">บันทึกรูปนี้</button>
+    </div>
   </div>
   <div class="acts" style="margin-top:12px">
     <button class="btn ghost" id="btnViewClose">ปิด</button>
@@ -108,6 +146,7 @@ select.sel{min-height:40px;border-radius:999px;border:1.5px solid var(--line);pa
     <button class="btn primary" id="btnViewDl">ดาวน์โหลด (PNG)</button>
   </div>
   <button class="btn danger" id="btnWithdraw" style="width:100%;margin-top:10px">ถอนความยินดี: นักเรียนไม่ยินยอมแล้ว</button>
+  </div></div>
 </div></div>
 
 <div class="modal-back" id="retModal"><div class="modal">
@@ -136,6 +175,7 @@ const PAGE = 1000, SHOW = 60;
 const TABS = [["pending","รอตรวจ"],["changed","มีการเปลี่ยน"],["approved","อนุมัติแล้ว"],["returned","ส่งกลับให้แก้"]];
 
 let profile=null, rounds=[], round=null, items=[], tab="pending", room="all", sel=new Set(), photoCache={}, viewing=null, viewRatio="4:5", retIds=[];
+let fxRows={}, autoFxCache={}, maskCache={}, editFx=null, editMask=null, editPrep=null, editPrepKey="";
 
 const $ = id => document.getElementById(id);
 const esc = s => (s??"").toString().replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -165,6 +205,7 @@ async function boot(){
   rounds = data||[];
   if(!rounds.length) return gate("ยังไม่มีรอบสำรวจ ม.6");
   await PCWCard.fontsReady();
+  try{ PCWPhoto.preload(false); }catch(e){}
   await pickRound(rounds[0].id);
 }
 
@@ -176,6 +217,8 @@ async function pickRound(id){
     fetchAllRows(()=> sb.from("survey_admissions").select("id,response_id,institution,campus,faculty,major,admit_round,is_chosen,survey_responses!inner(round_id)").eq("survey_responses.round_id", round.id).order("id"))
   ]);
   if(rs.error || ad.error) return gate("โหลดข้อมูลไม่สำเร็จ: "+(rs.error||ad.error).message);
+  const fxr = await fetchAllRows(()=> sb.from("survey_card_photo_fx").select("response_id,photo_path,fx,mask_path,updated_at,survey_responses!inner(round_id)").eq("survey_responses.round_id", round.id).order("response_id"));
+  fxRows = {}; (fxr.data||[]).forEach(f=>{ delete f.survey_responses; fxRows[f.response_id] = f; });
   const ids = [...new Set(rs.data.map(r=>r.student_id))], pmap = {};
   for(let i=0;i<ids.length;i+=150){
     const chunk = ids.slice(i,i+150);
@@ -247,7 +290,8 @@ function tileHtml(x){
     ${t==="changed"? `<div class="changed">มีการเปลี่ยนหลังอนุมัติ — ${before}</div>`:""}
     ${t==="returned"? `<div class="retnote">ส่งกลับแล้ว: “${esc(x.r.card_note||"")}” รอนักเรียนแก้</div>`:""}
     ${t==="approved"? `<div class="okline">✓ อนุมัติแล้ว</div>`:""}
-    <canvas data-view="${x.id}" data-draw="${x.id}" width="216" height="270" title="กดเพื่อดูการ์ดใหญ่"></canvas>
+    <canvas data-view="${x.id}" data-draw="${x.id}" width="216" height="270" title="กดเพื่อดูการ์ดใหญ่ และปรับรูป"></canvas>
+    <div class="fxline" data-fxline="${x.id}"></div>
     <div class="acts">
       ${t!=="approved"? `<button class="btn primary sm" data-ok="${x.id}">อนุมัติ</button>`:""}
       <button class="btn danger sm" data-ret="${x.id}">ส่งกลับให้แก้</button>
@@ -271,6 +315,44 @@ function cardData(x){
   const c = x.chosen||{};
   return { name:x.name, cls:x.cls, inst:c.institution||"", campus:c.campus||"", prog:[c.faculty,c.major].filter(Boolean).join(" ")||" ", round:PCWCard.roundShort(c.admit_round), photo: photoCache[x.r.photo_path]||null };
 }
+/* ── ปรับรูป: ค่าที่ครูบันทึกไว้ (ถ้ายังเป็นรูปเดิม) หรือค่าอัตโนมัติ ── */
+function savedFx(x){ const r = fxRows[x.id]; return r && r.photo_path === x.r.photo_path ? r : null; }
+async function getFx(x){
+  const s = savedFx(x); if(s) return s.fx;
+  const img = await loadPhoto(x.r.photo_path); if(!img) return null;
+  const key = x.r.photo_path;
+  if(!autoFxCache[key]) autoFxCache[key] = PCWPhoto.autoFx(img).catch(()=> ({v:1, auto:false, face:null, zoom:1, dx:0, dy:0, bright:0, contrast:0, bg:"keep", noFace:true}));
+  return autoFxCache[key];
+}
+async function loadMask(path){
+  if(!path) return null;
+  if(maskCache[path] !== undefined) return maskCache[path];
+  maskCache[path] = null;
+  const {data} = await sb.storage.from("survey-photos").download(path);
+  if(!data) return null;
+  const img = await new Promise(ok=>{ const i=new Image(); i.onload=()=>ok(i); i.onerror=()=>ok(null); i.src=URL.createObjectURL(data); });
+  maskCache[path] = img; return img;
+}
+// การ์ดพร้อมรูปที่ปรับแล้ว (maxSide เล็กสำหรับรูปย่อ เพื่อประหยัดหน่วยความจำ)
+async function fxCardData(x, fx, mask){
+  const d = cardData(x); if(!d.photo || !fx) return d;
+  if(fx.bg && fx.bg !== "keep" && !mask) fx = Object.assign({}, fx, {bg:"keep"});
+  const pr = PCWPhoto.render(d.photo, fx, mask, PCWCard.color(d));
+  return Object.assign(d, PCWPhoto.cardFields(pr, fx));
+}
+async function fullCardData(x){
+  const img = await loadPhoto(x.r.photo_path); if(!img) return cardData(x);
+  const fx = await getFx(x), s = savedFx(x);
+  const mask = fx && fx.bg && fx.bg !== "keep" && s ? await loadMask(s.mask_path) : null;
+  return fxCardData(x, fx, mask);
+}
+function fxLabel(x, fx){
+  const s = savedFx(x);
+  if(s) return ["done","✓ ครูปรับรูปแล้ว"];
+  if(!x.r.photo_path) return ["",""];
+  if(!fx || fx.noFace) return ["warn","⚠️ หาใบหน้าไม่เจอ กดที่การ์ดเพื่อปรับเอง"];
+  return ["","✨ ปรับรูปอัตโนมัติแล้ว"];
+}
 async function loadPhoto(path){
   if(!path) return null;
   if(photoCache[path]!==undefined) return photoCache[path];
@@ -284,14 +366,18 @@ async function loadPhoto(path){
 // วาดเป็นรูปเล็กเฉพาะที่เลื่อนมาเห็น (ประหยัดหน่วยความจำเครื่อง)
 let io = null;
 const big = document.createElement("canvas");
+let redrawTile = ()=>{};
 function lazyDraw(){
   if(io) io.disconnect();
-  const draw = async cv=>{
+  const draw = redrawTile = async cv=>{
     const x = items.find(i=> i.id===cv.dataset.draw); if(!x || !x.chosen) return;
-    await loadPhoto(x.r.photo_path);
-    PCWCard.draw(big, cardData(x), "4:5");
+    let d;
+    try{ d = await fullCardData(x); }catch(e){ d = cardData(x); }
+    PCWCard.draw(big, d, "4:5");
     const ctx = cv.getContext("2d"); cv.width = 432; cv.height = 540;
     ctx.drawImage(big, 0, 0, cv.width, cv.height);
+    const ln = document.querySelector(`[data-fxline="${x.id}"]`);
+    if(ln){ const [cls, t] = fxLabel(x, savedFx(x)? savedFx(x).fx : await getFx(x)); ln.className = "fxline "+cls; ln.textContent = t; }
   };
   if(!("IntersectionObserver" in window)){ document.querySelectorAll("[data-draw]").forEach(draw); return; }
   io = new IntersectionObserver(es=> es.forEach(e=>{ if(e.isIntersecting){ io.unobserve(e.target); draw(e.target); } }), {rootMargin:"300px"});
@@ -302,6 +388,7 @@ function lazyDraw(){
 async function review(ids, action, note){
   if(!ids.length) return;
   if(action==="approve" && ids.length>1 && !confirm(`อนุมัติการ์ด ${ids.length} คนใช่ไหมคะ?`)) return;
+  if(action==="approve") await saveAutoFx(ids);
   const {data:n, error} = await sb.rpc("survey_card_review", {p_response_ids: ids, p_action: action, p_note: note||null});
   if(error){ toast("บันทึกไม่สำเร็จ: "+error.message); return false; }
   toast(action==="approve"? `อนุมัติแล้ว ${n} คน ✅` : `ส่งกลับให้แก้แล้ว ${n} คน`);
@@ -335,15 +422,115 @@ async function openView(id){
   $("btnWithdraw").disabled = !viewing.r.photo_consent;
   $("btnViewPhoto").disabled = !viewing.r.photo_path;
   $("viewModal").classList.add("show");
-  await loadPhoto(viewing.r.photo_path);
-  PCWCard.draw($("viewCv"), cardData(viewing), viewRatio);
+  $("fxPanel").classList.toggle("hidden", !viewing.r.photo_path);
+  $("fxHint").textContent = "กำลังเตรียมรูป…";
+  const img = await loadPhoto(viewing.r.photo_path);
+  if(!img){ $("fxPanel").classList.add("hidden"); PCWCard.draw($("viewCv"), cardData(viewing), viewRatio); return; }
+  const s = savedFx(viewing), fx = await getFx(viewing);
+  editFx = JSON.parse(JSON.stringify(fx || {v:1, auto:true, face:null, zoom:1, dx:0, dy:0, bright:0, contrast:0, bg:"keep", noFace:true}));
+  editMask = s && editFx.bg !== "keep" ? await loadMask(s.mask_path) : null;
+  if(editFx.bg !== "keep" && !editMask) editFx.bg = "keep";
+  editPrepKey = ""; syncFxUi(); drawView();
+}
+/* ── แผงปรับรูป ── */
+const FX_SL = [["fxZoom","zoom",100,"oZoom",v=>v+"%"],["fxDx","dx",100,"oDx",v=>v],["fxDy","dy",100,"oDy",v=>v],["fxBright","bright",1,"oBright",v=>v],["fxContrast","contrast",1,"oContrast",v=>v]];
+function syncFxUi(){
+  if(!editFx) return;
+  $("fxAuto").checked = editFx.auto !== false;
+  FX_SL.forEach(([id,k,m,o,f])=>{ const v = Math.round((editFx[k] ?? (k==="zoom"?1:0)) * m); $(id).value = v; $(o).textContent = f(v); });
+  const noFace = !editFx.face;
+  document.querySelectorAll("[data-bg]").forEach(b=>{ b.classList.toggle("active", b.dataset.bg === (editFx.bg||"keep")); b.disabled = noFace && b.dataset.bg !== "keep"; });
+  const s = savedFx(viewing);
+  $("fxHint").textContent = noFace ? "หาใบหน้าในรูปไม่เจอ ปรับขนาดและตำแหน่งเองได้ แต่เปลี่ยนพื้นหลังไม่ได้ (หรือส่งกลับให้นักเรียนเปลี่ยนรูป)"
+    : s ? "รูปนี้ครูบันทึกการปรับไว้แล้ว นักเรียนจะเห็นการ์ดตามนี้" : "ปรับอัตโนมัติแล้ว ยังไม่ได้บันทึก (กดอนุมัติจะบันทึกให้เอง)";
+}
+let drawQ = false;
+function drawView(){
+  if(drawQ) return; drawQ = true;
+  requestAnimationFrame(()=>{
+    drawQ = false; if(!viewing || !editFx) return;
+    const d = cardData(viewing); if(!d.photo) return PCWCard.draw($("viewCv"), d, viewRatio);
+    const fx = editFx.bg !== "keep" && !editMask ? Object.assign({}, editFx, {bg:"keep"}) : editFx;
+    const key = JSON.stringify([fx.auto, fx.tone, fx.bright, fx.contrast, fx.bg, !!editMask, viewing.id]);
+    if(key !== editPrepKey){ editPrep = PCWPhoto.render(d.photo, fx, editMask, PCWCard.color(d)); editPrepKey = key; }
+    PCWCard.draw($("viewCv"), Object.assign(d, PCWPhoto.cardFields(editPrep, fx)), viewRatio);
+  });
+}
+FX_SL.forEach(([id,k,m,o,f])=> $(id).addEventListener("input", ()=>{ if(!editFx) return; const v = +$(id).value; editFx[k] = v / m; $(o).textContent = f(v); drawView(); }));
+$("fxAuto").onchange = ()=>{ if(!editFx) return; editFx.auto = $("fxAuto").checked; drawView(); };
+document.querySelectorAll("[data-bg]").forEach(b=> b.onclick = async ()=>{
+  if(!editFx || b.disabled) return;
+  const want = b.dataset.bg;
+  if(want !== "keep" && !editMask){
+    const img = await loadPhoto(viewing.r.photo_path);
+    $("fxHint").textContent = "กำลังแยกคนออกจากพื้นหลัง… (ครั้งแรกอาจใช้เวลาสักครู่)";
+    document.querySelectorAll("[data-bg]").forEach(x=> x.disabled = true);
+    try{ editMask = await PCWPhoto.maskFor(img); }
+    catch(e){ editMask = null; syncFxUi(); $("fxHint").textContent = "แยกพื้นหลังไม่สำเร็จ: " + (e.message||e); return; }
+  }
+  editFx.bg = want; editPrepKey = ""; syncFxUi(); drawView();
+});
+$("btnFxReset").onclick = async ()=>{
+  if(!viewing) return;
+  const img = await loadPhoto(viewing.r.photo_path); if(!img) return;
+  delete autoFxCache[viewing.r.photo_path];
+  editFx = JSON.parse(JSON.stringify(await getFxAuto(viewing))); editMask = null; editPrepKey = "";
+  syncFxUi(); drawView(); $("fxHint").textContent = "คืนค่าอัตโนมัติแล้ว กดบันทึกถ้าต้องการใช้แบบนี้";
+};
+async function getFxAuto(x){
+  const img = await loadPhoto(x.r.photo_path);
+  if(!autoFxCache[x.r.photo_path]) autoFxCache[x.r.photo_path] = PCWPhoto.autoFx(img).catch(()=> ({v:1, auto:false, face:null, zoom:1, dx:0, dy:0, bright:0, contrast:0, bg:"keep", noFace:true}));
+  return autoFxCache[x.r.photo_path];
+}
+$("btnFxSave").onclick = async ()=>{
+  if(!viewing || !editFx) return;
+  $("btnFxSave").disabled = true;
+  try{
+    await saveFx(viewing, editFx, editMask);
+    toast("บันทึกรูปแล้ว ✅"); syncFxUi();
+    const cv = document.querySelector(`[data-draw="${viewing.id}"]`); if(cv) redrawTile(cv);
+  }catch(e){ toast("บันทึกไม่สำเร็จ: " + (e.message||e)); }
+  $("btnFxSave").disabled = false;
+};
+function cleanFx(fx){
+  const r = (v, d=3)=> +(+v||0).toFixed(d);
+  return { v:1, auto: fx.auto !== false, tone: fx.tone || null,
+    face: fx.face ? {cx:r(fx.face.cx,4), cy:r(fx.face.cy,4), w:r(fx.face.w,4), h:r(fx.face.h,4)} : null,
+    zoom: r(fx.zoom ?? 1), dx: r(fx.dx), dy: r(fx.dy), bright: Math.round(+fx.bright||0), contrast: Math.round(+fx.contrast||0),
+    bg: ["keep","uni","white"].includes(fx.bg) ? fx.bg : "keep", noFace: !fx.face };
+}
+async function saveFx(x, fx, maskCanvas){
+  const clean = cleanFx(fx), old = fxRows[x.id];
+  let mask_path = null;
+  if(clean.bg !== "keep"){
+    mask_path = `${x.r.student_id}/fx-${x.id}.png`;
+    if(maskCanvas && maskCanvas.toBlob){
+      const blob = await new Promise(ok=> maskCanvas.toBlob(ok, "image/png"));
+      const {error} = await sb.storage.from("survey-photos").upload(mask_path, blob, {contentType:"image/png", upsert:true});
+      if(error) throw error;
+      maskCache[mask_path] = maskCanvas;
+    } else if(!(old && old.mask_path === mask_path)) { clean.bg = "keep"; mask_path = null; }
+  }
+  const row = { response_id: x.id, photo_path: x.r.photo_path, fx: clean, mask_path, updated_by: profile.id, updated_at: new Date().toISOString() };
+  const {error} = await sb.from("survey_card_photo_fx").upsert(row, {onConflict:"response_id"});
+  if(error) throw error;
+  if(old && old.mask_path && !mask_path) await sb.storage.from("survey-photos").remove([old.mask_path]);
+  fxRows[x.id] = row;
+}
+// ตอนอนุมัติ: บันทึกค่าปรับอัตโนมัติให้คนที่ครูยังไม่ได้ปรับ (นักเรียนจะได้การ์ดหน้าตาเดียวกับที่ครูเห็น)
+async function saveAutoFx(ids){
+  const list = items.filter(x=> ids.includes(x.id) && x.r.photo_path && !savedFx(x));
+  for(let i=0;i<list.length;i++){
+    if(list.length > 3) toast(`กำลังเตรียมรูป ${i+1} / ${list.length} …`);
+    try{ const fx = await getFx(list[i]); if(fx) await saveFx(list[i], fx, null); }catch(e){ /* ข้ามได้ ใช้รูปเดิม */ }
+  }
 }
 document.querySelectorAll("[data-r]").forEach(b=> b.onclick=()=>{
   viewRatio = b.dataset.r;
   document.querySelectorAll("[data-r]").forEach(x=> x.classList.toggle("active", x===b));
-  if(viewing) PCWCard.draw($("viewCv"), cardData(viewing), viewRatio);
+  if(viewing) drawView();
 });
-$("btnViewClose").onclick = ()=> $("viewModal").classList.remove("show");
+$("btnViewClose").onclick = ()=>{ $("viewModal").classList.remove("show"); editFx = null; editMask = null; editPrep = null; editPrepKey = ""; };
 $("btnViewDl").onclick = ()=>{ if(viewing) $("viewCv").toBlob(b=> saveBlob(b, fileName(viewing)), "image/png"); };
 $("btnViewPhoto").onclick = async ()=>{
   if(!viewing?.r.photo_path) return;
@@ -370,8 +557,9 @@ async function zipApproved(){
   try{
     for(let i=0;i<list.length;i++){
       zm.textContent = `กำลังทำการ์ด ${i+1} / ${list.length} …`;
-      const x = list[i]; await loadPhoto(x.r.photo_path);
-      PCWCard.draw(cv, cardData(x), "4:5");
+      const x = list[i];
+      let d; try{ d = await fullCardData(x); }catch(e){ d = cardData(x); }
+      PCWCard.draw(cv, d, "4:5");
       let nm = fileName(x); if(used[nm]) nm = nm.replace(".png","_"+(i+1)+".png"); used[nm]=1;
       zip.file(nm, await new Promise(ok=> cv.toBlob(ok, "image/png")));
       await new Promise(r=> setTimeout(r,0));
