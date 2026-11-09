@@ -343,6 +343,7 @@ textarea.csvbox{font-family:monospace;font-size:.82rem;min-height:120px}
           </div>
           <h2 style="margin-top:16px;font-size:.95rem">📊 ขนาดแยกตามตาราง</h2>
           <div class="tbl-wrap"><table><thead><tr><th>ตาราง</th><th>ขนาด</th><th>จำนวนแถว (โดยประมาณ)</th></tr></thead><tbody id="healthTableRows"></tbody></table></div>
+          <button class="btn ghost sm hidden" id="btnHealthMore" style="margin-top:8px">▼ ดูทั้งหมด</button>
           <p class="field hint" style="margin-top:10px" id="healthCheckedAt"></p>
         </div>
         <button class="btn ghost sm" id="btnHealthRefresh" style="margin-top:12px">🔄 รีเฟรชข้อมูล</button>
@@ -1573,6 +1574,18 @@ function setHealthBar(barId, pctId, usedBytes, limitBytes){
   else if(pct>=70) wrap.classList.add("warn");
   $(pctId).textContent = `ใช้ไป ${pct.toFixed(1)}% จาก ${fmtBytes(limitBytes)}`;
 }
+// ตารางสุขภาพระบบ: ค่าเริ่มต้นแสดงแค่ 10 อันดับแรก (เรียงตามขนาดจากเซิร์ฟเวอร์) กดปุ่มเพื่อดูทั้งหมด
+const HEALTH_TOP = 10;
+let healthTables = [], healthShowAll = false;
+function renderHealthTables(){
+  const rows = healthShowAll ? healthTables : healthTables.slice(0, HEALTH_TOP);
+  $("healthTableRows").innerHTML = rows.map(t=>
+    `<tr><td>${esc(t.table_name)}</td><td>${esc(t.total_pretty)}</td><td>${Number(t.approx_rows||0).toLocaleString("th-TH")}</td></tr>`
+  ).join("") || `<tr><td colspan="3" style="text-align:center;color:var(--ink-soft)">ไม่มีข้อมูล</td></tr>`;
+  const btn = $("btnHealthMore");
+  btn.classList.toggle("hidden", healthTables.length <= HEALTH_TOP);
+  btn.textContent = healthShowAll ? "▲ แสดงแค่ 10 อันดับแรก" : `▼ ดูทั้งหมด (${healthTables.length} ตาราง)`;
+}
 async function loadHealth(){
   const isAdmin = profile && profile.role==="admin";
   $("healthPanel").classList.toggle("hidden", !isAdmin);
@@ -1590,9 +1603,8 @@ async function loadHealth(){
     $("healthStSize").textContent = fmtBytes(storageTotal);
     setHealthBar("healthStBar","healthStPct", storageTotal, STORAGE_LIMIT_BYTES);
     // ตารางแยกทีละตัว
-    $("healthTableRows").innerHTML = (data.tables||[]).map(t=>
-      `<tr><td>${esc(t.table_name)}</td><td>${esc(t.total_pretty)}</td><td>${Number(t.approx_rows||0).toLocaleString("th-TH")}</td></tr>`
-    ).join("") || `<tr><td colspan="3" style="text-align:center;color:var(--ink-soft)">ไม่มีข้อมูล</td></tr>`;
+    healthTables = data.tables||[];
+    renderHealthTables();
     $("healthCheckedAt").textContent = "เช็คล่าสุด: " + thDateTime(data.checked_at);
     $("healthLoading").classList.add("hidden");
     $("healthBody").classList.remove("hidden");
@@ -1601,6 +1613,7 @@ async function loadHealth(){
   }
 }
 $("btnHealthRefresh").onclick = loadHealth;
+$("btnHealthMore").onclick = ()=>{ healthShowAll = !healthShowAll; renderHealthTables(); };
 
 async function loadUsers(){
   // ต้องแบ่งหน้าดึงเหมือน fetchAllStudents() ข้างบน — ไม่งั้นพอนักเรียนรวมกันเกิน 1,000 แถว
