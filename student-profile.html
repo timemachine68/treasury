@@ -18,7 +18,6 @@
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="congrats-card-draw.js"></script>
-<script src="card-photo-fx.js"></script>
 <style>
 :root{
   --ink:#22313A; --ink-soft:#5B6B72;
@@ -49,10 +48,9 @@ header.app a{color:#fff}
 .hero{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);border-left:6px solid var(--gc,var(--g4));padding:16px;display:flex;gap:16px;align-items:center;flex-wrap:wrap;margin-top:12px}
 .avatar{width:64px;height:64px;border-radius:50%;background:var(--pine-tint);display:flex;align-items:center;justify-content:center;font-size:30px;flex:none}
 .avatar.photo{width:84px;height:112px;border-radius:14px;overflow:hidden;background:var(--pine-tint);cursor:zoom-in;position:relative;border:0;padding:0}
-.avatar.photo canvas{width:100%;height:100%;object-fit:cover;display:block}
-.photocap{font-size:12px;color:var(--ink-soft);margin-top:4px;max-width:150px}
+.avatar.photo img{width:100%;height:100%;object-fit:cover;object-position:50% 20%;display:block}
 .zoomlb{position:fixed;inset:0;z-index:80;background:rgba(20,30,28,.86);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;padding:16px;cursor:zoom-out;color:#fff;font-size:14px}
-.zoomlb canvas{max-width:min(92vw,480px);max-height:78vh;border-radius:16px;background:#fff}
+.zoomlb img{max-width:min(92vw,480px);max-height:78vh;border-radius:16px;background:#fff}
 .hero h1{font-size:22px}
 .hero .meta{color:var(--ink-soft);font-size:14px}
 .badge{display:inline-block;border-radius:999px;padding:1px 10px;font-size:12px;font-weight:600;background:var(--pine-tint);color:var(--pine-deep);margin-right:4px}
@@ -208,56 +206,28 @@ async function loadProfile(id){
   if (error){ $('app').innerHTML = `<div class="msg err">โหลดข้อมูลไม่สำเร็จ: ${esc(error.message)}</div>`; return; }
   if (!data){ $('app').innerHTML = empty('🔎', 'ไม่พบนักเรียนคนนี้'); return; }
   render(data);
-  loadSurveyPhoto(id, data, seq);
+  loadAvatarPhoto(id, seq);
   history.replaceState(null, '', '?id=' + encodeURIComponent(id) + (document.documentElement.classList.contains('embed') ? '&embed=1' : ''));
 }
 
-// ---------- รูปจากแบบสำรวจเรียนต่อ (ใช้ค่าที่ครูตกแต่งไว้ ถ้ามี) ----------
-// ครูอ่านรูป/ค่าตกแต่งได้ตามสิทธิ์เดิมของระบบ (iv_is_staff) จึงไม่ต้องแก้ฐานข้อมูล
-// แสดงเฉพาะรูปที่นักเรียนติ๊กยินยอมไว้ · ถ้าดึงไม่ได้ ปล่อยไอคอนเดิม ไม่ให้หน้าพัง
-function loadImg(blob){
-  return new Promise(ok => { const u = URL.createObjectURL(blob), i = new Image(); i.onload = () => { URL.revokeObjectURL(u); ok(i); }; i.onerror = () => { URL.revokeObjectURL(u); ok(null); }; i.src = u; });
-}
-async function loadSurveyPhoto(id, d, seq){
+// ---------- รูปโปรไฟล์ = รูปที่นักเรียนอัปโหลดเองเท่านั้น (profiles.avatar_path) ----------
+// ครูอ่านรูปได้ตามสิทธิ์เดิมของที่เก็บ profile-photos · ไม่มีรูป/ดึงไม่ได้ = แสดงไอคอนเดิม ไม่ให้หน้าพัง
+async function loadAvatarPhoto(id, seq){
   try {
-    const { data: rs } = await sb.from('survey_responses')
-      .select('id,photo_path,photo_consent,submitted_at')
-      .eq('student_id', id).not('photo_path', 'is', null)
-      .order('submitted_at', { ascending: false, nullsFirst: false }).limit(1);
-    const r = rs && rs[0];
-    if (!r || r.photo_consent !== true) return;
-    const { data: fxs } = await sb.from('survey_card_photo_fx')
-      .select('photo_path,fx,mask_path,updated_at').eq('response_id', r.id)
-      .order('updated_at', { ascending: false }).limit(1);
-    const f = fxs && fxs[0] && fxs[0].photo_path === r.photo_path ? fxs[0] : null;   // ค่าตกแต่งใช้ได้เมื่อยังเป็นรูปเดียวกับที่ตกแต่ง
-    const { data: blob } = await sb.storage.from('survey-photos').download(r.photo_path);
-    if (!blob) return;
-    const img = await loadImg(blob);
-    if (!img) return;
-    let mask = null;
-    if (f && f.fx && f.fx.bg && f.fx.bg !== 'keep' && f.mask_path){
-      const { data: mb } = await sb.storage.from('survey-photos').download(f.mask_path);
-      if (mb) mask = await loadImg(mb);
-    }
-    let fx = f ? f.fx : null;
-    if (fx && fx.bg && fx.bg !== 'keep' && !mask) fx = Object.assign({}, fx, { bg: 'keep' });   // ไม่มีภาพตัดพื้นหลัง = ไม่เปลี่ยนพื้น
-    // สีพื้นแบบ "สีมหาวิทยาลัย" ใช้สถาบันที่นักเรียนเลือก (ถ้ามี)
-    let inst = '';
-    for (const sv of (d.surveys || [])){ const a = (sv.admissions || []).find(x => x.is_chosen); if (a){ inst = a.institution || ''; break; } }
-    if (!inst && d.surveys && d.surveys[0]) inst = d.surveys[0].institution || '';
-    let cv;
-    if (fx && window.PCWPhoto) cv = PCWPhoto.render(img, fx, mask, window.PCWCard ? PCWCard.color({ inst }) : null).canvas;
-    else { cv = document.createElement('canvas'); cv.width = img.naturalWidth; cv.height = img.naturalHeight; cv.getContext('2d').drawImage(img, 0, 0); }
+    const { data: p } = await sb.from('profiles').select('avatar_path').eq('id', id).maybeSingle();
+    if (!p || !p.avatar_path) return;
+    const { data: u } = await sb.storage.from('profile-photos').createSignedUrl(p.avatar_path, 3600);
+    if (!u || !u.signedUrl) return;
     if (seq !== loadSeq) return;                       // เปลี่ยนไปดูคนอื่นระหว่างโหลดแล้ว
     const box = $('pfAvatarBox');
     if (!box) return;
-    box.innerHTML = '<button type="button" class="avatar photo" id="pfAvatar" aria-label="ขยายรูปนักเรียน"></button>'
-      + `<div class="photocap">รูปจากแบบสำรวจเรียนต่อ · ${f ? 'ตกแต่งแล้ว' : 'ต้นฉบับ (ครูยังไม่ได้ปรับ)'}</div>`;
-    $('pfAvatar').appendChild(cv);
+    box.innerHTML = '<button type="button" class="avatar photo" id="pfAvatar" aria-label="ขยายรูปนักเรียน"></button>';
+    const im = new Image(); im.alt = ''; im.src = u.signedUrl;
+    $('pfAvatar').appendChild(im);
     $('pfAvatar').addEventListener('click', () => {
       const lb = document.createElement('div');
       lb.className = 'zoomlb';
-      const big = document.createElement('canvas'); big.width = cv.width; big.height = cv.height; big.getContext('2d').drawImage(cv, 0, 0);
+      const big = new Image(); big.alt = 'รูปนักเรียน'; big.src = u.signedUrl;
       lb.appendChild(big); lb.insertAdjacentHTML('beforeend', '<span>แตะที่ว่างเพื่อปิด</span>');
       lb.addEventListener('click', () => lb.remove());
       document.body.appendChild(lb);
