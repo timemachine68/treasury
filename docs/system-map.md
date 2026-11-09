@@ -34,6 +34,7 @@
 | **รายงานผู้บริหาร (รวมภาพรวมผู้บริหาร + รายงานประจำปี)** | ไม่มีตารางของตัวเอง อ่านผ่าน RPC: `exec_overview()`, `usage_summary(p_months)`, `report_survey/quota/awards`, `report_programs(p_year)` (ทุน/ฝึกงาน/ซ้อมสัมภาษณ์/MOU/ตารางแนะแนว), `report_counseling(p_year)` (ให้คำปรึกษาแบบไม่ระบุตัวตน ซ่อนกลุ่ม <3 ราย); helper `th_academic_year(timestamptz)` | `executive-report.html` (แท็บ: ภาพรวม/เรียนต่อ/โควตา/ทุน/ผลงาน/ฝึกงาน/ซ้อมสัมภาษณ์/ความร่วมมือ/ให้คำปรึกษา/การใช้งาน; ปุ่ม Word ปุ่มเดียวทั้งฉบับ; พิมพ์/PDF). `exec-overview.html` และ `annual-report.html` เหลือเป็นหน้าเด้งมาหน้านี้ (คง hash เดิม) — บัญชีกองกลางไม่รวมในรายงาน | ใช้งานจริง — migration `20261102_report_programs`; usage key `page:executive-report` (key เก่า `page:exec-overview`, `page:annual-report` ยังมีป้ายชื่อ) |
 | **หน้าแรก + ปฏิทินกำหนดการ** | `calendar_events` (หมวด national/tcas/guidance/other; อ่าน = ทุกคนที่ login, เขียน = `iv_is_staff()`; ห้ามชื่อซ้ำในวันเริ่มเดียวกัน) + หน้าเว็บดึงวันเปิด-ปิดรับจาก `scholarships`/`quotas` (ไม่ใช่ draft) มาแสดงอัตโนมัติ | `home.html` — index.html ส่งไปหน้าแรกเมื่อ login ใหม่หรือเปิดครั้งแรกในแท็บ (flag `sessionStorage.pcw_home_seen`); `index.html#announce` / `#apps` เปิดแท็บนั้นตรง | ใช้งานจริง — merge PR #16 เข้า main 26 ต.ค. 2569; ช้างเผือกไม่มีคอลัมน์วันที่ ครูต้องกรอกในปฏิทินเอง |
 | **ประชาสัมพันธ์** | `announcements` (+ `is_pinned`, `pinned_until` — ปักหมุดได้เฉพาะเจ้าของข่าว/admin), `announcement_reads` | แท็บข่าวใน index.html + home.html | ใช้งานจริง — ตั้งแต่ 26 ต.ค. 2569 ข่าวและไฟล์แนบเห็นเฉพาะผู้ที่ login (revoke จาก anon) |
+| **ทำเนียบนักเรียน + รูปนักเรียน** (9 พ.ย. 2569) | `profiles.avatar_path` (รูปที่นักเรียนอัปโหลดเอง), `profiles.school_photo_path` (รูปถ่ายโรงเรียน ชื่อไฟล์ = รหัสนักเรียน 5 หลัก) | `student-roster.html` (ครูเปลี่ยนรูปรายคนด้วยปุ่ม 📷), `student-photo-import.html` (นำเข้ารูปทีละหลายร้อยไฟล์ ย่อ 480px จับคู่ด้วยรหัส), `student-profile.html`, `profile.html` | ใช้งานจริง (นำเข้าแล้ว 280 คน) |
 | **แบบสำรวจจบการศึกษา** | `survey_rounds`, `survey_responses` | ใน index.html | ใช้งานจริง |
 | **จุดแข็ง (RIASEC / เกียรติบัตรเดิม)** | `strength_assessments`, `strength_tags` (`type`=R/I/A/S/E/C หรือ `award`) | ใน index.html | ใช้งานจริง |
 | **ข้อมูลนักเรียน 360°** | `student_metrics`, `vulnerable_profiles` | ภาพรวมนักเรียน | มีข้อมูลบางส่วน |
@@ -56,6 +57,7 @@
 `announcements`, `chang-phueak-docs`, `iv-recordings`, `pa-evidence`, `profile-photos`, `project-media`, `resources`, `scholarship-evidence`, `submissions`, `survey-photos`
 บักเก็ต `chang-phueak-docs` และ `iv-recordings` ใช้ `auth.uid()` เป็นชื่อโฟลเดอร์ (บักเก็ตอื่นให้ตรวจ policy จริงก่อนสมมติ) ดาวน์โหลดผ่าน signed URL เท่านั้น
 บักเก็ต `announcements`: อ่านได้เฉพาะ `authenticated` (แก้ 26 ต.ค. 2569 เดิมเป็น public role)
+บักเก็ต `profile-photos` (แก้ 9 พ.ย. 2569): `<uid>/avatar_*.jpg` = รูปที่นักเรียนอัปโหลดเอง (นักเรียนเขียนได้เฉพาะโฟลเดอร์ตัวเอง) · `school/<รหัส 5 หลัก>.jpg` = รูปในทำเนียบ (เขียนได้เฉพาะ `iv_is_staff()` ผ่านนโยบาย "school photo staff insert/update"; อ่านตามนโยบาย "avatar read own or staff" คือครู/แอดมินเท่านั้น นักเรียนอ่านโฟลเดอร์ `school/` ไม่ได้) · จำกัดไฟล์ 2 MB, JPEG/PNG/WebP
 
 ## 5) RPC สำคัญแยกตามโมดูล
 
@@ -65,6 +67,8 @@
 - **รายงานผู้บริหาร:** `exec_overview()`, `usage_summary(p_months)`, `usage_log(p_page)`, `report_survey(text)`, `report_quota(text)`, `report_awards(int)`, `report_programs(text)` — ทั้งหมดเป็น SECURITY INVOKER เช็ค `iv_is_staff()` (raise 42501 ถ้าไม่ใช่) ยกเว้น `report_counseling(text)` ที่เป็น SECURITY DEFINER (เพราะ `counseling_logs` ให้ครูเห็นเฉพาะของตัวเอง) เช็ค `iv_is_staff()` ในฟังก์ชัน, ซ่อนกลุ่มที่น้อยกว่า 3 ราย, นับกลุ่มที่ซ่อนแยกเป็น `hidden_*`; ทุกตัว REVOKE จาก PUBLIC/anon. สถานะที่นับ: ทุนนับเฉพาะที่ยืนยันแล้วผ่าน `scholarship_annual_summary()`; ซ้อมสัมภาษณ์ไม่นับ draft
 - **บันทึกให้คำปรึกษา:** `counseling_annual_report(int)` (ยก 42501 ถ้าไม่ใช่ `iv_is_staff()`), `counseling_overview()` (คืนค่าว่างถ้าไม่ใช่ `iv_is_staff()`) — SECURITY DEFINER, ไม่เปิดให้ anon
 - **ปฏิทิน:** ไม่มี RPC — home.html เขียน `calendar_events` ตรง; trigger `calendar_events_touch` ล็อก `created_by`/`created_at` และอัปเดต `updated_at`
+- **รูปนักเรียน:** `set_school_photos(p_ids text[])` (SECURITY DEFINER, เช็ค `iv_is_staff()`, ไม่เปิดให้ anon) ตั้ง `school_photo_path = school/<รหัส>.jpg` ให้นักเรียนตามรหัส เพราะ `profiles` แก้ได้เฉพาะ admin · `update_my_avatar(new_path)` นักเรียนตั้งรูปตัวเอง
+- **นโยบายรูป (ตัดสินใจ 9 พ.ย. 2569):** รูปโปรไฟล์ = รูปที่นักเรียนอัปโหลดเองเท่านั้น (`profile.html`, `student-profile.html`; เลิกแสดงรูปจากแบบสำรวจเรียนต่อในโปรไฟล์) · ทำเนียบแสดงรูปโรงเรียนก่อน ถ้าไม่มีใช้รูปที่นักเรียนอัปโหลด · ครูเปลี่ยนรูปได้เฉพาะรูปในทำเนียบ (ไม่แตะรูปโปรไฟล์ของนักเรียน) · รูปจากแบบสำรวจ (`survey-photos`) ยังใช้ในหน้าสำรวจและการ์ดแสดงความยินดีตามเดิม
 - **ระบบ:** `get_db_health()` (admin), `scholarship_health()`, `manage-users` (Edge Function)
 
 ## 5.1) Helper ดึงข้อมูลแบบแบ่งหน้าในหน้าเว็บ
