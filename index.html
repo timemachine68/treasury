@@ -102,6 +102,10 @@ header.app .wrap{display:flex;align-items:center;gap:12px;padding-bottom:0;flex-
 .btn.danger{background:#fff;border:1.5px solid #EAC7C2;color:var(--danger)}
 .btn.note{background:var(--note);color:var(--pine-deep)}
 .btn.sm{padding:6px 11px;font-size:.78rem}
+.xrow{display:grid;grid-template-columns:1fr 1.6fr auto;gap:8px;margin-bottom:8px;align-items:center}
+.xrow .xdel{padding:6px 10px}
+@media (max-width:520px){.xrow{grid-template-columns:1fr auto}.xrow .xurl{grid-column:1/2}}
+.rescard .actions a.btn{text-decoration:none;display:inline-flex;align-items:center}
 .btn:disabled{opacity:.55;cursor:wait}
 .empty{padding:44px 16px;text-align:center;color:var(--ink-soft)}
 .empty .big{font-size:2rem;margin-bottom:6px}
@@ -575,6 +579,11 @@ textarea.csvbox{font-family:monospace;font-size:.82rem;min-height:120px}
     <div class="field hidden" id="linkWrap">
       <label for="rUrl">ลิงก์ (ขึ้นต้น https://)</label>
       <input id="rUrl" placeholder="https://…">
+    </div>
+    <div class="field" id="extraWrap">
+      <label>ลิงก์เพิ่มเติม (ไม่บังคับ) เช่น ไฟล์ pptx, สไลด์, ใบงาน — เพิ่มได้สูงสุด 10 ลิงก์</label>
+      <div id="extraList"></div>
+      <button type="button" class="btn ghost sm" id="btnAddExtra">➕ เพิ่มลิงก์</button>
     </div>
     <div class="foot">
       <button class="btn ghost" id="btnResCancel">ยกเลิก</button>
@@ -1308,6 +1317,7 @@ function renderResources(){
         ${isLink
           ? `<button class="btn primary sm" data-open="${r.id}">🔗 เปิดลิงก์</button>`
           : `<button class="btn primary sm" data-dl="${r.id}">⬇ ดาวน์โหลด</button>`}
+        ${extraLinks(r).map(x=>`<a class="btn ghost sm" href="${esc(x.url)}" target="_blank" rel="noopener noreferrer">🔗 ${esc(x.label)}</a>`).join("")}
         ${staff && mine ? `<button class="btn ghost sm" data-edit="${r.id}">แก้ไข</button>
         <button class="btn danger sm" data-del="${r.id}">ลบ</button>`:""}
       </div>
@@ -1335,6 +1345,35 @@ function openLink(id){
   sb.rpc("increment_download",{rid:id}).then(()=>{ r.download_count++; renderResources(); });
 }
 
+/* ── ลิงก์เพิ่มเติม (หลายลิงก์ต่อรายการ) ── */
+const MAX_EXTRA = 10;
+function extraLinks(r){
+  const a = Array.isArray(r.extra_links) ? r.extra_links : [];
+  return a.filter(x=>x && typeof x.url==="string" && /^https?:\/\//.test(x.url))
+          .map((x,i)=>({url:x.url, label:(x.label||"").toString().trim()||("ลิงก์ที่ "+(i+2))}));
+}
+function addExtraRow(label="", url=""){
+  if($("extraList").children.length>=MAX_EXTRA) return msg("resMsg","เพิ่มลิงก์ได้สูงสุด "+MAX_EXTRA+" ลิงก์ค่ะ","err");
+  const d = document.createElement("div"); d.className="xrow";
+  d.innerHTML = `<input class="xlabel" maxlength="40" placeholder="ชื่อปุ่ม เช่น สไลด์ pptx" value="${esc(label)}">
+    <input class="xurl" placeholder="https://…" value="${esc(url)}">
+    <button type="button" class="btn danger sm xdel" title="ลบลิงก์นี้">ลบ</button>`;
+  d.querySelector(".xdel").onclick = ()=> d.remove();
+  $("extraList").appendChild(d);
+}
+function readExtraRows(){
+  const out = [];
+  for(const d of $("extraList").children){
+    const label = d.querySelector(".xlabel").value.trim();
+    const url = d.querySelector(".xurl").value.trim();
+    if(!label && !url) continue;                       // แถวว่าง ข้ามไป
+    if(!/^https?:\/\//.test(url)) throw new Error("ลิงก์เพิ่มเติมต้องขึ้นต้นด้วย http:// หรือ https:// ("+(label||"ยังไม่ได้ตั้งชื่อ")+")");
+    out.push({label: label||("ลิงก์ที่ "+(out.length+2)), url});
+  }
+  return out;
+}
+$("btnAddExtra").onclick = ()=> addExtraRow();
+
 /* ── เพิ่ม/แก้ไขสื่อ ── */
 $("btnAdd").onclick = ()=> openResModal(null);
 $("btnResCancel").onclick = ()=> $("resModal").classList.remove("show");
@@ -1354,6 +1393,8 @@ function openResModal(id){
   $("rTitle").value = r?.title||""; $("rDesc").value = r?.description||"";
   $("rGrade").value = r?.grade_level||"ม.1"; $("rType").value = r?.resource_type||"full_plan";
   $("rFile").value = ""; $("rUrl").value = r?.external_url||"";
+  $("extraList").innerHTML = "";
+  (Array.isArray(r?.extra_links)?r.extra_links:[]).forEach(x=>addExtraRow(x.label||"", x.url||""));
   setSrc(r ? (r.external_url? "link":"file") : "file");
   // แก้ไข: เปลี่ยนไฟล์ไม่ได้ (ลบแล้วลงใหม่) แต่แก้ลิงก์/ข้อมูลได้
   $("srcSegWrap").classList.toggle("hidden", !!r);
@@ -1364,9 +1405,9 @@ function openResModal(id){
 $("btnResSave").onclick = async ()=>{
   const title=$("rTitle").value.trim();
   if(!title) return msg("resMsg","ใส่ชื่อรายการก่อนนะคะ","err");
-  const base = { title, description:$("rDesc").value.trim()||null, grade_level:$("rGrade").value, resource_type:$("rType").value };
   $("btnResSave").disabled = true;
   try{
+    const base = { title, description:$("rDesc").value.trim()||null, grade_level:$("rGrade").value, resource_type:$("rType").value, extra_links:readExtraRows() };
     if(editingId){
       const r = resources.find(x=>x.id===editingId);
       const upd = {...base};
