@@ -14,6 +14,7 @@ const SRC = {
   mfu:  {t:"สรุปค่าเทอม ม.แม่ฟ้าหลวง 2569", u:"https://dreamnesthub.com/tuition-fee-mfu-2568"},
   bu:   {t:"สรุปค่าเทอม ม.กรุงเทพ (ค่าเทอมภาคเรียนแรก ปี 2569 ของสาขาที่ใช้เทียบ)", u:"https://dreamnesthub.com/tuition-fee-bu-2569"},
   up:   {t:"สรุปค่าเทอม ม.พะเยา 2569 (ประมาณการรายกลุ่มคณะ ควรตรวจประกาศ REG-UP)", u:"https://dreamnesthub.com/khafee-mahawithayalai-phayao-2568"},
+  rmutk:{t:"อัตราการเก็บเงินรับเข้า ป.ตรี สำหรับนักศึกษารับเข้าปี 2570 มทร.กรุงเทพ (ปรับปรุง 4 พ.ย. 2569)", u:"https://admission.rmutk.ac.th/?p=16311"},
   dormUP:{t:"ประกาศอัตราค่าธรรมเนียมหอพัก ม.พะเยา (ใช้ตั้งแต่ปีการศึกษา 2564 ตามเอกสารที่ครูส่งมา)", u:""},
   dormIn:{t:"สำรวจราคาหอในมหาวิทยาลัย ปี 2568 (LINE TODAY)", u:"https://today.line.me/th/v3/article/aGLP5qo"},
   rent: {t:"ราคาหอนอกใกล้มหาวิทยาลัย (ค่ากลางของหน้า 'ราคาถูก' RentHub)", u:"https://www.renthub.in.th/"},
@@ -24,6 +25,7 @@ const SRC = {
 const U = {
   hcu:  {name:"ม.หัวเฉียวเฉลิมพระเกียรติ", short:"หัวเฉียวฯ", place:"บางพลี สมุทรปราการ", type:"private", zone:"near", housing:["home"], seniors:2, src:"hcu"},
   bu:   {name:"ม.กรุงเทพ", short:"ม.กรุงเทพ", place:"กล้วยน้ำไท / รังสิต", type:"private", zone:"near", housing:["home"], seniors:0, src:"bu"},
+  rmutk:{name:"มทร.กรุงเทพ (ราชมงคลกรุงเทพ)", short:"ราชมงคลกรุงเทพ", place:"สาทร กรุงเทพฯ", type:"public", zone:"near", housing:["home","dorm_out"], rent:3025, seniors:16, src:"rmutk"},
   kmitl:{name:"สจล. พระจอมเกล้าลาดกระบัง", short:"สจล.", place:"ลาดกระบัง กรุงเทพฯ", type:"public", zone:"near", housing:["home","dorm_out"], rent:3025, seniors:35, src:"kmitl"},
   ku:   {name:"ม.เกษตรศาสตร์ ศรีราชา", short:"มก.ศรีราชา", place:"ศรีราชา ชลบุรี", type:"public", zone:"mid", housing:["dorm_out"], rent:3250, seniors:7, src:"ku"},
   buu:  {name:"ม.บูรพา บางแสน", short:"บูรพา", place:"บางแสน ชลบุรี", type:"public", zone:"mid", housing:["dorm_in","dorm_out"], dormIn:{fee:3850, util:100, label:"หอในพัดลม 2–4 คน/ห้อง เริ่ม 3,850 บาท/เทอม"}, rent:3250, seniors:23, src:"buu"},
@@ -44,6 +46,11 @@ const P = {
 
   bu_biz:    {u:"bu", name:"บริหารธุรกิจ (การตลาด)", sem:43180, field:"biz", note:"ใช้ค่าเทอมภาคแรก ปี 69 เป็นค่าเฉลี่ยต่อภาค"},
   bu_eng:    {u:"bu", name:"มนุษยศาสตร์ ภาษาอังกฤษ", sem:44580, field:"lang", note:"ใช้ค่าเทอมภาคแรก ปี 69 เป็นค่าเฉลี่ยต่อภาค"},
+
+  rmutk_biz: {u:"rmutk", name:"บริหารธุรกิจ (การตลาด / การบัญชี / การเงิน)", sem:9500, fixed:5320, field:"biz", note:"ค่าเทอม 9,000 + กิจกรรม 500 · รวมค่าแรกเข้า/ประกันของเสียหาย 5,320 บาทครั้งเดียว"},
+  rmutk_cs:  {u:"rmutk", name:"วิทยาการคอมพิวเตอร์", sem:10550, fixed:5320, field:"sci", note:"ค่าเทอม 10,050 + กิจกรรม 500 · รวมค่าแรกเข้า/ประกันของเสียหาย 5,320 บาทครั้งเดียว"},
+  rmutk_eng: {u:"rmutk", name:"ศิลปศาสตร์ ภาษาอังกฤษเพื่อการสื่อสารสากล", sem:9550, fixed:5320, field:"lang", note:"ค่าเทอม 9,050 + กิจกรรม 500 · รวมค่าแรกเข้า/ประกันของเสียหาย 5,320 บาทครั้งเดียว"},
+  rmutk_health:{u:"rmutk", name:"วิทยาศาสตร์เพื่อสุขภาพและความงาม", sem:10550, fixed:5320, field:"medsci", note:"ค่าเทอม 10,050 + กิจกรรม 500 · รวมค่าแรกเข้า/ประกันของเสียหาย 5,320 บาทครั้งเดียว"},
 
   kmitl_biz: {u:"kmitl", name:"บริหารธุรกิจ", sem:20000, field:"biz"},
   kmitl_sci: {u:"kmitl", name:"วิทยาศาสตร์ (หลักสูตรภาษาไทย)", sem:19000, field:"sci"},
@@ -67,10 +74,10 @@ const P = {
 };
 
 const TRACKS = {
-  biz:   {name:"ธุรกิจ บัญชี โลจิสติกส์", icon:"💼", priv:["hcu_biz","bu_biz"], pub:["kmitl_biz","ku_mgt","buu_log","mfu_mgt","up_mgt"]},
-  health:{name:"สุขภาพ พยาบาล เทคนิคการแพทย์", icon:"🩺", priv:["hcu_nur","hcu_mt","hcu_pt","hcu_medsci","hcu_oh"], pub:["buu_nur","buu_mt","buu_pt","buu_medsci","mfu_oh","up_nur","up_medsci"]},
-  sci:   {name:"วิทยาศาสตร์ คอมพิวเตอร์", icon:"🔬", priv:["hcu_cs"], pub:["kmitl_sci","ku_sci","buu_sci","up_sci"]},
-  lang:  {name:"ภาษา ศิลปศาสตร์", icon:"🌏", priv:["hcu_eng","bu_eng"], pub:["kmitl_lang","buu_eng","up_lang"]}
+  biz:   {name:"ธุรกิจ บัญชี โลจิสติกส์", icon:"💼", priv:["hcu_biz","bu_biz"], pub:["kmitl_biz","ku_mgt","buu_log","mfu_mgt","up_mgt","rmutk_biz"]},
+  health:{name:"สุขภาพ พยาบาล เทคนิคการแพทย์", icon:"🩺", priv:["hcu_nur","hcu_mt","hcu_pt","hcu_medsci","hcu_oh"], pub:["buu_nur","buu_mt","buu_pt","buu_medsci","mfu_oh","up_nur","up_medsci","rmutk_health"]},
+  sci:   {name:"วิทยาศาสตร์ คอมพิวเตอร์", icon:"🔬", priv:["hcu_cs"], pub:["kmitl_sci","ku_sci","buu_sci","up_sci","rmutk_cs"]},
+  lang:  {name:"ภาษา ศิลปศาสตร์", icon:"🌏", priv:["hcu_eng","bu_eng"], pub:["kmitl_lang","buu_eng","up_lang","rmutk_eng"]}
 };
 
 const HOUSING = {home:"อยู่บ้าน ไป-กลับทุกวัน", dorm_in:"หอใน (หอของมหาวิทยาลัย)", dorm_out:"หอนอก (เช่ารายเดือน)"};
@@ -123,7 +130,7 @@ const EVENTS = [
 /* คิดเงิน 4 ปี ของ 1 ฝั่ง  — คืนรายการแยกหมวด */
 function calc(progKey, housing, base){
   const pr = P[progKey], uni = U[pr.u], p = Object.assign({months:K.dormMonths, tripMult:1, share:false, forceIn:false, both:0}, base);
-  let tuition = pr.sem*8 + (pr.summer||0), stay=0, food=0, travel=0, hours=0;
+  let tuition = pr.sem*8 + (pr.summer||0) + (pr.fixed||0), stay=0, food=0, travel=0, hours=0;
   for(let y=1;y<=4;y++){
     let h = housing;
     if(h==="dorm_out" && uni.dormIn && (p.forceIn || (uni.firstYearIn && y===1))) h="dorm_in";

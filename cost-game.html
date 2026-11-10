@@ -285,7 +285,7 @@ pub:()=>{const t=C.TRACKS[G.track],field=G.priv?C.P[G.priv].field:null;
     ${u.firstYearIn?`<div class="note">${esc(u.short)} ให้นักศึกษาปี 1 อยู่หอใน เกมคิดปี 1 เป็นหอในให้อัตโนมัติ</div>`:""}
     ${srcLine([u.src,u.dormSrc||"dormIn","rent"])}</section>`}
   return `<div class="stack">${stepHead(4,"ทาง B: มหาวิทยาลัยรัฐ")}
-  ${list.map(k=>{const p=C.P[k],u=C.U[p.u];return `<button class="opt pub" aria-pressed="${G.pub===k}" onclick="pickPub('${k}')"><span class="ic">🎓</span><span>${esc(u.short)} · ${esc(p.name)}<small>${esc(u.place)} · ${baht(p.sem)} บาท/เทอม · รุ่นพี่พูลเจริญฯ ติดที่นี่ปี 69: ${u.seniors} คน${p.field===field?" · สาขาใกล้กับทาง A":""}</small></span></button>`}).join("")}
+  ${list.map(k=>{const p=C.P[k],u=C.U[p.u];return `<button class="opt pub" aria-pressed="${G.pub===k}" onclick="pickPub('${k}')"><span class="ic">🎓</span><span>${esc(u.short)} · ${esc(p.name)}<small>${esc(u.place)} · ${baht(p.sem)} บาท/เทอม · รุ่นพี่พูลเจริญฯ ติดที่นี่ปี 69: ${u.seniors} คน${p.field===field?" · สาขาใกล้กับทาง A":""}${p.note?" · "+esc(p.note):""}</small></span></button>`}).join("")}
   ${hz}
   <button class="btn" ${G.pub&&G.housing?"":"disabled"} onclick="go('home')">ต่อไป</button></div>`},
 
