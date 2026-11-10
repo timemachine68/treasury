@@ -272,9 +272,9 @@ track:()=>`<div class="stack">${stepHead(2,"อยากเรียนสาย
   <p class="muted">รายชื่อมหาวิทยาลัยรัฐมาจากที่รุ่นพี่พูลเจริญฯ ติดจริงใน TCAS ปี 2569</p></div>`,
 
 priv:()=>{const t=C.TRACKS[G.track];return `<div class="stack">${stepHead(3,"ทาง A: เอกชนใกล้บ้าน")}
-  <p class="muted" style="margin:0">${esc(C.U.hcu.name)} · ${esc(C.U.hcu.place)} — เดินทางไป-กลับจากบ้านได้</p>
-  ${t.priv.map(k=>{const p=C.P[k];return `<button class="opt priv" aria-pressed="${G.priv===k}" onclick="pickPriv('${k}')"><span class="ic">🏠</span><span>${esc(p.name)}<small>ค่าเทอม ${baht(p.sem)} บาท/เทอม${p.note?" · "+esc(p.note):""}</small></span></button>`}).join("")}
-  ${srcLine(["hcu"])}
+  <p class="muted" style="margin:0">มหาวิทยาลัยเอกชนที่เดินทางไป-กลับจากบ้านได้</p>
+  ${t.priv.map(k=>{const p=C.P[k];return `<button class="opt priv" aria-pressed="${G.priv===k}" onclick="pickPriv('${k}')"><span class="ic">🏠</span><span>${esc(C.U[p.u].short)} · ${esc(p.name)}<small>${esc(C.U[p.u].place)} · ค่าเทอม ${baht(p.sem)} บาท/เทอม${p.note?" · "+esc(p.note):""}</small></span></button>`}).join("")}
+  ${srcLine([...new Set(t.priv.map(k=>C.U[C.P[k].u].src))])}
   <button class="btn" ${G.priv?"":"disabled"} onclick="go('pub')">ต่อไป</button></div>`},
 
 pub:()=>{const t=C.TRACKS[G.track],field=G.priv?C.P[G.priv].field:null;
@@ -291,7 +291,7 @@ pub:()=>{const t=C.TRACKS[G.track],field=G.priv?C.P[G.priv].field:null;
 
 home:()=>`<div class="stack">${stepHead(5,"ค่าของบ้านเรา (ปรับได้)")}
   <p class="muted" style="margin:0">ตัวเลขตั้งต้นเป็นค่าประมาณ ปรับให้ตรงกับบ้านเราได้ ไม่ต้องเป๊ะ</p>
-  <section class="card stack" style="gap:10px"><h3 style="font-size:17px">🚌 ไปหัวเฉียวฯ (หรือ ม.ใกล้บ้าน) จะไปยังไง?</h3>
+  <section class="card stack" style="gap:10px"><h3 style="font-size:17px">🚌 ไปมหาวิทยาลัยใกล้บ้าน (ทาง A) จะไปยังไง?</h3>
     <div class="chips">${C.COMMUTE_PRESETS.map(p=>`<button class="chip" aria-pressed="${G.preset===p.k}" onclick="setPreset('${p.k}')">${esc(p.label)} ~${p.v}</button>`).join("")}</div>
     <div class="grid2"><label>ค่ารถไป-กลับ/วัน (บาท)<input id="in_commute" type="number" inputmode="numeric" min="0" value="${G.my.commute}" onchange="setMy('commute',this.value)"></label>
     <label>เวลาเดินทางไป-กลับ/วัน (ชม.)<input id="in_hours" type="number" inputmode="decimal" min="0" step="0.5" value="${G.my.hours}" onchange="setMy('hours',this.value)"></label></div></section>
@@ -330,7 +330,7 @@ result:()=>{const t=totals(true),a=t.a,b=t.b,max=Math.max(a.total,b.total)||1,d=
   const score=G.picks.filter(p=>p.choice===p.truth).length;
   return `<div class="stack"><h2 style="font-size:22px">ผลรวม 4 ปี</h2>
   <section class="card stack" style="gap:10px">
-    <div><div class="row between"><span><span class="pill priv">A</span> ${esc(C.U.hcu.short)}</span><b>${baht(a.total)} บาท</b></div><div class="bar priv"><i style="width:${a.total/max*100}%"></i></div></div>
+    <div><div class="row between"><span><span class="pill priv">A</span> ${esc(C.U[C.P[G.priv].u].short)}</span><b>${baht(a.total)} บาท</b></div><div class="bar priv"><i style="width:${a.total/max*100}%"></i></div></div>
     <div><div class="row between"><span><span class="pill pub">B</span> ${esc(C.U[C.P[G.pub].u].short)}</span><b>${baht(b.total)} บาท</b></div><div class="bar pub"><i style="width:${b.total/max*100}%"></i></div></div>
     <p class="big" style="margin:4px 0 0">${win}</p>
     ${close?"":`<p style="margin:0">ต่างกัน <b>${baht(ad)} บาท</b> ≈ เดือนละ <b>${baht(ad/48)} บาท</b> ตลอด 4 ปี</p>`}
@@ -350,8 +350,8 @@ card:()=>{const t=G.final,a=t.a,b=t.b,d=a.total-b.total,ad=Math.abs(d),close=ad<
   const pa=C.P[G.priv],pb=C.P[G.pub],ub=C.U[pb.u],reason=C.REASONS.find(r=>r.k===G.reason);
   const lines=[];
   if(close){lines.push(`ลองคิดค่าใช้จ่ายครบ 4 ปีแล้ว สองทางรวมแล้วพอ ๆ กัน (ประมาณ ${baht(a.total)} กับ ${baht(b.total)} บาท) เลยอยากชวนดูเรื่องอื่นประกอบด้วย`)}
-  else if(d>0){lines.push(`ลองคิดครบ 4 ปีแล้ว ทั้งค่าเทอม ค่ากิน ค่ารถ และค่าหอ เรียน ${ub.short} ${G.housing==="dorm_in"?"อยู่หอใน":G.housing==="home"?"ไป-กลับ":"อยู่หอนอก"} รวมประมาณ ${baht(b.total)} บาท น้อยกว่า ${C.U.hcu.short} ประมาณ ${baht(ad)} บาท`)}
-  else{lines.push(`ลองคิดครบ 4 ปีแล้ว เรียน ${C.U.hcu.short} ไป-กลับจากบ้าน ประหยัดกว่าประมาณ ${baht(ad)} บาท เรื่องเงินพ่อแม่คิดถูก แต่ขอชวนดูเรื่องเวลาเดินทางด้วย`)}
+  else if(d>0){lines.push(`ลองคิดครบ 4 ปีแล้ว ทั้งค่าเทอม ค่ากิน ค่ารถ และค่าหอ เรียน ${ub.short} ${G.housing==="dorm_in"?"อยู่หอใน":G.housing==="home"?"ไป-กลับ":"อยู่หอนอก"} รวมประมาณ ${baht(b.total)} บาท น้อยกว่า ${C.U[C.P[G.priv].u].short} ประมาณ ${baht(ad)} บาท`)}
+  else{lines.push(`ลองคิดครบ 4 ปีแล้ว เรียน ${C.U[C.P[G.priv].u].short} ไป-กลับจากบ้าน ประหยัดกว่าประมาณ ${baht(ad)} บาท เรื่องเงินพ่อแม่คิดถูก แต่ขอชวนดูเรื่องเวลาเดินทางด้วย`)}
   if(a.hours>b.hours)lines.push(`ถ้าไป-กลับ จะใช้เวลาบนรถรวมประมาณ ${baht(a.hours)} ชั่วโมงใน 4 ปี (≈ ${baht(a.hours/24)} วันเต็ม) อยากเอาเวลานี้ไปอ่านหนังสือหรือพักผ่อนบ้าง`);
   if(G.reason==="safety"||G.reason==="family")lines.push(`ถ้าห่วงเรื่องความปลอดภัย เราลองไปดูหอในของ ${ub.short} ด้วยกันไหม หรือตกลงกันว่าจะโทรหาที่บ้านทุกวัน`);
   else lines.push(`สิ่งที่ให้ความสำคัญมากที่สุดคือ "${reason?reason.t:"-"}" อยากให้เราคุยเรื่องนี้ด้วยกัน`);
@@ -362,14 +362,14 @@ card:()=>{const t=G.final,a=t.a,b=t.b,d=a.total-b.total,ad=Math.abs(d),close=ad<
   <article class="talk stack" style="gap:10px">
     <div class="row between"><b style="font-family:var(--display);font-size:18px">เทียบค่าใช้จ่ายเรียน 4 ปี</b><span class="muted">${esc(profile.class_room||"")}</span></div>
     <div class="vs">
-      <div class="side priv"><span class="pill priv">A ไป-กลับจากบ้าน</span><p style="margin:4px 0 0;font-size:14px">${esc(C.U.hcu.name)}<br>${esc(pa.name)}</p><b>${baht(a.total)} บาท</b></div>
+      <div class="side priv"><span class="pill priv">A ไป-กลับจากบ้าน</span><p style="margin:4px 0 0;font-size:14px">${esc(C.U[pa.u].name)}<br>${esc(pa.name)}</p><b>${baht(a.total)} บาท</b></div>
       <div class="side pub"><span class="pill pub">B ${G.housing==="home"?"ไป-กลับ":G.housing==="dorm_in"?"หอใน":"หอนอก"}</span><p style="margin:4px 0 0;font-size:14px">${esc(ub.name)}<br>${esc(pb.name)}</p><b>${baht(b.total)} บาท</b></div>
     </div>
     ${breakdown(a,b,true)}
     <p style="margin:0"><b>${close?"รวมแล้วพอ ๆ กัน":d>0?`ทาง B ประหยัดกว่า ${baht(ad)} บาท (≈ ${baht(ad/48)} บาท/เดือน)`:`ทาง A ประหยัดกว่า ${baht(ad)} บาท (≈ ${baht(ad/48)} บาท/เดือน)`}</b></p>
     ${G.events.length?`<p class="muted" style="margin:0">รวมเหตุการณ์สุ่ม: ${G.events.map(e=>esc(e.t)).join(", ")}</p>`:""}
     <div style="border-top:1px solid var(--line);padding-top:8px"><b>ประโยคชวนคุยกับที่บ้าน</b><ol style="margin:4px 0 0;padding-left:20px">${lines.map(l=>`<li>${esc(l)}</li>`).join("")}</ol></div>
-    ${srcLine(["hcu",ub.src,"dormIn","rent"])}
+    ${srcLine([C.U[pa.u].src,ub.src,"dormIn","rent"])}
     <p class="src">ค่าเทอมคิด 8 เทอม ภาคปกติ · ค่ากิน ค่ารถ ค่าน้ำไฟ ค่ากลับบ้าน เป็นค่าประมาณที่ปรับเองในเกม · ไม่รวมค่าหนังสือ อุปกรณ์ ค่าชุด ซึ่งจ่ายพอ ๆ กันทั้งสองทาง · ก่อนตัดสินใจจริงให้ดูประกาศค่าเทอมล่าสุดของมหาวิทยาลัย</p>
   </article>
   <div class="grid2 noprint"><button class="btn ghost" onclick="again()">ลองคู่อื่น</button><button class="btn ghost" onclick="window.print()">พิมพ์ / บันทึก PDF</button></div></div>`}

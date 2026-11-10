@@ -12,6 +12,8 @@ const SRC = {
   ku:   {t:"ประกาศรับสมัคร TCAS1 ปี 2569 มก.ศรีราชา (ข้อ 9 ค่าธรรมเนียม)", u:"https://admissions.src.ku.ac.th/pdf/TCAS1_1_69.pdf"},
   buu:  {t:"สรุปค่าเทอม ม.บูรพา 2569 (อ้างระเบียบมหาวิทยาลัย)", u:"https://dreamnesthub.com/tuition-fee-buu-2569"},
   mfu:  {t:"สรุปค่าเทอม ม.แม่ฟ้าหลวง 2569", u:"https://dreamnesthub.com/tuition-fee-mfu-2568"},
+  bu:   {t:"สรุปค่าเทอม ม.กรุงเทพ (ค่าเทอมภาคเรียนแรก ปี 2569 ของสาขาที่ใช้เทียบ)", u:"https://dreamnesthub.com/tuition-fee-bu-2569"},
+  up:   {t:"สรุปค่าเทอม ม.พะเยา 2569 (ประมาณการรายกลุ่มคณะ ควรตรวจประกาศ REG-UP)", u:"https://dreamnesthub.com/khafee-mahawithayalai-phayao-2568"},
   dormIn:{t:"สำรวจราคาหอในมหาวิทยาลัย ปี 2568 (LINE TODAY)", u:"https://today.line.me/th/v3/article/aGLP5qo"},
   rent: {t:"ราคาหอนอกใกล้มหาวิทยาลัย (ค่ากลางของหน้า 'ราคาถูก' RentHub)", u:"https://www.renthub.in.th/"},
   bus:  {t:"ค่ารถทัวร์ กรุงเทพฯ–เชียงราย เริ่ม 789 บาท (12Go)", u:"https://12go.com/th/bus/bangkok/chiang-rai"}
@@ -20,9 +22,11 @@ const SRC = {
 /* zone: near = ไป-กลับจากบ้านได้, mid = ชลบุรี กลับบ้านบ่อยได้, far = ต่างภาค */
 const U = {
   hcu:  {name:"ม.หัวเฉียวเฉลิมพระเกียรติ", short:"หัวเฉียวฯ", place:"บางพลี สมุทรปราการ", type:"private", zone:"near", housing:["home"], seniors:2, src:"hcu"},
+  bu:   {name:"ม.กรุงเทพ", short:"ม.กรุงเทพ", place:"กล้วยน้ำไท / รังสิต", type:"private", zone:"near", housing:["home"], seniors:0, src:"bu"},
   kmitl:{name:"สจล. พระจอมเกล้าลาดกระบัง", short:"สจล.", place:"ลาดกระบัง กรุงเทพฯ", type:"public", zone:"near", housing:["home","dorm_out"], rent:3025, seniors:35, src:"kmitl"},
   ku:   {name:"ม.เกษตรศาสตร์ ศรีราชา", short:"มก.ศรีราชา", place:"ศรีราชา ชลบุรี", type:"public", zone:"mid", housing:["dorm_out"], rent:3250, seniors:7, src:"ku"},
   buu:  {name:"ม.บูรพา บางแสน", short:"บูรพา", place:"บางแสน ชลบุรี", type:"public", zone:"mid", housing:["dorm_in","dorm_out"], dormIn:{fee:3850, util:100, label:"หอในพัดลม 2–4 คน/ห้อง เริ่ม 3,850 บาท/เทอม"}, rent:3250, seniors:23, src:"buu"},
+  up:   {name:"ม.พะเยา", short:"ม.พะเยา", place:"เมือง พะเยา", type:"public", zone:"far", housing:["dorm_out"], rent:2750, seniors:7, src:"up"},
   mfu:  {name:"ม.แม่ฟ้าหลวง", short:"แม่ฟ้าหลวง", place:"เชียงราย", type:"public", zone:"far", housing:["dorm_in","dorm_out"], dormIn:{fee:5000, util:200, label:"หอในพัดลม 4,000–6,000 บาท/เทอม (ใช้ 5,000)"}, rent:2750, firstYearIn:true, seniors:9, src:"mfu"}
 };
 
@@ -37,6 +41,9 @@ const P = {
   hcu_nur:   {u:"hcu", name:"พยาบาลศาสตร์", sem:90000, summer:132000, note:"รวมภาคฤดูร้อน 3 ครั้ง ครั้งละ 44,000", field:"nur"},
   hcu_oh:    {u:"hcu", name:"อาชีวอนามัยและความปลอดภัย", sem:50000, field:"oh"},
 
+  bu_biz:    {u:"bu", name:"บริหารธุรกิจ (การตลาด)", sem:43180, field:"biz", note:"ใช้ค่าเทอมภาคแรก ปี 69 เป็นค่าเฉลี่ยต่อภาค"},
+  bu_eng:    {u:"bu", name:"มนุษยศาสตร์ ภาษาอังกฤษ", sem:44580, field:"lang", note:"ใช้ค่าเทอมภาคแรก ปี 69 เป็นค่าเฉลี่ยต่อภาค"},
+
   kmitl_biz: {u:"kmitl", name:"บริหารธุรกิจ", sem:20000, field:"biz"},
   kmitl_sci: {u:"kmitl", name:"วิทยาศาสตร์ (หลักสูตรภาษาไทย)", sem:19000, field:"sci"},
   kmitl_lang:{u:"kmitl", name:"ศิลปศาสตร์ ภาษาอังกฤษ / ญี่ปุ่น", sem:19000, field:"lang"},
@@ -49,15 +56,20 @@ const P = {
   buu_mt:    {u:"buu", name:"เทคนิคการแพทย์ (สหเวชศาสตร์)", sem:35000, field:"mt"},
   buu_pt:    {u:"buu", name:"กายภาพบำบัด (สหเวชศาสตร์)", sem:35000, field:"pt"},
   buu_nur:   {u:"buu", name:"พยาบาลศาสตร์", sem:28000, summer:42000, note:"รวมภาคฤดูร้อน 3 ครั้ง ครั้งละ 14,000 (ใช้จำนวนครั้งเท่ากับหัวเฉียวฯ เพื่อเทียบให้ยุติธรรม)", field:"nur"},
+  up_mgt:    {u:"up", name:"บริหารธุรกิจ / นิเทศศาสตร์", sem:15000, field:"biz"},
+  up_lang:   {u:"up", name:"ศิลปศาสตร์ (ภาษา)", sem:15000, field:"lang"},
+  up_sci:    {u:"up", name:"วิทยาศาสตร์ (กลุ่มวิทยาศาสตร์)", sem:18000, field:"sci"},
+  up_medsci: {u:"up", name:"วิทยาศาสตร์การแพทย์ / สาธารณสุข (กลุ่มวิทยาศาสตร์)", sem:18000, field:"medsci"},
+  up_nur:    {u:"up", name:"พยาบาลศาสตร์", sem:28000, summer:42000, note:"รวมภาคฤดูร้อน 3 ครั้ง ครั้งละ 14,000 (สมมุติเท่า ม.บูรพา เพื่อเทียบให้ยุติธรรม)", field:"nur"},
   mfu_mgt:   {u:"mfu", name:"การจัดการ บริหารธุรกิจ", sem:27500, field:"biz"},
   mfu_oh:    {u:"mfu", name:"วิทยาศาสตร์สุขภาพ อาชีวอนามัยฯ", sem:30000, field:"oh"}
 };
 
 const TRACKS = {
-  biz:   {name:"ธุรกิจ บัญชี โลจิสติกส์", icon:"💼", priv:["hcu_biz"], pub:["kmitl_biz","ku_mgt","buu_log","mfu_mgt"]},
-  health:{name:"สุขภาพ พยาบาล เทคนิคการแพทย์", icon:"🩺", priv:["hcu_nur","hcu_mt","hcu_pt","hcu_medsci","hcu_oh"], pub:["buu_nur","buu_mt","buu_pt","buu_medsci","mfu_oh"]},
-  sci:   {name:"วิทยาศาสตร์ คอมพิวเตอร์", icon:"🔬", priv:["hcu_cs"], pub:["kmitl_sci","ku_sci","buu_sci"]},
-  lang:  {name:"ภาษา ศิลปศาสตร์", icon:"🌏", priv:["hcu_eng"], pub:["kmitl_lang","buu_eng"]}
+  biz:   {name:"ธุรกิจ บัญชี โลจิสติกส์", icon:"💼", priv:["hcu_biz","bu_biz"], pub:["kmitl_biz","ku_mgt","buu_log","mfu_mgt","up_mgt"]},
+  health:{name:"สุขภาพ พยาบาล เทคนิคการแพทย์", icon:"🩺", priv:["hcu_nur","hcu_mt","hcu_pt","hcu_medsci","hcu_oh"], pub:["buu_nur","buu_mt","buu_pt","buu_medsci","mfu_oh","up_nur","up_medsci"]},
+  sci:   {name:"วิทยาศาสตร์ คอมพิวเตอร์", icon:"🔬", priv:["hcu_cs"], pub:["kmitl_sci","ku_sci","buu_sci","up_sci"]},
+  lang:  {name:"ภาษา ศิลปศาสตร์", icon:"🌏", priv:["hcu_eng","bu_eng"], pub:["kmitl_lang","buu_eng","up_lang"]}
 };
 
 const HOUSING = {home:"อยู่บ้าน ไป-กลับทุกวัน", dorm_in:"หอใน (หอของมหาวิทยาลัย)", dorm_out:"หอนอก (เช่ารายเดือน)"};
