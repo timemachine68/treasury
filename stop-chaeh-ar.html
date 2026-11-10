@@ -51,6 +51,7 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
 #camBox .lbl{position:absolute;left:24px;top:22px;z-index:2;padding:6px 14px;border-radius:999px;background:rgba(255,253,248,.92);font-weight:700;font-size:15px;box-shadow:2px 3px 0 rgba(91,74,110,.2)}
 #camBox .lbl i{display:inline-block;width:10px;height:10px;border-radius:50%;background:#E8574B;margin-right:6px;vertical-align:1px;animation:bob 1.2s steps(2) infinite}
 #camBox .big{position:absolute;right:24px;bottom:20px;z-index:2;min-width:84px;padding:4px 18px;border-radius:24px;background:rgba(255,253,248,.92);text-align:center;font-family:'Kanit',Tahoma,sans-serif;font-weight:800;font-size:40px;line-height:1.1;box-shadow:3px 5px 0 rgba(91,74,110,.25);display:none}
+#camBox .tip{position:absolute;left:24px;bottom:22px;z-index:2;padding:6px 14px;border-radius:999px;background:rgba(74,63,92,.85);color:#FFFDF8;font-weight:700;font-size:16px}
 #stage.camon #camBox{display:block}
 #stage.camon #scene{grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr);grid-template-rows:minmax(0,1fr);align-items:stretch;flex:1;min-height:0}
 #stage.camon #camBox{min-height:0}
@@ -61,7 +62,7 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
 #stage.camon .qbox{padding:16px 20px}
 #stage.camon .qbox h2{font-size:clamp(20px,2.1vw,30px)}
 #stage.camon #choices{margin-top:0}
-#stage.camon .choice{min-height:0;flex-direction:row;align-items:center;gap:14px;padding:14px 18px}
+#stage.camon .choice{min-height:0;flex-direction:row;align-items:center;gap:14px;padding:14px 76px 14px 18px}
 #stage.camon .choice .num small{display:none}
 #stage.camon .choice .ring{top:50%;margin-top:-26px}
 #stage.camon .qbox{order:-1}
@@ -201,7 +202,7 @@ td:first-child{border-radius:16px 0 0 16px}td:last-child{border-radius:0 16px 16
       <div class="phone lav clay sm2"><div class="scr" id="chat"></div></div>
       <div class="qbox paper pop" id="qbox"></div>
       </div>
-      <div id="camBox" class="lav clay"><div class="win" id="camWin"><span class="lbl"><i></i>กล้อง · ชูนิ้วในกรอบนี้</span><video id="cam" playsinline muted></video><span class="big" id="bigN"></span></div></div>
+      <div id="camBox" class="lav clay"><div class="win" id="camWin"><span class="lbl"><i></i>กล้อง · ชูนิ้วในกรอบนี้</span><video id="cam" playsinline muted></video><span class="big" id="bigN"></span><span class="tip" id="camTip">ชูมือ 1 ข้าง หันฝ่ามือเข้ากล้อง</span></div></div>
     </div>
     <div id="choices"></div>
     <p id="hint"></p>
@@ -212,7 +213,7 @@ td:first-child{border-radius:16px 0 0 16px}td:last-child{border-radius:0 16px 16
     <h2 class="k" id="fbTitle"></h2>
     <p id="fbWhy"></p>
     <p id="fbBest" class="mint"></p>
-    <div class="row"><button class="btn coral clay" id="next">ข้อต่อไป ➜</button><span style="font-size:15px;color:var(--ink2)">หรือ ชูมือแบ 4 นิ้วค้างไว้ · กด Space</span></div>
+    <div class="row"><button class="btn coral clay" id="next">ข้อต่อไป ➜</button><span style="font-size:15px;color:var(--ink2)">หรือ แบมือทั้งมือค้างไว้ · กด Space</span></div>
   </div></div>
 
   <!-- END -->
@@ -391,13 +392,19 @@ function loop(){
   cx.clearRect(0,0,fx.width,fx.height);
   parts.forEach(p=>{p.x+=p.vx*5/3;p.y+=p.vy*5/3;p.vy+=1.6;p.life-=5; clayDot(p.x,p.y,p.r,p.c)});
   parts=parts.filter(p=>p.life>0&&p.y<innerHeight+40);
-  if(hand){ hand.pts.forEach((p,k)=>{ if([4,8,12,16,20].includes(k)) clayDot(p.x,p.y,13,PAL[k%6]); else if(k===0) clayDot(p.x,p.y,10,"#D3C8F1"); });
+  if(hand){ const d=devicePixelRatio, P=hand.pts;
+    const F=[[0,1,2,3,4],[0,5,6,7,8],[0,9,10,11,12],[0,13,14,15,16],[0,17,18,19,20]];
+    cx.lineCap="round"; cx.lineJoin="round";
+    F.forEach((f,k)=>{ cx.strokeStyle=hand.ext[k]?"#FFFDF8":"rgba(255,253,248,.35)"; cx.lineWidth=(hand.ext[k]?7:4)*d;
+      cx.beginPath(); f.forEach((i,j)=>{ j? cx.lineTo(P[i].x*d,P[i].y*d) : cx.moveTo(P[i].x*d,P[i].y*d); }); cx.stroke(); });
+    F.forEach((f,k)=>{ const t=P[f[4]]; if(hand.ext[k]) clayDot(t.x,t.y,13,PAL[k]); });
+    clayDot(P[0].x,P[0].y,9,"#D3C8F1");
   }
 }
 loop();
 
 /* ---------- hold-to-lock ---------- */
-const HOLD_MS=1300;
+const HOLD_MS=1200;
 const hold={n:0,since:0,reset(){this.n=0;this.since=0;paintHold(0,0)},
   feed(n){ const now=performance.now();
     if(n!==this.n){this.n=n;this.since=now;}
@@ -423,30 +430,64 @@ async function startCamera(){
     status("กำลังโหลดตัวจับมือ (ต้องใช้อินเทอร์เน็ต)…",1);
     await loadScript(`https://cdn.jsdelivr.net/npm/@mediapipe/hands@${VER}/hands.js`);
     const hands=new Hands({locateFile:f=>`https://cdn.jsdelivr.net/npm/@mediapipe/hands@${VER}/${f}`});
-    hands.setOptions({maxNumHands:1,modelComplexity:0,minDetectionConfidence:.6,minTrackingConfidence:.5});
+    hands.setOptions({maxNumHands:2,modelComplexity:1,minDetectionConfidence:.7,minTrackingConfidence:.6});
     hands.onResults(onHands);
     st.mode="cam"; render(); status("พร้อมแล้ว: ชูนิ้วหน้ากล้องได้เลย");
     let busy=false;
-    (async function feed(){ if(!busy && v.readyState>=2){ busy=true; try{ await hands.send({image:v}); }catch(e){} busy=false; } setTimeout(feed,66); })();
+    (async function feed(){ if(!busy && v.readyState>=2){ busy=true; try{ await hands.send({image:v}); }catch(e){} busy=false; } setTimeout(feed,40); })();
   }catch(e){ st.mode="tap"; render(); status("โหลดตัวจับมือไม่ได้ (เน็ตไม่พอ) ใช้โหมดกดปุ่มแทน"); }
 }
-function d2(a,b){return Math.hypot(a.x-b.x,a.y-b.y)}
-function countFingers(lm){
-  const w=lm[0]; let n=0;
-  [[8,6],[12,10],[16,14],[20,18]].forEach(([t,p])=>{ if(d2(lm[t],w)>d2(lm[p],w)*1.18) n++; });
-  return n;
+function d3(a,b){return Math.hypot(a.x-b.x,a.y-b.y,(a.z||0)-(b.z||0))}
+function sub(a,b){return {x:a.x-b.x,y:a.y-b.y,z:(a.z||0)-(b.z||0)}}
+function cosv(u,v){const d=u.x*v.x+u.y*v.y+u.z*v.z, m=Math.hypot(u.x,u.y,u.z)*Math.hypot(v.x,v.y,v.z); return m? d/m : 0}
+/* นับนิ้วจากมุมข้อนิ้ว (ไม่ขึ้นกับว่ามือเอียงหรือหันข้าง) */
+function fingerState(L){
+  const ext=[false,false,false,false,false];
+  // นิ้วชี้ กลาง นาง ก้อย: [MCP,PIP,DIP,TIP]
+  [[5,6,7,8],[9,10,11,12],[13,14,15,16],[17,18,19,20]].forEach(([m,p,d,t],k)=>{
+    const straight = cosv(sub(L[p],L[m]), sub(L[t],L[d]));      // 1 = ตรง, ติดลบ = งอ
+    const base     = cosv(sub(L[m],L[0]), sub(L[t],L[p]));      // ทิศเดียวกับฝ่ามือ
+    ext[k+1] = straight>0.55 && base>0.15 && d3(L[t],L[0]) > d3(L[p],L[0])*1.05;
+  });
+  // นิ้วโป้ง: ต้องตรง และกางออกห่างจากโคนนิ้วชี้ชัดเจน
+  const pw=d3(L[5],L[17])||1e-6;
+  const tStraight=cosv(sub(L[3],L[2]), sub(L[4],L[3]));
+  ext[0] = tStraight>0.6 && d3(L[4],L[5])>pw*0.7 && d3(L[4],L[9])>pw*1.0;
+  return ext;
+}
+/* ทำให้ผลนิ่ง: ใช้ค่าที่เจอบ่อยสุดใน 8 เฟรมล่าสุด และไม่รีเซ็ตเมื่อมือหลุดสั้น ๆ */
+const buf=[]; let stable=0, lostAt=0;
+function smooth(n){
+  buf.push(n); if(buf.length>8) buf.shift();
+  const c={}; buf.forEach(x=>c[x]=(c[x]||0)+1);
+  let best=stable, bc=0; for(const k in c){ if(c[k]>bc){bc=c[k];best=+k;} }
+  if(bc>=5) stable=best;
+  return stable;
 }
 function onHands(r){
-  const lm=r.multiHandLandmarks&&r.multiHandLandmarks[0];
-  const bn=$("#bigN");
-  if(!lm){ hand=null; bn.style.display="none"; hold.feed(0); return; }
-  // map normalized video coords -> screen (object-fit:cover + mirror)
+  const bn=$("#bigN"), tip=$("#camTip");
+  const all=r.multiHandLandmarks||[];
+  // เลือกมือที่ใหญ่ที่สุด (คนที่อยู่ใกล้กล้อง) ไม่สนมือคนข้างหลัง
+  let bi=-1, bw=0;
+  all.forEach((lm,i)=>{ const xs=lm.map(p=>p.x), ys=lm.map(p=>p.y); const w=Math.max(Math.max(...xs)-Math.min(...xs), Math.max(...ys)-Math.min(...ys)); if(w>bw){bw=w;bi=i;} });
+  const now=performance.now();
+  if(bi<0){
+    if(!lostAt) lostAt=now;
+    if(now-lostAt>450){ hand=null; buf.length=0; stable=0; bn.style.display="none"; tip.textContent="ชูมือ 1 ข้าง หันฝ่ามือเข้ากล้อง"; hold.feed(0); }
+    return;
+  }
+  lostAt=0;
+  const lm=all[bi], wl=(r.multiHandWorldLandmarks||[])[bi];
+  const ext=fingerState(wl&&wl.length===21? wl : lm);
+  const raw=ext.filter(Boolean).length;
+  const n=smooth(raw>=4?4:raw);   // 4–5 นิ้ว = ไปข้อต่อไป
+  // map normalized video coords -> camera window (object-fit:cover + mirror)
   const v=$("#cam"), vw=v.videoWidth||640, vh=v.videoHeight||480, R=$("#camWin").getBoundingClientRect(), W=R.width, H=R.height;
   const s=Math.max(W/vw,H/vh), ox=(W-vw*s)/2, oy=(H-vh*s)/2;
   const pts=lm.map(p=>({x:R.left+W-(p.x*vw*s+ox), y:R.top+p.y*vh*s+oy}));
-  const n=countFingers(lm);
-  hand={pts,n:n>=1&&n<=3?n:0};
-  bn.style.display="block"; bn.textContent = n>=1&&n<=3 ? n+" นิ้ว" : (n===4?"ไปต่อ":"✋");
+  hand={pts,ext,n};
+  tip.textContent = bw<0.13 ? "เข้ามาใกล้กล้องอีกนิด" : (bw>0.7 ? "ถอยห่างจากกล้องอีกนิด" : "ค้างไว้จนวงเต็ม");
+  bn.style.display="block"; bn.textContent = n>=1&&n<=3 ? n+" นิ้ว" : (n===4?"ไปต่อ":"✊");
   hold.feed(n);
 }
 </script>
