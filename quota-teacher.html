@@ -297,6 +297,7 @@ function renderList(){
         <button class="btn ghost sm" onclick="editQuota('${q.id}')">แก้ไข</button>
         <button class="btn note sm" onclick="openCrit('${q.id}')">เกณฑ์</button>
         <button class="btn ${(q.status==='draft'||q.status==='closed')?'primary':'ghost'} sm" onclick="toggleStatus('${q.id}')">${(q.status==='draft'||q.status==='closed')?'เผยแพร่':'ปิดรับ'}</button>
+        <button class="btn danger sm" onclick="deleteQuota('${q.id}')">ลบ</button>
       </td>
     </tr>`;
   }).join("");
@@ -362,6 +363,24 @@ window.toggleStatus = async (id)=>{
     if(error) return toast("ไม่สำเร็จ: "+error.message);
     toast("ปิดรับสมัครแล้ว");
   }
+  loadQuotas();
+};
+
+/* ═══════════ ลบโควตา ═══════════ */
+window.deleteQuota = async (id)=>{
+  const q = quotas.find(x=>x.id===id); if(!q) return;
+  const {count, error:ce} = await sb.from("quota_applications").select("id",{count:"exact",head:true}).eq("quota_id",id);
+  if(ce) return toast("ตรวจใบสมัครไม่สำเร็จ: "+ce.message);
+  const n = count||0;
+  let text = `ลบโควตา “${q.name}” ใช่ไหมคะ?\n\nเกณฑ์การคัดเลือกของโควตานี้จะถูกลบด้วย`;
+  if(n>0) text += `\n\n⚠️ มีใบสมัครของนักเรียน ${n} ใบ จะถูกลบไปด้วยและกู้คืนไม่ได้\nถ้าแค่ไม่อยากให้สมัครแล้ว ให้กด “ปิดรับ” แทนจะปลอดภัยกว่า`;
+  else text += `\n\nโควตานี้ยังไม่มีใบสมัคร`;
+  if(!confirm(text)) return;
+  if(n>0 && !confirm(`ยืนยันอีกครั้ง: ลบโควตานี้พร้อมใบสมัคร ${n} ใบ`)) return;
+  const {data, error} = await sb.from("quotas").delete().eq("id",id).select("id");
+  if(error) return toast("ลบไม่สำเร็จ: "+error.message);
+  if(!data || !data.length) return toast("ลบไม่สำเร็จ: ไม่มีสิทธิ์ลบ หรือโควตานี้ถูกลบไปแล้ว");
+  toast("ลบโควตาแล้ว");
   loadQuotas();
 };
 
