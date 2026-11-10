@@ -107,7 +107,8 @@ function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor
 function newGame(){
   return {screen:"intro", saved:false, pre:null, track:null, priv:null, pub:null, housing:null,
     my:Object.assign({}, C.DEFAULTS), preset:"mix", reveal:0, picks:[], events:[], evShown:0,
-    reason:null, post:null, talk:null};
+    reason:null, post:null, talk:null,
+    goal:null, q:{pre:[null,null,null,null,null],post:[null,null,null,null,null]}, self:{preCost:null,preTalk:null,postCost:null,postTalk:null}, goalMet:null, preDone:false, postDone:false};
 }
 
 /* ---------- เข้าสู่ระบบ ---------- */
@@ -120,8 +121,8 @@ async function boot(){
   if(!p){await sb.auth.signOut();G.screen="login";G.msg="ไม่พบข้อมูลผู้ใช้";return render()}
   profile = p;
   if(p.role!=="student"){G.screen="notStudent";return render()}
-  const {data:row} = await sb.from("cost_game_plays").select("pre_guess,play_count").eq("academic_year",C.YEAR).maybeSingle();
-  if(row){G.pre=row.pre_guess;G.playCount=row.play_count}
+  const {data:row} = await sb.from("cost_game_plays").select("pre_guess,play_count,pre_score,post_score,goal").eq("academic_year",C.YEAR).maybeSingle();
+  if(row){G.pre=row.pre_guess;G.playCount=row.play_count;G.preDone=row.pre_score!=null;G.postDone=row.post_score!=null;G.preScore=row.pre_score;G.postScore=row.post_score;G.goal=row.goal}
   render();
 }
 async function doLogin(ev){
@@ -137,13 +138,37 @@ async function logout(){await sb.auth.signOut();location.reload()}
 
 /* ---------- ขั้นตอนเกม ---------- */
 function go(s){G.screen=s;render();window.scrollTo(0,0)}
-async function pickGuess(k){
-  if(G.pre){return go("track")}
-  G.preTry=k;
-  if(DEMO){G.pre=k;return go("track")}
-  const {data,error}=await sb.rpc("cost_game_start",{p_guess:k,p_year:C.YEAR});
-  if(error){G.pre=k;G.offline=true;toast(errText(error)+" — เล่นต่อได้ ค่อยส่งผลตอนจบ");return go("track")}
-  G.pre=data.pre_guess;go("track");
+function pickGuess(k){
+  if(G.pre&&G.preDone){return go("track")}
+  G.preTry=G.pre||k;go("pretest");
+}
+/* แบบทดสอบก่อน-หลัง 5 ข้อ (ข้อชุดเดียวกัน) + ประเมินตนเอง 2 ข้อ */
+const QUIZ=[
+ {q:"คิดค่าใช้จ่ายเรียนมหาวิทยาลัย 4 ปี ควรนับอะไรบ้างให้ครบ?",o:["ค่าเทอมอย่างเดียว","ค่าเทอม + ที่พัก + ค่ากิน + ค่าเดินทาง","ค่าเทอม + ค่าหอ เท่านั้น"],a:1},
+ {q:"\"ค่าเทอมเหมาจ่าย\" หมายถึงอะไร?",o:["รวมค่ากิน ค่าหอ ค่ารถ ไว้หมดแล้ว","จ่ายครั้งเดียวจบทั้ง 4 ปี","รวมค่าเรียนกับค่าธรรมเนียมหลักต่อเทอม แต่ยังไม่รวมค่ากิน ที่พัก และเดินทาง"],a:2},
+ {q:"ถ้าไป-กลับจากบ้านทุกวัน ค่าที่คนมักลืมนับคืออะไร?",o:["ค่าเดินทางที่สะสมตลอด 4 ปี และเวลาที่เสียบนรถ","ค่าหนังสือเรียน","ค่าชุดนักศึกษา"],a:0},
+ {q:"วิธีเทียบ 2 ทางให้ยุติธรรมที่สุดคือข้อไหน?",o:["เทียบเฉพาะค่าเทอมต่อเทอม","นับหมวดค่าใช้จ่ายเดียวกันและนับ 4 ปีเท่ากันทั้งสองทาง","เลือกทางที่ค่าเทอมถูกที่สุดเลย"],a:1},
+ {q:"ถ้ายอดรวม 2 ทางต่างกันน้อยมาก (ไม่ถึง 5%) ควรทำอย่างไร?",o:["เลือกทางที่ถูกกว่าทันที","จับสลากเลือก","ดูเรื่องอื่นประกอบ เช่น เวลา ความปลอดภัย ความถนัด แล้วคุยกับที่บ้าน"],a:2}];
+const GOALS={know_cost:"รู้ว่า 4 ปีต้องจ่ายอะไรบ้าง",compare:"เทียบ 2 ทางให้ได้อย่างยุติธรรม",talk_parents:"มีตัวเลขไปคุยกับที่บ้าน",choose:"ตัดสินใจเลือกทางให้ได้"};
+const SELF_COST="ฉันคิดค่าใช้จ่ายเรียน 4 ปีได้ครบทุกหมวด", SELF_TALK="ฉันพร้อมเอาตัวเลขไปคุยกับผู้ปกครอง";
+const LV=["ยังไม่ได้เลย","ได้นิดหน่อย","ได้ค่อนข้างดี","ได้ดีมาก"];
+const quizScore=a=>a.reduce((n,v,i)=>n+(v===QUIZ[i].a?1:0),0);
+function setQ(w,i,j){G.q[w][i]=j;render()}
+function setSelf(k,v){G.self[k]=v;render()}
+function pickGoal(k){G.goal=k;render()}
+function pickGoalMet(k){G.goalMet=k;render()}
+const quizHtml=w=>QUIZ.map((it,i)=>`<div class="stack" style="gap:6px"><b>${i+1}. ${it.q}</b>${it.o.map((t,j)=>`<button class="opt" aria-pressed="${G.q[w][i]===j}" onclick="setQ('${w}',${i},${j})"><span>${t}</span></button>`).join("")}</div>`).join("");
+const rateHtml=(label,k)=>`<div class="stack" style="gap:6px"><b>${label}</b><div class="chips">${LV.map((t,i)=>`<button class="chip" aria-pressed="${G.self[k]===i+1}" onclick="setSelf('${k}',${i+1})">${t}</button>`).join("")}</div></div>`;
+async function submitPre(){
+  const pre={goal:G.goal,score:quizScore(G.q.pre),self_cost:G.self.preCost,self_talk:G.self.preTalk};
+  G.preScore=pre.score;
+  if(DEMO){G.pre=G.preTry;G.preDone=true;return go("track")}
+  G.preSaving=true;render();
+  const {data,error}=await sb.rpc("cost_game_start",{p_guess:G.preTry,p_year:C.YEAR,p_pre:pre});
+  G.preSaving=false;
+  if(error){G.pre=G.preTry;G.offline=true;G.preDone=true;toast(errText(error)+" — เล่นต่อได้ ค่อยส่งผลตอนจบ")}
+  else{G.pre=data.pre_guess;G.preDone=true;G.preScore=data.pre_score!=null?data.pre_score:pre.score}
+  go("track");
 }
 function pickTrack(k){G.track=k;const t=C.TRACKS[k];G.priv=t.priv.length===1?t.priv[0]:null;G.pub=null;G.housing=null;go("priv")}
 function pickPriv(k){G.priv=k;render()}
@@ -194,19 +219,21 @@ function pickTalk(k){G.talk=k;render()}
 async function finish(){
   const t=totals(true);
   G.final=t;
+  if(!G.postDone)G.postScore=quizScore(G.q.post);
   if(DEMO){G.saved=true;return go("card")}
   const payload={track:G.track,private_prog:G.priv,public_prog:G.pub,housing:G.housing,total_private:t.a.total,total_public:t.b.total,
     events:G.events.map(e=>e.k),top_reason:G.reason,post_choice:G.post,talk_home:G.talk};
+  if(!G.postDone)Object.assign(payload,{post_score:G.postScore,self_cost_post:G.self.postCost,self_talk_post:G.self.postTalk,goal_met:G.goalMet});
   G.saving=true;render();
   try{
-    if(G.offline){const r=await sb.rpc("cost_game_start",{p_guess:G.preTry||G.pre,p_year:C.YEAR});if(r.error)throw r.error;G.offline=false}
+    if(G.offline){const r=await sb.rpc("cost_game_start",{p_guess:G.preTry||G.pre,p_year:C.YEAR,p_pre:{goal:G.goal,score:quizScore(G.q.pre),self_cost:G.self.preCost,self_talk:G.self.preTalk}});if(r.error)throw r.error;G.offline=false}
     const {error}=await sb.rpc("cost_game_finish",{p:payload,p_year:C.YEAR});
     if(error)throw error;
     G.saved=true;
   }catch(e){G.saveErr=errText(e)}
   G.saving=false;go("card");
 }
-function again(){const pre=G.pre;G=newGame();G.pre=pre;go("track")}
+function again(){const o=G;G=newGame();Object.assign(G,{pre:o.pre,preDone:o.preDone,postDone:o.postDone||!!o.saved,goal:o.goal,preScore:o.preScore,postScore:o.postScore,q:o.q,self:o.self,goalMet:o.goalMet});go("track")}
 
 /* ---------- วาดหน้าจอ ---------- */
 /* วาดใหม่โดยไม่ให้หน้ากระตุก: ล็อกความสูงเดิมไว้ระหว่างเปลี่ยน คืนตำแหน่งเลื่อนเดิม และเล่นแอนิเมชันเฉพาะตอนเปลี่ยนหน้า */
@@ -222,7 +249,7 @@ function render(){
 }
 const prName=k=>{const p=C.P[k];return `${C.U[p.u].short} · ${p.name}`};
 function stepHead(n,title){return `<div class="row between noprint"><button class="link" onclick="back()">‹ ย้อนกลับ</button><span class="step">ขั้นที่ ${n} จาก 6</span></div><h2 style="font-size:22px">${title}</h2>`}
-const BACK={guess:"intro",track:"guess",priv:"track",pub:"priv",home:"pub",reveal:"home"};
+const BACK={guess:"intro",pretest:"guess",track:"guess",priv:"track",pub:"priv",home:"pub",reveal:"home"};
 function back(){if(BACK[G.screen])go(BACK[G.screen])}
 function srcLine(keys){return `<p class="src">ที่มา: ${keys.map(k=>C.SRC[k].u?`<a href="${C.SRC[k].u}" target="_blank" rel="noopener">${esc(C.SRC[k].t)}</a>`:esc(C.SRC[k].t)).join(" · ")} · ตรวจเมื่อ ${C.CHECKED}</p>`}
 
@@ -262,10 +289,20 @@ intro:()=>`<div class="stack">
   <button class="btn" onclick="go('guess')">เริ่มเลย</button></div>`,
 
 guess:()=>`<div class="stack">${stepHead(1,"ทายก่อนเล่น: 4 ปี ทางไหนจ่ายน้อยกว่า?")}
-  ${G.pre?`<div class="tip">เราทายไว้แล้วว่า <b>${GUESS[G.pre]}</b> (เก็บคำทายแรกไว้เทียบตอนท้าย)</div><button class="btn" onclick="go('track')">เล่นต่อ</button>`:
+  ${G.pre?`<div class="tip">เราทายไว้แล้วว่า <b>${GUESS[G.pre]}</b> (เก็บคำทายแรกไว้เทียบตอนท้าย)</div><button class="btn" onclick="pickGuess()">เล่นต่อ</button>`:
   `<p class="muted" style="margin:0">ตอบตามความรู้สึก ไม่มีถูกผิด คำทายแรกจะเก็บไว้เทียบกับผลจริง</p>
   ${Object.entries(GUESS).map(([k,t],i)=>`<button class="opt ${k==="private"?"priv":k==="public"?"pub":""}" onclick="pickGuess('${k}')"><span class="ic">${["🏠","🎒","⚖️"][i]}</span><span>${t}</span></button>`).join("")}`}
   </div>`,
+
+pretest:()=>{const ok=G.goal&&G.q.pre.every(v=>v!==null)&&G.self.preCost&&G.self.preTalk&&!G.preSaving;
+  return `<div class="stack"><div class="row between noprint"><button class="link" onclick="back()">‹ ย้อนกลับ</button><span class="step">ก่อนเล่น</span></div>
+  <h2 style="font-size:22px">วอร์มอัป 1 นาที</h2>
+  <p class="muted" style="margin:0">ไม่ตัดเกรด ใช้ดูว่าเล่นเกมแล้วเรารู้เพิ่มขึ้นแค่ไหน ตอบตามที่รู้ตอนนี้ได้เลย</p>
+  <section class="card stack"><b>เล่นเกมนี้ เราอยากได้อะไรมากที่สุด? (เลือก 1)</b>
+    ${Object.entries(GOALS).map(([k,t])=>`<button class="opt" aria-pressed="${G.goal===k}" onclick="pickGoal('${k}')"><span>${t}</span></button>`).join("")}</section>
+  <section class="card stack">${quizHtml("pre")}</section>
+  <section class="card stack">${rateHtml(SELF_COST,"preCost")}${rateHtml(SELF_TALK,"preTalk")}</section>
+  <button class="btn" ${ok?"":"disabled"} onclick="submitPre()">${G.preSaving?"กำลังบันทึก…":"เริ่มเล่น"}</button></div>`},
 
 track:()=>`<div class="stack">${stepHead(2,"อยากเรียนสายไหน?")}
   ${Object.entries(C.TRACKS).map(([k,t])=>`<button class="opt" aria-pressed="${G.track===k}" onclick="pickTrack('${k}')"><span class="ic">${t.icon}</span><span>${t.name}<small>${t.pub.length} ทางเลือกมหาวิทยาลัยรัฐ</small></span></button>`).join("")}
@@ -344,7 +381,9 @@ result:()=>{const t=totals(true),a=t.a,b=t.b,max=Math.max(a.total,b.total)||1,d=
     ${[["private","ทาง A เอกชนใกล้บ้าน","priv"],["public","ทาง B มหาวิทยาลัยรัฐ","pub"],["unsure","ยังไม่แน่ใจ ขอคุยกับที่บ้านก่อน",""]].map(([k,tx,c])=>`<button class="opt ${c}" aria-pressed="${G.post===k}" onclick="pickPost('${k}')"><span>${tx}</span></button>`).join("")}</section>
   <section class="card stack" style="gap:10px"><h3 style="font-size:17px">จะเอาการ์ดสรุปไปคุยกับที่บ้านไหม?</h3>
     <div class="chips">${[["yes","คุยแน่นอน"],["maybe","อาจจะ"],["no","ไม่คุย"]].map(([k,tx])=>`<button class="chip" aria-pressed="${G.talk===k}" onclick="pickTalk('${k}')">${tx}</button>`).join("")}</div></section>
-  <button class="btn pine" ${G.reason&&G.post&&G.talk&&!G.saving?"":"disabled"} onclick="finish()">${G.saving?"กำลังส่ง…":"ส่งคำตอบ + รับการ์ดคุยกับบ้าน"}</button></div>`},
+  ${G.postDone?"":`<section class="card stack" style="gap:12px"><h3 style="font-size:17px">ทบทวนหลังเล่น (ข้อชุดเดิม)</h3>${quizHtml("post")}${rateHtml(SELF_COST,"postCost")}${rateHtml(SELF_TALK,"postTalk")}
+    <div class="stack" style="gap:6px"><b>เป้าหมายที่เลือกไว้ "${esc(GOALS[G.goal]||"-")}" ทำได้แค่ไหน?</b><div class="chips">${[["yes","ได้แล้ว"],["some","ได้บางส่วน"],["no","ยังไม่ได้"]].map(([k,t])=>`<button class="chip" aria-pressed="${G.goalMet===k}" onclick="pickGoalMet('${k}')">${t}</button>`).join("")}</div></div></section>`}
+  <button class="btn pine" ${G.reason&&G.post&&G.talk&&(G.postDone||(G.q.post.every(v=>v!==null)&&G.self.postCost&&G.self.postTalk&&G.goalMet))&&!G.saving?"":"disabled"} onclick="finish()">${G.saving?"กำลังส่ง…":"ส่งคำตอบ + รับการ์ดคุยกับบ้าน"}</button></div>`},
 
 card:()=>{const t=G.final,a=t.a,b=t.b,d=a.total-b.total,ad=Math.abs(d),close=ad<=Math.max(a.total,b.total)*0.05;
   const pa=C.P[G.priv],pb=C.P[G.pub],ub=C.U[pb.u],reason=C.REASONS.find(r=>r.k===G.reason);
@@ -358,6 +397,7 @@ card:()=>{const t=G.final,a=t.a,b=t.b,d=a.total-b.total,ad=Math.abs(d),close=ad<
   lines.push(`มีแผน B เตรียมไว้แล้ว และพร้อมฟังเหตุผลของพ่อแม่ด้วย`);
   return `<div class="stack">
   ${G.saved?`<div class="tip noprint">${DEMO?"โหมดสาธิต: ไม่ได้บันทึกผล":"ส่งคำตอบแล้ว ขอบคุณนะ"}</div>`:`<div class="note noprint" role="alert">ยังส่งผลไม่สำเร็จ: ${esc(G.saveErr||"")} <button class="link" onclick="finish()">ส่งอีกครั้ง</button></div>`}
+  ${G.preScore!=null&&G.postScore!=null?`<div class="tip noprint">ความรู้เรื่องค่าใช้จ่าย: ก่อนเล่น <b>${G.preScore}/5</b> → หลังเล่น <b>${G.postScore}/5</b> ${G.postScore>G.preScore?"เก่งขึ้นแล้ว":G.postScore===G.preScore?"เท่าเดิม ลองเล่นอีกรอบเพื่อดูตัวเลขอื่น":"ลองอ่านการ์ดสรุปอีกรอบนะ"}</div>`:""}
   <p class="muted noprint" style="margin:0">แคปหน้าจอการ์ดนี้ไปให้ที่บ้านดูได้เลย</p>
   <article class="talk stack" style="gap:10px">
     <div class="row between"><b style="font-family:var(--display);font-size:18px">เทียบค่าใช้จ่ายเรียน 4 ปี</b><span class="muted">${esc(profile.class_room||"")}</span></div>

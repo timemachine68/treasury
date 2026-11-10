@@ -162,9 +162,11 @@ function render(){
     </tbody></table></div>
     <p class="muted" style="margin:0">ส่วนต่างเฉลี่ยเป็นบวก = ทางเอกชนแพงกว่าโดยเฉลี่ย · คำทายก่อนเล่นเก็บครั้งแรกครั้งเดียว เล่นซ้ำไม่ทับ</p>
   </section>
+  ${learnCard()}
   <section class="card stack">
     <div class="row"><h2 class="grow" style="font-size:19px">รายชื่อห้อง ${esc(V.room||"-")}</h2></div>
     <div class="roomgrid">${rooms.map(r=>`<button aria-pressed="${r.room===V.room}" onclick="pickRoom('${esc(r.room)}')">${esc(r.room)}</button>`).join("")}</div>
+    <div class="row"><button class="btn sm plain" onclick="exportCsv()">ดาวน์โหลดผลก่อน–หลัง ห้องนี้ (CSV ไม่มีชื่อ)</button></div>
     ${roomTable(sel)}
   </section>
   <section class="card stack"><h2 style="font-size:19px">ข้อมูลที่ใช้ในเกม (ตรวจเมื่อ ${C.CHECKED})</h2>
@@ -180,15 +182,50 @@ function roomTable(sel){
   if(!V.list.length)return `<p class="muted">ห้องนี้ยังไม่มีรายชื่อนักเรียนในระบบ</p>`;
   const notYet=V.list.filter(x=>!x.pre_guess).length;
   return `<p class="muted" style="margin:0">ยังไม่เริ่ม ${notYet} คน · เริ่มแล้วแต่ยังไม่จบ ${V.list.filter(x=>x.pre_guess&&!x.finished).length} คน</p>
-  <div class="tw"><table><thead><tr><th>เลขประจำตัว</th><th>ชื่อ</th><th>สถานะ</th><th>ทายก่อน</th><th>คู่ที่เทียบ</th><th>ผล 4 ปี (A / B)</th><th>เลือกหลังเล่น</th><th>คุยกับบ้าน</th><th></th></tr></thead><tbody>
+  <div class="tw"><table><thead><tr><th>เลขประจำตัว</th><th>ชื่อ</th><th>สถานะ</th><th>ทายก่อน</th><th>ความรู้ ก่อน→หลัง</th><th>คู่ที่เทียบ</th><th>ผล 4 ปี (A / B)</th><th>เลือกหลังเล่น</th><th>คุยกับบ้าน</th><th></th></tr></thead><tbody>
   ${V.list.map(x=>{const pa=C.P[x.private_prog],pb=C.P[x.public_prog];return `<tr><td>${esc(x.student_id||"-")}</td><td>${esc(x.name||"")}</td>
     <td>${x.finished?`<span class="pill on">จบแล้ว${x.play_count>1?" ("+x.play_count+" รอบ)":""}</span>`:x.pre_guess?`<span class="pill off">กำลังเล่น</span>`:`<span class="muted">ยังไม่เริ่ม</span>`}</td>
     <td>${x.pre_guess?GUESS[x.pre_guess]:"-"}</td>
+    <td>${x.pre_score!=null?x.pre_score+" → "+(x.post_score!=null?x.post_score:"-"):"-"}</td>
     <td>${pa&&pb?`${esc(C.U[pa.u].short)} ${esc(pa.name)}<br><span class="muted">vs ${esc(C.U[pb.u].short)} ${esc(pb.name)} · ${esc(C.HOUSING[x.housing]||"")}</span>`:"-"}</td>
     <td>${x.finished?`${baht(x.total_private)} / ${baht(x.total_public)}`:"-"}</td>
     <td>${x.post_choice?POST[x.post_choice]:"-"}</td><td>${x.talk_home?TALK[x.talk_home]:"-"}</td>
     <td>${x.pre_guess?`<button class="btn sm danger" onclick="resetOne('${esc(x.pid)}')">ล้างผล</button>`:""}</td></tr>`}).join("")}
   </tbody></table></div>`;
+}
+
+/* ---------- ผลการเรียนรู้ก่อน-หลัง (หลักฐานผลงาน PA) ---------- */
+const GOALS={know_cost:"รู้ว่า 4 ปีต้องจ่ายอะไรบ้าง",compare:"เทียบ 2 ทางให้ได้อย่างยุติธรรม",talk_parents:"มีตัวเลขไปคุยกับที่บ้าน",choose:"ตัดสินใจเลือกทางให้ได้"};
+function wavg(rs,k){let n=0,t=0;rs.forEach(r=>{const w=n0(r.paired);if(r[k]!=null&&w){n+=w;t+=Number(r[k])*w}});return n?t/n:null}
+const f2=v=>v==null?"-":Number(v).toFixed(2);
+function learnRow(label,r,bold){const pd=n0(r.paired),st=n0(r.students);
+  return `<tr><td>${bold?"<b>"+esc(label)+"</b>":esc(label)}</td><td>${pd} / ${st}${st?` <span class="muted">(${Math.round(pd/st*100)}%)</span>`:""}</td>
+  <td>${f2(r.avg_pre)} → ${f2(r.avg_post)}</td><td>${pd?Math.round(n0(r.improved)/pd*100)+"%":"-"} <span class="muted">(เท่าเดิม ${n0(r.same_score)} · ลดลง ${n0(r.dropped)})</span></td>
+  <td>${f2(r.avg_cost_pre)} → ${f2(r.avg_cost_post)}</td><td>${f2(r.avg_talk_pre)} → ${f2(r.avg_talk_post)}</td>
+  <td>${n0(r.goal_yes)} / ${n0(r.goal_some)} / ${n0(r.goal_no)}</td></tr>`}
+function learnCard(){
+  const all={students:rooms.reduce((s,r)=>s+n0(r.students),0),paired:rooms.reduce((s,r)=>s+n0(r.paired),0),
+    improved:rooms.reduce((s,r)=>s+n0(r.improved),0),same_score:rooms.reduce((s,r)=>s+n0(r.same_score),0),dropped:rooms.reduce((s,r)=>s+n0(r.dropped),0),
+    goal_yes:rooms.reduce((s,r)=>s+n0(r.goal_yes),0),goal_some:rooms.reduce((s,r)=>s+n0(r.goal_some),0),goal_no:rooms.reduce((s,r)=>s+n0(r.goal_no),0),
+    avg_pre:wavg(rooms,"avg_pre"),avg_post:wavg(rooms,"avg_post"),avg_cost_pre:wavg(rooms,"avg_cost_pre"),avg_cost_post:wavg(rooms,"avg_cost_post"),
+    avg_talk_pre:wavg(rooms,"avg_talk_pre"),avg_talk_post:wavg(rooms,"avg_talk_post")};
+  return `<section class="card stack"><h2 style="font-size:19px">ผลการเรียนรู้ก่อน–หลัง (ใช้เป็นหลักฐานผลงาน)</h2>
+  <div class="tw"><table><thead><tr><th>ห้อง</th><th>ทำครบก่อน+หลัง / ทั้งห้อง</th><th>คะแนนความรู้เฉลี่ย (เต็ม 5)</th><th>คนที่คะแนนเพิ่ม</th><th>ประเมินตนเอง: คิดค่าใช้จ่ายครบ (1–4)</th><th>ประเมินตนเอง: พร้อมคุยกับบ้าน (1–4)</th><th>บรรลุเป้าหมาย ได้ / บางส่วน / ไม่ได้</th></tr></thead><tbody>
+  ${rooms.map(r=>learnRow(r.room,r)).join("")}${rooms.length>1?learnRow("รวมทุกห้อง",all,true):""}</tbody></table></div>
+  <p class="muted" style="margin:0">นับเฉพาะคนที่ทำครบทั้งก่อนและหลัง · ค่าก่อนเรียนเก็บครั้งแรกครั้งเดียว ค่าหลังเรียนเก็บจากรอบแรกที่เล่นจบ (เล่นซ้ำไม่ทับ) · คอลัมน์ในวงเล็บ % = สัดส่วนของนักเรียนทั้งห้องที่มีข้อมูลครบ ใช้ดูว่าครอบคลุมกลุ่มเป้าหมายพอหรือไม่ ให้ตรวจเกณฑ์ที่ต้องครอบคลุมกับคู่มือฉบับจริงอีกครั้ง</p></section>`;
+}
+function exportCsv(){
+  const L=(V.list||[]).filter(x=>x.pre_guess);
+  if(!L.length)return toast("ห้องนี้ยังไม่มีข้อมูลให้ส่งออก");
+  const h=["รหัส","เป้าหมาย","ทายก่อนเล่น","คะแนนก่อน(5)","คะแนนหลัง(5)","ผลต่าง","คิดค่าใช้จ่ายครบ ก่อน(1-4)","คิดค่าใช้จ่ายครบ หลัง(1-4)","พร้อมคุยกับบ้าน ก่อน(1-4)","พร้อมคุยกับบ้าน หลัง(1-4)","บรรลุเป้าหมาย","เลือกหลังเล่น","คุยกับบ้าน"];
+  const gm={yes:"ได้แล้ว",some:"ได้บางส่วน",no:"ยังไม่ได้"};
+  const code=(V.room||"R").replace("ม.","M").replace("/","-").replace(/[^0-9A-Za-z-]/g,"");
+  const rows=L.map((x,i)=>[code+"-"+String(i+1).padStart(2,"0"),GOALS[x.goal]||"",GUESS[x.pre_guess]||"",x.pre_score??"",x.post_score??"",
+    x.pre_score!=null&&x.post_score!=null?x.post_score-x.pre_score:"",x.self_cost_pre??"",x.self_cost_post??"",x.self_talk_pre??"",x.self_talk_post??"",
+    gm[x.goal_met]||"",x.post_choice?POST[x.post_choice]:"",x.talk_home?TALK[x.talk_home]:""]);
+  const csv="\ufeff"+[h].concat(rows).map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(",")).join("\r\n");
+  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));
+  a.download="cost-game-"+code+"-pre-post.csv";document.body.appendChild(a);a.click();a.remove();
 }
 async function resetOne(pid){
   const row=(V.list||[]).find(x=>x.pid===pid);
