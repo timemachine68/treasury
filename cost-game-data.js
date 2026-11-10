@@ -14,6 +14,7 @@ const SRC = {
   mfu:  {t:"สรุปค่าเทอม ม.แม่ฟ้าหลวง 2569", u:"https://dreamnesthub.com/tuition-fee-mfu-2568"},
   bu:   {t:"สรุปค่าเทอม ม.กรุงเทพ (ค่าเทอมภาคเรียนแรก ปี 2569 ของสาขาที่ใช้เทียบ)", u:"https://dreamnesthub.com/tuition-fee-bu-2569"},
   up:   {t:"สรุปค่าเทอม ม.พะเยา 2569 (ประมาณการรายกลุ่มคณะ ควรตรวจประกาศ REG-UP)", u:"https://dreamnesthub.com/khafee-mahawithayalai-phayao-2568"},
+  dormUP:{t:"ประกาศอัตราค่าธรรมเนียมหอพัก ม.พะเยา (ใช้ตั้งแต่ปีการศึกษา 2564 ตามเอกสารที่ครูส่งมา)", u:""},
   dormIn:{t:"สำรวจราคาหอในมหาวิทยาลัย ปี 2568 (LINE TODAY)", u:"https://today.line.me/th/v3/article/aGLP5qo"},
   rent: {t:"ราคาหอนอกใกล้มหาวิทยาลัย (ค่ากลางของหน้า 'ราคาถูก' RentHub)", u:"https://www.renthub.in.th/"},
   bus:  {t:"ค่ารถทัวร์ กรุงเทพฯ–เชียงราย เริ่ม 789 บาท (12Go)", u:"https://12go.com/th/bus/bangkok/chiang-rai"}
@@ -26,7 +27,7 @@ const U = {
   kmitl:{name:"สจล. พระจอมเกล้าลาดกระบัง", short:"สจล.", place:"ลาดกระบัง กรุงเทพฯ", type:"public", zone:"near", housing:["home","dorm_out"], rent:3025, seniors:35, src:"kmitl"},
   ku:   {name:"ม.เกษตรศาสตร์ ศรีราชา", short:"มก.ศรีราชา", place:"ศรีราชา ชลบุรี", type:"public", zone:"mid", housing:["dorm_out"], rent:3250, seniors:7, src:"ku"},
   buu:  {name:"ม.บูรพา บางแสน", short:"บูรพา", place:"บางแสน ชลบุรี", type:"public", zone:"mid", housing:["dorm_in","dorm_out"], dormIn:{fee:3850, util:100, label:"หอในพัดลม 2–4 คน/ห้อง เริ่ม 3,850 บาท/เทอม"}, rent:3250, seniors:23, src:"buu"},
-  up:   {name:"ม.พะเยา", short:"ม.พะเยา", place:"เมือง พะเยา", type:"public", zone:"far", housing:["dorm_out"], rent:2750, seniors:7, src:"up"},
+  up:   {name:"ม.พะเยา", short:"ม.พะเยา", place:"เมือง พะเยา", type:"public", zone:"far", housing:["dorm_in","dorm_out"], rent:2750, dormIn:{fee:10580, util:150, label:"หอในพัดลม 4 คน/ห้อง 21,160 บาท/ปี (หอ มพ. 2 คน/ห้อง ถูกสุด 12,000 · ห้องแอร์ 29,095–31,740 บาท/ปี)"}, dormSrc:"dormUP", seniors:7, src:"up"},
   mfu:  {name:"ม.แม่ฟ้าหลวง", short:"แม่ฟ้าหลวง", place:"เชียงราย", type:"public", zone:"far", housing:["dorm_in","dorm_out"], dormIn:{fee:5000, util:200, label:"หอในพัดลม 4,000–6,000 บาท/เทอม (ใช้ 5,000)"}, rent:2750, firstYearIn:true, seniors:9, src:"mfu"}
 };
 

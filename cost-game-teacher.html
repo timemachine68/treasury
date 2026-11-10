@@ -172,7 +172,7 @@ function render(){
     <div class="tw"><table><thead><tr><th>มหาวิทยาลัย</th><th>หลักสูตร</th><th>ค่าเทอม/ภาค</th><th>ที่พัก</th><th>รุ่นพี่ติดปี 69</th></tr></thead><tbody>
     ${Object.entries(C.P).map(([k,p])=>{const u=C.U[p.u];return `<tr><td>${esc(u.short)}</td><td>${esc(p.name)}${p.note?`<br><span class="muted">${esc(p.note)}</span>`:""}</td><td>${baht(p.sem)}</td><td>${u.housing.map(h=>h==="home"?"ไป-กลับ":h==="dorm_in"?"หอใน "+baht(u.dormIn.fee)+"/เทอม":"หอนอก ~"+baht(u.rent)+"/เดือน").join("<br>")}</td><td>${u.seniors}</td></tr>`}).join("")}
     </tbody></table></div>
-    <ul class="muted" style="margin:0;padding-left:18px">${Object.values(C.SRC).map(s=>`<li><a href="${s.u}" target="_blank" rel="noopener">${esc(s.t)}</a></li>`).join("")}</ul>
+    <ul class="muted" style="margin:0;padding-left:18px">${Object.values(C.SRC).map(s=>`<li>${s.u?`<a href="${s.u}" target="_blank" rel="noopener">${esc(s.t)}</a>`:esc(s.t)}</li>`).join("")}</ul>
   </section>`;
 }
 function roomTable(sel){
