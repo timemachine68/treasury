@@ -146,6 +146,7 @@ tr.dq{opacity:.7}
     <div class="toolbar">
       <div class="selbar"><select id="quotaSel"><option value="">— เลือกโควตาที่ต้องการดูผล —</option></select></div>
       <button class="btn primary" id="btnCompute" disabled>🔄 คำนวณ/จัดอันดับใหม่</button>
+      <button class="btn note" id="btnManual" disabled>➕ บันทึกนักเรียนที่ได้โควตา</button>
       <a class="backlink" href="quota-hub.html" style="margin-left:auto">← กลับหน้าหลัก</a>
     </div>
 
@@ -184,6 +185,25 @@ tr.dq{opacity:.7}
   <div class="foot">
     <button class="btn ghost" onclick="closeModal('statusModal')">ยกเลิก</button>
     <button class="btn primary" id="btnStatusSave">บันทึก</button>
+  </div>
+</div></div>
+
+<!-- โมดัลบันทึกนักเรียนที่ได้โควตา (ครูบันทึกเอง) -->
+<div class="modal-back" id="manualModal"><div class="modal" style="max-width:480px">
+  <h2>บันทึกนักเรียนที่ได้โควตา</h2>
+  <div class="subt" id="mqName">สำหรับนักเรียนที่ได้โควตาโดยไม่ได้สมัครผ่านระบบนี้</div>
+  <div id="mqMsg" class="msg"></div>
+  <div class="field"><label>ค้นหานักเรียน (รหัส 5 หลัก หรือชื่อ)</label>
+    <input id="mqSearch" placeholder="เช่น 24448 หรือ ณิชนันท์" autocomplete="off">
+    <div id="mqResults" style="margin-top:6px"></div></div>
+  <div class="field"><label>นักเรียนที่เลือก</label>
+    <div id="mqPicked" style="font-weight:700;color:var(--pine-deep)">ยังไม่ได้เลือก</div></div>
+  <div class="field"><label>คณะที่ได้</label><input id="mqFaculty" placeholder="เช่น คณะครุศาสตร์"></div>
+  <div class="field"><label>สาขาที่ได้</label><input id="mqMajor" placeholder="เช่น วิทยาการจัดการเรียนรู้"></div>
+  <div class="field"><label>หมายเหตุ</label><input id="mqNote" placeholder="เช่น สมัครเองกับมหาวิทยาลัย แจ้งครูภายหลัง"></div>
+  <div class="foot">
+    <button class="btn ghost" onclick="closeModal('manualModal')">ยกเลิก</button>
+    <button class="btn primary" id="btnManualSave" disabled>บันทึก</button>
   </div>
 </div></div>
 
@@ -238,7 +258,7 @@ async function loadQuotas(){
 }
 $("quotaSel").onchange = async (e)=>{
   const id=e.target.value;
-  $("btnCompute").disabled=!id;
+  $("btnCompute").disabled=!id; $("btnManual").disabled=!id;
   if(!id){ curQuota=null; $("resultWrap").innerHTML=""; $("promoWrap").innerHTML=""; return; }
   curQuota=quotasList.find(q=>q.id===id);
   await loadResult();
@@ -278,18 +298,33 @@ async function loadResult(){
 
 function renderResult(){
   const seats=curQuota.seats;
-  const active=curRows.filter(r=>!r.disqualified);
-  const dq=curRows.filter(r=>r.disqualified);
-  const approved=curRows.filter(r=>["approved","promoted"].includes(r.status)).length;
+  const manual=curRows.filter(r=>r.is_manual);
+  const screened=curRows.filter(r=>!r.is_manual);
+  const active=screened.filter(r=>!r.disqualified);
+  const dq=screened.filter(r=>r.disqualified);
+  const approved=screened.filter(r=>["approved","promoted"].includes(r.status)).length;
 
   let stats=`<div class="stats">
-    <div class="stat"><div class="num">${curRows.length}</div><div class="lab">ผู้สมัครทั้งหมด</div></div>
+    <div class="stat"><div class="num">${screened.length}</div><div class="lab">ผู้สมัครทั้งหมด</div></div>
     <div class="stat"><div class="num">${seats}</div><div class="lab">ที่นั่ง</div></div>
     <div class="stat"><div class="num">${approved}</div><div class="lab">ได้รับโควตาแล้ว</div></div>
     <div class="stat"><div class="num">${dq.length}</div><div class="lab">ตัดสิทธิ์</div></div>
+    ${manual.length?`<div class="stat"><div class="num">${manual.length}</div><div class="lab">ครูบันทึกเพิ่ม</div></div>`:""}
   </div>`;
 
-  if(!curRows.length){ $("resultWrap").innerHTML=stats+`<div class="panel"><div class="empty">ยังไม่มีผู้สมัคร หรือกด “คำนวณ” เพื่อประมวลผล</div></div>`; return; }
+  const manualPanel = manual.length ? `<div class="panel">
+    <h2>✍️ นักเรียนที่ครูบันทึกเพิ่ม (${manual.length})</h2>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>นักเรียน</th><th>ห้อง</th><th>คณะ/สาขาที่ได้</th><th>หมายเหตุ</th><th></th></tr></thead>
+      <tbody>${manual.map(r=>{const p=r.profiles||{};return `<tr>
+        <td><b>${esc(p.display_name||"—")}</b>${p.student_id?`<div style="font-size:.72rem;color:var(--ink-soft)">${esc(p.student_id)}</div>`:""}</td>
+        <td>${esc(p.class_room||"—")}</td>
+        <td style="font-size:.82rem">${esc(r.applied_faculty||"—")}${r.applied_major?`<div style="font-size:.72rem;color:var(--ink-soft)">${esc(r.applied_major)}</div>`:""}</td>
+        <td style="font-size:.8rem">${esc(r.student_statement||"")}</td>
+        <td><button class="btn danger sm" onclick="removeManual('${r.id}')">ลบ</button></td></tr>`;}).join("")}</tbody></table></div>
+    <div style="font-size:.76rem;color:var(--ink-soft);margin-top:10px">💡 รายการนี้นับเป็น “ได้รับคัดเลือก” ในรายงานผู้บริหาร แต่ไม่กินที่นั่งและไม่เข้าการจัดอันดับ</div>
+  </div>` : "";
+  if(!screened.length){ $("resultWrap").innerHTML=stats+`<div class="panel"><div class="empty">ยังไม่มีผู้สมัครผ่านระบบ หรือกด “คำนวณ” เพื่อประมวลผล</div></div>`+manualPanel; return; }
 
   let body="", shownActive=0;
   active.forEach(r=>{
@@ -311,7 +346,7 @@ function renderResult(){
       <thead><tr><th>อันดับ</th><th>ผู้สมัคร</th><th>ห้อง</th><th>คณะ/สาขาที่สมัคร</th><th>คะแนนรวม</th><th>สถานะ</th><th></th></tr></thead>
       <tbody>${body}</tbody></table></div>
     <div style="font-size:.76rem;color:var(--ink-soft);margin-top:10px">💡 แถวไฮไลต์เขียว = อยู่ในโควตาตามอันดับ · การอนุมัติเกินจำนวนที่นั่งจะถูกระบบปฏิเสธ</div>
-  </div>`;
+  </div>`+manualPanel;
 }
 function rowHtml(r, inQuota){
   const p=r.profiles||{};
@@ -380,6 +415,48 @@ $("btnStatusSave").onclick = async ()=>{
   $("btnStatusSave").disabled=false;
   if(error) return msg("stMsg","ไม่สำเร็จ: "+error.message,"err");
   closeModal("statusModal"); toast("เปลี่ยนสถานะแล้ว"); loadResult();
+};
+
+/* ---------- บันทึกนักเรียนที่ได้โควตา (ครูบันทึกเอง) ---------- */
+let mqPick=null, mqTimer=null;
+function mqReset(){
+  mqPick=null; $("mqSearch").value=""; $("mqResults").innerHTML=""; $("mqPicked").textContent="ยังไม่ได้เลือก";
+  $("mqFaculty").value=curQuota.faculty||""; $("mqMajor").value=""; $("mqNote").value="";
+  $("btnManualSave").disabled=true; clearMsg("mqMsg");
+  $("mqName").textContent="โควตา: "+curQuota.name;
+}
+$("btnManual").onclick = ()=>{ if(!curQuota) return; mqReset(); openModal("manualModal"); };
+$("mqSearch").addEventListener("input", ()=>{
+  clearTimeout(mqTimer);
+  mqTimer=setTimeout(async ()=>{
+    const t=$("mqSearch").value.trim().replace(/[%,()]/g,"");
+    if(t.length<2){ $("mqResults").innerHTML=""; return; }
+    const {data,error}=await sb.from("profiles").select("id,display_name,class_room,student_id")
+      .eq("role","student").or(`student_id.eq.${t},display_name.ilike.%${t}%`).order("class_room").limit(8);
+    if(error){ $("mqResults").innerHTML=`<div class="hint">ค้นหาไม่สำเร็จ: ${esc(error.message)}</div>`; return; }
+    if(!data.length){ $("mqResults").innerHTML=`<div class="hint">ไม่พบนักเรียน ลองพิมพ์รหัส 5 หลักหรือชื่อให้ครบขึ้น</div>`; return; }
+    $("mqResults").innerHTML=data.map(p=>`<button type="button" class="btn ghost sm" style="width:100%;justify-content:flex-start;margin-bottom:4px" data-sid="${esc(p.student_id||"")}" data-name="${esc(p.display_name||"")}" data-room="${esc(p.class_room||"")}">${esc(p.display_name||"—")} · ${esc(p.class_room||"—")} · ${esc(p.student_id||"ไม่มีรหัส")}</button>`).join("");
+    $("mqResults").querySelectorAll("button").forEach(b=>b.onclick=()=>{
+      if(!b.dataset.sid) return msg("mqMsg","นักเรียนคนนี้ไม่มีรหัสนักเรียนในระบบ เลือกไม่ได้","err");
+      mqPick={sid:b.dataset.sid}; clearMsg("mqMsg");
+      $("mqPicked").textContent=`${b.dataset.name} · ${b.dataset.room} · ${b.dataset.sid}`;
+      $("mqResults").innerHTML=""; $("btnManualSave").disabled=false;
+    });
+  },300);
+});
+$("btnManualSave").onclick = async ()=>{
+  if(!mqPick) return msg("mqMsg","เลือกนักเรียนก่อนค่ะ","err");
+  $("btnManualSave").disabled=true;
+  const {error}=await sb.rpc("quota_add_manual",{p_quota_id:curQuota.id,p_student_id:mqPick.sid,
+    p_faculty:$("mqFaculty").value,p_major:$("mqMajor").value,p_note:$("mqNote").value});
+  if(error){ $("btnManualSave").disabled=false; return msg("mqMsg","บันทึกไม่สำเร็จ: "+error.message,"err"); }
+  closeModal("manualModal"); toast("บันทึกนักเรียนที่ได้โควตาแล้ว"); loadResult();
+};
+window.removeManual = async (id)=>{
+  if(!confirm("ลบรายการที่ครูบันทึกเองนี้ใช่ไหมคะ?")) return;
+  const {error}=await sb.rpc("quota_remove_manual",{p_application_id:id});
+  if(error) return toast("ลบไม่สำเร็จ: "+error.message);
+  toast("ลบรายการแล้ว"); loadResult();
 };
 
 /* ---------- แจ้งเลื่อน (auto-promote) ---------- */
