@@ -42,11 +42,32 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
 
 /* ---- stage ---- */
 #stage{position:fixed;inset:0;overflow:hidden}
-#cam{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform:scaleX(-1);opacity:0;transition:opacity .4s}
-#cam.on{opacity:1;filter:brightness(1.08) contrast(1.05) saturate(1.05)}
+#cam{display:block;width:100%;height:100%;object-fit:cover;transform:scaleX(-1);filter:brightness(1.08) contrast(1.05) saturate(1.05);background:#2E2740}
 #veil{position:absolute;inset:0;background:linear-gradient(180deg,rgba(251,246,238,.55),rgba(243,236,249,.35) 50%,rgba(251,246,238,.75));pointer-events:none;transition:background .4s}
-#stage.camon #veil{background:linear-gradient(180deg,rgba(251,246,238,.35),rgba(251,246,238,0) 22%,rgba(251,246,238,0) 70%,rgba(251,246,238,.35))}
-#stage.camon .choice{opacity:.94}
+#fx{z-index:5}
+#left{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:clamp(12px,2vw,28px);align-items:start}
+#camBox{display:none;position:relative;padding:12px;border-radius:36px}
+#camBox .win{position:absolute;inset:12px;border-radius:24px;overflow:hidden;background:#2E2740}
+#camBox .lbl{position:absolute;left:24px;top:22px;z-index:2;padding:6px 14px;border-radius:999px;background:rgba(255,253,248,.92);font-weight:700;font-size:15px;box-shadow:2px 3px 0 rgba(91,74,110,.2)}
+#camBox .lbl i{display:inline-block;width:10px;height:10px;border-radius:50%;background:#E8574B;margin-right:6px;vertical-align:1px;animation:bob 1.2s steps(2) infinite}
+#camBox .big{position:absolute;right:24px;bottom:20px;z-index:2;min-width:84px;padding:4px 18px;border-radius:24px;background:rgba(255,253,248,.92);text-align:center;font-family:'Kanit',Tahoma,sans-serif;font-weight:800;font-size:40px;line-height:1.1;box-shadow:3px 5px 0 rgba(91,74,110,.25);display:none}
+#stage.camon #camBox{display:block}
+#stage.camon #scene{grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr);grid-template-rows:minmax(0,1fr);align-items:stretch;flex:1;min-height:0}
+#stage.camon #camBox{min-height:0}
+#stage.camon #left{min-height:0;overflow:hidden}
+#stage.camon #left{grid-template-columns:1fr;gap:14px;align-content:start}
+#stage.camon .phone{padding:10px;border-radius:30px}
+#stage.camon .phone .scr{min-height:0;padding:10px;gap:6px}
+#stage.camon .qbox{padding:16px 20px}
+#stage.camon .qbox h2{font-size:clamp(20px,2.1vw,30px)}
+#stage.camon #choices{margin-top:0}
+#stage.camon .choice{min-height:0;flex-direction:row;align-items:center;gap:14px;padding:14px 18px}
+#stage.camon .choice .num small{display:none}
+#stage.camon .choice .ring{top:50%;margin-top:-26px}
+#stage.camon .qbox{order:-1}
+#stage.camon .msg{font-size:clamp(14px,1.3vw,18px)}
+#stage.camon .msg .b{padding:7px 12px}
+#stage.camon .ghead{padding-bottom:4px}
 #fx{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
 .deco{position:absolute;border-radius:50%;pointer-events:none}
 
@@ -144,7 +165,6 @@ td:first-child{border-radius:16px 0 0 16px}td:last-child{border-radius:0 16px 16
 </head>
 <body>
 <div id="stage">
-  <video id="cam" playsinline muted></video>
   <div id="veil"></div>
   <canvas id="fx"></canvas>
 
@@ -177,8 +197,11 @@ td:first-child{border-radius:16px 0 0 16px}td:last-child{border-radius:0 16px 16
       <button class="chip ghost" id="toTeacher" style="background:rgba(255,253,248,.85);box-shadow:3px 5px 0 var(--shadow)">หน้าครู</button>
     </div>
     <div id="scene">
+      <div id="left">
       <div class="phone lav clay sm2"><div class="scr" id="chat"></div></div>
       <div class="qbox paper pop" id="qbox"></div>
+      </div>
+      <div id="camBox" class="lav clay"><div class="win" id="camWin"><span class="lbl"><i></i>กล้อง · ชูนิ้วในกรอบนี้</span><video id="cam" playsinline muted></video><span class="big" id="bigN"></span></div></div>
     </div>
     <div id="choices"></div>
     <p id="hint"></p>
@@ -369,7 +392,7 @@ function loop(){
   parts.forEach(p=>{p.x+=p.vx*5/3;p.y+=p.vy*5/3;p.vy+=1.6;p.life-=5; clayDot(p.x,p.y,p.r,p.c)});
   parts=parts.filter(p=>p.life>0&&p.y<innerHeight+40);
   if(hand){ hand.pts.forEach((p,k)=>{ if([4,8,12,16,20].includes(k)) clayDot(p.x,p.y,13,PAL[k%6]); else if(k===0) clayDot(p.x,p.y,10,"#D3C8F1"); });
-    if(hand.n){ const t=hand.pts[9]; cx.font=`800 ${44*devicePixelRatio}px Kanit, Tahoma`; cx.fillStyle="#4A3F5C"; cx.textAlign="center"; cx.fillText(hand.n, t.x*devicePixelRatio, (t.y-70)*devicePixelRatio);} }
+  }
 }
 loop();
 
@@ -394,7 +417,7 @@ async function startCamera(){
   try{
     status("กำลังเปิดกล้อง…",1);
     const stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:"user",width:{ideal:1280},height:{ideal:720}},audio:false});
-    v.srcObject=stream; await v.play(); v.classList.add("on"); $("#stage").classList.add("camon");
+    v.srcObject=stream; await v.play(); $("#stage").classList.add("camon");
   }catch(e){ st.mode="tap"; render(); status("เปิดกล้องไม่ได้ ใช้โหมดกดปุ่มแทน (แตะการ์ด หรือกด 1 2 3)"); return; }
   try{
     status("กำลังโหลดตัวจับมือ (ต้องใช้อินเทอร์เน็ต)…",1);
@@ -415,13 +438,15 @@ function countFingers(lm){
 }
 function onHands(r){
   const lm=r.multiHandLandmarks&&r.multiHandLandmarks[0];
-  if(!lm){ hand=null; hold.feed(0); return; }
+  const bn=$("#bigN");
+  if(!lm){ hand=null; bn.style.display="none"; hold.feed(0); return; }
   // map normalized video coords -> screen (object-fit:cover + mirror)
-  const v=$("#cam"), vw=v.videoWidth||640, vh=v.videoHeight||480, W=innerWidth, H=innerHeight;
+  const v=$("#cam"), vw=v.videoWidth||640, vh=v.videoHeight||480, R=$("#camWin").getBoundingClientRect(), W=R.width, H=R.height;
   const s=Math.max(W/vw,H/vh), ox=(W-vw*s)/2, oy=(H-vh*s)/2;
-  const pts=lm.map(p=>({x:W-(p.x*vw*s+ox), y:p.y*vh*s+oy}));
+  const pts=lm.map(p=>({x:R.left+W-(p.x*vw*s+ox), y:R.top+p.y*vh*s+oy}));
   const n=countFingers(lm);
   hand={pts,n:n>=1&&n<=3?n:0};
+  bn.style.display="block"; bn.textContent = n>=1&&n<=3 ? n+" นิ้ว" : (n===4?"ไปต่อ":"✋");
   hold.feed(n);
 }
 </script>
