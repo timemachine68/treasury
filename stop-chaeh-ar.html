@@ -1,0 +1,427 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>ภารกิจหยุดแชทแฉ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@500;700;800&family=Mali:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --cream:#FBF6EE; --ink:#4A3F5C; --ink2:#6B5F80; --plum:#8C7BB0;
+  --pink:#F7C3CF; --peach:#FBD2B0; --mint:#B9E3CD; --lav:#D3C8F1; --butter:#FAE79F; --sky:#B8DAF2; --coral:#F0958C;
+  --shadow:rgba(91,74,110,.22);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:var(--cream);color:var(--ink);font-family:'Mali',Tahoma,sans-serif;overflow:hidden;-webkit-tap-highlight-color:transparent}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
+.k{font-family:'Kanit',Tahoma,sans-serif}
+
+/* ---- clay look ---- */
+.clay{position:relative;border-radius:34px;
+  box-shadow: inset -10px -12px 22px rgba(74,63,92,.16), inset 10px 12px 18px rgba(255,255,255,.65), 7px 12px 0 var(--shadow), 10px 18px 26px rgba(91,74,110,.18);}
+.clay::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;opacity:.35;mix-blend-mode:multiply;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .55 0 0 0 0 .5 0 0 0 0 .6 0 0 0 .35 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");}
+.pink{background:radial-gradient(circle at 30% 25%,#FCE0E7,var(--pink) 60%)}
+.peach{background:radial-gradient(circle at 30% 25%,#FDE6D3,var(--peach) 60%)}
+.mint{background:radial-gradient(circle at 30% 25%,#DDF3E7,var(--mint) 60%)}
+.lav{background:radial-gradient(circle at 30% 25%,#EAE4FA,var(--lav) 60%)}
+.butter{background:radial-gradient(circle at 30% 25%,#FDF5CF,var(--butter) 60%)}
+.sky{background:radial-gradient(circle at 30% 25%,#DCEDF9,var(--sky) 60%)}
+.coral{background:radial-gradient(circle at 30% 25%,#F8C2BC,var(--coral) 60%)}
+.paper{background:#FFFDF8;border-radius:28px;box-shadow:4px 8px 0 rgba(91,74,110,.12),0 10px 24px rgba(91,74,110,.10)}
+
+/* stop-motion wobble: few frames per second */
+@keyframes sm{0%{transform:rotate(-1.2deg) translate(0,0)}25%{transform:rotate(.8deg) translate(1px,-2px)}50%{transform:rotate(-.4deg) translate(-1px,1px)}75%{transform:rotate(1.1deg) translate(1px,0)}100%{transform:rotate(-1.2deg)}}
+.sm{animation:sm 1.2s steps(1) infinite}
+.sm2{animation:sm 1.6s steps(1) infinite reverse}
+@keyframes pop{0%{transform:scale(.6) rotate(-6deg);opacity:0}60%{transform:scale(1.06) rotate(2deg);opacity:1}100%{transform:scale(1) rotate(0)}}
+.pop{animation:pop .45s steps(5) both}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+
+/* ---- stage ---- */
+#stage{position:fixed;inset:0;overflow:hidden}
+#cam{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform:scaleX(-1);opacity:0;transition:opacity .4s}
+#cam.on{opacity:.55}
+#veil{position:absolute;inset:0;background:linear-gradient(180deg,rgba(251,246,238,.55),rgba(243,236,249,.35) 50%,rgba(251,246,238,.75));pointer-events:none}
+#fx{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.deco{position:absolute;border-radius:50%;pointer-events:none}
+
+.screen{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;padding:clamp(12px,2.5vw,32px);gap:clamp(10px,1.6vw,20px)}
+.screen.show{display:flex}
+
+/* HUD */
+#hud{width:min(1200px,100%);display:flex;align-items:center;gap:12px;justify-content:space-between}
+.chip{padding:8px 18px;border-radius:999px;font-size:clamp(15px,1.5vw,20px);font-weight:700;white-space:nowrap}
+#stars{display:flex;gap:4px;flex-wrap:wrap}
+.star{width:clamp(18px,2vw,28px);height:clamp(18px,2vw,28px);border-radius:50%;background:#E8E1D6;box-shadow:inset -3px -3px 5px rgba(0,0,0,.08)}
+.star.got{background:radial-gradient(circle at 35% 30%,#FFF6C8,#F5D45A 65%);box-shadow:inset -3px -4px 6px rgba(160,120,0,.25),2px 3px 0 var(--shadow)}
+.star.miss{background:radial-gradient(circle at 35% 30%,#EFE9F7,#CFC5E3 65%)}
+
+/* chat scene */
+#scene{width:min(1200px,100%);display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:clamp(12px,2vw,28px);align-items:start}
+.phone{padding:16px;border-radius:40px}
+.phone .scr{background:#FFFDF8;border-radius:26px;padding:14px;display:flex;flex-direction:column;gap:10px;min-height:150px}
+.ghead{display:flex;align-items:center;gap:10px;padding-bottom:8px;border-bottom:2px dashed #EEE6F5;font-weight:700;font-size:clamp(14px,1.4vw,18px);color:var(--ink2)}
+.gdot{width:28px;height:28px;border-radius:50%}
+.msg{display:flex;gap:8px;align-items:flex-end;font-size:clamp(15px,1.5vw,20px);line-height:1.4}
+.msg .av{flex:none;width:30px;height:30px;border-radius:50%}
+.msg .b{padding:9px 14px;border-radius:20px 20px 20px 6px;max-width:85%}
+.msg .who{font-size:12px;color:var(--ink2);margin-bottom:2px}
+.msg.me{flex-direction:row-reverse}.msg.me .b{border-radius:20px 20px 6px 20px}
+.qbox{padding:clamp(16px,2vw,28px)}
+.qbox .tag{display:inline-block;margin-bottom:8px}
+.qbox h2{font-size:clamp(22px,2.6vw,38px);line-height:1.3;font-weight:700}
+
+/* choices */
+#choices{width:min(1200px,100%);display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:clamp(10px,1.6vw,22px);margin-top:auto}
+.choice{position:relative;padding:clamp(14px,1.6vw,22px) clamp(14px,1.6vw,22px) clamp(16px,1.8vw,24px);text-align:left;display:flex;flex-direction:column;gap:8px;min-height:clamp(120px,15vh,190px);transition:transform .15s}
+.choice .num{font-family:'Kanit',Tahoma,sans-serif;font-weight:800;font-size:clamp(34px,4vw,58px);line-height:1;display:flex;align-items:center;gap:10px}
+.choice .num small{font-size:clamp(13px,1.2vw,16px);font-weight:600;font-family:'Mali',Tahoma,sans-serif;opacity:.75}
+.choice .t{font-size:clamp(16px,1.7vw,23px);line-height:1.4;font-weight:600}
+.choice.hot{transform:translateY(-8px) scale(1.03)}
+.choice.locked{outline:5px solid var(--ink);outline-offset:3px}
+.ring{position:absolute;right:14px;top:14px;width:52px;height:52px;border-radius:50%;
+  background:conic-gradient(var(--ink) calc(var(--p,0)*1turn),rgba(255,255,255,.55) 0);opacity:0;transition:opacity .15s}
+.ring::after{content:"";position:absolute;inset:8px;border-radius:50%;background:rgba(255,253,248,.95)}
+.choice.hot .ring{opacity:1}
+
+#hint{font-size:clamp(14px,1.4vw,18px);color:var(--ink2);text-align:center}
+#hint b{color:var(--ink)}
+
+/* feedback */
+#fb{position:absolute;inset:0;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(74,63,92,.28)}
+#fb.show{display:flex}
+#fbCard{width:min(760px,100%);padding:clamp(22px,3vw,40px);display:flex;flex-direction:column;gap:14px}
+#fbCard h2{font-size:clamp(28px,3.4vw,48px);line-height:1.2}
+#fbCard p{font-size:clamp(17px,1.8vw,24px);line-height:1.5}
+#fbBest{padding:14px 18px;border-radius:22px;font-weight:600}
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.btn{padding:14px 26px;border-radius:999px;font-weight:700;font-size:clamp(16px,1.6vw,21px)}
+.btn:active{transform:translateY(3px)}
+.btn.ghost{background:rgba(255,253,248,.85);box-shadow:3px 5px 0 var(--shadow)}
+
+/* start */
+#start{justify-content:center;text-align:center}
+#start h1{font-size:clamp(40px,7vw,96px);line-height:1.05;font-weight:800}
+#start h1 span{color:#D9685C}
+#start .lead{font-size:clamp(17px,2vw,26px);color:var(--ink2);max-width:760px;line-height:1.5}
+.setup{padding:20px 26px;display:flex;flex-direction:column;gap:14px;align-items:center}
+.teams{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.teams button{width:52px;height:52px;border-radius:50%;font-weight:800;font-size:22px;font-family:'Kanit',Tahoma,sans-serif;background:#FFFDF8;box-shadow:3px 5px 0 var(--shadow)}
+.teams button.on{background:var(--ink);color:var(--cream)}
+.blob{position:absolute;border-radius:50%}
+.face{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);width:60%;height:36%}
+.face i{position:absolute;top:0;width:13%;height:42%;background:var(--ink);border-radius:50%}
+.face i:nth-child(1){left:22%}.face i:nth-child(2){right:22%}
+.face b{position:absolute;left:50%;top:48%;width:22%;height:30%;border:4px solid var(--ink);border-top:0;border-left-color:transparent;border-right-color:transparent;border-radius:0 0 50% 50%;transform:translateX(-50%)}
+.face u{position:absolute;top:44%;width:16%;height:20%;background:#F39BAE;opacity:.6;border-radius:50%}
+.face u:nth-of-type(1){left:4%}.face u:nth-of-type(2){right:4%}
+
+/* teacher */
+#teacher{background:rgba(251,246,238,.97);overflow:auto;align-items:stretch;padding-bottom:60px}
+#teacher .wrap{width:min(1100px,100%);margin:0 auto;display:flex;flex-direction:column;gap:16px}
+#teacher h2{font-size:clamp(26px,3vw,40px)}
+table{width:100%;border-collapse:separate;border-spacing:0 8px;font-size:clamp(14px,1.4vw,18px)}
+th{text-align:left;color:var(--ink2);font-weight:600;padding:0 12px}
+td{background:#FFFDF8;padding:12px;vertical-align:top}
+td:first-child{border-radius:16px 0 0 16px}td:last-child{border-radius:0 16px 16px 0}
+.pill{display:inline-block;padding:3px 12px;border-radius:999px;font-weight:700;white-space:nowrap}
+#status{position:absolute;left:50%;top:72px;transform:translateX(-50%);font-size:13px;color:var(--ink2);background:rgba(255,253,248,.85);padding:4px 12px;border-radius:999px;white-space:nowrap;pointer-events:none}
+
+@media (max-width:760px){
+  #scene{grid-template-columns:1fr}
+  #choices{grid-template-columns:1fr}
+  .choice{min-height:0;flex-direction:row;align-items:center}
+  .choice .num small{display:none}
+  .phone .scr{min-height:0}
+  .screen{overflow:auto}
+}
+</style>
+</head>
+<body>
+<div id="stage">
+  <video id="cam" playsinline muted></video>
+  <div id="veil"></div>
+  <canvas id="fx"></canvas>
+
+  <!-- START -->
+  <section class="screen show" id="start">
+    <div class="blob mint clay sm" style="width:150px;height:140px;left:6%;bottom:12%"><div class="face"><i></i><i></i><b></b><u></u><u></u></div></div>
+    <div class="blob peach clay sm2" style="width:120px;height:112px;right:7%;top:14%"><div class="face"><i></i><i></i><b></b><u></u><u></u></div></div>
+    <div class="blob butter clay" style="width:46px;height:46px;left:14%;top:12%;animation:bob 3s steps(6) infinite"></div>
+    <div class="blob pink clay" style="width:30px;height:30px;right:18%;bottom:20%;animation:bob 2.4s steps(6) infinite"></div>
+    <p class="chip lav clay k" style="border-radius:999px">เกม AR · กิจกรรมแนะแนว ม.ต้น</p>
+    <h1 class="k pop">ภารกิจ<br><span>หยุดแชทแฉ</span></h1>
+    <p class="lead">อ่านสถานการณ์ในแชท แล้ว <b>ชู 1, 2 หรือ 3 นิ้ว</b> หน้ากล้องค้างไว้จนวงเต็ม<br>ทั้งห้องช่วยกันเก็บดาวให้ครบ 8 ดวง</p>
+    <div class="setup paper">
+      <p style="font-weight:700">กี่ทีม? (ผลัดกันตอบทีละข้อ)</p>
+      <div class="teams" id="teams"></div>
+      <div class="row" style="justify-content:center">
+        <button class="btn coral clay" id="goCam">เริ่มเล่น (เปิดกล้อง)</button>
+        <button class="btn ghost" id="goTap">เล่นแบบกดปุ่ม</button>
+      </div>
+      <p style="font-size:14px;color:var(--ink2)">ไม่มีการเก็บภาพหรือข้อมูลนักเรียน ภาพจากกล้องอยู่ในเครื่องนี้เท่านั้น</p>
+    </div>
+  </section>
+
+  <!-- PLAY -->
+  <section class="screen" id="play">
+    <div id="hud">
+      <span class="chip butter clay k" id="qno">ข้อ 1/8</span>
+      <span class="chip mint clay k" id="turn">ตาทีม 1</span>
+      <div id="stars"></div>
+      <button class="chip ghost" id="toTeacher" style="background:rgba(255,253,248,.85);box-shadow:3px 5px 0 var(--shadow)">หน้าครู</button>
+    </div>
+    <div id="scene">
+      <div class="phone lav clay sm2"><div class="scr" id="chat"></div></div>
+      <div class="qbox paper pop" id="qbox"></div>
+    </div>
+    <div id="choices"></div>
+    <p id="hint"></p>
+  </section>
+
+  <!-- FEEDBACK -->
+  <div id="fb"><div id="fbCard" class="paper pop">
+    <h2 class="k" id="fbTitle"></h2>
+    <p id="fbWhy"></p>
+    <p id="fbBest" class="mint"></p>
+    <div class="row"><button class="btn coral clay" id="next">ข้อต่อไป ➜</button><span style="font-size:15px;color:var(--ink2)">หรือ ชูมือแบ 4 นิ้วค้างไว้ · กด Space</span></div>
+  </div></div>
+
+  <!-- END -->
+  <section class="screen" id="end" style="justify-content:center;text-align:center">
+    <h1 class="k pop" style="font-size:clamp(36px,5.5vw,80px);line-height:1.1" id="endTitle"></h1>
+    <p class="lead" style="font-size:clamp(18px,2vw,26px);color:var(--ink2);max-width:800px" id="endMsg"></p>
+    <div class="paper" style="padding:22px 30px;max-width:820px">
+      <p class="k" style="font-size:clamp(22px,2.6vw,36px);font-weight:700">ไม่เข้าร่วม · ไม่แชร์ · ไม่ส่งต่อ</p>
+      <p style="font-size:clamp(16px,1.7vw,22px);color:var(--ink2);margin-top:6px">เจอแล้วเก็บหลักฐาน กดรายงาน และบอกผู้ใหญ่ที่ไว้ใจ</p>
+    </div>
+    <div class="row" style="justify-content:center">
+      <button class="btn coral clay" id="endTeacher">ดูสรุปหน้าครู</button>
+      <button class="btn ghost" id="again">เล่นใหม่ (ห้องถัดไป)</button>
+    </div>
+  </section>
+
+  <!-- TEACHER -->
+  <section class="screen" id="teacher">
+    <div class="wrap">
+      <div class="row" style="justify-content:space-between">
+        <h2 class="k">หน้าครู: สรุปผลทั้งห้อง</h2>
+        <div class="row"><button class="btn ghost" id="copy">คัดลอกผล</button><button class="btn coral clay" id="back">กลับไปเล่น</button></div>
+      </div>
+      <p id="tSum" style="font-size:18px"></p>
+      <table><thead><tr><th>ข้อ</th><th>สถานการณ์</th><th>ทีม</th><th>ตอบ</th><th>เฉลย</th></tr></thead><tbody id="tBody"></tbody></table>
+      <p style="font-size:15px;color:var(--ink2)">ผลอยู่ในเครื่องนี้เท่านั้น ปิดหน้าหรือกด “เล่นใหม่” แล้วผลจะหายไป ใช้ข้อที่ห้องตอบไม่ตรงชวนคุยตอนถอดบทเรียน</p>
+    </div>
+  </section>
+
+  <div id="status"></div>
+</div>
+
+<script>
+const Q = [
+ {t:"QR ชวนเข้ากลุ่ม", g:"แฉ ม.ต้น 😈", chat:[["บัญชีไม่มีชื่อ","ใครอยากรู้เรื่องลับเพื่อนในห้อง สแกนเลย 👀","peach"],["เพื่อนสนิท","เฮ้ย เข้าป่ะ ส่ง QR ให้แล้ว","mint"]],
+  q:"เพื่อนส่ง QR กลุ่มแฉมาให้ เราจะทำอะไร",
+  c:["สแกนเข้าไปดูนิดเดียว ไม่พิมพ์อะไร","ไม่เข้า และบอกเพื่อนว่า “เราไม่เอาด้วยนะ”","ส่ง QR ต่อให้เพื่อนอีกกลุ่ม"], a:1,
+  why:"แค่เข้าไปดู ก็ทำให้กลุ่มมีคนสนใจและอยู่ต่อได้ ส่วนการส่ง QR ต่อคือการช่วยกระจาย การไม่เข้าและพูดออกมาตรง ๆ ช่วยหยุดกลุ่มได้จริง"},
+ {t:"รูปเพื่อนถูกตัดต่อ", g:"แฉ ม.ต้น 😈", chat:[["แอดมิน","ดูหน้าคนนี้สิ 555 (รูปตัดต่อ)","coral"],["ผู้ใช้ 23","ฮ่า ๆ ๆ","sky"]],
+  q:"เห็นรูปเพื่อนในห้องถูกตัดต่อให้ดูน่าอาย",
+  c:["แคปเก็บเป็นหลักฐาน แล้วบอกครู","กดสติกเกอร์หัวเราะตามคนอื่น","แคปส่งให้เพื่อนสนิทดูขำ ๆ"], a:0,
+  why:"การตัดต่อรูปคนอื่นให้อับอายอาจผิด พ.ร.บ.คอมพิวเตอร์ แคปไว้เพื่อแจ้งผู้ใหญ่เป็นเรื่องถูก แต่ถ้าแคปไปส่งต่อ ก็เท่ากับช่วยเผยแพร่"},
+ {t:"ถูกด่าในกลุ่ม", g:"แฉ ม.ต้น 😈", chat:[["บัญชีไม่มีชื่อ","คนนี้ทำตัวน่ารำคาญที่สุดในห้อง","peach"],["ผู้ใช้ 7","จริง!!","butter"]],
+  q:"มีคนพิมพ์ด่า “เรา” ในกลุ่ม เราจะทำอะไร",
+  c:["ด่ากลับให้แรงกว่า","ตั้งกลุ่มใหม่แฉคืน","ไม่ตอบโต้ แคปหลักฐาน กดรายงาน แล้วบอกผู้ใหญ่"], a:2,
+  why:"ด่ากลับหรือแฉคืนทำให้เรื่องใหญ่ขึ้น และเราอาจผิดเองด้วย การตั้งสติ เก็บหลักฐาน แล้วให้ผู้ใหญ่ช่วย ปลอดภัยที่สุด"},
+ {t:"เพื่อนเงียบไป", g:"ห้อง ม.2/5", chat:[["เพื่อนในห้อง","เห็นป่ะ เขาไม่มาเรียนสองวันแล้ว","mint"],["เพื่อนในห้อง","คงอายเรื่องในกลุ่มแฉ","sky"]],
+  q:"เพื่อนที่ถูกแฉเงียบ ไม่อยากมาโรงเรียน",
+  c:["ทักส่วนตัว “เราอยู่ข้างเธอนะ” แล้วชวนไปหาครู","ถามเขาว่าเรื่องในกลุ่มจริงไหม","ปล่อยไว้ เดี๋ยวก็หาย"], a:0,
+  why:"คนที่ถูกแฉต้องการคนที่อยู่ข้าง ๆ ไม่ใช่คำถามซ้ำเติม ข้อความสั้น ๆ ว่าเราอยู่ข้างเธอ ช่วยให้เพื่อนรู้สึกไม่โดดเดี่ยว"},
+ {t:"ชื่อปลอมไม่มีใครรู้", g:"แฉ ม.ต้น 😈", chat:[["ผู้ใช้ 12","พิมพ์คำเดียวเอง ใช้ชื่อปลอม ไม่มีใครรู้หรอก","lav"]],
+  q:"เพื่อนชวนว่าใช้ชื่อปลอม พิมพ์แรง ๆ ได้",
+  c:["พิมพ์ได้ ไม่มีใครรู้","ไม่พิมพ์ เพราะชื่อปลอมก็ตามตัวได้ และเพื่อนเจ็บจริง","ส่งแค่สติกเกอร์ล้อแทน"], a:1,
+  why:"ชื่อปลอมไม่ได้ทำให้ความเจ็บของเพื่อนหายไป และบัญชีออนไลน์ตรวจสอบย้อนกลับได้ สติกเกอร์ล้อก็ยังเป็นการร่วมแกล้ง"},
+ {t:"อายุยังไม่ถึง", g:"แฉ ม.ต้น 😈", chat:[["ผู้ใช้ 30","เราเป็นเด็ก ทำอะไรก็ไม่ผิดหรอก","peach"]],
+  q:"“เป็นเด็ก ทำอะไรก็ไม่ผิด” จริงไหม",
+  c:["จริง เด็กไม่ผิดกฎหมาย","ไม่จริง เด็กไม่ถูกจำคุก แต่ศาลสั่งมาตรการได้ และอาจต้องชดใช้ค่าเสียหาย","ผิดแค่คนตั้งกลุ่มคนเดียว"], a:1,
+  why:"เด็กอายุไม่เกิน 15 ปี ไม่ถูกลงโทษจำคุก แต่ยังมีมาตรการสำหรับเด็กและผู้ปกครอง และอาจถูกเรียกค่าเสียหาย ที่สำคัญคือเพื่อนเจ็บจริง"},
+ {t:"อยากช่วยเพื่อน", g:"ห้อง ม.2/5", chat:[["เรา","เพื่อนโดนแฉหนักมาก ทำไงดี","mint"]],
+  q:"เราอยากช่วยเพื่อนที่ถูกแฉ วิธีไหนดีที่สุด",
+  c:["เข้าไปด่าแอดมินกลุ่มแฉ","เข้ากลุ่มไปตามดูว่าใครพิมพ์อะไรบ้าง","พาเพื่อนไปหาครูแนะแนวหรือครูประจำชั้น"], a:2,
+  why:"การเข้าไปด่าหรือตามดูในกลุ่ม อาจทำให้เราเจ็บไปด้วยและเรื่องลุกลาม ผู้ใหญ่ช่วยแจ้งและดูแลได้ตามขั้นตอน"},
+ {t:"แคปแล้วเอาไปไหน", g:"แฉ ม.ต้น 😈", chat:[["เรา","แคปข้อความในกลุ่มไว้แล้ว 3 รูป","mint"]],
+  q:"แคปหลักฐานไว้แล้ว ควรเอาไปทำอะไร",
+  c:["โพสต์ลงสตอรี่ประจานคนแฉ","ส่งให้ครูหรือผู้ปกครองเท่านั้น","เก็บไว้ขู่คนแฉ"], a:1,
+  why:"หลักฐานมีไว้ให้ผู้ใหญ่ช่วยจัดการ ถ้าเอาไปโพสต์ประจานหรือขู่ เราจะกลายเป็นคนแฉเสียเอง"}
+];
+const COLORS=["pink","butter","mint"];
+const $=s=>document.querySelector(s);
+const st={teams:6, i:0, log:[], mode:"tap", locked:false};
+
+/* ---------- setup ---------- */
+function drawTeams(){ const el=$("#teams"); el.innerHTML="";
+  for(let n=2;n<=8;n++){ const b=document.createElement("button"); b.textContent=n; if(n===st.teams)b.className="on";
+    b.onclick=()=>{st.teams=n;drawTeams()}; el.appendChild(b);} }
+drawTeams();
+function show(id){document.querySelectorAll(".screen").forEach(s=>s.classList.toggle("show",s.id===id))}
+let stT;function status(t,keep){const e=$("#status");e.textContent=t||"";e.style.display=t?"block":"none";clearTimeout(stT);if(t&&!keep)stT=setTimeout(()=>status(""),5000)}
+status("");
+
+$("#goCam").onclick=async()=>{ start(); await startCamera(); };
+$("#goTap").onclick=()=>{ st.mode="tap"; start(); };
+$("#again").onclick=()=>{ st.i=0; st.log=[]; show("start"); };
+$("#toTeacher").onclick=()=>teacher("play");
+$("#endTeacher").onclick=()=>teacher("end");
+$("#next").onclick=next;
+
+function start(){ st.i=0; st.log=[]; show("play"); render(); }
+
+/* ---------- round ---------- */
+function render(){
+  const q=Q[st.i]; st.locked=false; hold.reset();
+  $("#qno").textContent=`ข้อ ${st.i+1}/${Q.length}`;
+  $("#turn").textContent=`ตาทีม ${st.i%st.teams+1}`;
+  const s=$("#stars"); s.innerHTML="";
+  Q.forEach((_,k)=>{const d=document.createElement("span"); const L=st.log[k];
+    d.className="star"+(L?(L.ok?" got":" miss"):""); s.appendChild(d);});
+  const chat=$("#chat");
+  chat.innerHTML=`<div class="ghead"><span class="gdot coral"></span>${q.g}</div>`+
+    q.chat.map(([w,m,c],k)=>`<div class="msg${w==="เรา"?" me":""}"><span class="av ${c}"></span><div><div class="who">${w}</div><div class="b ${c} pop" style="animation-delay:${k*.25}s">${m}</div></div></div>`).join("");
+  const qb=$("#qbox"); qb.classList.remove("pop"); void qb.offsetWidth; qb.classList.add("pop");
+  qb.innerHTML=`<span class="chip coral clay k tag">สถานการณ์: ${q.t}</span><h2>${q.q}</h2>`;
+  const ch=$("#choices"); ch.innerHTML="";
+  q.c.forEach((t,k)=>{ const b=document.createElement("button");
+    b.className=`choice clay ${COLORS[k]}`; b.dataset.k=k;
+    b.innerHTML=`<span class="num">${k+1}<small>ชู ${k+1} นิ้ว</small></span><span class="t">${t}</span><span class="ring"></span>`;
+    b.onclick=()=>choose(k); ch.appendChild(b); });
+  $("#hint").innerHTML = st.mode==="cam"
+    ? `คุยกันในทีม 20 วินาที แล้ว <b>ชูนิ้วค้างไว้จนวงเต็ม</b> · กล้องไม่จับ? แตะการ์ดแทนได้`
+    : `แตะการ์ด หรือกด <b>1 2 3</b> บนแป้นพิมพ์`;
+}
+function choose(k){
+  if(st.locked) return; st.locked=true;
+  const q=Q[st.i], ok=k===q.a;
+  st.log[st.i]={team:st.i%st.teams+1, pick:k, ok};
+  document.querySelectorAll(".choice").forEach(c=>{c.classList.remove("hot"); if(+c.dataset.k===k)c.classList.add("locked")});
+  setTimeout(()=>{
+    $("#fbTitle").textContent= ok? "เยี่ยมมาก! ได้ดาว 1 ดวง ⭐" : "ลองคิดอีกมุมนะ";
+    $("#fbWhy").textContent=q.why;
+    $("#fbBest").textContent=`ทางที่ปลอดภัยที่สุด: ข้อ ${q.a+1} ${q.c[q.a]}`;
+    $("#fb").classList.add("show"); hold.reset();
+    if(ok) burst();
+  },450);
+}
+function next(){
+  if(!$("#fb").classList.contains("show")) return;
+  $("#fb").classList.remove("show");
+  if(st.i<Q.length-1){ st.i++; render(); } else end();
+}
+function end(){
+  const n=st.log.filter(x=>x&&x.ok).length;
+  $("#endTitle").innerHTML = n>=6? `ทั้งห้องเก็บได้ ${n} ดาว<br>ปิดกลุ่มแฉสำเร็จ!` : `ทั้งห้องเก็บได้ ${n} ดาว<br>เราเรียนรู้ไปด้วยกันแล้ว`;
+  $("#endMsg").textContent="ทุกข้อที่ตอบไม่ตรง คือข้อที่เรามาคุยกันต่อได้ ไม่มีใครผิดที่กล้าตอบ";
+  show("end"); burst();
+}
+document.addEventListener("keydown",e=>{
+  if($("#fb").classList.contains("show")){ if(e.key===" "||e.key==="Enter"||e.key==="ArrowRight"){e.preventDefault();next();} return; }
+  if($("#play").classList.contains("show") && ["1","2","3"].includes(e.key)) choose(+e.key-1);
+});
+
+/* ---------- teacher ---------- */
+let backTo="play";
+function teacher(from){ backTo=from; const tb=$("#tBody"); tb.innerHTML="";
+  Q.forEach((q,k)=>{ const L=st.log[k];
+    tb.insertAdjacentHTML("beforeend",`<tr><td>${k+1}</td><td>${q.t}</td><td>${L?"ทีม "+L.team:"-"}</td>
+      <td>${L?`<span class="pill ${L.ok?"mint":"pink"}">${L.pick+1} · ${L.ok?"ตรง":"ไม่ตรง"}</span>`:'<span style="color:#8A7FA0">ยังไม่ถึง</span>'}</td>
+      <td>${q.a+1}. ${q.c[q.a]}</td></tr>`); });
+  const done=st.log.filter(Boolean).length, ok=st.log.filter(x=>x&&x.ok).length;
+  const miss=Q.map((q,k)=>st.log[k]&&!st.log[k].ok?k+1:null).filter(Boolean);
+  $("#tSum").innerHTML=`เล่นแล้ว <b>${done}/${Q.length}</b> ข้อ · ได้ดาว <b>${ok}</b> ดวง · ข้อที่ควรคุยต่อ: <b>${miss.length?miss.join(", "):"ไม่มี"}</b>`;
+  show("teacher");
+}
+$("#back").onclick=()=>show(backTo);
+$("#copy").onclick=async()=>{
+  const lines=Q.map((q,k)=>{const L=st.log[k]; return `ข้อ ${k+1} ${q.t}: ${L?`ทีม ${L.team} ตอบ ${L.pick+1} (${L.ok?"ตรง":"ไม่ตรง"})`:"ยังไม่เล่น"}`});
+  const txt=`ภารกิจหยุดแชทแฉ ${new Date().toLocaleDateString("th-TH")}\n`+lines.join("\n");
+  try{ await navigator.clipboard.writeText(txt); $("#copy").textContent="คัดลอกแล้ว"; }catch(e){ $("#copy").textContent="คัดลอกไม่ได้"; }
+  setTimeout(()=>$("#copy").textContent="คัดลอกผล",1500);
+};
+
+/* ---------- clay confetti (stop-motion) ---------- */
+const fx=$("#fx"), cx=fx.getContext("2d"); let parts=[], hand=null;
+function size(){ fx.width=innerWidth*devicePixelRatio; fx.height=innerHeight*devicePixelRatio; }
+size(); addEventListener("resize",size);
+const PAL=["#F7C3CF","#FAE79F","#B9E3CD","#D3C8F1","#B8DAF2","#FBD2B0"];
+function burst(){ for(let i=0;i<46;i++) parts.push({x:innerWidth/2,y:innerHeight*.45,vx:(Math.random()-.5)*14,vy:-Math.random()*13-4,r:6+Math.random()*10,c:PAL[i%6],life:90}); }
+function clayDot(x,y,r,c){ const d=devicePixelRatio; x*=d;y*=d;r*=d;
+  cx.fillStyle="rgba(91,74,110,.2)"; cx.beginPath(); cx.arc(x+r*.25,y+r*.35,r,0,7); cx.fill();
+  const g=cx.createRadialGradient(x-r*.35,y-r*.4,r*.1,x,y,r); g.addColorStop(0,"#fff"); g.addColorStop(.35,c); g.addColorStop(1,shade(c));
+  cx.fillStyle=g; cx.beginPath(); cx.arc(x,y,r,0,7); cx.fill(); }
+function shade(h){const n=parseInt(h.slice(1),16); const f=v=>Math.round(v*.82); return `rgb(${f(n>>16)},${f(n>>8&255)},${f(n&255)})`}
+let tick=0;
+function loop(){
+  requestAnimationFrame(loop); tick++;
+  if(tick%5) return; // ~12 fps = stop-motion feel
+  cx.clearRect(0,0,fx.width,fx.height);
+  parts.forEach(p=>{p.x+=p.vx*5/3;p.y+=p.vy*5/3;p.vy+=1.6;p.life-=5; clayDot(p.x,p.y,p.r,p.c)});
+  parts=parts.filter(p=>p.life>0&&p.y<innerHeight+40);
+  if(hand){ hand.pts.forEach((p,k)=>{ if([4,8,12,16,20].includes(k)) clayDot(p.x,p.y,13,PAL[k%6]); else if(k===0) clayDot(p.x,p.y,10,"#D3C8F1"); });
+    if(hand.n){ const t=hand.pts[9]; cx.font=`800 ${44*devicePixelRatio}px Kanit, Tahoma`; cx.fillStyle="#4A3F5C"; cx.textAlign="center"; cx.fillText(hand.n, t.x*devicePixelRatio, (t.y-70)*devicePixelRatio);} }
+}
+loop();
+
+/* ---------- hold-to-lock ---------- */
+const HOLD_MS=1300;
+const hold={n:0,since:0,reset(){this.n=0;this.since=0;paintHold(0,0)},
+  feed(n){ const now=performance.now();
+    if(n!==this.n){this.n=n;this.since=now;}
+    const p=n? Math.min(1,(now-this.since)/HOLD_MS):0;
+    const fbOpen=$("#fb").classList.contains("show");
+    if(fbOpen){ if(n===4 && p>=1){ this.reset(); next(); } return; }
+    if(!$("#play").classList.contains("show")||st.locked) return;
+    if(n>=1&&n<=3){ paintHold(n,p); if(p>=1){ this.reset(); choose(n-1); } } else paintHold(0,0);
+  }};
+function paintHold(n,p){ document.querySelectorAll(".choice").forEach(c=>{ const on=+c.dataset.k===n-1; c.classList.toggle("hot",on); c.querySelector(".ring").style.setProperty("--p",on?p:0); }); }
+
+/* ---------- camera + hand tracking ---------- */
+const VER="0.4.1675469240";
+function loadScript(src){return new Promise((ok,bad)=>{const s=document.createElement("script");s.src=src;s.crossOrigin="anonymous";s.onload=ok;s.onerror=bad;document.head.appendChild(s);});}
+async function startCamera(){
+  const v=$("#cam");
+  try{
+    status("กำลังเปิดกล้อง…",1);
+    const stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:"user",width:{ideal:640},height:{ideal:480}},audio:false});
+    v.srcObject=stream; await v.play(); v.classList.add("on");
+  }catch(e){ st.mode="tap"; render(); status("เปิดกล้องไม่ได้ ใช้โหมดกดปุ่มแทน (แตะการ์ด หรือกด 1 2 3)"); return; }
+  try{
+    status("กำลังโหลดตัวจับมือ (ต้องใช้อินเทอร์เน็ต)…",1);
+    await loadScript(`https://cdn.jsdelivr.net/npm/@mediapipe/hands@${VER}/hands.js`);
+    const hands=new Hands({locateFile:f=>`https://cdn.jsdelivr.net/npm/@mediapipe/hands@${VER}/${f}`});
+    hands.setOptions({maxNumHands:1,modelComplexity:0,minDetectionConfidence:.6,minTrackingConfidence:.5});
+    hands.onResults(onHands);
+    st.mode="cam"; render(); status("พร้อมแล้ว: ชูนิ้วหน้ากล้องได้เลย");
+    let busy=false;
+    (async function feed(){ if(!busy && v.readyState>=2){ busy=true; try{ await hands.send({image:v}); }catch(e){} busy=false; } setTimeout(feed,66); })();
+  }catch(e){ st.mode="tap"; render(); status("โหลดตัวจับมือไม่ได้ (เน็ตไม่พอ) ใช้โหมดกดปุ่มแทน"); }
+}
+function d2(a,b){return Math.hypot(a.x-b.x,a.y-b.y)}
+function countFingers(lm){
+  const w=lm[0]; let n=0;
+  [[8,6],[12,10],[16,14],[20,18]].forEach(([t,p])=>{ if(d2(lm[t],w)>d2(lm[p],w)*1.18) n++; });
+  return n;
+}
+function onHands(r){
+  const lm=r.multiHandLandmarks&&r.multiHandLandmarks[0];
+  if(!lm){ hand=null; hold.feed(0); return; }
+  // map normalized video coords -> screen (object-fit:cover + mirror)
+  const v=$("#cam"), vw=v.videoWidth||640, vh=v.videoHeight||480, W=innerWidth, H=innerHeight;
+  const s=Math.max(W/vw,H/vh), ox=(W-vw*s)/2, oy=(H-vh*s)/2;
+  const pts=lm.map(p=>({x:W-(p.x*vw*s+ox), y:p.y*vh*s+oy}));
+  const n=countFingers(lm);
+  hand={pts,n:n>=1&&n<=3?n:0};
+  hold.feed(n);
+}
+</script>
+</body>
+</html>
