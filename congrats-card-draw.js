@@ -325,8 +325,14 @@ var __UNI=[
     c.font = '700 20px ' + F_S; c.fillStyle = 'rgba(255,255,255,0.85)'; spaced(c, 'BOARDING PASS', X + CW - 44, Y + 60, 5, 'right');
     c.fillStyle = 'rgba(255,255,255,0.25)'; c.fillRect(X + 40, Y + 90, CW - 80, 1.5);
     var ts = 96; c.font = '400 ' + ts + 'px ' + F_T; while (c.measureText('Congratulations!').width > CW - 140 && ts > 40) { ts -= 2; c.font = '400 ' + ts + 'px ' + F_T; }
-    c.textAlign = 'center'; c.fillStyle = 'rgba(0,0,0,0.28)'; c.fillText('Congratulations!', W / 2 + 4, Y + 198);
-    c.fillStyle = foil(c, X + 120, Y + 110, X + CW - 120, Y + 220); c.fillText('Congratulations!', W / 2, Y + 194);
+    c.textAlign = 'center';
+    if (viv) {   // หัวบัตรสีสด: ทองกลืนกับพื้น → ใช้ขาวครีม ขอบทองบาง + เงาเข้ม ให้อ่านชัด
+      c.save(); c.shadowColor = 'rgba(0,0,0,0.38)'; c.shadowBlur = 10; c.shadowOffsetY = 4; c.fillStyle = '#FFFDF5'; c.fillText('Congratulations!', W / 2, Y + 194); c.restore();
+      c.lineWidth = 1.6; c.strokeStyle = 'rgba(255,214,102,0.9)'; c.strokeText('Congratulations!', W / 2, Y + 194);
+    } else {
+      c.fillStyle = 'rgba(0,0,0,0.28)'; c.fillText('Congratulations!', W / 2 + 4, Y + 198);
+      c.fillStyle = foil(c, X + 120, Y + 110, X + CW - 120, Y + 220); c.fillText('Congratulations!', W / 2, Y + 194);
+    }
     // เส้นทาง PW → มหาวิทยาลัย
     var ry = Y + 300;
     c.font = '600 18px ' + F_M; c.fillStyle = mute; spaced(c, 'FROM', X + 48, ry, 3, 'left'); spaced(c, 'TO', X + CW - 48, ry, 3, 'right');
