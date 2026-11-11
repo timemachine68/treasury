@@ -6,7 +6,7 @@
 <title>แบบสำรวจเรียนต่อ | แนะให้แนว</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Chonburi&family=Mitr:wght@400;500;600&family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Chonburi&family=Mitr:wght@400;500;600&family=Sarabun:wght@400;500;600;700&family=Pacifico&family=Great+Vibes&family=Monoton&family=Playfair+Display:ital,wght@0,700;1,400;1,900&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="congrats-card-draw.js"></script>
 <script src="card-photo-fx.js"></script>
@@ -74,6 +74,10 @@ header.app .wrap{display:flex;align-items:center;gap:12px;padding-bottom:0;flex-
 .status.wait{background:#FFF6D6;color:var(--note-deep)}
 .status.ok{background:var(--pine-tint);color:var(--pine-deep)}
 .status.bad{background:#FBEAE7;color:var(--danger)}
+.cardpick{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:8px;font-size:.88rem;font-weight:600;color:var(--ink-soft,#5b6b66)}
+.cardpick span{min-width:62px}
+.cpick{border:1.5px solid var(--line,#d9e2df);background:#fff;border-radius:999px;padding:6px 12px;font:inherit;font-weight:600;cursor:pointer;min-height:36px}
+.cpick.on{background:var(--pine,#0F6B5C);border-color:var(--pine,#0F6B5C);color:#fff}
 #cardCv{display:block;width:100%;max-width:340px;height:auto;margin:6px auto 0;border-radius:10px;box-shadow:0 6px 22px rgba(20,39,74,.2)}
 .msg{border-radius:10px;padding:10px 13px;font-size:.9rem;margin-top:10px;display:none}
 .msg.err{display:block;background:#FBEAE7;color:var(--danger)}
@@ -383,12 +387,20 @@ function cardPanel(){
       <li class="${c?"":"no"}">${c?"✓ เลือกที่เรียนแล้ว":"✗ ยังไม่ได้เลือกที่เรียน"}</li>
     </ul>
     ${st}
-    ${c? `<canvas id="cardCv" aria-label="ตัวอย่างการ์ดแสดงความยินดี"></canvas>`:""}
+    ${c? `<div class="cardpick"><span>แบบการ์ด</span>${PCWCard.designs.map(([k,l])=>`<button type="button" class="cpick ${PCWCard.design()===k?"on":""}" data-design="${k}">${l}</button>`).join("")}</div>
+    <div class="cardpick"><span>ขนาด</span><button type="button" class="cpick ${cardRatio==="4:5"?"on":""}" data-cr="4:5">โพสต์ 4:5</button><button type="button" class="cpick ${cardRatio==="9:16"?"on":""}" data-cr="9:16">สตอรี่ 9:16</button></div>
+    <canvas id="cardCv" aria-label="ตัวอย่างการ์ดแสดงความยินดี"></canvas>`:""}
     <button class="btn ${can?"primary":"ghost"} block" style="margin-top:12px" id="btnDl" ${can?"":"disabled"}>${can?"ดาวน์โหลดการ์ด (PNG)":"ดาวน์โหลดได้หลังครูอนุมัติ"}</button>
   </div>`;
 }
 
-let photoImg=null, photoImgSrc=null;
+let photoImg=null, photoImgSrc=null, cardRatio="4:5";
+document.addEventListener("click", e=>{
+  const b = e.target.closest("[data-design],[data-cr]"); if(!b || !b.closest(".cardpick")) return;
+  if(b.dataset.design) PCWCard.setDesign(b.dataset.design); else cardRatio = b.dataset.cr;
+  b.parentNode.querySelectorAll(".cpick").forEach(x=> x.classList.toggle("on", x===b));
+  drawCard();
+});
 async function drawCard(){
   const cv = $("cardCv"), c = chosen(); if(!cv || !c) return;
   if(photoUrl && photoImgSrc!==photoUrl){
@@ -398,7 +410,7 @@ async function drawCard(){
   if(!photoUrl) photoImg = null;
   await PCWCard.fontsReady();
   if(!$("cardCv")) return;
-  PCWCard.draw($("cardCv"), cardData(), "4:5");
+  PCWCard.draw($("cardCv"), cardData(), cardRatio);
 }
 function cardData(){
   const c = chosen();
@@ -593,10 +605,10 @@ async function download(){
   const c = chosen(); if(!c || resp?.card_status!=="approved") return;
   const cv = document.createElement("canvas");
   await PCWCard.fontsReady();
-  PCWCard.draw(cv, cardData(), "4:5");
+  PCWCard.draw(cv, cardData(), cardRatio);
   cv.toBlob(b=>{
     const a = document.createElement("a"); a.href = URL.createObjectURL(b);
-    a.download = "การ์ดแสดงความยินดี_" + (profile.username||"") + ".png";
+    a.download = "การ์ดแสดงความยินดี_" + (profile.username||"") + (cardRatio==="9:16"?"_สตอรี่":"") + ".png";
     document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href), 3000);
   }, "image/png");
 }
