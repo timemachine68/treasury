@@ -245,7 +245,7 @@ var __UNI=[
     for (var y = y0; y < y1; y += step) { for (var x = x0; x < x1; x += step) { c.beginPath(); c.arc(x, y, r, 0, 6.2832); c.fill(); } }
   }
   // ---------- ตัวช่วยของแบบใหม่ ----------
-  var F_M = "'Mitr', sans-serif", F_S = "'Playfair Display', serif", F_T = "'Kaushan Script', cursive";
+  var F_M = "'Mitr', sans-serif", F_S = "'Playfair Display', serif", F_T = "'Pacifico', cursive";
   function mixc(h, to, t) { var a = rgb(h), b = rgb(to); return 'rgb(' + [0, 1, 2].map(function (i) { return Math.round(a[i] + (b[i] - a[i]) * t); }).join(',') + ')'; }
   function rgbaU(h, al) { var a = rgb(h); return 'rgba(' + a[0] + ',' + a[1] + ',' + a[2] + ',' + al + ')'; }
   function lumOf(h) { var a = rgb(h); return (0.299 * a[0] + 0.587 * a[1] + 0.114 * a[2]) / 255; }
@@ -272,7 +272,7 @@ var __UNI=[
     var sx = align === 'center' ? x - w / 2 : align === 'right' ? x - w : x; c.textAlign = 'left';
     ch.forEach(function (k) { c.fillText(k, sx, y); sx += c.measureText(k).width + sp; });
   }
-  function foil(c, x0, y0, x1, y1) { var g = c.createLinearGradient(x0, y0, x1, y1); g.addColorStop(0, '#FFFFFF'); g.addColorStop(0.5, '#FFF3CF'); g.addColorStop(1, '#F6D98B'); return g; }
+  function foil(c, x0, y0, x1, y1) { var g = c.createLinearGradient(x0, y0, x1, y1); g.addColorStop(0, '#8A6215'); g.addColorStop(0.3, '#E8C25A'); g.addColorStop(0.5, '#FFF0B8'); g.addColorStop(0.7, '#D4A63C'); g.addColorStop(1, '#8A6215'); return g; }
   function plane(c, x, y, s, rot, col) {
     c.save(); c.translate(x, y); c.rotate(rot || 0); c.scale(s, s); c.fillStyle = col;
     c.beginPath(); c.moveTo(26, 0); c.lineTo(-18, -6); c.lineTo(-28, -6); c.lineTo(-22, 0); c.lineTo(-28, 6); c.lineTo(-18, 6); c.closePath(); c.fill();
@@ -288,7 +288,7 @@ var __UNI=[
   // ---------- แบบ "บัตรขึ้นเครื่อง" ----------
   function drawBoarding(canvas, d, rat) {
     var P = stage(canvas, rat), c = P.c, W = P.W, H = P.H, T = theme(d), U = T.u;
-    var deep = mixc(U, '#000000', 0.5), ink = '#1F2328', mute = '#8A8F98', code = uniCode(d), seed = seedOf(d.name + d.inst);
+    var deep = mixc(U, '#000000', lumOf(U) > 0.6 ? 0.66 : 0.5), ink = '#1F2328', mute = '#8A8F98', code = uniCode(d), seed = seedOf(d.name + d.inst);
     var UT = lumOf(U) > 0.6 ? mixc(U, '#000000', 0.38) : U;   // สีอ่อนมาก (เช่น เหลือง) ใช้เฉดเข้มขึ้นกับตัวหนังสือบนพื้นขาว
     // พื้นหลังเต็มภาพ
     var g = c.createLinearGradient(0, 0, W, H); g.addColorStop(0, mixc(U, '#ffffff', 0.35)); g.addColorStop(1, mixc(U, '#000000', 0.15)); c.fillStyle = g; c.fillRect(0, 0, W, H);
@@ -312,15 +312,15 @@ var __UNI=[
     c.save(); c.shadowColor = 'rgba(0,0,0,0.25)'; c.shadowBlur = 44; c.shadowOffsetY = 18; notchPath(); c.fillStyle = '#FFFFFF'; c.fill(); c.restore();
     c.save(); notchPath(); c.clip();
     // หัวบัตร
-    var hg = c.createLinearGradient(X, Y, X + CW, Y + 250); hg.addColorStop(0, deep); hg.addColorStop(1, mixc(U, '#000000', 0.3)); c.fillStyle = hg; c.fillRect(X, Y, CW, 250);
+    var hg = c.createLinearGradient(X, Y, X + CW, Y + 250); hg.addColorStop(0, deep); hg.addColorStop(1, mixc(U, '#000000', lumOf(U) > 0.6 ? 0.5 : 0.3)); c.fillStyle = hg; c.fillRect(X, Y, CW, 250);
     c.save(); c.globalAlpha = 0.1; c.strokeStyle = '#fff'; c.lineWidth = 2; for (var i = 0; i < 9; i++) { c.beginPath(); c.arc(X + CW - 40, Y + 20, 50 + i * 34, 0, 6.2832); c.stroke(); } c.restore();
     c.fillStyle = '#fff'; c.beginPath(); c.arc(X + 62, Y + 52, 22, 0, 6.2832); c.fill(); plane(c, X + 62, Y + 52, 0.5, -0.5, deep);
     c.fillStyle = '#fff'; c.font = '600 22px ' + F_M; spaced(c, 'PW GUIDANCE AIRLINES', X + 98, Y + 60, 3, 'left');
     c.font = '700 20px ' + F_S; c.fillStyle = 'rgba(255,255,255,0.85)'; spaced(c, 'BOARDING PASS', X + CW - 44, Y + 60, 5, 'right');
     c.fillStyle = 'rgba(255,255,255,0.25)'; c.fillRect(X + 40, Y + 90, CW - 80, 1.5);
-    var ts = 104; c.font = '400 ' + ts + 'px ' + F_T; while (c.measureText('Congratulations!').width > CW - 140 && ts > 40) { ts -= 2; c.font = '400 ' + ts + 'px ' + F_T; }
-    c.textAlign = 'center'; c.fillStyle = 'rgba(0,0,0,0.28)'; c.fillText('Congratulations!', W / 2 + 4, Y + 204);
-    c.fillStyle = foil(c, 0, Y + 120, 0, Y + 210); c.fillText('Congratulations!', W / 2, Y + 200);
+    var ts = 96; c.font = '400 ' + ts + 'px ' + F_T; while (c.measureText('Congratulations!').width > CW - 140 && ts > 40) { ts -= 2; c.font = '400 ' + ts + 'px ' + F_T; }
+    c.textAlign = 'center'; c.fillStyle = 'rgba(0,0,0,0.28)'; c.fillText('Congratulations!', W / 2 + 4, Y + 198);
+    c.fillStyle = foil(c, X + 120, Y + 110, X + CW - 120, Y + 220); c.fillText('Congratulations!', W / 2, Y + 194);
     // เส้นทาง PW → มหาวิทยาลัย
     var ry = Y + 300;
     c.font = '600 18px ' + F_M; c.fillStyle = mute; spaced(c, 'FROM', X + 48, ry, 3, 'left'); spaced(c, 'TO', X + CW - 48, ry, 3, 'right');
@@ -414,7 +414,7 @@ var __UNI=[
   }
   function fontsReady() {
     if (!document.fonts || !document.fonts.load) { return Promise.resolve(); }
-    return Promise.all(['400 30px Sarabun', '500 30px Sarabun', '600 30px Sarabun', '700 30px Sarabun', '400 30px Mitr', '600 30px Mitr', '400 30px Chonburi', '400 30px "Kaushan Script"', '700 30px "Playfair Display"', 'italic 400 30px "Playfair Display"', 'italic 900 30px "Playfair Display"', '400 30px "Great Vibes"', '400 30px Monoton'].map(function (f) { return document.fonts.load(f, 'ยินดีด้วย Congratulations PW 2569'); })).catch(function () {});
+    return Promise.all(['400 30px Sarabun', '500 30px Sarabun', '600 30px Sarabun', '700 30px Sarabun', '400 30px Mitr', '600 30px Mitr', '400 30px Chonburi', '400 30px Pacifico', '700 30px "Playfair Display"', 'italic 400 30px "Playfair Display"', 'italic 900 30px "Playfair Display"', '400 30px "Great Vibes"', '400 30px Monoton'].map(function (f) { return document.fonts.load(f, 'ยินดีด้วย Congratulations PW 2569'); })).catch(function () {});
   }
   window.PCWCard = { draw: drawCard, roundShort: roundShort, fontsReady: fontsReady, color: effColor, code: uniCode, design: curDesign, setDesign: setDesign, designs: [['boarding', '✈️ บัตรขึ้นเครื่อง'], ['neon', '🌃 ไฟนีออน']] };
 })();
