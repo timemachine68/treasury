@@ -83,6 +83,8 @@ const ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsI
 const EMAIL_DOMAIN = "guidance-pcw.local";
 const sb = supabase.createClient(SUPABASE_URL, ANON_KEY);
 const C = window.CG, baht = C.baht;
+const isCu=k=>k==="custom_a"||k==="custom_b";
+const progLbl=k=>isCu(k)?"กรอกเอง (นักเรียนใส่เอง)":(C.P[k]?esc(C.U[C.P[k].u].short)+" "+esc(C.P[k].name):"-");
 const esc=t=>String(t??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const $=id=>document.getElementById(id);
 function toast(t){const el=$("toast");el.textContent=t;el.classList.add("show");clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove("show"),3800)}
@@ -187,7 +189,7 @@ function roomTable(sel){
     <td>${x.finished?`<span class="pill on">จบแล้ว${x.play_count>1?" ("+x.play_count+" รอบ)":""}</span>`:x.pre_guess?`<span class="pill off">กำลังเล่น</span>`:`<span class="muted">ยังไม่เริ่ม</span>`}</td>
     <td>${x.pre_guess?GUESS[x.pre_guess]:"-"}</td>
     <td>${x.pre_score!=null?x.pre_score+" → "+(x.post_score!=null?x.post_score:"-"):"-"}</td>
-    <td>${pa&&pb?`${esc(C.U[pa.u].short)} ${esc(pa.name)}<br><span class="muted">vs ${esc(C.U[pb.u].short)} ${esc(pb.name)} · ${esc(C.HOUSING[x.housing]||"")}</span>`:"-"}</td>
+    <td>${(pa||isCu(x.private_prog))&&(pb||isCu(x.public_prog))?`${progLbl(x.private_prog)}<br><span class="muted">vs ${progLbl(x.public_prog)} · ${esc(C.HOUSING[x.housing]||"")}</span>`:"-"}</td>
     <td>${x.finished?`${baht(x.total_private)} / ${baht(x.total_public)}`:"-"}</td>
     <td>${x.post_choice?POST[x.post_choice]:"-"}</td><td>${x.talk_home?TALK[x.talk_home]:"-"}</td>
     <td>${x.pre_guess?`<button class="btn sm danger" onclick="resetOne('${esc(x.pid)}')">ล้างผล</button>`:""}</td></tr>`}).join("")}

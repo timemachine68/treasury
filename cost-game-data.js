@@ -7,6 +7,7 @@ const CHECKED = "9 พ.ย. 2569";
 const YEAR = "2569";
 
 const SRC = {
+  custom:{t:"ตัวเลขที่นักเรียนกรอกเอง (ไม่ได้ตรวจกับประกาศของมหาวิทยาลัย)", u:""},
   hcu:  {t:"ตารางค่าธรรมเนียมเหมาจ่าย ป.ตรี ปี 2569 ม.หัวเฉียวเฉลิมพระเกียรติ", u:"https://admission.hcu.ac.th/Files/payment.pdf"},
   kmitl:{t:"สรุปค่าเทอม สจล. 2569 (อ้างประกาศสำนักทะเบียน สจล.)", u:"https://dreamnesthub.com/tuition-fee-kmitl-2569"},
   ku:   {t:"ประกาศรับสมัคร TCAS1 ปี 2569 มก.ศรีราชา (ข้อ 9 ค่าธรรมเนียม)", u:"https://admissions.src.ku.ac.th/pdf/TCAS1_1_69.pdf"},
@@ -104,9 +105,9 @@ const P = {
 
 const TRACKS = {
   biz:   {name:"ธุรกิจ บัญชี โลจิสติกส์", icon:"💼", priv:["hcu_biz","bu_biz"], pub:["kmitl_biz","ku_mgt","buu_log","mfu_mgt","up_mgt","rmutk_biz","cmu_biz","nu_biz"]},
-  health:{name:"สุขภาพ พยาบาล เทคนิคการแพทย์", icon:"🩺", priv:["hcu_nur","hcu_mt","hcu_pt","hcu_medsci","hcu_oh"], pub:["buu_nur","buu_mt","buu_pt","buu_medsci","mfu_oh","up_nur","up_medsci","rmutk_health","cmu_nur","cmu_mt","cmu_pt","nu_nur","nu_medsci","nu_mt","nu_pt","dru_nur"]},
+  health:{name:"สุขภาพ พยาบาล เทคนิคการแพทย์", icon:"🩺", priv:["hcu_nur","hcu_mt","hcu_pt","hcu_medsci","hcu_oh","dru_nur"], pub:["buu_nur","buu_mt","buu_pt","buu_medsci","mfu_oh","up_nur","up_medsci","rmutk_health","cmu_nur","cmu_mt","cmu_pt","nu_nur","nu_medsci","nu_mt","nu_pt","dru_nur"]},
   sci:   {name:"วิทยาศาสตร์ คอมพิวเตอร์", icon:"🔬", priv:["hcu_cs"], pub:["kmitl_sci","ku_sci","buu_sci","up_sci","rmutk_cs","cmu_sci","nu_sci"]},
-  lang:  {name:"ภาษา ศิลปศาสตร์", icon:"🌏", priv:["hcu_eng","bu_eng"], pub:["kmitl_lang","buu_eng","up_lang","rmutk_eng","cmu_lang","nu_lang","dru_eng","dru_chi","dru_thai"]}
+  lang:  {name:"ภาษา ศิลปศาสตร์", icon:"🌏", priv:["hcu_eng","bu_eng","dru_eng","dru_chi","dru_thai"], pub:["kmitl_lang","buu_eng","up_lang","rmutk_eng","cmu_lang","nu_lang","dru_eng","dru_chi","dru_thai"]}
 };
 
 const HOUSING = {home:"อยู่บ้าน ไป-กลับทุกวัน", dorm_in:"หอใน (หอของมหาวิทยาลัย)", dorm_out:"หอนอก (เช่ารายเดือน)"};
@@ -169,9 +170,9 @@ function calc(progKey, housing, base){
       hours += K.studyDays*p.hours;
     }else{
       if(h==="dorm_in"){ stay += uni.dormIn.fee*2 + uni.dormIn.util*K.dormMonths; }
-      else { stay += (p.share?uni.rent/2:uni.rent)*p.months + K.utilOut*p.months; }
+      else { stay += (p.share?uni.rent/2:uni.rent)*p.months + (uni.utilOut!=null?uni.utilOut:K.utilOut)*p.months; }
       food += K.dormDays*p.dormFood + (365-K.dormDays)*p.homeFood;
-      if(uni.zone==="far"){ const tc=uni.trip?uni.trip.cost:K.tripFar, th=uni.trip?uni.trip.hours:K.tripHoursFar; travel += tc*K.tripFarPerYear*p.tripMult; hours += th*K.tripFarPerYear*p.tripMult; }
+      if(uni.zone==="far"){ const tc=uni.trip?uni.trip.cost:K.tripFar, th=uni.trip?uni.trip.hours:K.tripHoursFar, py=uni.tripPerYear!=null?uni.tripPerYear:K.tripFarPerYear; travel += tc*py*p.tripMult; hours += th*py*p.tripMult; }
       else { travel += K.tripMid*K.tripMidPerMonth*K.dormMonths*p.tripMult; hours += K.tripHoursMid*K.tripMidPerMonth*K.dormMonths*p.tripMult; }
     }
   }
