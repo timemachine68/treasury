@@ -3,13 +3,13 @@
 (function(){
 'use strict';
 var __UNI=[
- ['พระจอมเกล้าธนบุรี','#FA4616','KMUTT'],['พระจอมเกล้าเจ้าคุณทหารลาดกระบัง','#E35205','KMITL'],['พระจอมเกล้าพระนครเหนือ','#AC3520','KMUTNB'],
+ ['พระจอมเกล้าธนบุรี','#FA4616','KMUTT'],['พระจอมเกล้าเจ้าคุณทหารลาดกระบัง','#E35205','KMITL','v'],['พระจอมเกล้าพระนครเหนือ','#AC3520','KMUTNB'],
  ['จุฬาลงกรณ์','#DE5C8E','CU'],['เกษตรศาสตร์','#006664','KU'],['มหิดล','#0035AD','MU'],
  ['ธรรมศาสตร์','#C3002F','TU'],['ศิลปากร','#007A6D','SU'],['เชียงใหม่','#9E76B4','CMU'],
  ['ขอนแก่น','#A73B24','KKU'],['สงขลานครินทร์','#003C71','PSU'],['บูรพา','#FFCE00','BUU'],
  ['รามคำแหง','#1E3F8A','RU'],['ศรีนครินทรวิโรฒ','#DA2128','SWU'],['นเรศวร','#E0582A','NU'],
  ['มหาสารคาม','#E6A100','MSU'],['ทักษิณ','#358CCB','TSU'],['สุรนารี','#E4572E','SUT'],
- ['แม่ฟ้าหลวง','#A6192E','MFU'],['พะเยา','#6A3A95','UP'],['วลัยลักษณ์','#F37321','WU'],
+ ['แม่ฟ้าหลวง','#E4002B','MFU','v'],['พะเยา','#6A3A95','UP'],['วลัยลักษณ์','#F37321','WU'],
  ['แม่โจ้','#00843D','MJU'],['อุบลราชธานี','#1B3F8B','UBU'],['นครพนม','#D4A017','NPU'],
  ['ราชมงคลธัญบุรี','#162B75','RMUTT'],['ราชมงคลกรุงเทพ','#008000','RMUTK'],['ราชมงคลพระนคร','#6B2D5C','RMUTP'],
  ['ราชมงคลตะวันออก','','RMUTTO'],['ราชมงคลสุวรรณภูมิ','','RMUTSB'],['ราชมงคลรัตนโกสินทร์','','RMUTR'],
@@ -17,7 +17,7 @@ var __UNI=[
  ['จันทรเกษม','#808080','CRU'],['บ้านสมเด็จเจ้าพระยา','#6B2D5C','BSRU'],['ราชนครินทร์','','RNRU'],
  ['สุโขทัยธรรมาธิราช','','STOU'],['หัวเฉียว','#FFD700','HCU'],['รังสิต','#E6007E','RSU'],
  ['มหาวิทยาลัยกรุงเทพ','#FF6B00','BU'],['หอการค้า','#1E90FF','UTCC'],['ศรีปทุม','#EC008B','SPU'],
- ['เกริก','','KRU'],['เกษมบัณฑิต','#FF6B00','KBU'],['ธุรกิจบัณฑิตย์','#6B2D5C','DPU'],['เอเชียอาคเนย์','','SAU'],
+ ['เกริก','','KRU'],['เกษมบัณฑิต','#FF6B00','KBU'],['ธุรกิจบัณฑิตย์','#8E24AA','DPU','v'],['เอเชียอาคเนย์','','SAU'],
  ['มหาวิทยาลัยสยาม','','SIAM'],['อัสสัมชัญ','#C8102E','ABAC'],['เทคโนโลยีมหานคร','','MUT'],
  ['เนชั่น','','NTU'],['ปทุมวัน','','PIT'],['การบินพลเรือน','','CATC'],
  ['บัณฑิตพัฒนศิลป์','','BPI'],['นวมินทราธิราช','#0B5D1E','NMU'],['การกีฬาแห่งชาติ','','TNSU'],
@@ -57,6 +57,12 @@ var __UNI=[
     return d.inst + (String(d.inst).indexOf('บรมราชชนนี') > -1 ? ' ' : ' วิทยาเขต') + cp;
   }
   function effColor(d) { return d.color || uniColor(d.inst) || DEFAULT_U; }
+  // 'v' ช่องที่ 4 = ครูอยากได้สีสด (หัวบัตรไม่หม่นลง) — ใช้เมื่อไม่ได้กำหนดสีเองใน d.color
+  function uniVivid(d) {
+    if (d.color) { return false; }
+    var i; for (i = 0; i < UNI_COLORS.length; i++) { if (d.inst && d.inst.indexOf(UNI_COLORS[i][0]) > -1 && UNI_COLORS[i][1]) { return UNI_COLORS[i][3] === 'v'; } }
+    return false;
+  }
   function theme(d) {
     var u = effColor(d);
     return {
@@ -288,7 +294,7 @@ var __UNI=[
   // ---------- แบบ "บัตรขึ้นเครื่อง" ----------
   function drawBoarding(canvas, d, rat) {
     var P = stage(canvas, rat), c = P.c, W = P.W, H = P.H, T = theme(d), U = T.u;
-    var deep = mixc(U, '#000000', lumOf(U) > 0.6 ? 0.66 : 0.5), ink = '#1F2328', mute = '#8A8F98', code = uniCode(d), seed = seedOf(d.name + d.inst);
+    var viv = uniVivid(d), deep = viv ? mixc(U, '#000000', 0.2) : mixc(U, '#000000', lumOf(U) > 0.6 ? 0.66 : 0.5), ink = '#1F2328', mute = '#8A8F98', code = uniCode(d), seed = seedOf(d.name + d.inst);
     var UT = lumOf(U) > 0.6 ? mixc(U, '#000000', 0.38) : U;   // สีอ่อนมาก (เช่น เหลือง) ใช้เฉดเข้มขึ้นกับตัวหนังสือบนพื้นขาว
     // พื้นหลังเต็มภาพ
     var g = c.createLinearGradient(0, 0, W, H); g.addColorStop(0, mixc(U, '#ffffff', 0.35)); g.addColorStop(1, mixc(U, '#000000', 0.15)); c.fillStyle = g; c.fillRect(0, 0, W, H);
@@ -312,7 +318,7 @@ var __UNI=[
     c.save(); c.shadowColor = 'rgba(0,0,0,0.25)'; c.shadowBlur = 44; c.shadowOffsetY = 18; notchPath(); c.fillStyle = '#FFFFFF'; c.fill(); c.restore();
     c.save(); notchPath(); c.clip();
     // หัวบัตร
-    var hg = c.createLinearGradient(X, Y, X + CW, Y + 250); hg.addColorStop(0, deep); hg.addColorStop(1, mixc(U, '#000000', lumOf(U) > 0.6 ? 0.5 : 0.3)); c.fillStyle = hg; c.fillRect(X, Y, CW, 250);
+    var hg = c.createLinearGradient(X, Y, X + CW, Y + 250); hg.addColorStop(0, viv ? U : deep); hg.addColorStop(1, mixc(U, '#000000', viv ? 0.22 : (lumOf(U) > 0.6 ? 0.5 : 0.3))); c.fillStyle = hg; c.fillRect(X, Y, CW, 250);
     c.save(); c.globalAlpha = 0.1; c.strokeStyle = '#fff'; c.lineWidth = 2; for (var i = 0; i < 9; i++) { c.beginPath(); c.arc(X + CW - 40, Y + 20, 50 + i * 34, 0, 6.2832); c.stroke(); } c.restore();
     c.fillStyle = '#fff'; c.beginPath(); c.arc(X + 62, Y + 52, 22, 0, 6.2832); c.fill(); plane(c, X + 62, Y + 52, 0.5, -0.5, deep);
     c.fillStyle = '#fff'; c.font = '600 22px ' + F_M; spaced(c, 'PW GUIDANCE AIRLINES', X + 98, Y + 60, 3, 'left');
