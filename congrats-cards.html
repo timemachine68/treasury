@@ -127,7 +127,7 @@ select.sel{min-height:40px;border-radius:999px;border:1.5px solid var(--line);pa
     <h3>ปรับรูป</h3>
     <label style="display:flex;align-items:center;gap:8px;font-size:.9rem;font-weight:600"><input type="checkbox" id="fxAuto" style="width:20px;height:20px;accent-color:var(--pine)"> ปรับแสงและสีอัตโนมัติ</label>
     <div class="fxbg"><span class="hint">พื้นหลัง</span>
-      <button class="chip" data-bg="keep">เดิม</button><button class="chip" data-bg="uni">สีมหาวิทยาลัย</button><button class="chip" data-bg="white">ขาวสะอาด</button>
+      <button class="chip" data-bg="auto">✨ ให้ระบบเลือก</button><button class="chip" data-bg="keep">เดิม</button><button class="chip" data-bg="studio">ฉากสตูดิโอ</button><button class="chip" data-bg="blur">เบลอของเดิม</button><button class="chip" data-bg="uni">สีมหาวิทยาลัย</button><button class="chip" data-bg="white">ขาวสะอาด</button>
     </div>
     <div class="fxrow"><label for="fxZoom">ขนาดหน้า</label><input type="range" id="fxZoom" min="50" max="200" step="5"><output id="oZoom"></output></div>
     <div class="fxrow"><label for="fxDx">เลื่อนซ้าย-ขวา</label><input type="range" id="fxDx" min="-35" max="35" step="1"><output id="oDx"></output></div>
@@ -468,7 +468,9 @@ document.querySelectorAll("[data-bg]").forEach(b=> b.onclick = async ()=>{
     try{ editMask = await PCWPhoto.maskFor(img); }
     catch(e){ editMask = null; syncFxUi(); $("fxHint").textContent = "แยกพื้นหลังไม่สำเร็จ: " + (e.message||e); return; }
   }
-  editFx.bg = want; editPrepKey = ""; syncFxUi(); drawView();
+  let pick = want;
+  if(want === "auto"){ pick = PCWPhoto.suggestBg(editMask); $("fxHint").textContent = pick === "keep" ? "ระบบเห็นว่าแยกตัวคนได้ไม่ชัด จึงคงพื้นหลังเดิมไว้ (ลองเลือกแบบอื่นเองได้)" : "ระบบเลือก" + (pick === "blur" ? "เบลอของเดิม" : "ฉากสตูดิโอ") + "ให้แล้ว ไม่ถูกใจเลือกแบบอื่นได้"; }
+  editFx.bg = pick; editPrepKey = ""; syncFxUi(); drawView();
 });
 $("btnFxReset").onclick = async ()=>{
   if(!viewing) return;
@@ -497,7 +499,7 @@ function cleanFx(fx){
   return { v:1, auto: fx.auto !== false, tone: fx.tone || null,
     face: fx.face ? {cx:r(fx.face.cx,4), cy:r(fx.face.cy,4), w:r(fx.face.w,4), h:r(fx.face.h,4)} : null,
     zoom: r(fx.zoom ?? 1), dx: r(fx.dx), dy: r(fx.dy), bright: Math.round(+fx.bright||0), contrast: Math.round(+fx.contrast||0),
-    bg: ["keep","uni","white"].includes(fx.bg) ? fx.bg : "keep", noFace: !fx.face };
+    bg: ["keep","uni","white","studio","blur"].includes(fx.bg) ? fx.bg : "keep", noFace: !fx.face };
 }
 async function saveFx(x, fx, maskCanvas){
   const clean = cleanFx(fx), old = fxRows[x.id];

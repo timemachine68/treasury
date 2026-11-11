@@ -4,7 +4,7 @@
  * 3) แยกคนออกจากพื้นหลัง → เปลี่ยนพื้นเป็นสีมหาวิทยาลัย/สีขาว
  * โมเดล MediaPipe (Apache-2.0) โหลดเฉพาะฝั่งครูตอนต้องใช้ ฝั่งนักเรียนใช้แค่ render() ที่ไม่ต้องโหลดโมเดล
  *
- * fx = { v:1, auto:true, tone:{g:[r,g,b],lo,hi,gamma}, face:{cx,cy,w,h}|null, zoom:1, dx:0, dy:0, bright:0, contrast:0, bg:'keep'|'uni'|'white' }
+ * fx = { v:1, auto:true, tone:{g:[r,g,b],lo,hi,gamma}, face:{cx,cy,w,h}|null, zoom:1, dx:0, dy:0, bright:0, contrast:0, bg:'keep'|'uni'|'white'|'studio'|'blur' }
  *   (ตำแหน่งทั้งหมดเป็นสัดส่วน 0–1 ของรูป ไม่ขึ้นกับขนาดไฟล์)
  */
 (function () {
@@ -185,27 +185,91 @@
     }
     return null;
   }
+  function rgbOf(hex) { var h = String(hex || '#27478a').replace('#', ''); return [parseInt(h.substr(0, 2), 16), parseInt(h.substr(2, 2), 16), parseInt(h.substr(4, 2), 16)]; }
+  function mix(c, to, t) { return [Math.round(c[0] + (to[0] - c[0]) * t), Math.round(c[1] + (to[1] - c[1]) * t), Math.round(c[2] + (to[2] - c[2]) * t)]; }
+  function css(c, a) { return 'rgba(' + c[0] + ',' + c[1] + ',' + c[2] + ',' + (a == null ? 1 : a) + ')'; }
+
+  // ขัดขอบ mask: หดเข้า 1-2 px (ตัดขอบเก่าที่ติดสีพื้นหลังเดิม) แล้วเกลี่ยให้นุ่ม ไม่เป็นรอยหยัก
+  function refineMask(maskImg, W, H) {
+    var m = canvas(W, H), mx = m.getContext('2d');
+    mx.imageSmoothingQuality = 'high'; mx.drawImage(maskImg, 0, 0, W, H);
+    var id = mx.getImageData(0, 0, W, H), d = id.data, n = W * H, a = new Uint8Array(n), t = new Uint8Array(n), i, x, y, k;
+    for (i = 0; i < n; i++) a[i] = d[i * 4 + 3];
+    var r = Math.max(1, Math.round(W / 700));
+    function pass(src, dst, horiz, mode) {   // mode 0 = min, 1 = box average
+      var len = horiz ? W : H, outer = horiz ? H : W, base, step = horiz ? 1 : W, o, v, cnt;
+      for (o = 0; o < outer; o++) {
+        base = horiz ? o * W : o;
+        for (i = 0; i < len; i++) {
+          v = mode ? 0 : 255; cnt = 0;
+          for (k = -r; k <= r; k++) { x = i + k; if (x < 0 || x >= len) continue; y = src[base + x * step]; if (mode) { v += y; cnt++; } else if (y < v) v = y; }
+          dst[base + i * step] = mode ? Math.round(v / cnt) : v;
+        }
+      }
+    }
+    pass(a, t, true, 0); pass(t, a, false, 0);   // erode
+    pass(a, t, true, 1); pass(t, a, false, 1);   // soften
+    for (i = 0; i < n; i++) { d[i * 4] = d[i * 4 + 1] = d[i * 4 + 2] = 255; d[i * 4 + 3] = a[i]; }
+    mx.putImageData(id, 0, 0);
+    return m;
+  }
+  // พื้นหลังเบลอจากรูปเดิม (แบบโหมดถ่ายคน) เบากว่าและขอบไม่ฟ้อง
+  function blurredBack(c, W, H) {
+    var out = canvas(W, H), ox = out.getContext('2d'), sm = canvas(W / 14, H / 14), sx = sm.getContext('2d');
+    sx.imageSmoothingQuality = 'high'; sx.drawImage(c, 0, 0, sm.width, sm.height);
+    ox.imageSmoothingEnabled = true; ox.imageSmoothingQuality = 'high'; ox.drawImage(sm, 0, 0, W, H);
+    ox.fillStyle = 'rgba(255,255,255,0.22)'; ox.fillRect(0, 0, W, H);   // ให้สว่างขึ้น หน้าเด่น
+    return out;
+  }
   function render(img, fx, maskImg, uniHex) {
     fx = fx || {};
     var c = scaled(img, MAX_SIDE), x = c.getContext('2d'), W = c.width, H = c.height;
     var L = lut(fx), id = x.getImageData(0, 0, W, H), d = id.data, i;
     for (i = 0; i < d.length; i += 4) { d[i] = L[0][d[i]]; d[i + 1] = L[1][d[i + 1]]; d[i + 2] = L[2][d[i + 2]]; }
     x.putImageData(id, 0, 0);
-    var bg = (fx.bg && fx.bg !== 'keep' && maskImg) ? bgColor(fx.bg, uniHex) : null;
-    if (bg) {
+    var mode = fx.bg && fx.bg !== 'keep' && maskImg ? fx.bg : null, bg = null;
+    if (mode) {
       var person = canvas(W, H), px = person.getContext('2d');
       px.drawImage(c, 0, 0);
       px.globalCompositeOperation = 'destination-in';
-      px.imageSmoothingQuality = 'high';
-      px.drawImage(maskImg, 0, 0, W, H);
+      px.drawImage(refineMask(maskImg, W, H), 0, 0);
+      var back = null;
+      if (mode === 'blur') back = blurredBack(c, W, H);
       x.globalCompositeOperation = 'source-over';
-      x.fillStyle = bg; x.fillRect(0, 0, W, H);
-      var gl = x.createRadialGradient(W / 2, H * 0.35, 0, W / 2, H * 0.35, Math.max(W, H) * 0.75);
-      gl.addColorStop(0, 'rgba(255,255,255,0.35)'); gl.addColorStop(1, 'rgba(255,255,255,0)');
-      x.fillStyle = gl; x.fillRect(0, 0, W, H);
+      if (mode === 'studio') {
+        // ฉากสตูดิโอ: สีมหาวิทยาลัยอ่อน ๆ สว่างตรงหลังศีรษะ ขอบเข้มขึ้นนิดเดียว
+        var base = mix(rgbOf(uniHex), [255, 255, 255], 0.8), edge = mix(base, [0, 0, 0], 0.1), glow = mix(base, [255, 255, 255], 0.65);
+        var f = fx.face, gx = (f ? f.cx : 0.5) * W, gy = (f ? f.cy : 0.3) * H, R = Math.max(W, H) * 0.85;
+        x.fillStyle = css(edge); x.fillRect(0, 0, W, H);
+        var g1 = x.createRadialGradient(gx, gy, 0, gx, gy, R);
+        g1.addColorStop(0, css(glow)); g1.addColorStop(0.45, css(base)); g1.addColorStop(1, css(edge));
+        x.fillStyle = g1; x.fillRect(0, 0, W, H);
+        bg = css(edge);
+      } else if (mode === 'blur') {
+        x.drawImage(back, 0, 0);
+        var q = canvas(1, 1).getContext('2d'); q.drawImage(back, 0, 0, W, H, 0, 0, 1, 1);
+        var av = q.getImageData(0, 0, 1, 1).data; bg = 'rgb(' + av[0] + ',' + av[1] + ',' + av[2] + ')';
+      } else {
+        bg = bgColor(mode, uniHex);
+        x.fillStyle = bg; x.fillRect(0, 0, W, H);
+        var gl = x.createRadialGradient(W / 2, H * 0.35, 0, W / 2, H * 0.35, Math.max(W, H) * 0.75);
+        gl.addColorStop(0, 'rgba(255,255,255,0.35)'); gl.addColorStop(1, 'rgba(255,255,255,0)');
+        x.fillStyle = gl; x.fillRect(0, 0, W, H);
+      }
       x.drawImage(person, 0, 0);
     }
     return { canvas: c, bg: bg };
+  }
+
+  // เลือกพื้นหลังให้เองจากคุณภาพการแยกตัวคน: ตัวคนพอดี → ฉากสตูดิโอ, แยกได้ไม่ชัด → คงของเดิม
+  function suggestBg(maskImg) {
+    var w = 96, h = Math.max(1, Math.round(96 * maskImg.height / maskImg.width)), c = canvas(w, h), x = c.getContext('2d');
+    x.drawImage(maskImg, 0, 0, w, h);
+    var d = x.getImageData(0, 0, w, h).data, n = w * h, solid = 0, soft = 0, i, a;
+    for (i = 0; i < n; i++) { a = d[i * 4 + 3]; if (a > 235) solid++; else if (a > 25) soft++; }
+    var ratio = solid / n, softRatio = soft / Math.max(1, solid + soft);
+    if (ratio < 0.06 || ratio > 0.8 || softRatio > 0.35) return 'keep';
+    return softRatio > 0.2 ? 'blur' : 'studio';   // ขอบไม่เนียนมาก → เบลอของเดิมปลอดภัยกว่า
   }
 
   /* ---------- ค่าเริ่มต้นอัตโนมัติ (ฝั่งครู) ---------- */
@@ -226,5 +290,5 @@
     return { photo: prepared.canvas, photoFace: face, photoZoom: (fx && fx.zoom) || 1, photoDx: (fx && fx.dx) || 0, photoDy: (fx && fx.dy) || 0, photoBg: prepared.bg || null };
   }
 
-  window.PCWPhoto = { autoFx: autoFx, maskFor: maskFor, render: render, bgColor: bgColor, cardFields: cardFields, preload: preload };
+  window.PCWPhoto = { autoFx: autoFx, maskFor: maskFor, render: render, bgColor: bgColor, suggestBg: suggestBg, cardFields: cardFields, preload: preload };
 })();
