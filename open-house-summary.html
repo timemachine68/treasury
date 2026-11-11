@@ -72,6 +72,26 @@
     </div>
 
     <div class="card">
+      <h2>🗓️ จัดการงาน Open House</h2>
+      <p class="hint">ปิดรับแล้วนักเรียนจะไม่เห็นงานนั้นในหน้าลงทะเบียน ข้อมูลที่ลงทะเบียนไว้แล้วยังอยู่ครบ</p>
+      <div class="tbl-wrap" style="margin-top:10px">
+        <table>
+          <thead><tr><th>มหาวิทยาลัย</th><th>วันที่งาน</th><th>สถานะรับลงทะเบียน</th><th></th></tr></thead>
+          <tbody id="evRows"></tbody>
+        </table>
+      </div>
+      <h2 style="margin-top:16px">➕ เพิ่มงานใหม่</h2>
+      <div class="filters">
+        <div><label for="nuUni">มหาวิทยาลัย</label><input type="text" id="nuUni" maxlength="200" placeholder="เช่น มหาวิทยาลัย..."></div>
+        <div><label for="nuDate">วันที่จัดงาน</label><input type="date" id="nuDate"></div>
+      </div>
+      <div class="btnrow">
+        <button class="btn" id="btnAddEv">เพิ่มงาน</button>
+        <span class="hint" id="evMsg"></span>
+      </div>
+    </div>
+
+    <div class="card">
       <h2>ตัวกรอง</h2>
       <div class="filters">
         <div><label for="fEv">งาน</label><select id="fEv"></select></div>
@@ -176,8 +196,7 @@
 
     // ตัวเลือกห้อง: จากรายชื่อนักเรียน + ห้องที่มีในการลงทะเบียน
     const rooms = [...new Set([...STUDENTS.map(s => s.class_room), ...REGS.map(r => r.class_snapshot)].filter(Boolean))].sort(byRoom);
-    $('fEv').innerHTML = '<option value="">ทุกงาน</option>' + EVENTS.map(e =>
-      `<option value="${esc(e.event_code)}">${esc(e.university)} (${esc(e.event_date)})</option>`).join('');
+    renderEventAdmin();
     $('fRoom').innerHTML = '<option value="">ทุกห้อง</option>' + rooms.map(r => `<option value="${esc(r)}">${esc(r)}</option>`).join('');
     $('fFac').innerHTML = '<option value="">ทุกคณะ</option>' + FACULTIES.map(f => `<option value="${esc(f)}">${esc(f)}</option>`).join('');
 
@@ -188,9 +207,61 @@
       $('fQ').value = ''; render();
     });
     $('btnExport').addEventListener('click', exportCsv);
+    $('btnAddEv').addEventListener('click', addEvent);
 
     checkDataQuality();
     render();
+  }
+
+  // ── จัดการงาน: แสดงรายการ + ตัวเลือกตัวกรองงาน ──
+  function renderEventAdmin(){
+    const cur = $('fEv').value;
+    $('fEv').innerHTML = '<option value="">ทุกงาน</option>' + EVENTS.map(e =>
+      `<option value="${esc(e.event_code)}">${esc(e.university)} (${esc(e.event_date)})</option>`).join('');
+    if (EVENTS.some(e => e.event_code === cur)) $('fEv').value = cur;
+
+    $('evRows').innerHTML = EVENTS.length ? EVENTS.map(e => `
+      <tr>
+        <td>${esc(e.university)}</td>
+        <td>${esc(e.event_date)}</td>
+        <td>${e.is_open ? '<span class="tag yes">เปิดรับ</span>' : '<span class="tag">ปิดรับแล้ว</span>'}</td>
+        <td><button class="btn ghost" data-code="${esc(e.event_code)}" data-open="${e.is_open ? '0' : '1'}">
+          ${e.is_open ? 'ปิดรับ' : 'เปิดรับ'}</button></td>
+      </tr>`).join('')
+      : '<tr><td colspan="4" class="empty">ยังไม่มีงาน</td></tr>';
+
+    $('evRows').querySelectorAll('button[data-code]').forEach(b => b.onclick = () =>
+      setEventOpen(b.dataset.code, b.dataset.open === '1'));
+  }
+
+  async function reloadEvents(){
+    EVENTS = await fetchAll(() => sb.from('open_house_events').select('event_code, university, event_date, is_open')
+      .order('event_date').order('event_code'));
+    renderEventAdmin();
+    render();
+  }
+
+  async function setEventOpen(code, open){
+    const { error } = await sb.from('open_house_events').update({ is_open: open }).eq('event_code', code);
+    if (error){ $('evMsg').textContent = 'ปรับสถานะไม่สำเร็จ: ' + error.message; return; }
+    $('evMsg').textContent = open ? 'เปิดรับลงทะเบียนแล้ว' : 'ปิดรับลงทะเบียนแล้ว';
+    await reloadEvents();
+  }
+
+  async function addEvent(){
+    const uni = $('nuUni').value.trim();
+    const date = $('nuDate').value;
+    if (!uni) return $('evMsg').textContent = 'กรุณากรอกชื่อมหาวิทยาลัย';
+    if (!date) return $('evMsg').textContent = 'กรุณาเลือกวันที่จัดงาน';
+    const code = 'oh-' + date.replace(/-/g, '') + '-' + Math.random().toString(36).slice(2, 6);
+    const btn = $('btnAddEv'); btn.disabled = true;
+    const { error } = await sb.from('open_house_events')
+      .insert({ event_code: code, university: uni, event_date: date, is_open: true });
+    btn.disabled = false;
+    if (error){ $('evMsg').textContent = 'เพิ่มงานไม่สำเร็จ: ' + error.message; return; }
+    $('nuUni').value = ''; $('nuDate').value = '';
+    $('evMsg').textContent = 'เพิ่มงานแล้ว';
+    await reloadEvents();
   }
 
   function filtered(){
