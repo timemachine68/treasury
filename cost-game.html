@@ -320,7 +320,7 @@ pub:()=>{const t=C.TRACKS[G.track],field=G.priv?C.P[G.priv].field:null;
     hz=`<section class="card stack" style="gap:8px"><h3 style="font-size:17px">จะอยู่ที่ไหนตอนเรียน ${esc(u.short)}?</h3>
     ${u.housing.map(h=>`<button class="opt pub" aria-pressed="${G.housing===h}" onclick="pickHousing('${h}')"><span class="ic">${h==="home"?"🏠":h==="dorm_in"?"🏫":"🏢"}</span><span>${C.HOUSING[h]}<small>${h==="dorm_in"?esc(u.dormIn.label):h==="dorm_out"?"ประมาณ "+baht(u.rent)+" บาท/เดือน + ค่าน้ำไฟ":"ใช้ค่ารถของบ้านเราเอง"}</small></span></button>`).join("")}
     ${u.firstYearIn?`<div class="note">${esc(u.short)} ให้นักศึกษาปี 1 อยู่หอใน เกมคิดปี 1 เป็นหอในให้อัตโนมัติ</div>`:""}
-    ${srcLine([u.src,u.dormSrc||"dormIn","rent"])}</section>`}
+    ${srcLine([u.src,u.dormSrc||"dormIn",u.rentSrc||"rent"])}</section>`}
   return `<div class="stack">${stepHead(4,"ทาง B: มหาวิทยาลัยรัฐ")}
   ${list.map(k=>{const p=C.P[k],u=C.U[p.u];return `<button class="opt pub" aria-pressed="${G.pub===k}" onclick="pickPub('${k}')"><span class="ic">🎓</span><span>${esc(u.short)} · ${esc(p.name)}<small>${esc(u.place)} · ${baht(p.sem)} บาท/เทอม · รุ่นพี่พูลเจริญฯ ติดที่นี่ปี 69: ${u.seniors} คน${p.field===field?" · สาขาใกล้กับทาง A":""}${p.note?" · "+esc(p.note):""}</small></span></button>`}).join("")}
   ${hz}
@@ -409,7 +409,7 @@ card:()=>{const t=G.final,a=t.a,b=t.b,d=a.total-b.total,ad=Math.abs(d),close=ad<
     <p style="margin:0"><b>${close?"รวมแล้วพอ ๆ กัน":d>0?`ทาง B ประหยัดกว่า ${baht(ad)} บาท (≈ ${baht(ad/48)} บาท/เดือน)`:`ทาง A ประหยัดกว่า ${baht(ad)} บาท (≈ ${baht(ad/48)} บาท/เดือน)`}</b></p>
     ${G.events.length?`<p class="muted" style="margin:0">รวมเหตุการณ์สุ่ม: ${G.events.map(e=>esc(e.t)).join(", ")}</p>`:""}
     <div style="border-top:1px solid var(--line);padding-top:8px"><b>ประโยคชวนคุยกับที่บ้าน</b><ol style="margin:4px 0 0;padding-left:20px">${lines.map(l=>`<li>${esc(l)}</li>`).join("")}</ol></div>
-    ${srcLine([C.U[pa.u].src,ub.src,ub.dormSrc||"dormIn","rent"])}
+    ${srcLine([C.U[pa.u].src,ub.src,ub.dormSrc||"dormIn",ub.rentSrc||"rent"].concat(ub.tripSrc?[ub.tripSrc]:[]))}
     <p class="src">ค่าเทอมคิด 8 เทอม ภาคปกติ · ค่ากิน ค่ารถ ค่าน้ำไฟ ค่ากลับบ้าน เป็นค่าประมาณที่ปรับเองในเกม · ไม่รวมค่าหนังสือ อุปกรณ์ ค่าชุด ซึ่งจ่ายพอ ๆ กันทั้งสองทาง · ก่อนตัดสินใจจริงให้ดูประกาศค่าเทอมล่าสุดของมหาวิทยาลัย</p>
   </article>
   <div class="grid2 noprint"><button class="btn ghost" onclick="again()">ลองคู่อื่น</button><button class="btn ghost" onclick="window.print()">พิมพ์ / บันทึก PDF</button></div></div>`}
@@ -421,7 +421,7 @@ function explain(k){
     tuition:`A: ${baht(pv.sem)} × 8 เทอม${pv.summer?" + ภาคฤดูร้อน "+baht(pv.summer):""} · B: ${baht(pb.sem)} × 8 เทอม${pb.summer?" + ภาคฤดูร้อน "+baht(pb.summer):""}`,
     stay:G.housing==="home"?"ทั้งสองทางอยู่บ้าน ไม่มีค่าหอ":G.housing==="dorm_in"?`หอใน ${baht(ub.dormIn.fee)} บาท/เทอม × 8 + ค่าไฟ ~${ub.dormIn.util}/เดือน`:`หอนอก ~${baht(ub.rent)} บาท/เดือน + น้ำไฟ ~${C.K.utilOut} × ${C.K.dormMonths} เดือน/ปี${ub.firstYearIn?" (ปี 1 อยู่หอใน)":""}`,
     food:`อยู่บ้าน: ข้าวที่มหาวิทยาลัย ${m.lunch}/วัน × ${C.K.studyDays} วันเรียน + กับข้าวที่บ้าน ${m.homeFood}/วัน · อยู่หอ: ${m.dormFood}/วัน × ${C.K.dormDays} วัน`,
-    travel:`ไป-กลับ: ${m.commute} บาท/วัน × ${C.K.studyDays} วันเรียน/ปี · อยู่หอ: ค่ากลับบ้าน${ub.zone==="far"?` ~${baht(C.K.tripFar)}/ครั้ง ปีละ ${C.K.tripFarPerYear} ครั้ง`:` ~${C.K.tripMid}/ครั้ง เดือนละ ${C.K.tripMidPerMonth} ครั้ง`}`
+    travel:`ไป-กลับ: ${m.commute} บาท/วัน × ${C.K.studyDays} วันเรียน/ปี · อยู่หอ: ค่ากลับบ้าน${ub.zone==="far"?` ~${baht(ub.trip?ub.trip.cost:C.K.tripFar)}/ครั้ง ปีละ ${C.K.tripFarPerYear} ครั้ง`:` ~${C.K.tripMid}/ครั้ง เดือนละ ${C.K.tripMidPerMonth} ครั้ง`}`
   };
   return `<p class="muted" style="margin:0">วิธีคิด: ${esc(x[k])}</p>`;
 }

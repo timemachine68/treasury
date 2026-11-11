@@ -18,7 +18,11 @@ const SRC = {
   dormUP:{t:"ประกาศอัตราค่าธรรมเนียมหอพัก ม.พะเยา (ใช้ตั้งแต่ปีการศึกษา 2564 ตามเอกสารที่ครูส่งมา)", u:""},
   dormIn:{t:"สำรวจราคาหอในมหาวิทยาลัย ปี 2568 (LINE TODAY)", u:"https://today.line.me/th/v3/article/aGLP5qo"},
   rent: {t:"ราคาหอนอกใกล้มหาวิทยาลัย (ค่ากลางของหน้า 'ราคาถูก' RentHub)", u:"https://www.renthub.in.th/"},
-  bus:  {t:"ค่ารถทัวร์ กรุงเทพฯ–เชียงราย เริ่ม 789 บาท (12Go)", u:"https://12go.com/th/bus/bangkok/chiang-rai"}
+  bus:  {t:"ค่ารถทัวร์ กรุงเทพฯ–เชียงราย เริ่ม 789 บาท (12Go)", u:"https://12go.com/th/bus/bangkok/chiang-rai"},
+  cmu:  {t:"ค่าธรรมเนียมการศึกษา ป.ตรี หลักสูตรไทยภาคปกติ ม.เชียงใหม่ (ใช้กับผู้เข้าศึกษาปี 2570 ข้อมูล ณ 6 ต.ค. 2569 · ตัวเลขเป็นภาคแรก)", u:"https://admission.reg.cmu.ac.th/tcas/files_download/%E0%B8%84%E0%B9%88%E0%B8%B2%E0%B8%98%E0%B8%A3%E0%B8%A3%E0%B8%A1%E0%B9%80%E0%B8%99%E0%B8%B5%E0%B8%A2%E0%B8%A1%E0%B8%81%E0%B8%B2%E0%B8%A3%E0%B8%A8%E0%B8%B6%E0%B8%81%E0%B8%A9%E0%B8%B2.pdf"},
+  nu:   {t:"ค่าเทอม ม.นเรศวร ตารางปี 2568 (เว็บสรุป ยังไม่ได้เทียบกับประกาศ มน. ปี 2568 และปี 2569 ควรตรวจประกาศล่าสุด)", u:"https://dreamnesthub.com/tuition-fee-nu-2569"},
+  nuTrip:{t:"ค่ารถทัวร์ กรุงเทพฯ–พิษณุโลก ประมาณ 9.6–12.7 ดอลลาร์สหรัฐ ใช้เวลาราว 6 ชม. (12Go) · ค่ากลับบ้านต่อครั้งในเกมเป็นค่าประมาณของหนู", u:"https://12go.com/th/travel/bangkok/phitsanulok?z=7173817"},
+  rentN:{t:"ค่าเช่าหอนอก: ใช้ค่ากลางเดียวกับ ม.พะเยา/แม่ฟ้าหลวง (ค่าประมาณ ยังไม่ได้สำรวจเฉพาะเมืองนี้ และยังไม่ได้ใส่ราคาหอในของมหาวิทยาลัย)", u:""}
 };
 
 /* zone: near = ไป-กลับจากบ้านได้, mid = ชลบุรี กลับบ้านบ่อยได้, far = ต่างภาค */
@@ -30,7 +34,10 @@ const U = {
   ku:   {name:"ม.เกษตรศาสตร์ ศรีราชา", short:"มก.ศรีราชา", place:"ศรีราชา ชลบุรี", type:"public", zone:"mid", housing:["dorm_out"], rent:3250, seniors:7, src:"ku"},
   buu:  {name:"ม.บูรพา บางแสน", short:"บูรพา", place:"บางแสน ชลบุรี", type:"public", zone:"mid", housing:["dorm_in","dorm_out"], dormIn:{fee:3850, util:100, label:"หอในพัดลม 2–4 คน/ห้อง เริ่ม 3,850 บาท/เทอม"}, rent:3250, seniors:23, src:"buu"},
   up:   {name:"ม.พะเยา", short:"ม.พะเยา", place:"เมือง พะเยา", type:"public", zone:"far", housing:["dorm_in","dorm_out"], rent:2750, dormIn:{fee:10580, util:150, label:"หอในพัดลม 4 คน/ห้อง 21,160 บาท/ปี (หอ มพ. 2 คน/ห้อง ถูกสุด 12,000 · ห้องแอร์ 29,095–31,740 บาท/ปี)"}, dormSrc:"dormUP", seniors:7, src:"up"},
-  mfu:  {name:"ม.แม่ฟ้าหลวง", short:"แม่ฟ้าหลวง", place:"เชียงราย", type:"public", zone:"far", housing:["dorm_in","dorm_out"], dormIn:{fee:5000, util:200, label:"หอในพัดลม 4,000–6,000 บาท/เทอม (ใช้ 5,000)"}, rent:2750, firstYearIn:true, seniors:9, src:"mfu"}
+  mfu:  {name:"ม.แม่ฟ้าหลวง", short:"แม่ฟ้าหลวง", place:"เชียงราย", type:"public", zone:"far", housing:["dorm_in","dorm_out"], dormIn:{fee:5000, util:200, label:"หอในพัดลม 4,000–6,000 บาท/เทอม (ใช้ 5,000)"}, rent:2750, firstYearIn:true, seniors:9, src:"mfu"},
+  /* seniors:"N" = รอใส่จำนวนรุ่นพี่จริงจากไฟล์ผลคัดเลือก TCAS 2569 (เกมจะแสดง "N คน") */
+  cmu:  {name:"ม.เชียงใหม่", short:"มช.", place:"เมือง เชียงใหม่", type:"public", zone:"far", housing:["dorm_out"], rent:2750, rentSrc:"rentN", seniors:"N", src:"cmu"},
+  nu:   {name:"ม.นเรศวร", short:"ม.นเรศวร", place:"เมือง พิษณุโลก", type:"public", zone:"far", housing:["dorm_out"], rent:2750, rentSrc:"rentN", trip:{cost:1000, hours:12}, tripSrc:"nuTrip", seniors:"N", src:"nu"}
 };
 
 /* sem = ค่าเทอมต่อภาค, summer = ค่าภาคฤดูร้อนรวมทั้งหลักสูตร (ถ้ามีบังคับ) */
@@ -70,14 +77,28 @@ const P = {
   up_medsci: {u:"up", name:"วิทยาศาสตร์การแพทย์ / สาธารณสุข (กลุ่มวิทยาศาสตร์)", sem:18000, field:"medsci"},
   up_nur:    {u:"up", name:"พยาบาลศาสตร์", sem:28000, summer:42000, note:"รวมภาคฤดูร้อน 3 ครั้ง ครั้งละ 14,000 (สมมุติเท่า ม.บูรพา เพื่อเทียบให้ยุติธรรม)", field:"nur"},
   mfu_mgt:   {u:"mfu", name:"การจัดการ บริหารธุรกิจ", sem:27500, field:"biz"},
-  mfu_oh:    {u:"mfu", name:"วิทยาศาสตร์สุขภาพ อาชีวอนามัยฯ", sem:30000, field:"oh"}
+  mfu_oh:    {u:"mfu", name:"วิทยาศาสตร์สุขภาพ อาชีวอนามัยฯ", sem:30000, field:"oh"},
+
+  cmu_biz:   {u:"cmu", name:"บริหารธุรกิจ / บัญชี (หลักสูตรไทย)", sem:18000, field:"biz"},
+  cmu_sci:   {u:"cmu", name:"วิทยาศาสตร์ (เคมี ชีววิทยา ฟิสิกส์ คณิต วิทยาการคอมพิวเตอร์ ฯลฯ)", sem:18000, field:"sci"},
+  cmu_lang:  {u:"cmu", name:"มนุษยศาสตร์ ภาษาอังกฤษ / ฝรั่งเศส / จิตวิทยา", sem:15000, field:"lang"},
+  cmu_nur:   {u:"cmu", name:"พยาบาลศาสตร์", sem:25000, field:"nur", note:"ยังไม่รวมภาคฤดูร้อน (ประกาศของ มช. ไม่ระบุ) ค่าจริงอาจสูงกว่านี้"},
+  cmu_mt:    {u:"cmu", name:"เทคนิคการแพทย์ (คณะเทคนิคการแพทย์)", sem:25000, field:"mt"},
+  cmu_pt:    {u:"cmu", name:"กายภาพบำบัด (คณะเทคนิคการแพทย์)", sem:25000, field:"pt"},
+
+  nu_biz:    {u:"nu", name:"บริหารธุรกิจ เศรษฐศาสตร์ และการสื่อสาร", sem:15000, field:"biz", note:"ตารางปี 2568 ตรวจประกาศ มน. ก่อนใช้"},
+  nu_sci:    {u:"nu", name:"วิทยาศาสตร์ / วิทยาการคอมพิวเตอร์", sem:16000, field:"sci", note:"ตารางปี 2568 ตรวจประกาศ มน. ก่อนใช้"},
+  nu_lang:   {u:"nu", name:"มนุษยศาสตร์ (ภาษา)", sem:15000, field:"lang", note:"ตารางปี 2568 ตรวจประกาศ มน. ก่อนใช้"},
+  nu_nur:    {u:"nu", name:"พยาบาลศาสตร์", sem:20000, field:"nur", note:"ตารางปี 2568 ยังไม่รวมภาคฤดูร้อน (ไม่พบข้อมูล)"},
+  nu_medsci: {u:"nu", name:"วิทยาศาสตร์การแพทย์", sem:20000, field:"medsci", note:"ตารางปี 2568 ตรวจประกาศ มน. ก่อนใช้"},
+  nu_allied: {u:"nu", name:"สหเวชศาสตร์ (เทคนิคการแพทย์ / กายภาพบำบัด ฯลฯ)", sem:22000, field:"mt", note:"ตารางปี 2568 ภาคละเท่ากันทุกสาขาในคณะ"}
 };
 
 const TRACKS = {
-  biz:   {name:"ธุรกิจ บัญชี โลจิสติกส์", icon:"💼", priv:["hcu_biz","bu_biz"], pub:["kmitl_biz","ku_mgt","buu_log","mfu_mgt","up_mgt","rmutk_biz"]},
-  health:{name:"สุขภาพ พยาบาล เทคนิคการแพทย์", icon:"🩺", priv:["hcu_nur","hcu_mt","hcu_pt","hcu_medsci","hcu_oh"], pub:["buu_nur","buu_mt","buu_pt","buu_medsci","mfu_oh","up_nur","up_medsci","rmutk_health"]},
-  sci:   {name:"วิทยาศาสตร์ คอมพิวเตอร์", icon:"🔬", priv:["hcu_cs"], pub:["kmitl_sci","ku_sci","buu_sci","up_sci","rmutk_cs"]},
-  lang:  {name:"ภาษา ศิลปศาสตร์", icon:"🌏", priv:["hcu_eng","bu_eng"], pub:["kmitl_lang","buu_eng","up_lang","rmutk_eng"]}
+  biz:   {name:"ธุรกิจ บัญชี โลจิสติกส์", icon:"💼", priv:["hcu_biz","bu_biz"], pub:["kmitl_biz","ku_mgt","buu_log","mfu_mgt","up_mgt","rmutk_biz","cmu_biz","nu_biz"]},
+  health:{name:"สุขภาพ พยาบาล เทคนิคการแพทย์", icon:"🩺", priv:["hcu_nur","hcu_mt","hcu_pt","hcu_medsci","hcu_oh"], pub:["buu_nur","buu_mt","buu_pt","buu_medsci","mfu_oh","up_nur","up_medsci","rmutk_health","cmu_nur","cmu_mt","cmu_pt","nu_nur","nu_medsci","nu_allied"]},
+  sci:   {name:"วิทยาศาสตร์ คอมพิวเตอร์", icon:"🔬", priv:["hcu_cs"], pub:["kmitl_sci","ku_sci","buu_sci","up_sci","rmutk_cs","cmu_sci","nu_sci"]},
+  lang:  {name:"ภาษา ศิลปศาสตร์", icon:"🌏", priv:["hcu_eng","bu_eng"], pub:["kmitl_lang","buu_eng","up_lang","rmutk_eng","cmu_lang","nu_lang"]}
 };
 
 const HOUSING = {home:"อยู่บ้าน ไป-กลับทุกวัน", dorm_in:"หอใน (หอของมหาวิทยาลัย)", dorm_out:"หอนอก (เช่ารายเดือน)"};
@@ -142,7 +163,7 @@ function calc(progKey, housing, base){
       if(h==="dorm_in"){ stay += uni.dormIn.fee*2 + uni.dormIn.util*K.dormMonths; }
       else { stay += (p.share?uni.rent/2:uni.rent)*p.months + K.utilOut*p.months; }
       food += K.dormDays*p.dormFood + (365-K.dormDays)*p.homeFood;
-      if(uni.zone==="far"){ travel += K.tripFar*K.tripFarPerYear*p.tripMult; hours += K.tripHoursFar*K.tripFarPerYear*p.tripMult; }
+      if(uni.zone==="far"){ const tc=uni.trip?uni.trip.cost:K.tripFar, th=uni.trip?uni.trip.hours:K.tripHoursFar; travel += tc*K.tripFarPerYear*p.tripMult; hours += th*K.tripFarPerYear*p.tripMult; }
       else { travel += K.tripMid*K.tripMidPerMonth*K.dormMonths*p.tripMult; hours += K.tripHoursMid*K.tripMidPerMonth*K.dormMonths*p.tripMult; }
     }
   }
