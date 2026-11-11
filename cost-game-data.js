@@ -20,7 +20,7 @@ const SRC = {
   rent: {t:"ราคาหอนอกใกล้มหาวิทยาลัย (ค่ากลางของหน้า 'ราคาถูก' RentHub)", u:"https://www.renthub.in.th/"},
   bus:  {t:"ค่ารถทัวร์ กรุงเทพฯ–เชียงราย เริ่ม 789 บาท (12Go)", u:"https://12go.com/th/bus/bangkok/chiang-rai"},
   cmu:  {t:"ค่าธรรมเนียมการศึกษา ป.ตรี หลักสูตรไทยภาคปกติ ม.เชียงใหม่ (ใช้กับผู้เข้าศึกษาปี 2570 ข้อมูล ณ 6 ต.ค. 2569 · ตัวเลขเป็นภาคแรก)", u:"https://admission.reg.cmu.ac.th/tcas/files_download/%E0%B8%84%E0%B9%88%E0%B8%B2%E0%B8%98%E0%B8%A3%E0%B8%A3%E0%B8%A1%E0%B9%80%E0%B8%99%E0%B8%B5%E0%B8%A2%E0%B8%A1%E0%B8%81%E0%B8%B2%E0%B8%A3%E0%B8%A8%E0%B8%B6%E0%B8%81%E0%B8%A9%E0%B8%B2.pdf"},
-  nu:   {t:"ค่าเทอม ม.นเรศวร ตารางปี 2568 (เว็บสรุป ยังไม่ได้เทียบกับประกาศ มน. ปี 2568 และปี 2569 ควรตรวจประกาศล่าสุด)", u:"https://dreamnesthub.com/tuition-fee-nu-2569"},
+  nu:   {t:"ประกาศ ม.นเรศวร อัตราค่าธรรมเนียมการศึกษา ป.ตรี ภาคปกติ ผู้เข้าศึกษาตั้งแต่ปีการศึกษา 2568 เป็นต้นไป (ลงวันที่ 13 พ.ย. 2567 ตัวเลขต่อภาค)", u:"https://www.admission.nu.ac.th/pdf/%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B2%E0%B8%A8%E0%B8%84%E0%B9%88%E0%B8%B2%E0%B8%98%E0%B8%A3%E0%B8%A3%E0%B8%A1%E0%B9%80%E0%B8%99%E0%B8%B5%E0%B8%A2%E0%B8%A1%20%E0%B8%9B.%E0%B8%95%E0%B8%A3%E0%B8%B5-68.pdf"},
   nuTrip:{t:"ค่ารถทัวร์ กรุงเทพฯ–พิษณุโลก ประมาณ 9.6–12.7 ดอลลาร์สหรัฐ ใช้เวลาราว 6 ชม. (12Go) · ค่ากลับบ้านต่อครั้งในเกมเป็นค่าประมาณของหนู", u:"https://12go.com/th/travel/bangkok/phitsanulok?z=7173817"},
   rentN:{t:"ค่าเช่าหอนอก: ใช้ค่ากลางเดียวกับ ม.พะเยา/แม่ฟ้าหลวง (ค่าประมาณ ยังไม่ได้สำรวจเฉพาะเมืองนี้ และยังไม่ได้ใส่ราคาหอในของมหาวิทยาลัย)", u:""}
 };
@@ -86,17 +86,18 @@ const P = {
   cmu_mt:    {u:"cmu", name:"เทคนิคการแพทย์ (คณะเทคนิคการแพทย์)", sem:25000, field:"mt"},
   cmu_pt:    {u:"cmu", name:"กายภาพบำบัด (คณะเทคนิคการแพทย์)", sem:25000, field:"pt"},
 
-  nu_biz:    {u:"nu", name:"บริหารธุรกิจ เศรษฐศาสตร์ และการสื่อสาร", sem:15000, field:"biz", note:"ตารางปี 2568 ตรวจประกาศ มน. ก่อนใช้"},
-  nu_sci:    {u:"nu", name:"วิทยาศาสตร์ / วิทยาการคอมพิวเตอร์", sem:16000, field:"sci", note:"ตารางปี 2568 ตรวจประกาศ มน. ก่อนใช้"},
-  nu_lang:   {u:"nu", name:"มนุษยศาสตร์ (ภาษา)", sem:15000, field:"lang", note:"ตารางปี 2568 ตรวจประกาศ มน. ก่อนใช้"},
-  nu_nur:    {u:"nu", name:"พยาบาลศาสตร์", sem:20000, field:"nur", note:"ตารางปี 2568 ยังไม่รวมภาคฤดูร้อน (ไม่พบข้อมูล)"},
-  nu_medsci: {u:"nu", name:"วิทยาศาสตร์การแพทย์", sem:20000, field:"medsci", note:"ตารางปี 2568 ตรวจประกาศ มน. ก่อนใช้"},
-  nu_allied: {u:"nu", name:"สหเวชศาสตร์ (เทคนิคการแพทย์ / กายภาพบำบัด ฯลฯ)", sem:22000, field:"mt", note:"ตารางปี 2568 ภาคละเท่ากันทุกสาขาในคณะ"}
+  nu_biz:    {u:"nu", name:"บริหารธุรกิจ / การเงิน / บัญชี / เศรษฐศาสตร์", sem:15000, field:"biz"},
+  nu_sci:    {u:"nu", name:"วิทยาศาสตร์ (เคมี ชีววิทยา ฟิสิกส์ คณิต วิทยาการคอมพิวเตอร์ ฯลฯ)", sem:16000, field:"sci"},
+  nu_lang:   {u:"nu", name:"มนุษยศาสตร์ ภาษาอังกฤษ / ภาษาไทย / ภาษาจีน / ภาษาญี่ปุ่น ฯลฯ", sem:15000, field:"lang"},
+  nu_nur:    {u:"nu", name:"พยาบาลศาสตร์", sem:20000, field:"nur", note:"ยังไม่รวมภาคฤดูร้อน (ประกาศของ มน. ไม่ระบุ) ค่าจริงอาจสูงกว่านี้"},
+  nu_medsci: {u:"nu", name:"วิทยาศาสตร์การแพทย์ (จุลชีววิทยา พยาธิวิทยากายวิภาค ฯลฯ)", sem:20000, field:"medsci"},
+  nu_mt:     {u:"nu", name:"เทคนิคการแพทย์ (คณะสหเวชศาสตร์)", sem:28000, field:"mt"},
+  nu_pt:     {u:"nu", name:"กายภาพบำบัด (คณะสหเวชศาสตร์)", sem:28000, field:"pt"}
 };
 
 const TRACKS = {
   biz:   {name:"ธุรกิจ บัญชี โลจิสติกส์", icon:"💼", priv:["hcu_biz","bu_biz"], pub:["kmitl_biz","ku_mgt","buu_log","mfu_mgt","up_mgt","rmutk_biz","cmu_biz","nu_biz"]},
-  health:{name:"สุขภาพ พยาบาล เทคนิคการแพทย์", icon:"🩺", priv:["hcu_nur","hcu_mt","hcu_pt","hcu_medsci","hcu_oh"], pub:["buu_nur","buu_mt","buu_pt","buu_medsci","mfu_oh","up_nur","up_medsci","rmutk_health","cmu_nur","cmu_mt","cmu_pt","nu_nur","nu_medsci","nu_allied"]},
+  health:{name:"สุขภาพ พยาบาล เทคนิคการแพทย์", icon:"🩺", priv:["hcu_nur","hcu_mt","hcu_pt","hcu_medsci","hcu_oh"], pub:["buu_nur","buu_mt","buu_pt","buu_medsci","mfu_oh","up_nur","up_medsci","rmutk_health","cmu_nur","cmu_mt","cmu_pt","nu_nur","nu_medsci","nu_mt","nu_pt"]},
   sci:   {name:"วิทยาศาสตร์ คอมพิวเตอร์", icon:"🔬", priv:["hcu_cs"], pub:["kmitl_sci","ku_sci","buu_sci","up_sci","rmutk_cs","cmu_sci","nu_sci"]},
   lang:  {name:"ภาษา ศิลปศาสตร์", icon:"🌏", priv:["hcu_eng","bu_eng"], pub:["kmitl_lang","buu_eng","up_lang","rmutk_eng","cmu_lang","nu_lang"]}
 };
