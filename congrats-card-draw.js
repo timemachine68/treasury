@@ -341,10 +341,11 @@ var __UNI=[
     lab('PASSENGER', fx, py + 14);
     c.fillStyle = ink; putLines(c, fitF(c, d.name, F_M, '600', 42, 24, fw, 1), fx, py + 62, 1.2);
     var colW = fw / 2, gy = py + 118;
-    [['FLIGHT', 'PW2569'], ['CLASS', d.cls || '-'], ['BOARDING', d.round || '-'], ['STATUS', 'ADMITTED ✓']].forEach(function (it, q) {
+    [['FLIGHT', 'PW2569'], ['CLASS', d.cls || '-'], ['BOARDING', d.round || '-']].forEach(function (it, q) {
       var cx = fx + (q % 2) * colW, cy = gy + Math.floor(q / 2) * 82;
-      lab(it[0], cx, cy); c.fillStyle = it[0] === 'STATUS' ? UT : ink; putLines(c, fitF(c, it[1], F_M, '600', 32, 18, colW - 16, 1), cx, cy + 40, 1.2);
+      lab(it[0], cx, cy); c.fillStyle = ink; putLines(c, fitF(c, it[1], F_M, '600', 32, 18, colW - 16, 1), cx, cy + 40, 1.2);
     });
+    var stX = fx + colW + colW / 2 - 16, stY = gy + 82 + 32;   // ตราประทับวางแทนช่อง STATUS เดิม
     // รอยปรุ
     c.strokeStyle = '#D5D9DE'; c.lineWidth = 3; c.setLineDash([12, 11]);
     [cut, cut2].forEach(function (q) { c.beginPath(); c.moveTo(X + 40, Y + q); c.lineTo(X + CW - 40, Y + q); c.stroke(); }); c.setLineDash([]);
@@ -360,12 +361,11 @@ var __UNI=[
     c.font = 'italic 400 27px ' + F_S; c.fillStyle = deep; c.textAlign = 'right'; c.fillText('Wishing you joy & success', X + CW - 48, sy + 16); c.fillText('on your new journey.', X + CW - 48, sy + 48);
     c.font = '600 14px ' + F_M; c.fillStyle = mute; spaced(c, 'GUIDANCE OFFICE · POOLCHAROENWITTAYAKOM SCHOOL', X + 48, sy + 86, 2, 'left');
     c.restore();
-    // ตราประทับบนมุมรูป
-    c.save(); c.translate(px + 44, py + ph - 30); c.rotate(-0.25); c.globalAlpha = 0.9;
-    c.fillStyle = 'rgba(255,255,255,0.55)'; c.beginPath(); c.arc(0, 0, 70, 0, 6.2832); c.fill();
-    c.strokeStyle = UT; c.fillStyle = UT; c.lineWidth = 5; c.beginPath(); c.arc(0, 0, 70, 0, 6.2832); c.stroke(); c.lineWidth = 2; c.beginPath(); c.arc(0, 0, 58, 0, 6.2832); c.stroke();
-    c.font = 'italic 900 22px ' + F_S; c.textAlign = 'center'; c.fillText('ADMITTED', 0, 8);
-    c.font = '700 12px ' + F_S; spaced(c, '★ 2569 ★', 0, -24, 2, 'center'); spaced(c, 'PW GUIDANCE', 0, 38, 2, 'center');
+    // ตราประทับ ADMITTED (แทนช่อง STATUS)
+    c.save(); c.translate(stX, stY); c.rotate(-0.2); c.globalAlpha = 0.9;
+    c.strokeStyle = UT; c.fillStyle = UT; c.lineWidth = 5; c.beginPath(); c.arc(0, 0, 64, 0, 6.2832); c.stroke(); c.lineWidth = 2; c.beginPath(); c.arc(0, 0, 53, 0, 6.2832); c.stroke();
+    c.font = 'italic 900 21px ' + F_S; c.textAlign = 'center'; c.fillText('ADMITTED', 0, 7);
+    c.font = '700 11px ' + F_S; spaced(c, '★ 2569 ★', 0, -22, 2, 'center'); spaced(c, 'PW GUIDANCE', 0, 35, 2, 'center');
     c.restore();
     P.leave();
     return { H: H };
