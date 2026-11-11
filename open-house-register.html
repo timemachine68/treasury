@@ -110,6 +110,7 @@
 
   const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
   const $ = id => document.getElementById(id);
+  let PROFILE = null, EVENTS = [];   // ต้องประกาศไว้ก่อนเรียก init() ไม่เช่นนั้นหน้าจะพัง
   const msg = (text, ok) => { const m = $('msg'); m.textContent = text; m.className = 'msg ' + (ok ? 'ok' : 'err'); };
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
@@ -126,8 +127,6 @@
   const { data: { session } } = await sb.auth.getSession();
   if (!session) { $('needLogin').classList.remove('hidden'); }
   else { $('app').classList.remove('hidden'); await init(session.user.id); }
-
-  let PROFILE = null, EVENTS = [];
 
   async function init(uid){
     const { data: p, error: pErr } = await sb.from('profiles')

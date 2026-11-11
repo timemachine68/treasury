@@ -143,7 +143,7 @@
   const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   const FACULTIES = ['ครุศาสตร์/ศึกษาศาสตร์', 'บริหารธุรกิจ', 'คอมพิวเตอร์/IT', 'นิเทศศาสตร์/สื่อ',
     'วิศวกรรมศาสตร์', 'สุขภาพ/พยาบาล', 'ท่องเที่ยว/โรงแรม', 'ออกแบบ', 'นิติศาสตร์', 'ยังไม่ตัดสินใจ'];
-  const INTEREST = { yes: 'ไปแน่นอน', maybe: 'ยังไม่แน่ใจ', no: 'ไม่ไป' };
+  const INTEREST = { yes: 'ไป', no: 'ไม่ไป' };
 
   const $ = id => document.getElementById(id);
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
