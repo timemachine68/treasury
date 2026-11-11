@@ -514,7 +514,10 @@ textarea.csvbox{font-family:monospace;font-size:.82rem;min-height:120px}
     <!-- ── มุมมองภาพรวมนักเรียน 360° ── -->
     <div id="viewOverview" class="hidden">
       <div class="panel">
-        <h2>🧑‍🎓 ภาพรวมนักเรียน 360°</h2>
+        <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-bottom:6px">
+          <h2 style="margin:0">🧑‍🎓 ภาพรวมนักเรียน 360°</h2>
+          <a id="ovRosterLink" class="btn ghost sm hidden" href="student-roster.html" style="text-decoration:none" title="ดูรูป ชื่อ-สกุล ชื่อเล่นเป็นรายห้อง และพิมพ์ใบติดบอร์ดห้อง A4">🌼 ทำเนียบนักเรียน</a>
+        </div>
         <p class="field hint" style="margin-bottom:10px">รวมข้อมูลจากทุกระบบในคลังแนะแนวไว้ในหน้าเดียวต่อคน: ผลงานนักเรียน · ทุนการศึกษา · ขออนุญาตทำงาน (กดที่ช่องเพื่อดูรายละเอียดของคนนั้น)</p>
         <div class="toolbar">
           <div class="search"><input id="ovQ" placeholder="ค้นหาชื่อ/ชื่อเล่น/โรงเรียนเดิม/ห้อง…"></div>
@@ -1219,6 +1222,8 @@ async function enterApp(){
   switchView(initial);
   preloadAnnBadge();
   if(profile.role==="student") checkOverdueOnEnter();
+  // ทางเข้าทำเนียบนักเรียน (หน้านี้เปิดได้เฉพาะแอดมินและครูแนะแนว)
+  $("ovRosterLink").classList.toggle("hidden", !canSeeSubs());
 }
 function computeMyPerms(){
   if(!profile) return {library:true, work:true, survey:true, strength:true, manage:true, overview:true};
@@ -3368,6 +3373,9 @@ function ovBuildIndex_(){
 }
 
 // หน่วง 300 ms หลังพิมพ์ค่อยค้นหา (ไม่วาดตารางใหม่ทุกตัวอักษร)
+$("ovRosterLink").addEventListener("click", ()=>{
+  $("ovRosterLink").href = /^ม\.[1-6]\/\d+$/.test(ovF.room) ? "student-roster.html?room="+encodeURIComponent(ovF.room) : "student-roster.html";
+});
 $("ovQ").addEventListener("input", ()=>{
   clearTimeout(ovQTimer);
   ovQTimer = setTimeout(()=>{ ovF.q=$("ovQ").value.trim().toLowerCase(); ovShow=OV_PAGE; renderOverview(); }, 300);
