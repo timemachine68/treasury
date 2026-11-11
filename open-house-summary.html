@@ -52,7 +52,7 @@
 <header>
   <h1>📋 ผู้ลงทะเบียน Open House</h1>
   <div><span id="who"></span> · <a href="index.html">← กลับแนะให้แนว</a></div>
-  <p class="hint" style="color:#fff;opacity:.9;width:100%;margin:0">มหาวิทยาลัยเซาธ์อีสต์บางกอก · วันที่ 19 พฤศจิกายน 2569</p>
+  <p class="hint" style="color:#fff;opacity:.9;width:100%;margin:0">รายชื่อนักเรียนที่ลงทะเบียนไปชมงานมหาวิทยาลัย · จัดการงานได้ในหน้านี้</p>
 </header>
 
 <main>
@@ -181,7 +181,7 @@
     $('main').classList.remove('hidden');
 
     try {
-      EVENTS = await fetchAll(() => sb.from('open_house_events').select('event_code, university, event_date')
+      EVENTS = await fetchAll(() => sb.from('open_house_events').select('event_code, university, event_date, is_open')
         .order('event_date').order('event_code'));
       REGS = await fetchAll(() => sb.from('open_house_registrations').select('*')
         .order('created_at').order('id'));
