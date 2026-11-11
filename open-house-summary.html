@@ -63,10 +63,9 @@
       <h2>สรุป (ตามตัวกรองที่เลือก)</h2>
       <div class="stats">
         <div class="stat"><b id="sTotal">0</b><span>ลงทะเบียนทั้งหมด</span></div>
-        <div class="stat"><b id="sYes">0</b><span>ไปแน่นอน</span></div>
-        <div class="stat"><b id="sMaybe">0</b><span>ยังไม่แน่ใจ</span></div>
+        <div class="stat"><b id="sYes">0</b><span>ไป</span></div>
         <div class="stat"><b id="sNo">0</b><span>ไม่ไป</span></div>
-        <div class="stat"><b id="sSchool">0</b><span>ยืนยันเดินทางกับโรงเรียน</span></div>
+        <div class="stat"><b id="sSchool">0</b><span>ไปกับโรงเรียน</span></div>
       </div>
       <div class="chips" id="facChips"></div>
       <p class="hint" id="notReg"></p>
@@ -75,21 +74,21 @@
     <div class="card">
       <h2>ตัวกรอง</h2>
       <div class="filters">
+        <div><label for="fEv">งาน</label><select id="fEv"></select></div>
         <div><label for="fRoom">ห้องเรียน</label><select id="fRoom"></select></div>
         <div><label for="fFac">คณะ/สาขาที่สนใจ</label><select id="fFac"></select></div>
         <div><label for="fInt">ความสนใจ</label>
           <select id="fInt">
             <option value="">ทั้งหมด</option>
-            <option value="yes">ไปแน่นอน</option>
-            <option value="maybe">ยังไม่แน่ใจ</option>
+            <option value="yes">ไป</option>
             <option value="no">ไม่ไป</option>
           </select>
         </div>
-        <div><label for="fGo">ยืนยันเดินทางกับโรงเรียน</label>
+        <div><label for="fGo">การเดินทาง</label>
           <select id="fGo">
             <option value="">ทั้งหมด</option>
-            <option value="yes">ยืนยัน</option>
-            <option value="no">ไม่ยืนยัน</option>
+            <option value="yes">ไปกับโรงเรียน</option>
+            <option value="no">ไปเอง</option>
           </select>
         </div>
         <div><label for="fQ">ค้นหาชื่อ / เลขประจำตัว</label><input type="text" id="fQ" placeholder="พิมพ์เพื่อค้นหา"></div>
@@ -108,7 +107,7 @@
       <div class="tbl-wrap">
         <table>
           <thead>
-            <tr><th>เลขประจำตัว</th><th>ชื่อ-นามสกุล</th><th>ห้อง</th><th>ความสนใจ</th><th>รถโรงเรียน</th><th>คณะที่สนใจ</th><th>ข้อเสนอแนะ</th><th>ลงทะเบียนเมื่อ</th></tr>
+            <tr><th>เลขประจำตัว</th><th>ชื่อ-นามสกุล</th><th>ห้อง</th><th>ความสนใจ</th><th>การเดินทาง</th><th>คณะที่สนใจ</th><th>ข้อเสนอแนะ</th><th>ลงทะเบียนเมื่อ</th></tr>
           </thead>
           <tbody id="rows"></tbody>
         </table>
@@ -122,7 +121,6 @@
   const SUPABASE_URL = 'https://ikkhjslmtjwrxzxvtokb.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlra2hqc2xtdGp3cnh6eHZ0b2tiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM3NDMzNjksImV4cCI6MjA5OTMxOTM2OX0.3OR_9mEv82Ns1LLjx5nnRwJYzrtKFtWCWd1bPuQfNKU';
   const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-  const EVENT = 'sbu-openhouse-2569-11-19';
   const FACULTIES = ['ครุศาสตร์/ศึกษาศาสตร์', 'บริหารธุรกิจ', 'คอมพิวเตอร์/IT', 'นิเทศศาสตร์/สื่อ',
     'วิศวกรรมศาสตร์', 'สุขภาพ/พยาบาล', 'ท่องเที่ยว/โรงแรม', 'ออกแบบ', 'นิติศาสตร์', 'ยังไม่ตัดสินใจ'];
   const INTEREST = { yes: 'ไปแน่นอน', maybe: 'ยังไม่แน่ใจ', no: 'ไม่ไป' };
@@ -132,6 +130,7 @@
 
   let REGS = [];        // การลงทะเบียนทั้งหมดของงานนี้
   let STUDENTS = [];    // นักเรียนที่ active (สำหรับนับคนที่ยังไม่ลงทะเบียน)
+  let EVENTS = [];      // รายการงานทั้งหมด
 
   function roomKey(r){ const m = /^ม\.(\d)\/(\d+)$/.exec(r || ''); return m ? [+m[1], +m[2]] : [9, 0]; }
   function byRoom(a, b){ const x = roomKey(a), y = roomKey(b); return x[0] - y[0] || x[1] - y[1]; }
@@ -162,8 +161,10 @@
     $('main').classList.remove('hidden');
 
     try {
+      EVENTS = await fetchAll(() => sb.from('open_house_events').select('event_code, university, event_date')
+        .order('event_date').order('event_code'));
       REGS = await fetchAll(() => sb.from('open_house_registrations').select('*')
-        .eq('event_code', EVENT).order('created_at').order('id'));
+        .order('created_at').order('id'));
       STUDENTS = await fetchAll(() => sb.from('profiles').select('id, student_id, display_name, class_room')
         .eq('role', 'student').eq('status', 'active').order('class_room').order('id'));
     } catch (e) {
@@ -175,13 +176,15 @@
 
     // ตัวเลือกห้อง: จากรายชื่อนักเรียน + ห้องที่มีในการลงทะเบียน
     const rooms = [...new Set([...STUDENTS.map(s => s.class_room), ...REGS.map(r => r.class_snapshot)].filter(Boolean))].sort(byRoom);
+    $('fEv').innerHTML = '<option value="">ทุกงาน</option>' + EVENTS.map(e =>
+      `<option value="${esc(e.event_code)}">${esc(e.university)} (${esc(e.event_date)})</option>`).join('');
     $('fRoom').innerHTML = '<option value="">ทุกห้อง</option>' + rooms.map(r => `<option value="${esc(r)}">${esc(r)}</option>`).join('');
     $('fFac').innerHTML = '<option value="">ทุกคณะ</option>' + FACULTIES.map(f => `<option value="${esc(f)}">${esc(f)}</option>`).join('');
 
-    ['fRoom','fFac','fInt','fGo'].forEach(id => $(id).addEventListener('change', render));
+    ['fEv','fRoom','fFac','fInt','fGo'].forEach(id => $(id).addEventListener('change', render));
     $('fQ').addEventListener('input', render);
     $('btnReset').addEventListener('click', () => {
-      ['fRoom','fFac','fInt','fGo'].forEach(id => $(id).value = '');
+      ['fEv','fRoom','fFac','fInt','fGo'].forEach(id => $(id).value = '');
       $('fQ').value = ''; render();
     });
     $('btnExport').addEventListener('click', exportCsv);
@@ -191,9 +194,10 @@
   }
 
   function filtered(){
-    const room = $('fRoom').value, fac = $('fFac').value, it = $('fInt').value, gs = $('fGo').value;
+    const ev = $('fEv').value, room = $('fRoom').value, fac = $('fFac').value, it = $('fInt').value, gs = $('fGo').value;
     const q = $('fQ').value.trim().toLowerCase();
     return REGS.filter(r =>
+      (!ev || r.event_code === ev) &&
       (!room || r.class_snapshot === room) &&
       (!fac || (r.faculties || []).includes(fac)) &&
       (!it || r.interest === it) &&
@@ -211,7 +215,6 @@
     const cnt = k => rows.filter(r => r.interest === k).length;
     $('sTotal').textContent = rows.length;
     $('sYes').textContent = cnt('yes');
-    $('sMaybe').textContent = cnt('maybe');
     $('sNo').textContent = cnt('no');
     $('sSchool').textContent = rows.filter(r => r.go_with_school).length;
     $('count').textContent = rows.length;
@@ -223,7 +226,8 @@
 
     // นักเรียนในห้องที่เลือกที่ยังไม่ลงทะเบียน
     const room = $('fRoom').value;
-    const regIds = new Set(REGS.map(r => r.profile_id));
+    const ev = $('fEv').value;
+    const regIds = new Set(REGS.filter(r => !ev || r.event_code === ev).map(r => r.profile_id));
     $('notReg').textContent = room
       ? `${room}: ยังไม่ลงทะเบียน ${STUDENTS.filter(s => s.class_room === room && !regIds.has(s.id)).length} คน`
       : '';
@@ -234,7 +238,7 @@
         <td>${esc(r.name_snapshot)}</td>
         <td>${esc(r.class_snapshot)}</td>
         <td><span class="tag ${esc(r.interest)}">${esc(INTEREST[r.interest] || r.interest)}</span></td>
-        <td>${r.go_with_school ? 'ยืนยัน' : '-'}</td>
+        <td>${r.interest === 'yes' ? (r.go_with_school ? 'ไปกับโรงเรียน' : 'ไปเอง') : '-'}</td>
         <td>${esc((r.faculties || []).join(', '))}</td>
         <td>${esc(r.note || '')}</td>
         <td>${esc(fmtDate(r.created_at))}</td>
@@ -260,18 +264,24 @@
   function exportCsv(){
     const rows = filtered();
     if (!rows.length){ $('exportHint').textContent = 'ไม่มีข้อมูลให้ส่งออก'; return; }
-    const head = ['เลขประจำตัว','ชื่อ-นามสกุล','ห้อง','ความสนใจ','ยืนยันเดินทางกับโรงเรียน','คณะที่สนใจ','ข้อเสนอแนะ','ลงทะเบียนเมื่อ'];
-    const body = rows.map(r => [
-      r.student_id_snapshot, r.name_snapshot, r.class_snapshot,
-      INTEREST[r.interest] || r.interest, r.go_with_school ? 'ใช่' : 'ไม่',
-      (r.faculties || []).join(', '), r.note || '', fmtDate(r.created_at)
-    ]);
+    const head = ['งาน','วันที่งาน','เลขประจำตัว','ชื่อ-นามสกุล','ห้อง','ความสนใจ','การเดินทาง','คณะที่สนใจ','ข้อเสนอแนะ','ลงทะเบียนเมื่อ'];
+    const body = rows.map(r => {
+      const ev = EVENTS.find(e => e.event_code === r.event_code) || {};
+      return [
+        ev.university || r.event_code, ev.event_date || '',
+        r.student_id_snapshot, r.name_snapshot, r.class_snapshot,
+        INTEREST[r.interest] || r.interest,
+        r.interest === 'yes' ? (r.go_with_school ? 'ไปกับโรงเรียน' : 'ไปเอง') : '',
+        (r.faculties || []).join(', '), r.note || '', fmtDate(r.created_at)
+      ];
+    });
     const text = [head, ...body].map(a => a.map(csvCell).join(',')).join('\r\n');
     const blob = new Blob(['﻿' + text], { type: 'text/csv;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const today = new Date(Date.now() + 7 * 3600 * 1000).toISOString().slice(0, 10);
     const a = document.createElement('a');
-    a.href = url; a.download = `open-house-sbu-${today}.csv`;
+    const evPart = $('fEv').value || 'ทุกงาน';
+    a.href = url; a.download = `open-house-${evPart}-${today}.csv`;
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
     $('exportHint').textContent = `ส่งออก ${rows.length} รายการแล้ว`;

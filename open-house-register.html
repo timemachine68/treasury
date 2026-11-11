@@ -34,13 +34,14 @@
   .msg.err{display:block;background:#fbe9e7;color:var(--danger);border:1px solid #f5c6c0}
   .msg.ok{display:block;background:var(--pine-tint);color:var(--pine-deep);border:1px solid var(--pine)}
   .hidden{display:none !important}
+  .sel{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font:inherit;background:#fff}
   a{color:var(--pine)}
 </style>
 </head>
 <body>
 <header>
   <h1>ลงทะเบียนงาน Open House</h1>
-  <p>มหาวิทยาลัยเซาธ์อีสต์บางกอก · วันที่ 19 พฤศจิกายน 2569 · <a href="index.html" style="color:#fff">← กลับแนะให้แนว</a></p>
+  <p>ลงทะเบียนงานมหาวิทยาลัย · <a href="index.html" style="color:#fff">← กลับแนะให้แนว</a></p>
 </header>
 
 <main>
@@ -63,17 +64,22 @@
 
     <form id="f" novalidate>
       <div class="card">
-        <h2>สนใจไปชมงานไหม *</h2>
-        <label class="opt"><input type="radio" name="interest" value="yes"> ไปแน่นอน</label>
-        <label class="opt"><input type="radio" name="interest" value="maybe"> ยังไม่แน่ใจ</label>
+        <h2>เลือกงาน *</h2>
+        <select id="evSel" class="sel"></select>
+        <p class="hint" id="evDate"></p>
+      </div>
+
+      <div class="card">
+        <h2>หัวข้อสนใจไปชมงานไหม *</h2>
+        <label class="opt"><input type="radio" name="interest" value="yes"> ไป</label>
         <label class="opt"><input type="radio" name="interest" value="no"> ไม่ไป</label>
       </div>
 
       <div id="detail">
         <div class="card">
-          <h2>การเดินทาง</h2>
-          <label class="opt"><input type="checkbox" id="goSchool"> ยืนยันเดินทางกับโรงเรียน</label>
-          <p class="hint">ถ้าไม่ติ๊ก ให้ผู้ปกครองพาไป หรือไปเอง</p>
+          <h2>การเดินทาง *</h2>
+          <label class="opt"><input type="radio" name="transport" value="school"> ไปกับโรงเรียน</label>
+          <label class="opt"><input type="radio" name="transport" value="self"> ไปเอง</label>
         </div>
 
         <div class="card">
@@ -99,63 +105,95 @@
 
   const SUPABASE_URL = 'https://ikkhjslmtjwrxzxvtokb.supabase.co';
   const SUPABASE_KEY = 'sb_publishable_gkUomr4OsxcNV2a6EkVgRA__gCuRM7q';
-  const EVENT_CODE = 'sbu-openhouse-2569-11-19';
   const FACULTIES = ['ครุศาสตร์/ศึกษาศาสตร์', 'บริหารธุรกิจ', 'คอมพิวเตอร์/IT', 'นิเทศศาสตร์/สื่อ',
     'วิศวกรรมศาสตร์', 'สุขภาพ/พยาบาล', 'ท่องเที่ยว/โรงแรม', 'ออกแบบ', 'นิติศาสตร์', 'ยังไม่ตัดสินใจ'];
 
   const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
   const $ = id => document.getElementById(id);
   const msg = (text, ok) => { const m = $('msg'); m.textContent = text; m.className = 'msg ' + (ok ? 'ok' : 'err'); };
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
-  // สร้างตัวเลือกคณะ
   $('faculties').innerHTML = FACULTIES.map(f =>
-    `<label class="opt"><input type="checkbox" name="faculty" value="${f}"> ${f}</label>`).join('');
+    `<label class="opt"><input type="checkbox" name="faculty" value="${esc(f)}"> ${esc(f)}</label>`).join('');
+
+  // แสดง/ซ่อนส่วนรายละเอียดตามที่เลือก ไป / ไม่ไป
+  function syncDetail(){
+    const going = document.querySelector('input[name="interest"]:checked')?.value === 'yes';
+    $('detail').classList.toggle('hidden', !going);
+  }
+  document.querySelectorAll('input[name="interest"]').forEach(r => r.addEventListener('change', syncDetail));
 
   const { data: { session } } = await sb.auth.getSession();
   if (!session) { $('needLogin').classList.remove('hidden'); }
   else { $('app').classList.remove('hidden'); await init(session.user.id); }
 
-  async function init(uid) {
-    // ดึงข้อมูลนักเรียนจากโปรไฟล์ (แถวของตัวเองเท่านั้น)
+  let PROFILE = null, EVENTS = [];
+
+  async function init(uid){
     const { data: p, error: pErr } = await sb.from('profiles')
       .select('display_name, class_room, student_id, role').eq('id', uid).maybeSingle();
-    if (pErr || !p) { msg('ดึงข้อมูลโปรไฟล์ไม่ได้ กรุณาแจ้งครูแนะแนว', false); return; }
+    if (pErr || !p){ msg('ดึงข้อมูลโปรไฟล์ไม่ได้ กรุณาแจ้งครูแนะแนว', false); return; }
+    PROFILE = p;
     $('pName').textContent = p.display_name || '-';
     $('pRoom').textContent = p.class_room || '-';
     $('pSid').textContent = p.student_id || '-';
 
-    // โหลดการลงทะเบียนเดิม (ถ้ามี) เพื่อให้แก้ไขได้
+    const { data: evs, error: eErr } = await sb.from('open_house_events')
+      .select('event_code, university, event_date').eq('is_open', true).order('event_date');
+    if (eErr || !evs || !evs.length){ msg('ยังไม่มีงานที่เปิดรับลงทะเบียนค่ะ', false); return; }
+    EVENTS = evs;
+    const want = new URLSearchParams(location.search).get('event');
+    $('evSel').innerHTML = evs.map(e =>
+      `<option value="${esc(e.event_code)}">${esc(e.university)}</option>`).join('');
+    if (want && evs.some(e => e.event_code === want)) $('evSel').value = want;
+    $('evSel').addEventListener('change', () => loadEvent(uid));
+    await loadEvent(uid);
+  }
+
+  async function loadEvent(uid){
+    const code = $('evSel').value;
+    const ev = EVENTS.find(e => e.event_code === code);
+    $('evDate').textContent = ev ? 'วันที่ ' + new Date(ev.event_date + 'T00:00:00').toLocaleDateString('th-TH', { dateStyle: 'long' }) : '';
+
+    // ล้างค่าเดิมก่อน แล้วโหลดการลงทะเบียนของงานนี้ (ถ้ามี)
+    document.querySelectorAll('input[name="interest"],input[name="transport"],input[name="faculty"]').forEach(i => i.checked = false);
+    $('note').value = '';
+    msg('', true); $('msg').className = 'msg';
+
     const { data: r } = await sb.from('open_house_registrations')
-      .select('*').eq('event_code', EVENT_CODE).eq('profile_id', uid).maybeSingle();
-    if (r) {
+      .select('*').eq('event_code', code).eq('profile_id', uid).maybeSingle();
+    if (r){
       document.querySelector(`input[name="interest"][value="${r.interest}"]`).checked = true;
-      $('goSchool').checked = r.go_with_school;
-      document.querySelectorAll('input[name="faculty"]').forEach(c => c.checked = r.faculties.includes(c.value));
+      if (r.interest === 'yes')
+        document.querySelector(`input[name="transport"][value="${r.go_with_school ? 'school' : 'self'}"]`).checked = true;
+      document.querySelectorAll('input[name="faculty"]').forEach(c => c.checked = (r.faculties || []).includes(c.value));
       $('note').value = r.note || '';
-      msg('คุณลงทะเบียนแล้ว แก้ไขและบันทึกใหม่ได้', true);
+      msg('คุณลงทะเบียนงานนี้แล้ว แก้ไขและบันทึกใหม่ได้', true);
     }
-    window._profile = p;
+    syncDetail();
   }
 
   $('f').addEventListener('submit', async e => {
     e.preventDefault();
     const interest = document.querySelector('input[name="interest"]:checked')?.value;
-    if (!interest) return msg('กรุณาเลือกว่าสนใจไปชมงานหรือไม่', false);
+    if (!interest) return msg('กรุณาเลือกว่าไปหรือไม่ไป', false);
+    const transport = document.querySelector('input[name="transport"]:checked')?.value;
+    if (interest === 'yes' && !transport) return msg('กรุณาเลือกการเดินทาง', false);
 
     const { data: { user } } = await sb.auth.getUser();
     if (!user) return msg('หมดเวลาเข้าสู่ระบบ กรุณาเข้าสู่ระบบใหม่', false);
 
-    const p = window._profile || {};
+    const going = interest === 'yes';
     const row = {
-      event_code: EVENT_CODE,
+      event_code: $('evSel').value,
       profile_id: user.id,
       interest,
-      go_with_school: $('goSchool').checked,
-      faculties: [...document.querySelectorAll('input[name="faculty"]:checked')].map(c => c.value),
-      note: $('note').value.trim() || null,
-      student_id_snapshot: p.student_id || null,
-      name_snapshot: p.display_name || null,
-      class_snapshot: p.class_room || null,
+      go_with_school: going && transport === 'school',
+      faculties: going ? [...document.querySelectorAll('input[name="faculty"]:checked')].map(c => c.value) : [],
+      note: going ? ($('note').value.trim() || null) : null,
+      student_id_snapshot: PROFILE?.student_id || null,
+      name_snapshot: PROFILE?.display_name || null,
+      class_snapshot: PROFILE?.class_room || null,
       updated_at: new Date().toISOString()
     };
 
@@ -166,9 +204,7 @@
     btn.disabled = false; btn.textContent = 'บันทึกการลงทะเบียน';
 
     if (error) return msg('บันทึกไม่สำเร็จ กรุณาลองใหม่ หรือแจ้งครูแนะแนว', false);
-    msg(interest === 'no'
-      ? 'บันทึกแล้ว ขอบคุณที่ตอบนะคะ'
-      : 'ลงทะเบียนเรียบร้อย ครูแนะแนวจะแจ้งรายละเอียดเพิ่มเติมอีกครั้ง', true);
+    msg(going ? 'ลงทะเบียนเรียบร้อย ครูแนะแนวจะแจ้งรายละเอียดเพิ่มเติมอีกครั้ง' : 'บันทึกแล้ว ขอบคุณที่ตอบนะคะ', true);
   });
 </script>
 </body>
