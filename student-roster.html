@@ -252,8 +252,8 @@ function pickLevel(l){
 }
 function markRoom(){ $('rooms').querySelectorAll('.rm').forEach(b => b.classList.toggle('on', b.dataset.r === curRoom)); }
 
-// รูปที่ใช้แสดง: รูปถ่ายของโรงเรียน (ย่อไว้แล้ว) มาก่อน ถ้าไม่มีใช้รูปที่นักเรียนอัปโหลดเอง
-function photoPath(s){ return s.school_photo_path || s.avatar_path || null; }
+// รูปที่ใช้แสดง: รูปที่นักเรียนอัปโหลดเองมาก่อน ถ้าไม่มีใช้รูปถ่ายของโรงเรียน
+function photoPath(s){ return s.avatar_path || s.school_photo_path || null; }
 
 // ---------- โหลดห้อง + รูป ----------
 async function pickRoom(r){
@@ -348,9 +348,11 @@ $('chgIn').addEventListener('change', async e => {
     if (rp.error) throw rp.error;
     const sg = await sb.storage.from(BUCKET).createSignedUrl(path, 3600);
     s.school_photo_path = path;
-    s.url = sg.data ? sg.data.signedUrl : s.url;
     const orig = ALL.find(x => x.id === s.id); if (orig) orig.school_photo_path = path;
+    const shown = photoPath(s) === path;           // นักเรียนอัปโหลดรูปเองไว้ → ยังแสดงรูปของนักเรียน
+    if (shown) s.url = sg.data ? sg.data.signedUrl : s.url;
     renderRoom(false);
+    if (!shown) alert('บันทึกรูปถ่ายของโรงเรียนแล้วค่ะ แต่นักเรียนคนนี้อัปโหลดรูปเองไว้ ทำเนียบจึงยังแสดงรูปที่นักเรียนอัปโหลด');
   } catch (err){
     alert('เปลี่ยนรูปไม่สำเร็จ: ' + (err && err.message ? err.message : err) + '\nรูปเดิมยังอยู่ ลองใหม่อีกครั้งได้ค่ะ');
     restore();
