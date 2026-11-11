@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ผู้ลงทะเบียน Open House · แนะให้แนว</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Mitr:wght@500;600&family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root{
+    --ink:#22313A; --ink-soft:#5B6B72; --board:#EFF3F1; --card:#FFF;
+    --pine:#0F6B5C; --pine-deep:#0A4F44; --pine-tint:#E2F0EC;
+    --note:#FFD34D; --note-deep:#8A6D00; --line:#DCE4E1; --danger:#C0392B;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--board);color:var(--ink);font:16px/1.6 Sarabun,sans-serif}
+  header{background:var(--pine);color:#fff;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+  header h1{font:600 20px Mitr,sans-serif;margin:0}
+  header a{color:#fff;font-size:14px}
+  main{max-width:1000px;margin:0 auto;padding:20px}
+  .card{background:var(--card);border-radius:14px;box-shadow:0 2px 10px rgba(34,49,58,.08);padding:18px 20px;margin-bottom:16px;border-left:5px solid var(--pine)}
+  .card.warn{border-left-color:var(--note)}
+  h2{font:500 17px Mitr,sans-serif;margin:0 0 10px}
+  .hint{color:var(--ink-soft);font-size:14px;margin:4px 0 0}
+  .hidden{display:none !important}
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
+  .stat{background:var(--pine-tint);border-radius:12px;padding:10px 12px}
+  .stat b{display:block;font:600 22px Mitr,sans-serif;color:var(--pine-deep)}
+  .stat span{font-size:13px;color:var(--ink-soft)}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+  .chip{background:var(--board);border:1px solid var(--line);border-radius:999px;padding:2px 10px;font-size:13px}
+  .filters{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
+  label{font-weight:600;font-size:14px;display:block;margin-bottom:4px}
+  select,input[type=text]{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:10px;font:inherit;background:#fff}
+  .btnrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;align-items:center}
+  .btn{border:0;border-radius:999px;padding:10px 18px;font:500 15px Mitr,sans-serif;cursor:pointer;background:var(--pine);color:#fff}
+  .btn.ghost{background:#fff;color:var(--ink);border:1px solid var(--line)}
+  .btn:disabled{opacity:.6}
+  .tbl-wrap{overflow-x:auto}
+  table{width:100%;border-collapse:collapse;font-size:15px}
+  th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+  th{background:var(--pine-tint);font-weight:600;white-space:nowrap}
+  .tag{display:inline-block;padding:1px 8px;border-radius:999px;font-size:13px;background:var(--board);border:1px solid var(--line)}
+  .tag.yes{background:var(--pine-tint);border-color:var(--pine)}
+  .tag.maybe{background:#FFF6D6;border-color:var(--note)}
+  .empty{text-align:center;color:var(--ink-soft);padding:24px}
+  .err{color:var(--danger)}
+</style>
+</head>
+<body>
+<header>
+  <h1>📋 ผู้ลงทะเบียน Open House</h1>
+  <div><span id="who"></span> · <a href="index.html">← กลับแนะให้แนว</a></div>
+  <p class="hint" style="color:#fff;opacity:.9;width:100%;margin:0">มหาวิทยาลัยเซาธ์อีสต์บางกอก · วันที่ 19 พฤศจิกายน 2569</p>
+</header>
+
+<main>
+  <div id="noAccess" class="card hidden"></div>
+
+  <div id="main" class="hidden">
+    <div class="card">
+      <h2>สรุป (ตามตัวกรองที่เลือก)</h2>
+      <div class="stats">
+        <div class="stat"><b id="sTotal">0</b><span>ลงทะเบียนทั้งหมด</span></div>
+        <div class="stat"><b id="sYes">0</b><span>ไปแน่นอน</span></div>
+        <div class="stat"><b id="sMaybe">0</b><span>ยังไม่แน่ใจ</span></div>
+        <div class="stat"><b id="sNo">0</b><span>ไม่ไป</span></div>
+        <div class="stat"><b id="sSchool">0</b><span>ยืนยันเดินทางกับโรงเรียน</span></div>
+      </div>
+      <div class="chips" id="facChips"></div>
+      <p class="hint" id="notReg"></p>
+    </div>
+
+    <div class="card">
+      <h2>ตัวกรอง</h2>
+      <div class="filters">
+        <div><label for="fRoom">ห้องเรียน</label><select id="fRoom"></select></div>
+        <div><label for="fFac">คณะ/สาขาที่สนใจ</label><select id="fFac"></select></div>
+        <div><label for="fInt">ความสนใจ</label>
+          <select id="fInt">
+            <option value="">ทั้งหมด</option>
+            <option value="yes">ไปแน่นอน</option>
+            <option value="maybe">ยังไม่แน่ใจ</option>
+            <option value="no">ไม่ไป</option>
+          </select>
+        </div>
+        <div><label for="fGo">ยืนยันเดินทางกับโรงเรียน</label>
+          <select id="fGo">
+            <option value="">ทั้งหมด</option>
+            <option value="yes">ยืนยัน</option>
+            <option value="no">ไม่ยืนยัน</option>
+          </select>
+        </div>
+        <div><label for="fQ">ค้นหาชื่อ / เลขประจำตัว</label><input type="text" id="fQ" placeholder="พิมพ์เพื่อค้นหา"></div>
+      </div>
+      <div class="btnrow">
+        <button class="btn" id="btnExport">⬇️ ส่งออกเป็น Excel (CSV)</button>
+        <button class="btn ghost" id="btnReset">ล้างตัวกรอง</button>
+        <span class="hint" id="exportHint"></span>
+      </div>
+    </div>
+
+    <div class="card warn hidden" id="warnCard"></div>
+
+    <div class="card">
+      <h2>รายชื่อ (<span id="count">0</span> คน)</h2>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr><th>เลขประจำตัว</th><th>ชื่อ-นามสกุล</th><th>ห้อง</th><th>ความสนใจ</th><th>รถโรงเรียน</th><th>คณะที่สนใจ</th><th>ข้อเสนอแนะ</th><th>ลงทะเบียนเมื่อ</th></tr>
+          </thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+      <div id="loading" class="empty">กำลังโหลด…</div>
+    </div>
+  </div>
+</main>
+
+<script>
+  const SUPABASE_URL = 'https://ikkhjslmtjwrxzxvtokb.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlra2hqc2xtdGp3cnh6eHZ0b2tiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM3NDMzNjksImV4cCI6MjA5OTMxOTM2OX0.3OR_9mEv82Ns1LLjx5nnRwJYzrtKFtWCWd1bPuQfNKU';
+  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  const EVENT = 'sbu-openhouse-2569-11-19';
+  const FACULTIES = ['ครุศาสตร์/ศึกษาศาสตร์', 'บริหารธุรกิจ', 'คอมพิวเตอร์/IT', 'นิเทศศาสตร์/สื่อ',
+    'วิศวกรรมศาสตร์', 'สุขภาพ/พยาบาล', 'ท่องเที่ยว/โรงแรม', 'ออกแบบ', 'นิติศาสตร์', 'ยังไม่ตัดสินใจ'];
+  const INTEREST = { yes: 'ไปแน่นอน', maybe: 'ยังไม่แน่ใจ', no: 'ไม่ไป' };
+
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+  let REGS = [];        // การลงทะเบียนทั้งหมดของงานนี้
+  let STUDENTS = [];    // นักเรียนที่ active (สำหรับนับคนที่ยังไม่ลงทะเบียน)
+
+  function roomKey(r){ const m = /^ม\.(\d)\/(\d+)$/.exec(r || ''); return m ? [+m[1], +m[2]] : [9, 0]; }
+  function byRoom(a, b){ const x = roomKey(a), y = roomKey(b); return x[0] - y[0] || x[1] - y[1]; }
+
+  // ดึงทีละ 1,000 แถว (PostgREST ตัดที่ 1,000)
+  async function fetchAll(build){
+    let out = [], from = 0;
+    while (true){
+      const { data, error } = await build().range(from, from + 999);
+      if (error) throw error;
+      out = out.concat(data || []);
+      if (!data || data.length < 1000) break;
+      from += 1000;
+    }
+    return out;
+  }
+
+  function deny(html){ const el = $('noAccess'); el.innerHTML = html; el.classList.remove('hidden'); $('loading').classList.add('hidden'); }
+
+  async function init(){
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) return deny('กรุณาเข้าสู่ระบบจากหน้า <a href="index.html">แนะให้แนว</a> ก่อนนะคะ');
+
+    const { data: me } = await sb.from('profiles').select('display_name, role, is_guidance').eq('id', session.user.id).maybeSingle();
+    const ok = !!me && (me.role === 'admin' || (me.role === 'teacher' && me.is_guidance === true));
+    if (!ok) return deny('<b>หน้านี้สำหรับครูแนะแนวและผู้ดูแลระบบเท่านั้น</b><br>ถ้าต้องใช้ ให้แจ้งครูแนะแนวเพื่อขอสิทธิ์นะคะ');
+    $('who').textContent = me.display_name || '';
+    $('main').classList.remove('hidden');
+
+    try {
+      REGS = await fetchAll(() => sb.from('open_house_registrations').select('*')
+        .eq('event_code', EVENT).order('created_at').order('id'));
+      STUDENTS = await fetchAll(() => sb.from('profiles').select('id, student_id, display_name, class_room')
+        .eq('role', 'student').eq('status', 'active').order('class_room').order('id'));
+    } catch (e) {
+      $('loading').textContent = 'โหลดข้อมูลไม่สำเร็จ: ' + (e.message || e) + ' ลองรีเฟรชหน้านี้อีกครั้งนะคะ';
+      $('loading').classList.add('err');
+      return;
+    }
+    $('loading').classList.add('hidden');
+
+    // ตัวเลือกห้อง: จากรายชื่อนักเรียน + ห้องที่มีในการลงทะเบียน
+    const rooms = [...new Set([...STUDENTS.map(s => s.class_room), ...REGS.map(r => r.class_snapshot)].filter(Boolean))].sort(byRoom);
+    $('fRoom').innerHTML = '<option value="">ทุกห้อง</option>' + rooms.map(r => `<option value="${esc(r)}">${esc(r)}</option>`).join('');
+    $('fFac').innerHTML = '<option value="">ทุกคณะ</option>' + FACULTIES.map(f => `<option value="${esc(f)}">${esc(f)}</option>`).join('');
+
+    ['fRoom','fFac','fInt','fGo'].forEach(id => $(id).addEventListener('change', render));
+    $('fQ').addEventListener('input', render);
+    $('btnReset').addEventListener('click', () => {
+      ['fRoom','fFac','fInt','fGo'].forEach(id => $(id).value = '');
+      $('fQ').value = ''; render();
+    });
+    $('btnExport').addEventListener('click', exportCsv);
+
+    checkDataQuality();
+    render();
+  }
+
+  function filtered(){
+    const room = $('fRoom').value, fac = $('fFac').value, it = $('fInt').value, gs = $('fGo').value;
+    const q = $('fQ').value.trim().toLowerCase();
+    return REGS.filter(r =>
+      (!room || r.class_snapshot === room) &&
+      (!fac || (r.faculties || []).includes(fac)) &&
+      (!it || r.interest === it) &&
+      (!gs || (gs === 'yes') === !!r.go_with_school) &&
+      (!q || String(r.name_snapshot || '').toLowerCase().includes(q) || String(r.student_id_snapshot || '').includes(q))
+    );
+  }
+
+  function fmtDate(iso){
+    return iso ? new Date(iso).toLocaleString('th-TH', { timeZone: 'Asia/Bangkok', dateStyle: 'short', timeStyle: 'short' }) : '';
+  }
+
+  function render(){
+    const rows = filtered();
+    const cnt = k => rows.filter(r => r.interest === k).length;
+    $('sTotal').textContent = rows.length;
+    $('sYes').textContent = cnt('yes');
+    $('sMaybe').textContent = cnt('maybe');
+    $('sNo').textContent = cnt('no');
+    $('sSchool').textContent = rows.filter(r => r.go_with_school).length;
+    $('count').textContent = rows.length;
+
+    $('facChips').innerHTML = FACULTIES.map(f => {
+      const n = rows.filter(r => (r.faculties || []).includes(f)).length;
+      return n ? `<span class="chip">${esc(f)}: <b>${n}</b></span>` : '';
+    }).join('');
+
+    // นักเรียนในห้องที่เลือกที่ยังไม่ลงทะเบียน
+    const room = $('fRoom').value;
+    const regIds = new Set(REGS.map(r => r.profile_id));
+    $('notReg').textContent = room
+      ? `${room}: ยังไม่ลงทะเบียน ${STUDENTS.filter(s => s.class_room === room && !regIds.has(s.id)).length} คน`
+      : '';
+
+    $('rows').innerHTML = rows.length ? rows.map(r => `
+      <tr>
+        <td>${esc(r.student_id_snapshot)}</td>
+        <td>${esc(r.name_snapshot)}</td>
+        <td>${esc(r.class_snapshot)}</td>
+        <td><span class="tag ${esc(r.interest)}">${esc(INTEREST[r.interest] || r.interest)}</span></td>
+        <td>${r.go_with_school ? 'ยืนยัน' : '-'}</td>
+        <td>${esc((r.faculties || []).join(', '))}</td>
+        <td>${esc(r.note || '')}</td>
+        <td>${esc(fmtDate(r.created_at))}</td>
+      </tr>`).join('')
+      : '<tr><td colspan="8" class="empty">ไม่มีรายการที่ตรงกับตัวกรอง</td></tr>';
+  }
+
+  function checkDataQuality(){
+    const bad = REGS.filter(r => !r.student_id_snapshot || !r.name_snapshot || !r.class_snapshot).length;
+    const el = $('warnCard');
+    if (bad){
+      el.innerHTML = `<h2>⚠️ ข้อมูลไม่ครบ ${bad} คน</h2><p class="hint">มีนักเรียนที่ข้อมูลห้อง เลขประจำตัว หรือชื่อว่าง ให้ตรวจที่ทำเนียบนักเรียนค่ะ</p>`;
+      el.classList.remove('hidden');
+    }
+  }
+
+  // CSV: มี BOM ให้ Excel อ่านภาษาไทยได้ ขึ้นบรรทัดด้วย CRLF
+  function csvCell(v){
+    let s = String(v == null ? '' : v);
+    if (/^[=+\-@]/.test(s)) s = "'" + s;   // กันสูตรใน Excel
+    return /[",\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+  }
+  function exportCsv(){
+    const rows = filtered();
+    if (!rows.length){ $('exportHint').textContent = 'ไม่มีข้อมูลให้ส่งออก'; return; }
+    const head = ['เลขประจำตัว','ชื่อ-นามสกุล','ห้อง','ความสนใจ','ยืนยันเดินทางกับโรงเรียน','คณะที่สนใจ','ข้อเสนอแนะ','ลงทะเบียนเมื่อ'];
+    const body = rows.map(r => [
+      r.student_id_snapshot, r.name_snapshot, r.class_snapshot,
+      INTEREST[r.interest] || r.interest, r.go_with_school ? 'ใช่' : 'ไม่',
+      (r.faculties || []).join(', '), r.note || '', fmtDate(r.created_at)
+    ]);
+    const text = [head, ...body].map(a => a.map(csvCell).join(',')).join('\r\n');
+    const blob = new Blob(['﻿' + text], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const today = new Date(Date.now() + 7 * 3600 * 1000).toISOString().slice(0, 10);
+    const a = document.createElement('a');
+    a.href = url; a.download = `open-house-sbu-${today}.csv`;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    $('exportHint').textContent = `ส่งออก ${rows.length} รายการแล้ว`;
+  }
+
+  init();
+</script>
+</body>
+</html>

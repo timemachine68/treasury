@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ลงทะเบียน Open House</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Mitr:wght@500;600&family=Sarabun:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#22313A; --ink-soft:#5B6B72; --board:#EFF3F1; --card:#FFF;
+    --pine:#0F6B5C; --pine-deep:#0A4F44; --pine-tint:#E2F0EC;
+    --note:#FFD34D; --note-deep:#8A6D00; --line:#DCE4E1; --danger:#C0392B;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--board);color:var(--ink);font:16px/1.6 Sarabun,sans-serif}
+  header{background:var(--pine);color:#fff;padding:18px 20px}
+  header h1{font:600 22px Mitr,sans-serif;margin:0}
+  header p{margin:4px 0 0;opacity:.9;font-size:15px}
+  main{max-width:640px;margin:0 auto;padding:20px}
+  .card{background:var(--card);border-radius:14px;box-shadow:0 2px 10px rgba(34,49,58,.08);padding:20px;margin-bottom:16px;border-left:5px solid var(--pine)}
+  h2{font:500 17px Mitr,sans-serif;margin:0 0 10px}
+  .hint{color:var(--ink-soft);font-size:14px;margin:-6px 0 10px}
+  .info{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:15px}
+  .info b{color:var(--ink-soft);font-weight:600}
+  .badge{display:inline-block;background:var(--note);color:var(--note-deep);font-size:13px;padding:2px 10px;border-radius:999px;margin-bottom:8px}
+  .opt{display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;margin:6px 0;cursor:pointer}
+  .opt input{accent-color:var(--pine);width:18px;height:18px}
+  .opt:has(input:checked){background:var(--pine-tint);border-color:var(--pine)}
+  textarea{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font:inherit;min-height:80px;resize:vertical}
+  .btn{display:block;width:100%;padding:12px;border:0;border-radius:999px;background:var(--pine);color:#fff;font:500 17px Mitr,sans-serif;cursor:pointer}
+  .btn:disabled{opacity:.6}
+  .msg{padding:12px 14px;border-radius:10px;margin-top:12px;display:none}
+  .msg.err{display:block;background:#fbe9e7;color:var(--danger);border:1px solid #f5c6c0}
+  .msg.ok{display:block;background:var(--pine-tint);color:var(--pine-deep);border:1px solid var(--pine)}
+  .hidden{display:none !important}
+  a{color:var(--pine)}
+</style>
+</head>
+<body>
+<header>
+  <h1>ลงทะเบียนงาน Open House</h1>
+  <p>มหาวิทยาลัยเซาธ์อีสต์บางกอก · วันที่ 19 พฤศจิกายน 2569 · <a href="index.html" style="color:#fff">← กลับแนะให้แนว</a></p>
+</header>
+
+<main>
+  <div class="card hidden" id="needLogin">
+    <span class="badge">ต้องเข้าสู่ระบบก่อน</span>
+    <p>กรุณาเข้าสู่ระบบแนะให้แนวด้วยบัญชีของนักเรียน แล้วเปิดหน้านี้อีกครั้ง</p>
+    <p><a href="index.html">ไปหน้าเข้าสู่ระบบ</a></p>
+  </div>
+
+  <div id="app" class="hidden">
+    <div class="card">
+      <span class="badge">ข้อมูลของคุณ (ดึงจากระบบ)</span>
+      <div class="info">
+        <b>ชื่อ-นามสกุล</b><span id="pName">-</span>
+        <b>ห้องเรียน</b><span id="pRoom">-</span>
+        <b>เลขประจำตัว</b><span id="pSid">-</span>
+      </div>
+      <p class="hint" style="margin-top:10px">ถ้าข้อมูลไม่ถูกต้อง ให้แจ้งครูแนะแนว</p>
+    </div>
+
+    <form id="f" novalidate>
+      <div class="card">
+        <h2>สนใจไปชมงานไหม *</h2>
+        <label class="opt"><input type="radio" name="interest" value="yes"> ไปแน่นอน</label>
+        <label class="opt"><input type="radio" name="interest" value="maybe"> ยังไม่แน่ใจ</label>
+        <label class="opt"><input type="radio" name="interest" value="no"> ไม่ไป</label>
+      </div>
+
+      <div id="detail">
+        <div class="card">
+          <h2>การเดินทาง</h2>
+          <label class="opt"><input type="checkbox" id="goSchool"> ยืนยันเดินทางกับโรงเรียน</label>
+          <p class="hint">ถ้าไม่ติ๊ก ให้ผู้ปกครองพาไป หรือไปเอง</p>
+        </div>
+
+        <div class="card">
+          <h2>คณะ/สาขาที่สนใจ</h2>
+          <p class="hint">เลือกได้มากกว่า 1 ข้อ</p>
+          <div id="faculties"></div>
+        </div>
+
+        <div class="card">
+          <h2>ข้อเสนอแนะ</h2>
+          <textarea id="note" maxlength="500" placeholder="ไม่บังคับ"></textarea>
+        </div>
+      </div>
+
+      <button class="btn" id="btn" type="submit">บันทึกการลงทะเบียน</button>
+      <div class="msg" id="msg"></div>
+    </form>
+  </div>
+</main>
+
+<script type="module">
+  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+
+  const SUPABASE_URL = 'https://ikkhjslmtjwrxzxvtokb.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_gkUomr4OsxcNV2a6EkVgRA__gCuRM7q';
+  const EVENT_CODE = 'sbu-openhouse-2569-11-19';
+  const FACULTIES = ['ครุศาสตร์/ศึกษาศาสตร์', 'บริหารธุรกิจ', 'คอมพิวเตอร์/IT', 'นิเทศศาสตร์/สื่อ',
+    'วิศวกรรมศาสตร์', 'สุขภาพ/พยาบาล', 'ท่องเที่ยว/โรงแรม', 'ออกแบบ', 'นิติศาสตร์', 'ยังไม่ตัดสินใจ'];
+
+  const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
+  const $ = id => document.getElementById(id);
+  const msg = (text, ok) => { const m = $('msg'); m.textContent = text; m.className = 'msg ' + (ok ? 'ok' : 'err'); };
+
+  // สร้างตัวเลือกคณะ
+  $('faculties').innerHTML = FACULTIES.map(f =>
+    `<label class="opt"><input type="checkbox" name="faculty" value="${f}"> ${f}</label>`).join('');
+
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) { $('needLogin').classList.remove('hidden'); }
+  else { $('app').classList.remove('hidden'); await init(session.user.id); }
+
+  async function init(uid) {
+    // ดึงข้อมูลนักเรียนจากโปรไฟล์ (แถวของตัวเองเท่านั้น)
+    const { data: p, error: pErr } = await sb.from('profiles')
+      .select('display_name, class_room, student_id, role').eq('id', uid).maybeSingle();
+    if (pErr || !p) { msg('ดึงข้อมูลโปรไฟล์ไม่ได้ กรุณาแจ้งครูแนะแนว', false); return; }
+    $('pName').textContent = p.display_name || '-';
+    $('pRoom').textContent = p.class_room || '-';
+    $('pSid').textContent = p.student_id || '-';
+
+    // โหลดการลงทะเบียนเดิม (ถ้ามี) เพื่อให้แก้ไขได้
+    const { data: r } = await sb.from('open_house_registrations')
+      .select('*').eq('event_code', EVENT_CODE).eq('profile_id', uid).maybeSingle();
+    if (r) {
+      document.querySelector(`input[name="interest"][value="${r.interest}"]`).checked = true;
+      $('goSchool').checked = r.go_with_school;
+      document.querySelectorAll('input[name="faculty"]').forEach(c => c.checked = r.faculties.includes(c.value));
+      $('note').value = r.note || '';
+      msg('คุณลงทะเบียนแล้ว แก้ไขและบันทึกใหม่ได้', true);
+    }
+    window._profile = p;
+  }
+
+  $('f').addEventListener('submit', async e => {
+    e.preventDefault();
+    const interest = document.querySelector('input[name="interest"]:checked')?.value;
+    if (!interest) return msg('กรุณาเลือกว่าสนใจไปชมงานหรือไม่', false);
+
+    const { data: { user } } = await sb.auth.getUser();
+    if (!user) return msg('หมดเวลาเข้าสู่ระบบ กรุณาเข้าสู่ระบบใหม่', false);
+
+    const p = window._profile || {};
+    const row = {
+      event_code: EVENT_CODE,
+      profile_id: user.id,
+      interest,
+      go_with_school: $('goSchool').checked,
+      faculties: [...document.querySelectorAll('input[name="faculty"]:checked')].map(c => c.value),
+      note: $('note').value.trim() || null,
+      student_id_snapshot: p.student_id || null,
+      name_snapshot: p.display_name || null,
+      class_snapshot: p.class_room || null,
+      updated_at: new Date().toISOString()
+    };
+
+    const btn = $('btn');
+    btn.disabled = true; btn.textContent = 'กำลังบันทึก...';
+    const { error } = await sb.from('open_house_registrations')
+      .upsert(row, { onConflict: 'event_code,profile_id' });
+    btn.disabled = false; btn.textContent = 'บันทึกการลงทะเบียน';
+
+    if (error) return msg('บันทึกไม่สำเร็จ กรุณาลองใหม่ หรือแจ้งครูแนะแนว', false);
+    msg(interest === 'no'
+      ? 'บันทึกแล้ว ขอบคุณที่ตอบนะคะ'
+      : 'ลงทะเบียนเรียบร้อย ครูแนะแนวจะแจ้งรายละเอียดเพิ่มเติมอีกครั้ง', true);
+  });
+</script>
+</body>
+</html>

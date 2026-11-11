@@ -300,6 +300,8 @@ textarea.csvbox{font-family:monospace;font-size:.82rem;min-height:120px}
       <button class="btn ghost" id="tabStrength">🌟 จุดแข็ง</button>
       <button class="btn ghost hidden" id="tabOverview">🧑‍🎓 ภาพรวมนักเรียน</button>
       <button class="btn ghost" id="tabApps">🧭 ระบบของเรา</button>
+      <a class="btn ghost hidden" id="tabOpenHouse" href="open-house-register.html" style="text-decoration:none">🎓 ลงทะเบียน Open House</a>
+      <a class="btn ghost hidden" id="tabOpenHouseAdmin" href="open-house-summary.html" style="text-decoration:none">📋 ผู้ลงทะเบียน Open House</a>
       <button class="btn ghost hidden" id="tabManage">👥 จัดการบัญชี</button>
       <div class="spacer"></div>
       <button class="btn primary hidden" id="btnAdd">➕ เพิ่มสื่อ/แผน</button>
@@ -1224,6 +1226,9 @@ async function enterApp(){
   if(profile.role==="student") checkOverdueOnEnter();
   // ทางเข้าทำเนียบนักเรียน (หน้านี้เปิดได้เฉพาะแอดมินและครูแนะแนว)
   $("ovRosterLink").classList.toggle("hidden", !canSeeSubs());
+  // ลิงก์ Open House: นักเรียนลงทะเบียน / ครูแนะแนวดูรายชื่อผู้ลงทะเบียน
+  $("tabOpenHouse").classList.toggle("hidden", profile.role !== "student");
+  $("tabOpenHouseAdmin").classList.toggle("hidden", !canSeeSubs());
 }
 function computeMyPerms(){
   if(!profile) return {library:true, work:true, survey:true, strength:true, manage:true, overview:true};
