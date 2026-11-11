@@ -1,13 +1,27 @@
-/* การ์ดแสดงความยินดี แบบ 5 "บัตรผ่านเข้า" — ใช้ร่วมกันระหว่าง survey.html (นักเรียน) และ congrats-cards.html (ครู)
+/* การ์ดแสดงความยินดี 2 แบบ: "บัตรขึ้นเครื่อง" (ค่าเริ่มต้น) และ "ไฟนีออน" · สีตามมหาวิทยาลัยจริง — ใช้ร่วมกันระหว่าง survey.html (นักเรียน) และ congrats-cards.html (ครู)
    วาดลง <canvas> ในเครื่องผู้ใช้ ไม่เก็บไฟล์การ์ดไว้ที่ไหน · ตราประทับเขียนแค่ "ผ่านแล้ว" (ครูสั่ง 31 ต.ค. 2569) */
 (function(){
 'use strict';
 var __UNI=[
- ['พระจอมเกล้าธนบุรี','#f26a21'],['พระจอมเกล้าเจ้าคุณทหารลาดกระบัง','#e8531f'],['พระจอมเกล้าพระนครเหนือ','#b3202a'],
- ['จุฬาลงกรณ์','#e0066f'],['เกษตรศาสตร์','#0b8a42'],['มหิดล','#1c3f94'],['ธรรมศาสตร์','#b3202a'],
- ['ศิลปากร','#0a7a5a'],['เชียงใหม่','#7b3f98'],['ขอนแก่น','#b8860b'],['สงขลานครินทร์','#1f3c88'],
- ['บูรพา','#e9a400'],['รามคำแหง','#d4570f'],['ศรีนครินทรวิโรฒ','#a0242a'],['นเรศวร','#8a1c1c'],
- ['มหาสารคาม','#e6a100'],['ทักษิณ','#d6246a'],['สุรนารี','#c81f2d'],['แม่ฟ้าหลวง','#c8102e'],['พะเยา','#6a3a95']
+ ['พระจอมเกล้าธนบุรี','#FA4616','KMUTT'],['พระจอมเกล้าเจ้าคุณทหารลาดกระบัง','#E35205','KMITL'],['พระจอมเกล้าพระนครเหนือ','#AC3520','KMUTNB'],
+ ['จุฬาลงกรณ์','#DE5C8E','CU'],['เกษตรศาสตร์','#006664','KU'],['มหิดล','#0035AD','MU'],
+ ['ธรรมศาสตร์','#C3002F','TU'],['ศิลปากร','#007A6D','SU'],['เชียงใหม่','#9E76B4','CMU'],
+ ['ขอนแก่น','#A73B24','KKU'],['สงขลานครินทร์','#003C71','PSU'],['บูรพา','#FFCE00','BUU'],
+ ['รามคำแหง','#1E3F8A','RU'],['ศรีนครินทรวิโรฒ','#DA2128','SWU'],['นเรศวร','#E0582A','NU'],
+ ['มหาสารคาม','#E6A100','MSU'],['ทักษิณ','#358CCB','TSU'],['สุรนารี','#E4572E','SUT'],
+ ['แม่ฟ้าหลวง','#A6192E','MFU'],['พะเยา','#6A3A95','UP'],['วลัยลักษณ์','#F37321','WU'],
+ ['แม่โจ้','#00843D','MJU'],['อุบลราชธานี','#1B3F8B','UBU'],['นครพนม','#D4A017','NPU'],
+ ['ราชมงคลธัญบุรี','#0B3B8C','RMUTT'],['ราชมงคลกรุงเทพ','','RMUTK'],['ราชมงคลพระนคร','','RMUTP'],
+ ['ราชมงคลตะวันออก','','RMUTTO'],['ราชมงคลสุวรรณภูมิ','','RMUTSB'],['ราชมงคลรัตนโกสินทร์','','RMUTR'],
+ ['สวนสุนันทา','#1E3A8A','SSRU'],['ราชภัฏธนบุรี','','DRU'],['ราชภัฏพระนคร','','PNRU'],
+ ['จันทรเกษม','','CRU'],['บ้านสมเด็จเจ้าพระยา','','BSRU'],['ราชนครินทร์','','RNRU'],
+ ['สุโขทัยธรรมาธิราช','','STOU'],['หัวเฉียว','#C79A2E','HCU'],['รังสิต','','RSU'],
+ ['มหาวิทยาลัยกรุงเทพ','','BU'],['หอการค้า','','UTCC'],['ศรีปทุม','','SPU'],
+ ['เกริก','','KRU'],['ธุรกิจบัณฑิตย์','#5B2C83','DPU'],['เอเชียอาคเนย์','','SAU'],
+ ['มหาวิทยาลัยสยาม','','SIAM'],['อัสสัมชัญ','','ABAC'],['เทคโนโลยีมหานคร','','MUT'],
+ ['เนชั่น','','NTU'],['ปทุมวัน','','PIT'],['การบินพลเรือน','','CATC'],
+ ['บัณฑิตพัฒนศิลป์','','BPI'],['นวมินทราธิราช','#0B5D1E','NMU'],['การกีฬาแห่งชาติ','','TNSU'],
+ ['พระบรมราชชนก','','PI'],['บรมราชชนนี','','BCN'],['ไทย-ญี่ปุ่น','#1F4E9C','TNI']
 ];
   var F_H = "'Chonburi', serif", F_B = "'Sarabun', sans-serif";
   var GOLD = '#e9c46a', PAPER = '#fbf6e9', DEFAULT_U = '#27478a';
@@ -33,7 +47,7 @@ var __UNI=[
     return 'rgba(' + a.map(function (v, i) { return Math.round(v + (b[i] - v) * t); }).join(',') + ',' + (al === undefined ? 1 : al) + ')';
   }
   function uniColor(inst) {
-    var i; for (i = 0; i < UNI_COLORS.length; i++) { if (inst && inst.indexOf(UNI_COLORS[i][0]) > -1) { return UNI_COLORS[i][1]; } }
+    var i; for (i = 0; i < UNI_COLORS.length; i++) { if (inst && inst.indexOf(UNI_COLORS[i][0]) > -1 && UNI_COLORS[i][1]) { return UNI_COLORS[i][1]; } }
     return null;
   }
   // ชื่อบนการ์ด: ใส่วิทยาเขตต่อท้ายถ้ามี (วิทยาลัยพยาบาลบรมราชชนนีใช้ชื่อจังหวัดต่อท้ายเลย)
@@ -230,79 +244,168 @@ var __UNI=[
     c.fillStyle = col;
     for (var y = y0; y < y1; y += step) { for (var x = x0; x < x1; x += step) { c.beginPath(); c.arc(x, y, r, 0, 6.2832); c.fill(); } }
   }
-  // ---------- แบบที่ 5: บัตรผ่านเข้า ----------
-  function drawTicket(canvas, d, rat) {
-    var s = setup(canvas, rat), c = s.c, W = s.W, H = s.H, T = theme(d), k = ({ '4:5': 1, '1:1': 0.8, '9:16': 1.12 })[rat], ky = (rat === '9:16') ? 1.35 : 1, i;
-    var bg = c.createLinearGradient(0, 0, W, H); bg.addColorStop(0, T.tint); bg.addColorStop(1, T.tint2); c.fillStyle = bg; c.fillRect(0, 0, W, H);
-    dots(c, 20, 20, W, H, 46, 5, 'rgba(255,255,255,0.4)');
-    var m = (rat === '9:16') ? 80 : (rat === '1:1' ? 52 : 64), tx = m, tw = W - 2 * m, ty = m, th = H - 2 * m, rad = 34 * k;
-    var headH = 140 * k, upH = 450 * k * ky, footH = 104 * k, py = ty + headH + upH, nr = 26 * k, pad = 48 * k, ink = T.ink;
-    function tpath() {
-      c.beginPath(); c.moveTo(tx + rad, ty); c.lineTo(tx + tw - rad, ty); c.arcTo(tx + tw, ty, tx + tw, ty + rad, rad);
-      c.lineTo(tx + tw, py - nr); c.arc(tx + tw, py, nr, -Math.PI / 2, Math.PI / 2, true);
-      c.lineTo(tx + tw, ty + th - rad); c.arcTo(tx + tw, ty + th, tx + tw - rad, ty + th, rad);
-      c.lineTo(tx + rad, ty + th); c.arcTo(tx, ty + th, tx, ty + th - rad, rad);
-      c.lineTo(tx, py + nr); c.arc(tx, py, nr, Math.PI / 2, -Math.PI / 2, true);
-      c.lineTo(tx, ty + rad); c.arcTo(tx, ty, tx + rad, ty, rad); c.closePath();
+  // ---------- ตัวช่วยของแบบใหม่ ----------
+  var F_M = "'Mitr', sans-serif", F_S = "'Playfair Display', serif", F_T = "'Kaushan Script', cursive";
+  function mixc(h, to, t) { var a = rgb(h), b = rgb(to); return 'rgb(' + [0, 1, 2].map(function (i) { return Math.round(a[i] + (b[i] - a[i]) * t); }).join(',') + ')'; }
+  function rgbaU(h, al) { var a = rgb(h); return 'rgba(' + a[0] + ',' + a[1] + ',' + a[2] + ',' + al + ')'; }
+  function lumOf(h) { var a = rgb(h); return (0.299 * a[0] + 0.587 * a[1] + 0.114 * a[2]) / 255; }
+  function satOf(h) { var a = rgb(h), mx = Math.max(a[0], a[1], a[2]), mn = Math.min(a[0], a[1], a[2]); return mx ? (mx - mn) / mx : 0; }
+  function uniCode(d) {
+    if (d.code) { return d.code; }
+    var i; for (i = 0; i < UNI_COLORS.length; i++) { if (d.inst && d.inst.indexOf(UNI_COLORS[i][0]) > -1 && UNI_COLORS[i][2]) { return UNI_COLORS[i][2]; } }
+    return '';
+  }
+  // ใส่ข้อความ (ไทย/อังกฤษ) ให้พอดีกรอบด้วยฟอนต์ที่กำหนด
+  function fitF(c, text, fam, weight, size, min, maxW, maxLines) {
+    var s, L;
+    for (s = Math.round(size); s >= min; s -= 2) {
+      c.font = weight + ' ' + s + 'px ' + fam; L = wrapLines(c, String(text || ''), maxW);
+      if (L.length <= maxLines && L.every(function (l) { return c.measureText(l).width <= maxW; })) { return { lines: L, size: s, font: c.font }; }
     }
-    c.save(); c.shadowColor = 'rgba(0,0,0,0.3)'; c.shadowBlur = 40; c.shadowOffsetY = 18; tpath(); c.fillStyle = '#fffdf7'; c.fill(); c.restore();
+    c.font = weight + ' ' + min + 'px ' + fam; L = wrapLines(c, String(text || ''), maxW).slice(0, maxLines);
+    if (L.length) { while (L[L.length - 1].length > 1 && c.measureText(L[L.length - 1] + '…').width > maxW) { L[L.length - 1] = L[L.length - 1].slice(0, -1); } }
+    return { lines: L, size: min, font: c.font };
+  }
+  function putLines(c, f, x, y, lh, align) { c.font = f.font; c.textAlign = align || 'left'; f.lines.forEach(function (l, i) { c.fillText(l, x, y + i * f.size * lh); }); return y + f.lines.length * f.size * lh; }
+  function spaced(c, text, x, y, sp, align) {
+    var ch = Array.from(String(text)), w = -sp; ch.forEach(function (k) { w += c.measureText(k).width + sp; });
+    var sx = align === 'center' ? x - w / 2 : align === 'right' ? x - w : x; c.textAlign = 'left';
+    ch.forEach(function (k) { c.fillText(k, sx, y); sx += c.measureText(k).width + sp; });
+  }
+  function foil(c, x0, y0, x1, y1) { var g = c.createLinearGradient(x0, y0, x1, y1); g.addColorStop(0, '#FFFFFF'); g.addColorStop(0.5, '#FFF3CF'); g.addColorStop(1, '#F6D98B'); return g; }
+  function plane(c, x, y, s, rot, col) {
+    c.save(); c.translate(x, y); c.rotate(rot || 0); c.scale(s, s); c.fillStyle = col;
+    c.beginPath(); c.moveTo(26, 0); c.lineTo(-18, -6); c.lineTo(-28, -6); c.lineTo(-22, 0); c.lineTo(-28, 6); c.lineTo(-18, 6); c.closePath(); c.fill();
+    c.beginPath(); c.moveTo(6, 0); c.lineTo(-7, -24); c.lineTo(-15, -24); c.lineTo(-7, 0); c.lineTo(-15, 24); c.lineTo(-7, 24); c.closePath(); c.fill();
+    c.restore();
+  }
+  // วางเนื้อการ์ด (ออกแบบที่ 1080×1350) ลงขนาดจริง: 1:1 ย่อลง, 9:16 วางกลางแล้วเติมหัว-ท้าย
+  function stage(canvas, rat) {
+    var S = setup(canvas, rat), k = S.H < 1350 ? S.H / 1350 : 1, oy = S.H > 1350 ? (S.H - 1350) / 2 : 0;
+    return { c: S.c, W: S.W, H: S.H, k: k, oy: oy, enter: function () { S.c.save(); S.c.translate((S.W - S.W * k) / 2, oy); S.c.scale(k, k); }, leave: function () { S.c.restore(); } };
+  }
 
+  // ---------- แบบ "บัตรขึ้นเครื่อง" ----------
+  function drawBoarding(canvas, d, rat) {
+    var P = stage(canvas, rat), c = P.c, W = P.W, H = P.H, T = theme(d), U = T.u;
+    var deep = mixc(U, '#000000', 0.5), ink = '#1F2328', mute = '#8A8F98', code = uniCode(d), seed = seedOf(d.name + d.inst);
+    var UT = lumOf(U) > 0.6 ? mixc(U, '#000000', 0.38) : U;   // สีอ่อนมาก (เช่น เหลือง) ใช้เฉดเข้มขึ้นกับตัวหนังสือบนพื้นขาว
+    // พื้นหลังเต็มภาพ
+    var g = c.createLinearGradient(0, 0, W, H); g.addColorStop(0, mixc(U, '#ffffff', 0.35)); g.addColorStop(1, mixc(U, '#000000', 0.15)); c.fillStyle = g; c.fillRect(0, 0, W, H);
+    c.fillStyle = 'rgba(255,255,255,0.14)'; for (var yy = 12; yy < H; yy += 22) { for (var xx = (yy % 44 ? 0 : 11); xx < W; xx += 22) { c.beginPath(); c.arc(xx, yy, 2.2, 0, 6.2832); c.fill(); } }
+    c.strokeStyle = 'rgba(255,255,255,0.35)'; c.lineWidth = 3; c.setLineDash([4, 14]); c.lineCap = 'round';
+    c.beginPath(); c.moveTo(-40, H - 100); c.bezierCurveTo(300, H - 450, 700, H + 150, W + 40, H - 370); c.stroke(); c.setLineDash([]); c.lineCap = 'butt';
+    if (P.oy > 0) {   // สตอรี่: หัว-ท้ายเพิ่ม
+      plane(c, W / 2, P.oy * 0.42, 1.6, -0.35, 'rgba(255,255,255,0.9)');
+      c.fillStyle = '#fff'; c.font = '600 30px ' + F_M; spaced(c, 'CLASS OF 2569', W / 2, P.oy * 0.42 + 80, 8, 'center');
+      c.font = '600 24px ' + F_M; c.fillStyle = 'rgba(255,255,255,0.85)'; spaced(c, 'POOLCHAROENWITTAYAKOM SCHOOL', W / 2, H - P.oy * 0.45, 5, 'center');
+    }
+    P.enter();
+    var X = 80, Y = 56, CW = 920, CH = 1238, R = 36, cut = 800, cut2 = 1110;
+    function notchPath() {
+      c.beginPath(); c.moveTo(X + R, Y); c.lineTo(X + CW - R, Y); c.arcTo(X + CW, Y, X + CW, Y + R, R);
+      [cut, cut2].forEach(function (q) { c.lineTo(X + CW, Y + q - 24); c.arc(X + CW, Y + q, 24, -Math.PI / 2, Math.PI / 2, true); });
+      c.lineTo(X + CW, Y + CH - R); c.arcTo(X + CW, Y + CH, X + CW - R, Y + CH, R); c.lineTo(X + R, Y + CH); c.arcTo(X, Y + CH, X, Y + CH - R, R);
+      [cut2, cut].forEach(function (q) { c.lineTo(X, Y + q + 24); c.arc(X, Y + q, 24, Math.PI / 2, -Math.PI / 2, true); });
+      c.lineTo(X, Y + R); c.arcTo(X, Y, X + R, Y, R); c.closePath();
+    }
+    c.save(); c.shadowColor = 'rgba(0,0,0,0.25)'; c.shadowBlur = 44; c.shadowOffsetY = 18; notchPath(); c.fillStyle = '#FFFFFF'; c.fill(); c.restore();
+    c.save(); notchPath(); c.clip();
     // หัวบัตร
-    c.save(); tpath(); c.clip();
-    c.fillStyle = T.deep; c.fillRect(tx, ty, tw, headH);
-    c.save(); c.beginPath(); c.rect(tx, ty, tw, headH); c.clip(); lattice(c, W, H, 'rgba(233,196,106,0.09)', 60 * k); c.restore();
-    c.fillStyle = goldGrad(c, ty + headH - 8 * k, ty + headH); c.fillRect(tx, ty + headH - 7 * k, tw, 7 * k);
-    c.restore();
-    c.textAlign = 'left'; c.font = '400 ' + Math.round(76 * k) + 'px ' + F_H; c.fillStyle = goldGrad(c, ty + 30 * k, ty + headH - 30 * k);
-    c.fillText('ยินดีด้วย!', tx + pad, ty + headH * 0.66);
-    c.textAlign = 'right'; c.fillStyle = '#fbf6e9'; c.font = '700 ' + Math.round(26 * k) + 'px ' + F_B; c.fillText('บัตรผ่านเข้าศึกษาต่อ', tx + tw - pad, ty + headH * 0.44);
-    c.fillStyle = 'rgba(251,246,233,0.8)'; c.font = '400 ' + Math.round(24 * k) + 'px ' + F_B; c.fillText('โรงเรียนพูลเจริญวิทยาคม', tx + tw - pad, ty + headH * 0.72);
-
-    // รูป + ข้อมูลนักเรียน
-    var px0 = tx + pad, py0 = ty + headH + 30 * k, pw = 322 * k, ph = upH - 60 * k;
-    c.save(); c.shadowColor = 'rgba(0,0,0,0.25)'; c.shadowBlur = 16; c.shadowOffsetY = 6; rr(c, px0 - 6 * k, py0 - 6 * k, pw + 12 * k, ph + 12 * k, 20 * k); c.fillStyle = goldGrad(c, py0, py0 + ph); c.fill(); c.restore();
-    c.save(); rr(c, px0, py0, pw, ph, 14 * k); c.clip(); drawPhotoBlock(c, d, px0, py0, pw, ph, T, 0.2); c.restore();
-    var fx = px0 + pw + 40 * k, fw = tx + tw - pad - fx, fy = py0, lab = Math.round(22 * k), gap = 16 * k;
-    var nm = fitBlock(c, d.name, fw, 50 * k, 28, '700', 2);
-    function label(t, y) { c.textAlign = 'left'; c.font = '600 ' + lab + 'px ' + F_B; c.fillStyle = '#7b8494'; c.fillText(t, fx, y + lab * 0.9); return y + lab * 1.45; }
-    fy = label('ชื่อ-นามสกุล', fy);
-    c.fillStyle = ink; c.font = '700 ' + nm.size + 'px ' + F_B; nm.lines.forEach(function (t, q) { c.fillText(t, fx, fy + nm.size * 0.95 + q * nm.size * 1.2); });
-    fy += nm.lines.length * nm.size * 1.2 + gap;
-    fy = label('ชั้น', fy); c.fillStyle = ink; c.font = '700 ' + Math.round(36 * k) + 'px ' + F_B; c.fillText(d.cls, fx, fy + 30 * k); fy += 44 * k + gap;
-    if (d.round) { fy = label('รอบสมัคร', fy); c.fillStyle = ink; c.font = '700 ' + Math.round(36 * k) + 'px ' + F_B; c.fillText(d.round, fx, fy + 30 * k); }
-
+    var hg = c.createLinearGradient(X, Y, X + CW, Y + 250); hg.addColorStop(0, deep); hg.addColorStop(1, mixc(U, '#000000', 0.3)); c.fillStyle = hg; c.fillRect(X, Y, CW, 250);
+    c.save(); c.globalAlpha = 0.1; c.strokeStyle = '#fff'; c.lineWidth = 2; for (var i = 0; i < 9; i++) { c.beginPath(); c.arc(X + CW - 40, Y + 20, 50 + i * 34, 0, 6.2832); c.stroke(); } c.restore();
+    c.fillStyle = '#fff'; c.beginPath(); c.arc(X + 62, Y + 52, 22, 0, 6.2832); c.fill(); plane(c, X + 62, Y + 52, 0.5, -0.5, deep);
+    c.fillStyle = '#fff'; c.font = '600 22px ' + F_M; spaced(c, 'PW GUIDANCE AIRLINES', X + 98, Y + 60, 3, 'left');
+    c.font = '700 20px ' + F_S; c.fillStyle = 'rgba(255,255,255,0.85)'; spaced(c, 'BOARDING PASS', X + CW - 44, Y + 60, 5, 'right');
+    c.fillStyle = 'rgba(255,255,255,0.25)'; c.fillRect(X + 40, Y + 90, CW - 80, 1.5);
+    var ts = 104; c.font = '400 ' + ts + 'px ' + F_T; while (c.measureText('Congratulations!').width > CW - 140 && ts > 40) { ts -= 2; c.font = '400 ' + ts + 'px ' + F_T; }
+    c.textAlign = 'center'; c.fillStyle = 'rgba(0,0,0,0.28)'; c.fillText('Congratulations!', W / 2 + 4, Y + 204);
+    c.fillStyle = foil(c, 0, Y + 120, 0, Y + 210); c.fillText('Congratulations!', W / 2, Y + 200);
+    // เส้นทาง PW → มหาวิทยาลัย
+    var ry = Y + 300;
+    c.font = '600 18px ' + F_M; c.fillStyle = mute; spaced(c, 'FROM', X + 48, ry, 3, 'left'); spaced(c, 'TO', X + CW - 48, ry, 3, 'right');
+    c.font = '600 108px ' + F_M; c.fillStyle = ink; c.textAlign = 'left'; c.fillText('PW', X + 44, ry + 104);
+    if (code) { var cf = fitF(c, code, F_M, '600', 108, 50, 330, 1); c.fillStyle = UT; putLines(c, cf, X + CW - 44, ry + 104, 1, 'right'); }
+    else { c.fillStyle = UT; c.font = '600 60px ' + F_M; c.textAlign = 'right'; c.fillText('★', X + CW - 60, ry + 96); }
+    c.font = '400 20px ' + F_B; c.fillStyle = mute; c.textAlign = 'left'; c.fillText('Poolcharoenwittayakom', X + 48, ry + 138); c.textAlign = 'right'; c.fillText('Your next chapter', X + CW - 48, ry + 138);
+    var ax0 = X + 250, ax1 = X + CW - 360, ay = ry + 64;
+    c.strokeStyle = '#C9CDD3'; c.lineWidth = 3; c.setLineDash([8, 9]); c.beginPath(); c.moveTo(ax0, ay); c.quadraticCurveTo((ax0 + ax1) / 2, ay - 54, ax1, ay); c.stroke(); c.setLineDash([]);
+    c.fillStyle = '#C9CDD3'; c.beginPath(); c.arc(ax0, ay, 6, 0, 6.2832); c.fill(); c.beginPath(); c.arc(ax1, ay, 6, 0, 6.2832); c.fill();
+    plane(c, (ax0 + ax1) / 2, ay - 27, 1, 0, UT);
+    // ผู้โดยสาร
+    var px = X + 48, py = Y + 476, pw = 220, ph = 262;
+    c.fillStyle = mixc(U, '#ffffff', 0.85); rr(c, px - 8, py - 8, pw + 16, ph + 16, 22); c.fill();
+    c.save(); rr(c, px, py, pw, ph, 16); c.clip(); drawPhotoBlock(c, d, px, py, pw, ph, T, 0.2); c.restore();
+    var fx = px + pw + 44, fw = X + CW - 48 - fx;
+    function lab(txt, x, y) { c.font = '600 16px ' + F_M; c.fillStyle = mute; spaced(c, txt, x, y, 2.5, 'left'); }
+    lab('PASSENGER', fx, py + 14);
+    c.fillStyle = ink; putLines(c, fitF(c, d.name, F_M, '600', 42, 24, fw, 1), fx, py + 62, 1.2);
+    var colW = fw / 2, gy = py + 118;
+    [['FLIGHT', 'PW2569'], ['CLASS', d.cls || '-'], ['BOARDING', d.round || '-'], ['STATUS', 'ADMITTED ✓']].forEach(function (it, q) {
+      var cx = fx + (q % 2) * colW, cy = gy + Math.floor(q / 2) * 82;
+      lab(it[0], cx, cy); c.fillStyle = it[0] === 'STATUS' ? UT : ink; putLines(c, fitF(c, it[1], F_M, '600', 32, 18, colW - 16, 1), cx, cy + 40, 1.2);
+    });
     // รอยปรุ
-    c.save(); c.setLineDash([14 * k, 11 * k]); c.lineWidth = 3 * k; c.strokeStyle = '#cfc8b2'; c.beginPath(); c.moveTo(tx + nr + 12 * k, py); c.lineTo(tx + tw - nr - 12 * k, py); c.stroke(); c.restore();
-
-    // ส่วนล่าง
-    var lw = tw - 2 * pad, uni = fitBlock(c, uniText(d), lw, 68 * k, 32, '700', 2), fac = fitBlock(c, d.prog, lw, 44 * k, 26, '600', 2);
-    var lg = 14 * k, contentH = lab * 1.45 + uni.lines.length * uni.size * 1.2 + lg + lab * 1.45 + fac.lines.length * fac.size * 1.3;
-    var rTop = py + nr, rBot = ty + th - footH, yy = rTop + Math.max(10 * k, (rBot - rTop - contentH) * 0.34);
-    c.textAlign = 'left'; c.font = '600 ' + lab + 'px ' + F_B; c.fillStyle = '#7b8494'; c.fillText('มหาวิทยาลัย', tx + pad, yy + lab * 0.9); yy += lab * 1.45;
-    c.fillStyle = ink; c.font = '700 ' + uni.size + 'px ' + F_B; uni.lines.forEach(function (t, q) { c.fillText(t, tx + pad, yy + uni.size * 0.95 + q * uni.size * 1.2); });
-    yy += uni.lines.length * uni.size * 1.2 + lg;
-    c.font = '600 ' + lab + 'px ' + F_B; c.fillStyle = '#7b8494'; c.fillText('คณะ / สาขา', tx + pad, yy + lab * 0.9); yy += lab * 1.45;
-    c.fillStyle = '#2f3b52'; c.font = '600 ' + fac.size + 'px ' + F_B; fac.lines.forEach(function (t, q) { c.fillText(t, tx + pad, yy + fac.size * 0.98 + q * fac.size * 1.3); });
-
-    c.textAlign = 'left'; c.fillStyle = '#9aa3b2'; c.font = '600 ' + Math.round(26 * k) + 'px ' + F_B; c.fillText('ขอให้เรียนสนุกและประสบความสำเร็จ', tx + pad, rBot - 26 * k);
-
-    // ตราประทับ
-    var sr = 96 * k, sx = tx + tw - pad - sr - 14 * k, sy = py0 + ph - sr - 6 * k, stc = shade(T.u, 0.3, 'k');
-    c.save(); c.translate(sx, sy); c.rotate(-0.24); c.globalCompositeOperation = 'multiply'; c.globalAlpha = 0.92;
-    c.strokeStyle = stc; c.lineWidth = 6 * k; c.beginPath(); c.arc(0, 0, sr, 0, 6.2832); c.stroke();
-    c.lineWidth = 2.5 * k; c.beginPath(); c.arc(0, 0, sr - 12 * k, 0, 6.2832); c.stroke();
-    c.fillStyle = stc; c.textAlign = 'center'; c.font = '400 ' + Math.round(31 * k) + 'px ' + F_H; c.fillText('ผ่านแล้ว', 0, 12 * k);
+    c.strokeStyle = '#D5D9DE'; c.lineWidth = 3; c.setLineDash([12, 11]);
+    [cut, cut2].forEach(function (q) { c.beginPath(); c.moveTo(X + 40, Y + q); c.lineTo(X + CW - 40, Y + q); c.stroke(); }); c.setLineDash([]);
+    // ปลายทาง
+    var dy = Y + cut + 54;
+    lab('DESTINATION · UNIVERSITY', X + 48, dy);
+    c.fillStyle = deep; dy = putLines(c, fitF(c, uniText(d), F_M, '600', 44, 26, CW - 96, 2), X + 48, dy + 52, 1.16) + 8;
+    lab('TERMINAL · FACULTY / MAJOR', X + 48, dy);
+    c.fillStyle = '#3D434B'; putLines(c, fitF(c, d.prog, F_B, '500', 29, 18, CW - 96, 2), X + 48, dy + 40, 1.28);
+    // ต้นขั้ว
+    var sy = Y + cut2 + 34, rb = rng(seed), bx = X + 48;
+    c.fillStyle = ink; while (bx < X + 470) { var bw = 2 + Math.floor(rb() * 5); c.fillRect(bx, sy - 6, bw, 58); bx += bw + 2 + Math.floor(rb() * 4); }
+    c.font = 'italic 400 27px ' + F_S; c.fillStyle = deep; c.textAlign = 'right'; c.fillText('Wishing you joy & success', X + CW - 48, sy + 16); c.fillText('on your new journey.', X + CW - 48, sy + 48);
+    c.font = '600 14px ' + F_M; c.fillStyle = mute; spaced(c, 'GUIDANCE OFFICE · POOLCHAROENWITTAYAKOM SCHOOL', X + 48, sy + 86, 2, 'left');
     c.restore();
-
-    // ท้ายบัตร: บาร์โค้ด
-    var ft = ty + th - footH, rnd = rng(seedOf(d.name + d.inst + 'bc')), bxx = tx + pad, bh = 56 * k, byy = ft + (footH - bh) / 2;
-    c.fillStyle = '#e5dfcb'; c.fillRect(tx + pad, ft, tw - 2 * pad, 2 * k);
-    c.fillStyle = ink; c.globalAlpha = 0.85;
-    while (bxx < tx + tw * 0.46) { var bw = (2 + Math.floor(rnd() * 4)) * k; c.fillRect(bxx, byy, bw, bh); bxx += bw + (2 + Math.floor(rnd() * 4)) * k; }
-    c.globalAlpha = 1; c.textAlign = 'right'; c.fillStyle = '#7b8494'; c.font = '600 ' + Math.round(24 * k) + 'px ' + F_B; c.fillText('งานแนะแนว  ·  แนะให้แนว', tx + tw - pad, ft + footH / 2 + 8 * k);
-    sparkle(c, tx - 4, ty + 10, 26 * k, '#ffffff'); sparkle(c, tx + tw + 6, ty + th - 20, 22 * k, '#ffffff');
+    // ตราประทับบนมุมรูป
+    c.save(); c.translate(px + 44, py + ph - 30); c.rotate(-0.25); c.globalAlpha = 0.9;
+    c.fillStyle = 'rgba(255,255,255,0.55)'; c.beginPath(); c.arc(0, 0, 70, 0, 6.2832); c.fill();
+    c.strokeStyle = UT; c.fillStyle = UT; c.lineWidth = 5; c.beginPath(); c.arc(0, 0, 70, 0, 6.2832); c.stroke(); c.lineWidth = 2; c.beginPath(); c.arc(0, 0, 58, 0, 6.2832); c.stroke();
+    c.font = 'italic 900 22px ' + F_S; c.textAlign = 'center'; c.fillText('ADMITTED', 0, 8);
+    c.font = '700 12px ' + F_S; spaced(c, '★ 2569 ★', 0, -24, 2, 'center'); spaced(c, 'PW GUIDANCE', 0, 38, 2, 'center');
+    c.restore();
+    P.leave();
     return { H: H };
   }
+
+  // ---------- แบบ "ไฟนีออน" (สีตามมหาวิทยาลัย) ----------
+  function drawNeon(canvas, d, rat) {
+    var P = stage(canvas, rat), c = P.c, W = P.W, H = P.H, T = theme(d), U = T.u, gray = satOf(U) < 0.18;
+    var hot = gray ? '#FFD34D' : (lumOf(U) < 0.35 ? mixc(U, '#ffffff', 0.45) : mixc(U, '#ffffff', 0.25));
+    var soft = gray ? '#FFF1B8' : mixc(U, '#ffffff', 0.75), line = gray ? '#FFE58A' : mixc(U, '#ffffff', 0.6);
+    var g = c.createLinearGradient(0, 0, 0, H); g.addColorStop(0, mixc(U, '#000000', 0.8)); g.addColorStop(1, mixc(U, '#000000', 0.91)); c.fillStyle = g; c.fillRect(0, 0, W, H);
+    var rg = c.createRadialGradient(W / 2, H * 0.42, 0, W / 2, H * 0.42, 760); rg.addColorStop(0, rgbaU(U, 0.35)); rg.addColorStop(1, rgbaU(U, 0)); c.fillStyle = rg; c.fillRect(0, 0, W, H);
+    var r = rng(seedOf(d.name + 'neon')); for (var i = 0; i < 170; i++) { c.fillStyle = 'rgba(255,255,255,' + (0.15 + r() * 0.55) + ')'; c.beginPath(); c.arc(r() * W, r() * H * 0.72, r() * 1.8, 0, 6.2832); c.fill(); }
+    var hz = H - 370; c.strokeStyle = gray ? 'rgba(255,211,77,0.22)' : shade(U, 0.3, 'w', 0.22); c.lineWidth = 1.2;
+    for (i = 0; i < 16; i++) { c.beginPath(); c.moveTo(W / 2, hz); c.lineTo(-400 + i * 125, H); c.stroke(); }
+    for (i = 0; i < 7; i++) { var yy = hz + 20 + i * i * 12; c.beginPath(); c.moveTo(0, yy); c.lineTo(W, yy); c.stroke(); }
+    function glow(col, blur, fn) { c.save(); c.shadowColor = col; c.shadowBlur = blur; fn(); c.restore(); }
+    if (P.oy > 0) { c.font = '600 26px ' + F_M; c.fillStyle = soft; glow(hot, 12, function () { spaced(c, 'POOLCHAROENWITTAYAKOM SCHOOL', W / 2, P.oy * 0.55, 6, 'center'); }); }
+    P.enter();
+    c.font = '150px "Great Vibes", ' + F_T; c.textAlign = 'center';
+    glow(hot, 44, function () { c.fillStyle = hot; c.fillText('Congratulations', W / 2, 210); });
+    glow(hot, 12, function () { c.fillStyle = soft; c.fillText('Congratulations', W / 2, 210); });
+    c.font = '46px Monoton, ' + F_M; glow(hot, 16, function () { c.fillStyle = soft; c.fillText('CLASS OF 2569', W / 2, 296); });
+    var px = 300, py = 340, pw = 480, ph = 520;
+    glow(hot, 50, function () { c.strokeStyle = line; c.lineWidth = 8; rr(c, px - 14, py - 14, pw + 28, ph + 28, 36); c.stroke(); });
+    c.save(); rr(c, px, py, pw, ph, 26); c.clip(); drawPhotoBlock(c, d, px, py, pw, ph, T, 0.2); c.restore();
+    c.fillStyle = '#fff'; putLines(c, fitF(c, d.name, F_M, '600', 54, 30, 900, 1), W / 2, 950, 1.2, 'center');
+    c.font = '400 28px ' + F_B; c.fillStyle = soft; c.textAlign = 'center'; c.fillText([d.cls, d.round].filter(Boolean).join('  ·  '), W / 2, 996);
+    var fi = fitF(c, uniText(d), F_M, '600', 44, 26, 920, 2), yi = 1074;
+    glow(hot, 22, function () { c.fillStyle = soft; yi = putLines(c, fi, W / 2, 1074, 1.2, 'center'); });
+    c.fillStyle = 'rgba(255,255,255,0.85)'; putLines(c, fitF(c, d.prog, F_B, '400', 27, 18, 900, 2), W / 2, yi + 6, 1.3, 'center');
+    c.font = '400 22px ' + F_B; c.fillStyle = 'rgba(255,255,255,0.5)'; c.textAlign = 'center'; c.fillText('Guidance Office · Poolcharoenwittayakom School', W / 2, 1300);
+    P.leave();
+    return { H: H };
+  }
+
+  var DESIGNS = { boarding: drawBoarding, neon: drawNeon };
+  function drawCard(canvas, d, rat) { var f = DESIGNS[d.design] || DESIGNS[curDesign()] || drawBoarding; return f(canvas, d, rat || '4:5'); }
+  function curDesign() { try { var v = localStorage.getItem('pcwCardDesign'); return DESIGNS[v] ? v : 'boarding'; } catch (e) { return 'boarding'; } }
+  function setDesign(v) { try { localStorage.setItem('pcwCardDesign', DESIGNS[v] ? v : 'boarding'); } catch (e) { } }
 
   // ชื่อรอบแบบสั้นสำหรับช่อง "รอบสมัคร" บนการ์ด
   function roundShort(r) {
@@ -311,7 +414,7 @@ var __UNI=[
   }
   function fontsReady() {
     if (!document.fonts || !document.fonts.load) { return Promise.resolve(); }
-    return Promise.all(['400 30px Sarabun', '600 30px Sarabun', '700 30px Sarabun', '400 30px Chonburi'].map(function (f) { return document.fonts.load(f, 'ยินดีด้วย'); })).catch(function () {});
+    return Promise.all(['400 30px Sarabun', '500 30px Sarabun', '600 30px Sarabun', '700 30px Sarabun', '400 30px Mitr', '600 30px Mitr', '400 30px Chonburi', '400 30px "Kaushan Script"', '700 30px "Playfair Display"', 'italic 400 30px "Playfair Display"', 'italic 900 30px "Playfair Display"', '400 30px "Great Vibes"', '400 30px Monoton'].map(function (f) { return document.fonts.load(f, 'ยินดีด้วย Congratulations PW 2569'); })).catch(function () {});
   }
-  window.PCWCard = { draw: drawTicket, roundShort: roundShort, fontsReady: fontsReady, color: effColor };
+  window.PCWCard = { draw: drawCard, roundShort: roundShort, fontsReady: fontsReady, color: effColor, code: uniCode, design: curDesign, setDesign: setDesign, designs: [['boarding', '✈️ บัตรขึ้นเครื่อง'], ['neon', '🌃 ไฟนีออน']] };
 })();

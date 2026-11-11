@@ -7,7 +7,7 @@
 <title>ตรวจการ์ดแสดงความยินดี | แนะให้แนว</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Chonburi&family=Mitr:wght@400;500;600&family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Chonburi&family=Mitr:wght@400;500;600&family=Sarabun:wght@400;500;600;700&family=Kaushan+Script&family=Great+Vibes&family=Monoton&family=Playfair+Display:ital,wght@0,700;1,400;1,900&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
 <script src="congrats-card-draw.js"></script>
@@ -256,6 +256,7 @@ function render(){
   <div class="bar">
     <select class="sel" id="selRound" aria-label="รอบสำรวจ">${rounds.map(r=>`<option value="${r.id}" ${r.id===round.id?"selected":""}>${esc(r.title)}${r.academic_year?" ("+esc(r.academic_year)+")":""}</option>`).join("")}</select>
     <select class="sel" id="selRoom" aria-label="ห้อง">${rooms.map(x=>`<option value="${esc(x)}" ${x===room?"selected":""}>${x==="all"?"ทุกห้อง":esc(x)}</option>`).join("")}</select>
+    <span class="hint">แบบการ์ด</span>${PCWCard.designs.map(([k,l])=>`<button class="chip ${PCWCard.design()===k?"active":""}" data-design="${k}">${l}</button>`).join("")}
     <span class="spacer"></span>
     <button class="btn ghost" id="btnZip" ${counts.approved?"":"disabled"}>⬇️ ดาวน์โหลดการ์ดที่อนุมัติแล้ว (ZIP)</button>
   </div>
@@ -273,6 +274,7 @@ function render(){
   document.querySelectorAll("[data-tab]").forEach(b=> b.onclick=()=>{ tab=b.dataset.tab; sel.clear(); pageN=1; render(); });
   if($("btnMore")) $("btnMore").onclick = ()=>{ pageN++; render(); };
   $("btnZip").onclick = zipApproved;
+  document.querySelectorAll("[data-design]").forEach(b=> b.onclick=()=>{ PCWCard.setDesign(b.dataset.design); render(); });
   document.querySelectorAll("[data-sel]").forEach(c=> c.onchange=()=>{ c.checked? sel.add(c.dataset.sel) : sel.delete(c.dataset.sel); c.closest(".tile").classList.toggle("sel", c.checked); dock(shown); });
   document.querySelectorAll("[data-ok]").forEach(b=> b.onclick=()=> review([b.dataset.ok], "approve"));
   document.querySelectorAll("[data-ret]").forEach(b=> b.onclick=()=> openReturn([b.dataset.ret]));
