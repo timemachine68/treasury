@@ -10,7 +10,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="cost-game-data.js"></script>
 <style>
-/* หน้าครู: แถบบนเขียวสน เนื้อหา max 1240px  ฝั่งเอกชน = ส้ม  ฝั่งรัฐ = ฟ้า */
+/* หน้าครู: แถบบนเขียวสน เนื้อหา max 1240px  ทาง A = ส้ม  ทาง B = ฟ้า */
 :root{
   --pine:#1E5F4A; --pine-d:#123D2F; --pine-soft:#E3F1EA; --ink:#1B2A24; --muted:#4F5F57; --ground:#F3F7F2;
   --line:#E1E8E4; --input:#C9D4CE; --amber:#E89A2C; --warn:#9A4309; --warn-line:#C2570C; --warn-soft:#FCEBDD;
@@ -90,7 +90,7 @@ const $=id=>document.getElementById(id);
 function toast(t){const el=$("toast");el.textContent=t;el.classList.add("show");clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove("show"),3800)}
 function errText(e){const m=(e&&e.message)||"";if(/Failed to fetch|NetworkError/i.test(m))return "เชื่อมต่อไม่ได้ ตรวจเน็ตแล้วลองใหม่";if(/row-level security|permission denied/i.test(m))return "ไม่มีสิทธิ์ทำรายการนี้";return m||"เกิดข้อผิดพลาด"}
 const GUESS={private:"เอกชนถูกกว่า",public:"รัฐถูกกว่า",same:"พอ ๆ กัน"};
-const POST={private:"เลือกเอกชน",public:"เลือกรัฐ",unsure:"ยังไม่แน่ใจ"};
+const POST={private:"เลือกทาง A",public:"เลือกทาง B",unsure:"ยังไม่แน่ใจ"};
 const TALK={yes:"คุยแน่นอน",maybe:"อาจจะ",no:"ไม่คุย"};
 const n0=v=>v||0;
 let me=null, rooms=[], V={room:null,list:null,proj:false}, pollId=null;
@@ -148,21 +148,21 @@ function render(){
   <div class="tiles">
     <div class="tile"><span class="muted">เล่นจบแล้ว</span><b>${fin} / ${n0(T.students)}</b><span class="muted">เริ่มแล้ว ${n0(T.started)} คน</span></div>
     <div class="tile"><span class="muted">ตอนแรกทายว่า "เอกชนถูกกว่า"</span><b>${n0(T.pre_private)} คน</b><span class="muted">จากที่โหวตก่อนเล่น ${n0(T.started)} คน</span></div>
-    <div class="tile"><span class="muted">ผลจริง: ทางรัฐจ่ายน้อยกว่า</span><b>${n0(T.found_public_cheaper)} / ${fin}</b><span class="muted">ทางเอกชนจ่ายน้อยกว่าหรือเท่ากัน ${n0(T.found_private_cheaper)}</span></div>
-    <div class="tile"><span class="muted">ทายเอกชนแต่ผลออกรัฐถูกกว่า</span><b>${n0(T.surprised)} คน</b><span class="muted">"เปลี่ยนความเชื่อ" จาก ${surprisedBase} คน</span></div>
+    <div class="tile"><span class="muted">ผลจริง: ทาง B จ่ายน้อยกว่า</span><b>${n0(T.found_public_cheaper)} / ${fin}</b><span class="muted">ทาง A จ่ายน้อยกว่าหรือเท่ากัน ${n0(T.found_private_cheaper)}</span></div>
+    <div class="tile"><span class="muted">ทายว่าเอกชนใกล้บ้านถูกกว่า แต่ทาง B ถูกกว่า</span><b>${n0(T.surprised)} คน</b><span class="muted">"เปลี่ยนความเชื่อ" จาก ${surprisedBase} คน</span></div>
     <div class="tile"><span class="muted">จะเอาการ์ดไปคุยกับบ้าน</span><b>${n0(T.talk_yes)} คน</b><span class="muted">อาจจะ ${n0(T.talk_maybe)} · ไม่คุย ${n0(T.talk_no)}</span></div>
   </div>
   <section class="card stack">
     <div class="row"><h2 class="grow" style="font-size:19px">สรุปรายห้อง</h2>
-      <span class="key"><i style="background:var(--priv)"></i>เอกชน</span><span class="key"><i style="background:var(--pub)"></i>รัฐ</span><span class="key"><i style="background:var(--same)"></i>พอ ๆ กัน / ยังไม่แน่ใจ</span></div>
-    <div class="tw"><table><thead><tr><th>ห้อง</th><th>เล่นจบ</th><th>ทายก่อนเล่น</th><th>เลือกหลังเล่น</th><th>ส่วนต่างเฉลี่ย (เอกชน − รัฐ)</th><th></th></tr></thead><tbody>
+      <span class="key"><i style="background:var(--priv)"></i>ทาง A (ใกล้บ้าน)</span><span class="key"><i style="background:var(--pub)"></i>ทาง B</span><span class="key"><i style="background:var(--same)"></i>พอ ๆ กัน / ยังไม่แน่ใจ</span></div>
+    <div class="tw"><table><thead><tr><th>ห้อง</th><th>เล่นจบ</th><th>ทายก่อนเล่น</th><th>เลือกหลังเล่น</th><th>ส่วนต่างเฉลี่ย (A − B)</th><th></th></tr></thead><tbody>
     ${rooms.length?rooms.map(r=>`<tr class="${r.room===V.room?"sel":""}"><td><b>${esc(r.room)}</b></td><td>${n0(r.finished)} / ${n0(r.students)}</td>
-      <td>${stack3(n0(r.pre_private),n0(r.pre_public),n0(r.pre_same),["เอกชน","รัฐ","พอ ๆ กัน"])}</td>
-      <td>${stack3(n0(r.post_private),n0(r.post_public),n0(r.post_unsure),["เอกชน","รัฐ","ยังไม่แน่ใจ"])}</td>
+      <td>${stack3(n0(r.pre_private),n0(r.pre_public),n0(r.pre_same),["A ถูกกว่า","B ถูกกว่า","พอ ๆ กัน"])}</td>
+      <td>${stack3(n0(r.post_private),n0(r.post_public),n0(r.post_unsure),["เลือก A","เลือก B","ยังไม่แน่ใจ"])}</td>
       <td>${r.avg_diff==null?"-":(r.avg_diff>0?"+":"")+baht(r.avg_diff)+" บาท"}</td>
       <td><button class="btn sm plain" onclick="pickRoom('${esc(r.room)}')">ดูรายชื่อ</button></td></tr>`).join(""):`<tr><td colspan="6" class="muted">ยังไม่พบห้อง ม.6 ในระบบ</td></tr>`}
     </tbody></table></div>
-    <p class="muted" style="margin:0">ส่วนต่างเฉลี่ยเป็นบวก = ทางเอกชนแพงกว่าโดยเฉลี่ย · คำทายก่อนเล่นเก็บครั้งแรกครั้งเดียว เล่นซ้ำไม่ทับ</p>
+    <p class="muted" style="margin:0">ส่วนต่างเฉลี่ยเป็นบวก = ทาง A แพงกว่าโดยเฉลี่ย · คำทายก่อนเล่นเก็บครั้งแรกครั้งเดียว เล่นซ้ำไม่ทับ</p>
   </section>
   ${learnCard()}
   <section class="card stack">
@@ -183,7 +183,8 @@ function roomTable(sel){
   if(V.list===null)return `<p class="muted">กำลังโหลด…</p>`;
   if(!V.list.length)return `<p class="muted">ห้องนี้ยังไม่มีรายชื่อนักเรียนในระบบ</p>`;
   const notYet=V.list.filter(x=>!x.pre_guess).length;
-  return `<p class="muted" style="margin:0">ยังไม่เริ่ม ${notYet} คน · เริ่มแล้วแต่ยังไม่จบ ${V.list.filter(x=>x.pre_guess&&!x.finished).length} คน</p>
+  const cuA=V.list.filter(x=>x.private_prog==="custom_a").length,cuB=V.list.filter(x=>x.public_prog==="custom_b").length;
+  return `<p class="muted" style="margin:0">ยังไม่เริ่ม ${notYet} คน · เริ่มแล้วแต่ยังไม่จบ ${V.list.filter(x=>x.pre_guess&&!x.finished).length} คน · นักเรียนกรอกเอง: ทาง A ${cuA} คน, ทาง B ${cuB} คน${cuA+cuB?" (ชื่อที่กรอกไม่ถูกเก็บ ใช้ดูว่ารายชื่อในเกมขาดอะไร)":""}</p>
   <div class="tw"><table><thead><tr><th>เลขประจำตัว</th><th>ชื่อ</th><th>สถานะ</th><th>ทายก่อน</th><th>ความรู้ ก่อน→หลัง</th><th>คู่ที่เทียบ</th><th>ผล 4 ปี (A / B)</th><th>เลือกหลังเล่น</th><th>คุยกับบ้าน</th><th></th></tr></thead><tbody>
   ${V.list.map(x=>{const pa=C.P[x.private_prog],pb=C.P[x.public_prog];return `<tr><td>${esc(x.student_id||"-")}</td><td>${esc(x.name||"")}</td>
     <td>${x.finished?`<span class="pill on">จบแล้ว${x.play_count>1?" ("+x.play_count+" รอบ)":""}</span>`:x.pre_guess?`<span class="pill off">กำลังเล่น</span>`:`<span class="muted">ยังไม่เริ่ม</span>`}</td>
@@ -251,10 +252,10 @@ function drawProj(){
       <select aria-label="เลือกห้อง" onchange="V.projRoom=this.value;drawProj()" style="font-size:18px"><option value="__all" ${pr==="__all"?"selected":""}>ทุกห้อง</option>${rooms.map(x=>`<option ${x.room===pr?"selected":""}>${esc(x.room)}</option>`).join("")}</select>
       <button class="btn amber" onclick="refresh().then(drawProj)">รีเฟรช</button><button class="btn amber" onclick="closeProj()">ปิด</button></div>
     <div class="row" style="gap:40px"><div><div class="big">${fin}</div><div class="lab">คนเล่นจบ</div></div>
-      <div><div class="big">${n0(r.found_public_cheaper)}</div><div class="lab">คนที่ผลออกว่ารัฐจ่ายน้อยกว่า</div></div>
-      <div><div class="big">${n0(r.surprised)}</div><div class="lab">ทายเอกชน แต่ผลออกรัฐ</div></div></div>
-    <div class="stack"><div class="lab">ก่อนเล่น ทายว่า…</div>${stack3(n0(r.pre_private),n0(r.pre_public),n0(r.pre_same),["เอกชนถูกกว่า","รัฐถูกกว่า","พอ ๆ กัน"]).replace(/class="muted"/,'class="lab"')}</div>
-    <div class="stack"><div class="lab">หลังเล่น ถ้าเลือกวันนี้…</div>${stack3(n0(r.post_private),n0(r.post_public),n0(r.post_unsure),["เอกชน","รัฐ","ยังไม่แน่ใจ"]).replace(/class="muted"/,'class="lab"')}</div>
+      <div><div class="big">${n0(r.found_public_cheaper)}</div><div class="lab">คนที่ผลออกว่าทาง B จ่ายน้อยกว่า</div></div>
+      <div><div class="big">${n0(r.surprised)}</div><div class="lab">ทายเอกชนถูกกว่า แต่ผลออกทาง B ถูกกว่า</div></div></div>
+    <div class="stack"><div class="lab">ก่อนเล่น ทายว่า…</div>${stack3(n0(r.pre_private),n0(r.pre_public),n0(r.pre_same),["A ถูกกว่า","B ถูกกว่า","พอ ๆ กัน"]).replace(/class="muted"/,'class="lab"')}</div>
+    <div class="stack"><div class="lab">หลังเล่น ถ้าเลือกวันนี้…</div>${stack3(n0(r.post_private),n0(r.post_public),n0(r.post_unsure),["เลือก A","เลือก B","ยังไม่แน่ใจ"]).replace(/class="muted"/,'class="lab"')}</div>
     <p class="lab" style="opacity:.9">คำถามชวนคิด: "ถ้าสองทางต่างกันไม่มาก เราจะใช้อะไรตัดสินใจ?"</p>
   </div></div>`;
 }
