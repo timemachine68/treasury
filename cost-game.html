@@ -98,7 +98,7 @@ const C = window.CG, baht = C.baht;
 const DEMO = new URLSearchParams(location.search).has("demo");
 const $ = document.getElementById("app");
 const esc = t => String(t ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const GUESS = {private:"เอกชนใกล้บ้านถูกกว่า", public:"รัฐ (อยู่หอ) ถูกกว่า", same:"พอ ๆ กัน"};
+const GUESS = {private:"เอกชนใกล้บ้านถูกกว่า", public:"ทาง B (ไกลบ้าน/เลือกเอง) ถูกกว่า", same:"พอ ๆ กัน"};
 let profile = null, G = null;
 
 function toast(t){const el=document.getElementById("toast");el.textContent=t;el.classList.add("show");clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove("show"),3500)}
@@ -336,7 +336,7 @@ intro:()=>`<div class="stack">
     <p style="margin:0">หลายบ้านคิดว่า <b>"เรียนเอกชนใกล้บ้าน ไม่ต้องเสียค่าหอ น่าจะถูกกว่า"</b></p>
     <p style="margin:0">เกมนี้ให้เราเป็น <b>นักสืบค่าใช้จ่าย</b> เปิดการ์ดทีละใบ เทียบ 2 ทางแบบครบทุกค่า แล้วได้ <b>การ์ดสรุป 1 หน้า</b> ไปคุยกับที่บ้าน</p>
     <div class="vs"><div class="side priv"><span class="pill priv">ทาง A</span><p style="margin:6px 0 0">ใกล้บ้าน<br><span class="lb">ไป-กลับจากบ้าน</span></p></div>
-    <div class="side pub"><span class="pill pub">ทาง B</span><p style="margin:6px 0 0">มหาวิทยาลัยรัฐ<br><span class="lb">เลือกได้เอง หรือกรอกเอง</span></p></div></div>
+    <div class="side pub"><span class="pill pub">ทาง B</span><p style="margin:6px 0 0">ไกลบ้าน / เลือกเอง<br><span class="lb">เลือกจากรายชื่อ หรือกรอกเอง</span></p></div></div>
   </section>
   <div class="tip">เกมนี้ไม่ถามรายได้ของบ้านเรา ตัวเลขทั้งหมดเป็นของเส้นทางที่เลือกในเกม</div>
   <button class="btn" onclick="go('guess')">เริ่มเลย</button></div>`,
@@ -358,8 +358,8 @@ pretest:()=>{const ok=G.goal&&G.q.pre.every(v=>v!==null)&&G.self.preCost&&G.self
   <button class="btn" ${ok?"":"disabled"} onclick="submitPre()">${G.preSaving?"กำลังบันทึก…":"เริ่มเล่น"}</button></div>`},
 
 track:()=>`<div class="stack">${stepHead(2,"อยากเรียนสายไหน?")}
-  ${Object.entries(C.TRACKS).map(([k,t])=>`<button class="opt" aria-pressed="${G.track===k}" onclick="pickTrack('${k}')"><span class="ic">${t.icon}</span><span>${t.name}<small>${t.pub.length} ทางเลือกมหาวิทยาลัยรัฐ</small></span></button>`).join("")}
-  <p class="muted">รายชื่อมหาวิทยาลัยรัฐมาจากที่รุ่นพี่พูลเจริญฯ ติดจริงใน TCAS ปี 2569</p></div>`,
+  ${Object.entries(C.TRACKS).map(([k,t])=>`<button class="opt" aria-pressed="${G.track===k}" onclick="pickTrack('${k}')"><span class="ic">${t.icon}</span><span>${t.name}<small>${t.pub.length} ทางเลือกทาง B</small></span></button>`).join("")}
+  <p class="muted">รายชื่อทาง B ส่วนใหญ่มาจากที่รุ่นพี่พูลเจริญฯ ติดจริงใน TCAS ปี 2569</p></div>`,
 
 priv:()=>{const t=C.TRACKS[G.track];return `<div class="stack">${stepHead(3,"ทาง A: ใกล้บ้าน (ไป-กลับ)")}
   <p class="muted" style="margin:0">มหาวิทยาลัยที่เดินทางไป-กลับจากบ้านได้ มีทั้งเอกชนและรัฐ หรือกรอกเองก็ได้</p>
@@ -376,8 +376,8 @@ pub:()=>{const t=C.TRACKS[G.track],field=G.priv?C.P[G.priv].field:null;
     ${u.housing.map(h=>`<button class="opt pub" aria-pressed="${G.housing===h}" onclick="pickHousing('${h}')"><span class="ic">${h==="home"?"🏠":h==="dorm_in"?"🏫":"🏢"}</span><span>${C.HOUSING[h]}<small>${h==="dorm_in"?esc(u.dormIn.label):h==="dorm_out"?"ประมาณ "+baht(u.rent)+" บาท/เดือน + ค่าน้ำไฟ":"ใช้ค่ารถของบ้านเราเอง"}</small></span></button>`).join("")}
     ${u.firstYearIn?`<div class="note">${esc(u.short)} ให้นักศึกษาปี 1 อยู่หอใน เกมคิดปี 1 เป็นหอในให้อัตโนมัติ</div>`:""}
     ${srcLine([u.src,u.dormSrc||"dormIn",u.rentSrc||"rent"])}</section>`}
-  return `<div class="stack">${stepHead(4,"ทาง B: มหาวิทยาลัยรัฐ")}
-  ${list.map(k=>{const p=C.P[k],u=C.U[p.u];return `<button class="opt pub" aria-pressed="${G.pub===k}" onclick="pickPub('${k}')"><span class="ic">🎓</span><span>${esc(u.short)} · ${esc(p.name)}<small>${esc(u.place)} · ${baht(p.sem)} บาท/เทอม · รุ่นพี่พูลเจริญฯ ติดที่นี่ปี 69: ${u.seniors} คน${p.field===field?" · สาขาใกล้กับทาง A":""}${p.note?" · "+esc(p.note):""}</small></span></button>`}).join("")}
+  return `<div class="stack">${stepHead(4,"ทาง B: ไกลบ้าน / เลือกเอง")}
+  ${list.map(k=>{const p=C.P[k],u=C.U[p.u];return `<button class="opt pub" aria-pressed="${G.pub===k}" onclick="pickPub('${k}')"><span class="ic">🎓</span><span>${esc(u.short)} · ${esc(p.name)}<small>${u.type==="private"?"เอกชน · ":""}${esc(u.place)} · ${baht(p.sem)} บาท/เทอม · รุ่นพี่พูลเจริญฯ ติดที่นี่ปี 69: ${u.seniors} คน${p.field===field?" · สาขาใกล้กับทาง A":""}${p.note?" · "+esc(p.note):""}</small></span></button>`}).join("")}
   <button class="opt pub" aria-pressed="${G.pub==="custom_b"}" onclick="pickCustom('B')"><span class="ic">✏️</span><span>กรอกเอง<small>ใส่ชื่อ ค่าเทอม ค่าที่พัก และค่ากลับบ้านของที่ที่เราสนใจ</small></span></button>
   ${G.pub==="custom_b"?customFormB():""}
   ${hz}

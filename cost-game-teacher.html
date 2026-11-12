@@ -89,7 +89,7 @@ const esc=t=>String(t??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&
 const $=id=>document.getElementById(id);
 function toast(t){const el=$("toast");el.textContent=t;el.classList.add("show");clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove("show"),3800)}
 function errText(e){const m=(e&&e.message)||"";if(/Failed to fetch|NetworkError/i.test(m))return "เชื่อมต่อไม่ได้ ตรวจเน็ตแล้วลองใหม่";if(/row-level security|permission denied/i.test(m))return "ไม่มีสิทธิ์ทำรายการนี้";return m||"เกิดข้อผิดพลาด"}
-const GUESS={private:"เอกชนถูกกว่า",public:"รัฐถูกกว่า",same:"พอ ๆ กัน"};
+const GUESS={private:"ทาง A ถูกกว่า",public:"ทาง B ถูกกว่า",same:"พอ ๆ กัน"};
 const POST={private:"เลือกทาง A",public:"เลือกทาง B",unsure:"ยังไม่แน่ใจ"};
 const TALK={yes:"คุยแน่นอน",maybe:"อาจจะ",no:"ไม่คุย"};
 const n0=v=>v||0;
@@ -172,7 +172,7 @@ function render(){
     ${roomTable(sel)}
   </section>
   <section class="card stack"><h2 style="font-size:19px">ข้อมูลที่ใช้ในเกม (ตรวจเมื่อ ${C.CHECKED})</h2>
-    <p class="muted" style="margin:0">แก้ตัวเลขได้ที่ไฟล์ cost-game-data.js ไฟล์เดียว · รายชื่อมหาวิทยาลัยรัฐมาจากไฟล์ผลการคัดเลือก TCAS ปี 2569 ของพูลเจริญฯ</p>
+    <p class="muted" style="margin:0">แก้ตัวเลขได้ที่ไฟล์ cost-game-data.js ไฟล์เดียว · รายชื่อทาง B ส่วนใหญ่มาจากไฟล์ผลการคัดเลือก TCAS ปี 2569 ของพูลเจริญฯ</p>
     <div class="tw"><table><thead><tr><th>มหาวิทยาลัย</th><th>หลักสูตร</th><th>ค่าเทอม/ภาค</th><th>ที่พัก</th><th>รุ่นพี่ติดปี 69</th></tr></thead><tbody>
     ${Object.entries(C.P).map(([k,p])=>{const u=C.U[p.u];return `<tr><td>${esc(u.short)}</td><td>${esc(p.name)}${p.note?`<br><span class="muted">${esc(p.note)}</span>`:""}</td><td>${baht(p.sem)}</td><td>${u.housing.map(h=>h==="home"?"ไป-กลับ":h==="dorm_in"?"หอใน "+baht(u.dormIn.fee)+"/เทอม":"หอนอก ~"+baht(u.rent)+"/เดือน").join("<br>")}</td><td>${u.seniors}</td></tr>`}).join("")}
     </tbody></table></div>
