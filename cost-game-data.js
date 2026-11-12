@@ -28,6 +28,8 @@ const SRC = {
   psuh: {t:"ม.อ.หาดใหญ่: ค่าเทอมใช้อัตรากลางของ ม.อ. ปี 2569 ตามกลุ่มคณะ ส่วนค่าหอ (หอศรีตรัง ม.อ.ตรัง) และค่ากลับบ้านใช้เป็นค่าอ้างอิง ตามที่ครูแจ้ง ยังไม่ได้ตรวจราคาหอและเส้นทางของหาดใหญ่", u:"https://regist.trang.psu.ac.th/wp-content/uploads/bachelor_fee_2569.pdf"},
   kku:  {t:"ค่าธรรมเนียมการศึกษา ป.ตรี ม.ขอนแก่น ต่อภาค แยกคณะ (เว็บรับสมัคร apps.admissions.kku.ac.th ไม่ระบุปีการศึกษา ไม่รวมค่าแรกเข้า/ค่าอื่น)", u:"https://apps.admissions.kku.ac.th/web/Tuitionfee"},
   kkuTrip:{t:"รถทัวร์ กรุงเทพฯ–ขอนแก่น ประมาณ 11.25 ดอลลาร์สหรัฐ (~390 บาท) ต่อเที่ยว ราว 7 ชม. (12Go) · ไป-กลับ ~780 บาท / 14 ชม. · แปลงบาทด้วยอัตราประมาณ", u:"https://12go.asia/en/travel/bangkok/khon-kaen/"},
+  msu:  {t:"อัตราค่าธรรมเนียมการศึกษา ป.ตรี ม.มหาสารคาม ระบบปกติ ต่อภาค (ไฟล์ msu-fee-70 ไม่ระบุปีการศึกษาในเนื้อหา ไม่รวมค่าแรกเข้า)", u:"https://admission.msu.ac.th/downloads/70/msu-fee-70.pdf"},
+  msuTrip:{t:"รถทัวร์ กรุงเทพฯ–มหาสารคาม ประมาณ 15–16 ดอลลาร์สหรัฐ (~550 บาท) ต่อเที่ยว ราว 7–8 ชม. (Bookaway) · ไป-กลับ ~1,100 บาท / 15 ชม. · แปลงบาทด้วยอัตราประมาณ", u:"https://www.bookaway.com/routes/thailand/bangkok-to-maha-sarakham"},
   rentN:{t:"ค่าเช่าหอนอก: ใช้ค่ากลางเดียวกับ ม.พะเยา/แม่ฟ้าหลวง (ค่าประมาณ ยังไม่ได้สำรวจเฉพาะเมืองนี้ และยังไม่ได้ใส่ราคาหอในของมหาวิทยาลัย)", u:""},
   dru:  {t:"ค่าเทอม ม.ราชภัฏธนบุรี ศูนย์สมุทรปราการ ภาคปกติ (เว็บศูนย์สมุทรปราการ เป็นค่าประมาณ ไม่ระบุปี แบ่งชำระ 2 ครั้ง/เทอม)", u:"https://sp.dru.ac.th/new/?page_id=14"}
 };
@@ -47,6 +49,7 @@ const U = {
   nu:   {name:"ม.นเรศวร", short:"ม.นเรศวร", place:"เมือง พิษณุโลก", type:"public", zone:"far", housing:["dorm_out"], rent:2750, rentSrc:"rentN", trip:{cost:1000, hours:12}, tripSrc:"nuTrip", seniors:"N", src:"nu"},
   psuh: {name:"ม.สงขลานครินทร์ หาดใหญ่", short:"ม.อ.หาดใหญ่", place:"หาดใหญ่ สงขลา", type:"public", zone:"far", housing:["dorm_in"], dormIn:{fee:4500, util:150, label:"ใช้ค่าหอศรีตรังของ ม.อ. เป็นค่าอ้างอิง: ห้อง 2 คน 3,800 + น้ำ 200 + ประกัน 500 บาท/ภาค (ค่าไฟประมาณ 150/เดือน)"}, dormSrc:"psuDorm", trip:{cost:500, hours:28}, tripSrc:"psuTrip", seniors:"0", src:"psuh"},
   kku:  {name:"ม.ขอนแก่น", short:"ม.ขอนแก่น", place:"เมือง ขอนแก่น", type:"public", zone:"far", housing:["dorm_out"], rent:2750, rentSrc:"rentN", trip:{cost:780, hours:14}, tripSrc:"kkuTrip", seniors:"N", src:"kku"},
+  msu:  {name:"ม.มหาสารคาม", short:"ม.มหาสารคาม", place:"กันทรวิชัย มหาสารคาม", type:"public", zone:"far", housing:["dorm_out"], rent:2750, rentSrc:"rentN", trip:{cost:1100, hours:15}, tripSrc:"msuTrip", seniors:"N", src:"msu"},
   dru:  {name:"ม.ราชภัฏธนบุรี ศูนย์สมุทรปราการ", short:"ราชภัฏธนบุรี", place:"ศูนย์สมุทรปราการ", type:"public", zone:"near", housing:["home"], seniors:"N", src:"dru"}
 };
 
@@ -119,6 +122,12 @@ const P = {
   kku_mt:  {u:"kku", name:"เทคนิคการแพทย์", sem:26000, field:"mt"},
   kku_pt:  {u:"kku", name:"กายภาพบำบัด", sem:26000, field:"pt"},
   kku_oh:  {u:"kku", name:"สาธารณสุขศาสตร์ (อนามัยสิ่งแวดล้อม / อาชีวอนามัยฯ)", sem:18000, field:"oh"},
+  msu_biz: {u:"msu", name:"การบัญชีและการจัดการ (บัญชี / บริหารธุรกิจ / การจัดการ)", sem:18000, field:"biz", note:"ทุกหลักสูตรภาษาไทยของคณะ"},
+  msu_sci: {u:"msu", name:"วิทยาศาสตร์", sem:15000, field:"sci", note:"ส่วนใหญ่ของคณะ ยกเว้นหลักสูตร 2 ปริญญา"},
+  msu_info:{u:"msu", name:"วิทยาการสารสนเทศ", sem:15000, field:"sci", note:"ส่วนใหญ่ของคณะ"},
+  msu_hum: {u:"msu", name:"มนุษยศาสตร์และสังคมศาสตร์ (ภาษา)", sem:15000, field:"lang", note:"ส่วนใหญ่ของคณะ ยกเว้นอังกฤษเพื่อการสื่อสารนานาชาติ"},
+  msu_nur: {u:"msu", name:"พยาบาลศาสตร์", sem:39500, field:"nur", note:"ยังไม่รวมภาคฤดูร้อน (ไฟล์ไม่ระบุ)"},
+  msu_oh:  {u:"msu", name:"สาธารณสุขศาสตร์", sem:16000, field:"oh", note:"ทุกหลักสูตรของคณะ"},
   dru_eng:   {u:"dru", name:"ภาษาอังกฤษธุรกิจ (ศศ.บ.)", sem:9000, fixed:1000, field:"lang", note:"เทอมแรก ~10,000 เทอมถัดไป ~9,000 (คิดส่วนต่างเทอมแรก 1,000 ครั้งเดียว) · ค่าประมาณจากเว็บศูนย์"},
   dru_chi:   {u:"dru", name:"ภาษาจีนเพื่อการสื่อสาร (ศศ.บ.)", sem:9000, fixed:1000, field:"lang", note:"เทอมแรก ~10,000 เทอมถัดไป ~9,000 (คิดส่วนต่างเทอมแรก 1,000 ครั้งเดียว) · ค่าประมาณจากเว็บศูนย์"},
   dru_thai:  {u:"dru", name:"ภาษาไทย (ศศ.บ.)", sem:9000, fixed:1000, field:"lang", note:"เทอมแรก ~10,000 เทอมถัดไป ~9,000 (คิดส่วนต่างเทอมแรก 1,000 ครั้งเดียว) · ค่าประมาณจากเว็บศูนย์"},
@@ -126,10 +135,10 @@ const P = {
 };
 
 const TRACKS = {
-  biz:   {name:"ธุรกิจ บัญชี โลจิสติกส์", icon:"💼", priv:["hcu_biz","bu_biz"], pub:["kmitl_biz","ku_mgt","buu_log","mfu_mgt","up_mgt","rmutk_biz","cmu_biz","nu_biz","psuh_biz","kku_acc","kku_mgt","kku_fin"]},
-  health:{name:"สุขภาพ พยาบาล เทคนิคการแพทย์", icon:"🩺", priv:["hcu_nur","hcu_mt","hcu_pt","hcu_medsci","hcu_oh","dru_nur"], pub:["buu_nur","buu_mt","buu_pt","buu_medsci","mfu_oh","up_nur","up_medsci","rmutk_health","cmu_nur","cmu_mt","cmu_pt","nu_nur","nu_medsci","nu_mt","nu_pt","dru_nur","psuh_nur","psuh_mt","psuh_pt","kku_nur","kku_mt","kku_pt","kku_oh"]},
-  sci:   {name:"วิทยาศาสตร์ คอมพิวเตอร์", icon:"🔬", priv:["hcu_cs"], pub:["kmitl_sci","ku_sci","buu_sci","up_sci","rmutk_cs","cmu_sci","nu_sci","psuh_sci","kku_sci"]},
-  lang:  {name:"ภาษา ศิลปศาสตร์", icon:"🌏", priv:["hcu_eng","bu_eng","dru_eng","dru_chi","dru_thai"], pub:["kmitl_lang","buu_eng","up_lang","rmutk_eng","cmu_lang","nu_lang","psuh_lang","kku_hum","dru_eng","dru_chi","dru_thai"]}
+  biz:   {name:"ธุรกิจ บัญชี โลจิสติกส์", icon:"💼", priv:["hcu_biz","bu_biz"], pub:["kmitl_biz","ku_mgt","buu_log","mfu_mgt","up_mgt","rmutk_biz","cmu_biz","nu_biz","psuh_biz","kku_acc","kku_mgt","kku_fin","msu_biz"]},
+  health:{name:"สุขภาพ พยาบาล เทคนิคการแพทย์", icon:"🩺", priv:["hcu_nur","hcu_mt","hcu_pt","hcu_medsci","hcu_oh","dru_nur"], pub:["buu_nur","buu_mt","buu_pt","buu_medsci","mfu_oh","up_nur","up_medsci","rmutk_health","cmu_nur","cmu_mt","cmu_pt","nu_nur","nu_medsci","nu_mt","nu_pt","dru_nur","psuh_nur","psuh_mt","psuh_pt","kku_nur","kku_mt","kku_pt","kku_oh","msu_nur","msu_oh"]},
+  sci:   {name:"วิทยาศาสตร์ คอมพิวเตอร์", icon:"🔬", priv:["hcu_cs"], pub:["kmitl_sci","ku_sci","buu_sci","up_sci","rmutk_cs","cmu_sci","nu_sci","psuh_sci","kku_sci","msu_sci","msu_info"]},
+  lang:  {name:"ภาษา ศิลปศาสตร์", icon:"🌏", priv:["hcu_eng","bu_eng","dru_eng","dru_chi","dru_thai"], pub:["kmitl_lang","buu_eng","up_lang","rmutk_eng","cmu_lang","nu_lang","psuh_lang","kku_hum","msu_hum","dru_eng","dru_chi","dru_thai"]}
 };
 
 const HOUSING = {home:"อยู่บ้าน ไป-กลับทุกวัน", dorm_in:"หอใน (หอของมหาวิทยาลัย)", dorm_out:"หอนอก (เช่ารายเดือน)"};
