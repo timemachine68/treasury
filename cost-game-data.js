@@ -9,6 +9,9 @@ const YEAR = "2569";
 const SRC = {
   custom:{t:"ตัวเลขที่นักเรียนกรอกเอง (ไม่ได้ตรวจกับประกาศของมหาวิทยาลัย)", u:""},
   druProg:{t:"รายชื่อสาขาภาคปกติ ม.ราชภัฏธนบุรี ศูนย์สมุทรปราการ (บางสาขาอาจไม่เปิดรับทุกปี)", u:"https://sp.dru.ac.th/new/?page_id=7496"},
+  kmitlAgri:{t:"ประกาศ สจล. รับสมัคร TCAS รอบ 1 คณะเทคโนโลยีการเกษตร ปีการศึกษา 2569 (ค่าธรรมเนียมเหมาจ่ายต่อภาค)", u:"https://www.reg.kmitl.ac.th/TCAS_old/news/files/2569_1_news1_4079_2025_10_16-17-33-50_9c3b4.pdf"},
+  upLaw:{t:"หน้าหลักสูตรนิติศาสตรบัณฑิต คณะนิติศาสตร์ ม.พะเยา (ภาคปกติ 15,000 · ฤดูร้อน 7,500 ไม่ระบุปี)", u:"https://law.up.ac.th/Bachelor.aspx"},
+  suTR:{t:"ค่าเทอม ม.ศิลปากร ปีการศึกษา 2567 แยกคณะ (ไทยรัฐ · กลุ่มคณะที่ไม่ใช่โครงการปกติแบบเดิม ยังไม่รวมค่าบำรุงมหาวิทยาลัย 4,000)", u:"https://www.thairath.co.th/news/society/2788757"},
   hcu:  {t:"ตารางค่าธรรมเนียมเหมาจ่าย ป.ตรี ปี 2569 ม.หัวเฉียวเฉลิมพระเกียรติ", u:"https://admission.hcu.ac.th/Files/payment.pdf"},
   kmitl:{t:"สรุปค่าเทอม สจล. 2569 (อ้างประกาศสำนักทะเบียน สจล.)", u:"https://dreamnesthub.com/tuition-fee-kmitl-2569"},
   ku:   {t:"ประกาศรับสมัคร TCAS1 ปี 2569 มก.ศรีราชา (ข้อ 9 ค่าธรรมเนียม)", u:"https://admissions.src.ku.ac.th/pdf/TCAS1_1_69.pdf"},
@@ -206,6 +209,11 @@ const P = {
   buu_comm:  {u:"buu", name:"นิเทศศาสตร์", sem:22500, field:"comm"},
   up_pol:    {u:"up", name:"รัฐศาสตร์ / รัฐประศาสนศาสตร์ / พัฒนาสังคม", sem:15000, field:"soc", src:"upGuide"},
   up_comm:   {u:"up", name:"นิเทศศาสตร์ (การจัดการการสื่อสาร)", sem:15000, field:"comm", src:"upGuide", note:"การสื่อสารสื่อใหม่ 21,000"},
+  up_law:    {u:"up", name:"นิติศาสตร์", sem:15000, field:"law", src:"upLaw", note:"หลักสูตร 2 ปริญญา (นิติ + บัญชี / IT / อังกฤษ ฯลฯ) 24,000"},
+  kmitl_agcomm:{u:"kmitl", name:"นิเทศศาสตร์เกษตร (คณะเทคโนโลยีการเกษตร)", sem:25000, field:"comm", src:"kmitlAgri"},
+  su_dev:    {u:"su", name:"สังคมศาสตร์การพัฒนา (คณะอักษรศาสตร์)", sem:16500, field:"soc", note:"โครงการปกติ ปี 2568 · ใช้ยอด 'รวม' ของคณะอักษรศาสตร์ในประกาศเป็นค่าเทอม/ภาค"},
+  su_comm:   {u:"su", name:"นิเทศศาสตร์ (คณะเทคโนโลยีสารสนเทศและการสื่อสาร วิทยาเขตเพชรบุรี)", sem:25000, field:"comm", src:"suTR", note:"ตัวเลขปี 2567 · ยังไม่รวมค่าบำรุงมหาวิทยาลัย ควรตรวจประกาศปีล่าสุด"},
+  su_pa:     {u:"su", name:"รัฐประศาสนศาสตร์ / การจัดการปกครองดิจิทัล (คณะวิทยาการจัดการ นนทบุรี)", sem:25000, field:"soc", src:"suTR", note:"ตัวเลขปี 2567 ของคณะวิทยาการจัดการ · ยังไม่รวมค่าบำรุงมหาวิทยาลัย ควรตรวจประกาศปีล่าสุด"},
   kmitl_eng: {u:"kmitl", name:"วิศวกรรมศาสตร์ (หลักสูตรทั่วไป: ไฟฟ้า โยธา เครื่องกล คอมพิวเตอร์ ฯลฯ)", sem:25000, field:"eng", src:"kmitlEng", note:"บางสาขาแพงกว่า เช่น เซมิคอนดักเตอร์ 40,000"},
   kmitl_it:  {u:"kmitl", name:"เทคโนโลยีสารสนเทศ", sem:32000, field:"sci"},
   kmitl_arch:{u:"kmitl", name:"สถาปัตยกรรม ศิลปะและการออกแบบ (ทุกสาขาภาคปกติ)", sem:29000, field:"arch"},
@@ -248,7 +256,7 @@ const TRACKS = {
   health:{name:"สุขภาพ พยาบาล เทคนิคการแพทย์", icon:"🩺", priv:["hcu_nur","hcu_mt","hcu_pt","hcu_medsci","hcu_oh","dru_nur"], pub:["buu_nur","buu_mt","buu_pt","buu_medsci","mfu_oh","up_nur","up_medsci","rmutk_health","cmu_nur","cmu_mt","cmu_pt","nu_nur","nu_medsci","nu_mt","nu_pt","dru_nur","psuh_nur","psuh_mt","psuh_pt","kku_nur","kku_mt","kku_pt","kku_oh","msu_nur","msu_oh","su_pharm"]},
   sci:   {name:"วิทยาศาสตร์ คอมพิวเตอร์ วิศวกรรม (TPAT3)", icon:"🔬", priv:["hcu_cs","dru_ee","hcu_ai","dru_cs","dru_food","dru_rail","dru_tech"], pub:["kmitl_sci","ku_sci","buu_sci","up_sci","rmutk_cs","cmu_sci","nu_sci","psuh_sci","kku_sci","msu_sci","msu_info","pim_digit","pim_robot","pim_ai","su_sci","su_agri","su_eng","su_biotech","kmitl_eng","kmitl_it","rmutk_eng","ku_eng","buu_eng","buu_info","up_eng","up_ict","cmu_eng","cmu_camt","nu_eng","psuh_eng","kku_eng","msu_eng","dru_ee"]},
   lang:  {name:"ภาษา ศิลปศาสตร์", icon:"🌏", priv:["hcu_eng","dru_eng","dru_chi","dru_thai","hcu_chi"], pub:["kmitl_lang","buu_eng","up_lang","rmutk_eng","cmu_lang","nu_lang","psuh_lang","kku_hum","msu_hum","dru_eng","dru_chi","dru_thai","pim_art","su_letters","su_arc_lang","su_arc"]},
-  soc:   {name:"สังคม นิเทศ กฎหมาย", icon:"⚖️", priv:["hcu_law","hcu_comm","hcu_sw","dru_law","dru_comm","dru_pa"], pub:["buu_law","buu_pol","buu_soc","buu_comm","up_pol","up_comm","cmu_law","cmu_pol","cmu_soc","cmu_mc","nu_law","nu_soc","nu_comm","psuh_law","kku_law","kku_soc","msu_law","msu_pol","msu_soc","msu_comm"]},
+  soc:   {name:"สังคม นิเทศ กฎหมาย", icon:"⚖️", priv:["hcu_law","hcu_comm","hcu_sw","dru_law","dru_comm","dru_pa"], pub:["kmitl_agcomm","su_dev","su_comm","su_pa","buu_law","buu_pol","buu_soc","buu_comm","up_law","up_pol","up_comm","cmu_law","cmu_pol","cmu_soc","cmu_mc","nu_law","nu_soc","nu_comm","psuh_law","kku_law","kku_soc","msu_law","msu_pol","msu_soc","msu_comm"]},
   /* หมวดตามวิชา TPAT · ทาง A ตอนนี้มีราชภัฏธนบุรี ศูนย์สมุทรปราการ */
   arch:  {name:"สถาปัตย์ ศิลปะ การออกแบบ (TPAT2, TPAT4)", icon:"📐", priv:["dru_art"], pub:["su_arch","su_decor","su_paint","kmitl_arch","up_arch","up_art","cmu_arch","cmu_art","nu_arch","nu_art","psuh_arch","kku_arch","kku_art","msu_arch","msu_art","buu_art"]},
   edu:   {name:"ครุศาสตร์ ศึกษาศาสตร์ (TPAT5)", icon:"🍎", priv:["dru_edu"], pub:["su_edu","kmitl_edu","rmutk_tedu","buu_edu","up_edu","cmu_edu","nu_edu","kku_edu","msu_edu"]}
