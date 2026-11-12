@@ -23,15 +23,9 @@ const SRC = {
   cmu:  {t:"ค่าธรรมเนียมการศึกษา ป.ตรี หลักสูตรไทยภาคปกติ ม.เชียงใหม่ (ใช้กับผู้เข้าศึกษาปี 2570 ข้อมูล ณ 6 ต.ค. 2569 · ตัวเลขเป็นภาคแรก)", u:"https://admission.reg.cmu.ac.th/tcas/files_download/%E0%B8%84%E0%B9%88%E0%B8%B2%E0%B8%98%E0%B8%A3%E0%B8%A3%E0%B8%A1%E0%B9%80%E0%B8%99%E0%B8%B5%E0%B8%A2%E0%B8%A1%E0%B8%81%E0%B8%B2%E0%B8%A3%E0%B8%A8%E0%B8%B6%E0%B8%81%E0%B8%A9%E0%B8%B2.pdf"},
   nu:   {t:"ประกาศ ม.นเรศวร อัตราค่าธรรมเนียมการศึกษา ป.ตรี ภาคปกติ ผู้เข้าศึกษาตั้งแต่ปีการศึกษา 2568 เป็นต้นไป (ลงวันที่ 13 พ.ย. 2567 ตัวเลขต่อภาค)", u:"https://www.admission.nu.ac.th/pdf/%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B2%E0%B8%A8%E0%B8%84%E0%B9%88%E0%B8%B2%E0%B8%98%E0%B8%A3%E0%B8%A3%E0%B8%A1%E0%B9%80%E0%B8%99%E0%B8%B5%E0%B8%A2%E0%B8%A1%20%E0%B8%9B.%E0%B8%95%E0%B8%A3%E0%B8%B5-68.pdf"},
   nuTrip:{t:"ค่ารถทัวร์ กรุงเทพฯ–พิษณุโลก ประมาณ 9.6–12.7 ดอลลาร์สหรัฐ ใช้เวลาราว 6 ชม. (12Go) · ค่ากลับบ้านต่อครั้งในเกมเป็นค่าประมาณของหนู", u:"https://12go.com/th/travel/bangkok/phitsanulok?z=7173817"},
-  psu:  {t:"ค่าธรรมเนียมการศึกษา ป.ตรี ม.สงขลานครินทร์ ปี 2569 (ประกาศ 19 ม.ค. 2569 เป็นอัตรากลางทั้งมหาวิทยาลัย เผยแพร่บนเว็บทะเบียนวิทยาเขตตรัง ไม่ได้ระบุวิทยาเขต)", u:"https://regist.trang.psu.ac.th/wp-content/uploads/bachelor_fee_2569.pdf"},
   psuDorm:{t:"หอพักศรีตรัง 1 ม.อ.ตรัง: ห้อง 2 คน 3,800 + น้ำ 200 บาท/ภาค + ประกันทรัพย์สิน 1,000 บาท/ปี (รวมคิด 4,500/ภาค) · ค่าไฟตามจริง ใช้ค่าประมาณ 150/เดือน · เอกสารไม่ระบุปี", u:"https://www.psu.ac.th/trang/wp-content/uploads/%E0%B8%A3%E0%B8%B2%E0%B8%A2%E0%B8%A5%E0%B8%B0%E0%B9%80%E0%B8%AD%E0%B8%B5%E0%B8%A2%E0%B8%94%E0%B8%82%E0%B9%89%E0%B8%AD%E0%B8%A1%E0%B8%B9%E0%B8%A5%E0%B9%81%E0%B8%A5%E0%B8%B0%E0%B8%AA%E0%B8%B4%E0%B9%88%E0%B8%87%E0%B8%AD%E0%B8%B3%E0%B8%99%E0%B8%A7%E0%B8%A2%E0%B8%84%E0%B8%A7%E0%B8%B2%E0%B8%A1%E0%B8%AA%E0%B8%B0%E0%B8%94%E0%B8%A7%E0%B8%81-%E0%B8%AB%E0%B8%AD%E0%B8%9E%E0%B8%B1%E0%B8%81%E0%B8%A8%E0%B8%A3%E0%B8%B5%E0%B8%95%E0%B8%A3%E0%B8%B1%E0%B8%87-1.pdf"},
   psuTrip:{t:"รถไฟชั้น 3 กรุงเทพฯ–ตรัง ประมาณ 7 ดอลลาร์สหรัฐ (~250 บาท) ต่อเที่ยว ราว 14 ชม. (12Go) · ไป-กลับ ~500 บาท", u:"https://12go.asia/en/travel/trang/bangkok?z=14813844"},
-  wu:   {t:"ค่าธรรมเนียมต่อเทอม รายหลักสูตร ม.วลัยลักษณ์ (หน้าหลักสูตร entry.wu.ac.th ไม่ระบุปีการศึกษา)", u:"https://entry.wu.ac.th/apply/home_program.asp"},
-  wuDorm:{t:"ค่าหอพักลักษณานิเวศ ม.วลัยลักษณ์ ห้อง Superior (พัก 2 ภาค) 3,600 บาท/ภาค (บทความ cas.wu.ac.th ไม่ระบุปี) · ค่าไฟประมาณ 150/เดือน เป็นค่าประมาณ", u:"https://cas.wu.ac.th/sdgs/?p=22009"},
-  wuTrip:{t:"ค่ากลับบ้าน นครศรีธรรมราช ใช้ค่าเดียวกับตรัง (รถไฟชั้น 3 ~250 บาท/เที่ยว ไป-กลับ ~500) เป็นค่าประมาณ ยังไม่ได้ตรวจราคาเส้นทางนี้", u:""},
-  tsu:  {t:"ค่าเทอม ม.ทักษิณ ช่วงราคาต่อภาค ปีการศึกษา 2568 (ยังไม่มีประกาศอย่างเป็นทางการ อ้างอิงปีก่อนหน้า) คณะเศรษฐศาสตร์และบริหารธุรกิจ 11,000–13,500 · มนุษยศาสตร์และสังคมศาสตร์ 10,000–14,500 · เกมใช้ค่าสูงสุดของช่วง", u:""},
-  tsuTrip:{t:"ค่ากลับบ้าน สงขลา ใช้ค่าเดียวกับตรัง (~500 บาท ไป-กลับ) เป็นค่าประมาณ ยังไม่ได้ตรวจราคาเส้นทางนี้", u:""},
-  psuh: {t:"ม.อ.หาดใหญ่: ค่าเทอมใช้อัตรากลางของ ม.อ. ปี 2569 ตามกลุ่มคณะ ส่วนค่าหอและค่ากลับบ้านใช้ค่าเดียวกับ ม.อ.ตรัง ตามที่ครูแจ้ง", u:"https://regist.trang.psu.ac.th/wp-content/uploads/bachelor_fee_2569.pdf"},
+  psuh: {t:"ม.อ.หาดใหญ่: ค่าเทอมใช้อัตรากลางของ ม.อ. ปี 2569 ตามกลุ่มคณะ ส่วนค่าหอ (หอศรีตรัง ม.อ.ตรัง) และค่ากลับบ้านใช้เป็นค่าอ้างอิง ตามที่ครูแจ้ง ยังไม่ได้ตรวจราคาหอและเส้นทางของหาดใหญ่", u:"https://regist.trang.psu.ac.th/wp-content/uploads/bachelor_fee_2569.pdf"},
   rentN:{t:"ค่าเช่าหอนอก: ใช้ค่ากลางเดียวกับ ม.พะเยา/แม่ฟ้าหลวง (ค่าประมาณ ยังไม่ได้สำรวจเฉพาะเมืองนี้ และยังไม่ได้ใส่ราคาหอในของมหาวิทยาลัย)", u:""},
   dru:  {t:"ค่าเทอม ม.ราชภัฏธนบุรี ศูนย์สมุทรปราการ ภาคปกติ (เว็บศูนย์สมุทรปราการ เป็นค่าประมาณ ไม่ระบุปี แบ่งชำระ 2 ครั้ง/เทอม)", u:"https://sp.dru.ac.th/new/?page_id=14"}
 };
@@ -49,10 +43,7 @@ const U = {
   /* seniors:"N" = รอใส่จำนวนรุ่นพี่จริงจากไฟล์ผลคัดเลือก TCAS 2569 (เกมจะแสดง "N คน") */
   cmu:  {name:"ม.เชียงใหม่", short:"มช.", place:"เมือง เชียงใหม่", type:"public", zone:"far", housing:["dorm_out"], rent:2750, rentSrc:"rentN", seniors:"N", src:"cmu"},
   nu:   {name:"ม.นเรศวร", short:"ม.นเรศวร", place:"เมือง พิษณุโลก", type:"public", zone:"far", housing:["dorm_out"], rent:2750, rentSrc:"rentN", trip:{cost:1000, hours:12}, tripSrc:"nuTrip", seniors:"N", src:"nu"},
-  psut: {name:"ม.สงขลานครินทร์ วิทยาเขตตรัง", short:"ม.อ.ตรัง", place:"เมือง ตรัง", type:"public", zone:"far", housing:["dorm_in"], dormIn:{fee:4500, util:150, label:"หอศรีตรัง ห้อง 2 คน 3,800 + น้ำ 200 + ประกัน 500 บาท/ภาค (ค่าไฟตามจริง ประมาณ 150/เดือน)"}, dormSrc:"psuDorm", trip:{cost:500, hours:28}, tripSrc:"psuTrip", seniors:"0", src:"psu"},
-  wu:   {name:"ม.วลัยลักษณ์", short:"ม.วลัยลักษณ์", place:"ท่าศาลา นครศรีธรรมราช", type:"public", zone:"far", housing:["dorm_in"], dormIn:{fee:3600, util:150, label:"หอลักษณานิเวศ ห้อง Superior 3,600 บาท/ภาค (ค่าไฟประมาณ 150/เดือน)"}, dormSrc:"wuDorm", trip:{cost:500, hours:28}, tripSrc:"wuTrip", seniors:"0", src:"wu"},
-  psuh: {name:"ม.สงขลานครินทร์ หาดใหญ่", short:"ม.อ.หาดใหญ่", place:"หาดใหญ่ สงขลา", type:"public", zone:"far", housing:["dorm_in"], dormIn:{fee:4500, util:150, label:"ใช้ค่าหอเดียวกับ ม.อ.ตรัง: ห้อง 2 คน 3,800 + น้ำ 200 + ประกัน 500 บาท/ภาค (ค่าไฟประมาณ 150/เดือน)"}, dormSrc:"psuh", trip:{cost:500, hours:28}, tripSrc:"tsuTrip", seniors:"0", src:"psuh"},
-  tsu:  {name:"ม.ทักษิณ", short:"ม.ทักษิณ", place:"เมือง สงขลา", type:"public", zone:"far", housing:["dorm_out"], rent:2750, rentSrc:"rentN", trip:{cost:500, hours:28}, tripSrc:"tsuTrip", seniors:"0", src:"tsu"},
+  psuh: {name:"ม.สงขลานครินทร์ หาดใหญ่", short:"ม.อ.หาดใหญ่", place:"หาดใหญ่ สงขลา", type:"public", zone:"far", housing:["dorm_in"], dormIn:{fee:4500, util:150, label:"ใช้ค่าหอศรีตรังของ ม.อ. เป็นค่าอ้างอิง: ห้อง 2 คน 3,800 + น้ำ 200 + ประกัน 500 บาท/ภาค (ค่าไฟประมาณ 150/เดือน)"}, dormSrc:"psuDorm", trip:{cost:500, hours:28}, tripSrc:"psuTrip", seniors:"0", src:"psuh"},
   dru:  {name:"ม.ราชภัฏธนบุรี ศูนย์สมุทรปราการ", short:"ราชภัฏธนบุรี", place:"ศูนย์สมุทรปราการ", type:"public", zone:"near", housing:["home"], seniors:"N", src:"dru"}
 };
 
@@ -110,30 +101,12 @@ const P = {
   nu_mt:     {u:"nu", name:"เทคนิคการแพทย์ (คณะสหเวชศาสตร์)", sem:28000, field:"mt"},
   nu_pt:     {u:"nu", name:"กายภาพบำบัด (คณะสหเวชศาสตร์)", sem:28000, field:"pt"},
 
-  psut_acc:  {u:"psut", name:"บัญชีบัณฑิต (คณะพาณิชยศาสตร์และการจัดการ)", sem:16000, field:"biz"},
-  psut_mkt:  {u:"psut", name:"บริหารธุรกิจ การตลาด", sem:16000, field:"biz"},
-  psut_fin:  {u:"psut", name:"บริหารธุรกิจ การเงิน ประกันภัยและการจัดการความเสี่ยง", sem:16000, field:"biz"},
-  psut_tour: {u:"psut", name:"บริหารธุรกิจ การจัดการการท่องเที่ยว", sem:17000, field:"biz", note:"อัตราพิเศษของหลักสูตรนี้"},
-  wu_acc:  {u:"wu", name:"บัญชี", sem:15400, field:"biz"},
-  wu_log:  {u:"wu", name:"บริหารธุรกิจ (การจัดการโลจิสติกส์)", sem:15400, field:"biz"},
-  wu_mkt:  {u:"wu", name:"บริหารธุรกิจ (การตลาดดิจิทัลและการสร้างแบรนด์)", sem:15400, field:"biz"},
-  wu_sci:  {u:"wu", name:"วิทยาศาสตร์ (คณิตศาสตร์ เคมี ชีววิทยา ฟิสิกส์)", sem:15800, field:"sci"},
-  wu_it:   {u:"wu", name:"เทคโนโลยีสารสนเทศและนวัตกรรมดิจิทัล", sem:15800, field:"sci"},
-  wu_eng:  {u:"wu", name:"ภาษาอังกฤษ", sem:14900, field:"lang"},
-  wu_chi:  {u:"wu", name:"ภาษาจีน", sem:14900, field:"lang"},
-  wu_thai: {u:"wu", name:"ภาษาไทย", sem:14900, field:"lang"},
-  wu_nur:  {u:"wu", name:"พยาบาลศาสตร์", sem:27900, field:"nur", note:"ยังไม่รวมภาคฤดูร้อน (หน้าหลักสูตรไม่ระบุ)"},
-  wu_mt:   {u:"wu", name:"เทคนิคการแพทย์", sem:28400, field:"mt"},
-  wu_pt:   {u:"wu", name:"กายภาพบำบัด", sem:28400, field:"pt"},
-  wu_oh:   {u:"wu", name:"สาธารณสุขศาสตร์ (อนามัยสิ่งแวดล้อม / อาชีวอนามัยฯ / สาธารณสุขชุมชน)", sem:23000, field:"oh"},
   psuh_biz: {u:"psuh", name:"วิทยาการจัดการ (บัญชี / การจัดการ)", sem:16000, field:"biz", note:"อัตรากลุ่มคณะวิทยาการจัดการ"},
   psuh_sci: {u:"psuh", name:"วิทยาศาสตร์", sem:18000, field:"sci", note:"อัตรากลุ่มคณะวิทยาศาสตร์"},
   psuh_lang:{u:"psuh", name:"ศิลปศาสตร์ (ภาษา)", sem:16000, field:"lang", note:"อัตรากลุ่มคณะศิลปศาสตร์"},
   psuh_nur: {u:"psuh", name:"พยาบาลศาสตร์", sem:22000, field:"nur", note:"ยังไม่รวมภาคฤดูร้อน"},
   psuh_mt:  {u:"psuh", name:"เทคนิคการแพทย์", sem:22000, field:"mt"},
   psuh_pt:  {u:"psuh", name:"กายภาพบำบัด", sem:18000, field:"pt", note:"อัตรากลุ่มแพทยศาสตร์ (สาขาสุขภาพ)"},
-  tsu_biz:  {u:"tsu", name:"เศรษฐศาสตร์และบริหารธุรกิจ", sem:13500, field:"biz", note:"ช่วง 11,000–13,500 ใช้ค่าสูงสุด"},
-  tsu_lang: {u:"tsu", name:"มนุษยศาสตร์และสังคมศาสตร์ (ภาษา)", sem:14500, field:"lang", note:"ช่วง 10,000–14,500 ใช้ค่าสูงสุด"},
   dru_eng:   {u:"dru", name:"ภาษาอังกฤษธุรกิจ (ศศ.บ.)", sem:9000, fixed:1000, field:"lang", note:"เทอมแรก ~10,000 เทอมถัดไป ~9,000 (คิดส่วนต่างเทอมแรก 1,000 ครั้งเดียว) · ค่าประมาณจากเว็บศูนย์"},
   dru_chi:   {u:"dru", name:"ภาษาจีนเพื่อการสื่อสาร (ศศ.บ.)", sem:9000, fixed:1000, field:"lang", note:"เทอมแรก ~10,000 เทอมถัดไป ~9,000 (คิดส่วนต่างเทอมแรก 1,000 ครั้งเดียว) · ค่าประมาณจากเว็บศูนย์"},
   dru_thai:  {u:"dru", name:"ภาษาไทย (ศศ.บ.)", sem:9000, fixed:1000, field:"lang", note:"เทอมแรก ~10,000 เทอมถัดไป ~9,000 (คิดส่วนต่างเทอมแรก 1,000 ครั้งเดียว) · ค่าประมาณจากเว็บศูนย์"},
@@ -141,10 +114,10 @@ const P = {
 };
 
 const TRACKS = {
-  biz:   {name:"ธุรกิจ บัญชี โลจิสติกส์", icon:"💼", priv:["hcu_biz","bu_biz"], pub:["kmitl_biz","ku_mgt","buu_log","mfu_mgt","up_mgt","rmutk_biz","cmu_biz","nu_biz","psut_acc","psut_mkt","psut_fin","psut_tour","wu_acc","wu_log","wu_mkt","psuh_biz","tsu_biz"]},
-  health:{name:"สุขภาพ พยาบาล เทคนิคการแพทย์", icon:"🩺", priv:["hcu_nur","hcu_mt","hcu_pt","hcu_medsci","hcu_oh","dru_nur"], pub:["buu_nur","buu_mt","buu_pt","buu_medsci","mfu_oh","up_nur","up_medsci","rmutk_health","cmu_nur","cmu_mt","cmu_pt","nu_nur","nu_medsci","nu_mt","nu_pt","dru_nur","wu_nur","wu_mt","wu_pt","wu_oh","psuh_nur","psuh_mt","psuh_pt"]},
-  sci:   {name:"วิทยาศาสตร์ คอมพิวเตอร์", icon:"🔬", priv:["hcu_cs"], pub:["kmitl_sci","ku_sci","buu_sci","up_sci","rmutk_cs","cmu_sci","nu_sci","wu_sci","wu_it","psuh_sci"]},
-  lang:  {name:"ภาษา ศิลปศาสตร์", icon:"🌏", priv:["hcu_eng","bu_eng","dru_eng","dru_chi","dru_thai"], pub:["kmitl_lang","buu_eng","up_lang","rmutk_eng","cmu_lang","nu_lang","wu_eng","wu_chi","wu_thai","psuh_lang","tsu_lang","dru_eng","dru_chi","dru_thai"]}
+  biz:   {name:"ธุรกิจ บัญชี โลจิสติกส์", icon:"💼", priv:["hcu_biz","bu_biz"], pub:["kmitl_biz","ku_mgt","buu_log","mfu_mgt","up_mgt","rmutk_biz","cmu_biz","nu_biz","psuh_biz"]},
+  health:{name:"สุขภาพ พยาบาล เทคนิคการแพทย์", icon:"🩺", priv:["hcu_nur","hcu_mt","hcu_pt","hcu_medsci","hcu_oh","dru_nur"], pub:["buu_nur","buu_mt","buu_pt","buu_medsci","mfu_oh","up_nur","up_medsci","rmutk_health","cmu_nur","cmu_mt","cmu_pt","nu_nur","nu_medsci","nu_mt","nu_pt","dru_nur","psuh_nur","psuh_mt","psuh_pt"]},
+  sci:   {name:"วิทยาศาสตร์ คอมพิวเตอร์", icon:"🔬", priv:["hcu_cs"], pub:["kmitl_sci","ku_sci","buu_sci","up_sci","rmutk_cs","cmu_sci","nu_sci","psuh_sci"]},
+  lang:  {name:"ภาษา ศิลปศาสตร์", icon:"🌏", priv:["hcu_eng","bu_eng","dru_eng","dru_chi","dru_thai"], pub:["kmitl_lang","buu_eng","up_lang","rmutk_eng","cmu_lang","nu_lang","psuh_lang","dru_eng","dru_chi","dru_thai"]}
 };
 
 const HOUSING = {home:"อยู่บ้าน ไป-กลับทุกวัน", dorm_in:"หอใน (หอของมหาวิทยาลัย)", dorm_out:"หอนอก (เช่ารายเดือน)"};
