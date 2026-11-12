@@ -8,6 +8,7 @@ const YEAR = "2569";
 
 const SRC = {
   custom:{t:"ตัวเลขที่นักเรียนกรอกเอง (ไม่ได้ตรวจกับประกาศของมหาวิทยาลัย)", u:""},
+  druProg:{t:"รายชื่อสาขาภาคปกติ ม.ราชภัฏธนบุรี ศูนย์สมุทรปราการ (บางสาขาอาจไม่เปิดรับทุกปี)", u:"https://sp.dru.ac.th/new/?page_id=7496"},
   hcu:  {t:"ตารางค่าธรรมเนียมเหมาจ่าย ป.ตรี ปี 2569 ม.หัวเฉียวเฉลิมพระเกียรติ", u:"https://admission.hcu.ac.th/Files/payment.pdf"},
   kmitl:{t:"สรุปค่าเทอม สจล. 2569 (อ้างประกาศสำนักทะเบียน สจล.)", u:"https://dreamnesthub.com/tuition-fee-kmitl-2569"},
   ku:   {t:"ประกาศรับสมัคร TCAS1 ปี 2569 มก.ศรีราชา (ข้อ 9 ค่าธรรมเนียม)", u:"https://admissions.src.ku.ac.th/pdf/TCAS1_1_69.pdf"},
@@ -30,7 +31,7 @@ const SRC = {
   msu:  {t:"อัตราค่าธรรมเนียมการศึกษา ป.ตรี ม.มหาสารคาม ระบบปกติ ต่อภาค (ไฟล์ msu-fee-70 ไม่ระบุปีการศึกษาในเนื้อหา ไม่รวมค่าแรกเข้า)", u:"https://admission.msu.ac.th/downloads/70/msu-fee-70.pdf"},
   msuTrip:{t:"รถทัวร์ กรุงเทพฯ–มหาสารคาม ประมาณ 15–16 ดอลลาร์สหรัฐ (~550 บาท) ต่อเที่ยว ราว 7–8 ชม. (Bookaway) · ไป-กลับ ~1,100 บาท / 15 ชม. · แปลงบาทด้วยอัตราประมาณ", u:"https://www.bookaway.com/routes/thailand/bangkok-to-maha-sarakham"},
   rentN:{t:"ค่าเช่าหอนอก: ใช้ค่ากลางเดียวกับ ม.พะเยา/แม่ฟ้าหลวง (ค่าประมาณ ยังไม่ได้สำรวจเฉพาะเมืองนี้ และยังไม่ได้ใส่ราคาหอในของมหาวิทยาลัย)", u:""},
-  dru:  {t:"ค่าเทอม ม.ราชภัฏธนบุรี ศูนย์สมุทรปราการ ภาคปกติ (เว็บศูนย์สมุทรปราการ เป็นค่าประมาณ ไม่ระบุปี แบ่งชำระ 2 ครั้ง/เทอม)", u:"https://sp.dru.ac.th/new/?page_id=14"},
+  dru:  {t:"ค่าเทอม ม.ราชภัฏธนบุรี ศูนย์สมุทรปราการ ภาคปกติ: ทั่วไป เทอมแรก ~14,000 เทอมถัดไป ~12,000 · วิศวกรรมไฟฟ้า ~18,000 / ~17,000 (เว็บศูนย์ ค่าประมาณ ไม่ระบุปี · ตรวจ 12 พ.ย. 2569)", u:"https://sp.dru.ac.th/new/?page_id=14"},
   su:   {t:"อัตราค่าธรรมเนียมการศึกษา นักศึกษาใหม่ ปีการศึกษา 2568 ม.ศิลปากร (SU-TCAS68 ข้อมูล ณ 10 ก.พ. 68 · ใช้ยอด 'รวม' ในภาพเป็นค่าเทอมต่อภาค ซึ่งรวมค่าขึ้นทะเบียน 1,000 และค่าพัฒนาภาษาอังกฤษ 500 จึงสูงกว่าจริงเล็กน้อยเมื่อคิด 4 ปี · เป็นข้อมูลปีก่อน ควรตรวจประกาศปีล่าสุด)", u:"https://admission.su.ac.th"},
   pim:  {t:"หน้าค่าเทอม สถาบันการจัดการปัญญาภิวัฒน์ (PIM) · ภาพประกาศที่ครูส่งมา 12 พ.ย. 2569 · ตัวเลข 'จ่าย…เรียนได้ทันที' ผ่อนได้สูงสุด 43 เดือน ใช้เป็นค่าเทอมต่อภาคตามที่ครูกำหนด (เงื่อนไขตามที่สถาบันฯ กำหนด ยังไม่ได้ตรวจกับตารางค่าเทอมเต็ม)", u:"https://www.pim.ac.th/tuition-fee/"},
   nu69: {t:"ตารางอัตราค่าบำรุงและค่าธรรมเนียมการศึกษา ป.ตรี ภาคปกติ ม.นเรศวร ผู้เข้าศึกษาตั้งแต่ปีการศึกษา 2569 (ต่อภาค)", u:"https://www.reg2.nu.ac.th/notification/NUREG_FEE_2569_bachelor.pdf"},
@@ -137,10 +138,10 @@ const P = {
   msu_hum: {u:"msu", name:"มนุษยศาสตร์และสังคมศาสตร์ (ภาษา)", sem:15000, field:"lang", note:"ส่วนใหญ่ของคณะ ยกเว้นอังกฤษเพื่อการสื่อสารนานาชาติ"},
   msu_nur: {u:"msu", name:"พยาบาลศาสตร์", sem:39500, field:"nur", note:"ยังไม่รวมภาคฤดูร้อน (ไฟล์ไม่ระบุ)"},
   msu_oh:  {u:"msu", name:"สาธารณสุขศาสตร์", sem:16000, field:"oh", note:"ทุกหลักสูตรของคณะ"},
-  dru_biz:   {u:"dru", name:"บริหารธุรกิจ", sem:9000, fixed:1000, field:"biz", note:"ใช้เลขเทอมเดียวกับสายภาษาของศูนย์ (~9,000 ต่อเทอม + ส่วนต่างเทอมแรก 1,000 ครั้งเดียว) · ค่าประมาณ ยังไม่ได้ตรวจกับสาขาธุรกิจโดยตรง"},
-  dru_eng:   {u:"dru", name:"ภาษาอังกฤษธุรกิจ (ศศ.บ.)", sem:9000, fixed:1000, field:"lang", note:"เทอมแรก ~10,000 เทอมถัดไป ~9,000 (คิดส่วนต่างเทอมแรก 1,000 ครั้งเดียว) · ค่าประมาณจากเว็บศูนย์"},
-  dru_chi:   {u:"dru", name:"ภาษาจีนเพื่อการสื่อสาร (ศศ.บ.)", sem:9000, fixed:1000, field:"lang", note:"เทอมแรก ~10,000 เทอมถัดไป ~9,000 (คิดส่วนต่างเทอมแรก 1,000 ครั้งเดียว) · ค่าประมาณจากเว็บศูนย์"},
-  dru_thai:  {u:"dru", name:"ภาษาไทย (ศศ.บ.)", sem:9000, fixed:1000, field:"lang", note:"เทอมแรก ~10,000 เทอมถัดไป ~9,000 (คิดส่วนต่างเทอมแรก 1,000 ครั้งเดียว) · ค่าประมาณจากเว็บศูนย์"},
+  dru_biz:   {u:"dru", name:"บริหารธุรกิจ (การจัดการ การตลาด โลจิสติกส์ ทรัพยากรมนุษย์ ธุรกิจดิจิทัล)", sem:12000, fixed:2000, field:"biz", note:"เทอมแรก ~14,000 เทอมถัดไป ~12,000 (คิดส่วนต่างเทอมแรก 2,000 ครั้งเดียว) · ค่าประมาณจากเว็บศูนย์"},
+  dru_eng:   {u:"dru", name:"ภาษาอังกฤษธุรกิจ (ศศ.บ.)", sem:12000, fixed:2000, field:"lang", note:"เทอมแรก ~14,000 เทอมถัดไป ~12,000 (คิดส่วนต่างเทอมแรก 2,000 ครั้งเดียว) · ค่าประมาณจากเว็บศูนย์"},
+  dru_chi:   {u:"dru", name:"ภาษาจีนเพื่อการสื่อสาร (ศศ.บ.)", sem:12000, fixed:2000, field:"lang", note:"เทอมแรก ~14,000 เทอมถัดไป ~12,000 (คิดส่วนต่างเทอมแรก 2,000 ครั้งเดียว) · ค่าประมาณจากเว็บศูนย์"},
+  dru_thai:  {u:"dru", name:"ภาษาไทย (ศศ.บ.)", sem:12000, fixed:2000, field:"lang", note:"เทอมแรก ~14,000 เทอมถัดไป ~12,000 (คิดส่วนต่างเทอมแรก 2,000 ครั้งเดียว) · ค่าประมาณจากเว็บศูนย์"},
   pim_log:{u:"pim", name:"การจัดการโลจิสติกส์และการคมนาคมขนส่ง", sem:13000, field:"biz", note:"ใช้ยอด 'จ่ายเริ่มเรียน' ในประกาศ PIM เป็นค่าเทอม/ภาค · ผ่อนได้สูงสุด 43 เดือน · ควรตรวจค่าเทอมเต็มกับ PIM"},
   pim_agri:{u:"pim", name:"เกษตรนวัตและการจัดการ", sem:7000, field:"biz", note:"ใช้ยอด 'จ่ายเริ่มเรียน' ในประกาศ PIM เป็นค่าเทอม/ภาค · ผ่อนได้สูงสุด 43 เดือน · ควรตรวจค่าเทอมเต็มกับ PIM"},
   pim_hotel:{u:"pim", name:"การจัดการธุรกิจบริการ โรงแรม และการบิน", sem:13000, field:"biz", note:"ใช้ยอด 'จ่ายเริ่มเรียน' ในประกาศ PIM เป็นค่าเทอม/ภาค · ผ่อนได้สูงสุด 43 เดือน · ควรตรวจค่าเทอมเต็มกับ PIM"},
@@ -167,6 +168,17 @@ const P = {
   dru_nur:   {u:"dru", name:"พยาบาลศาสตร์", sem:70000, fixed:3700, field:"nur", note:"~70,000 ต่อเทอม + ค่าใช้จ่ายเพิ่มเติมเทอมแรก ~3,700 · ยังไม่รวมภาคฤดูร้อน (เว็บไม่ระบุ) · ค่าประมาณจากเว็บศูนย์"},
   /* ---- วิศวกรรม เทคโนโลยี / สถาปัตย์ ศิลปะ การออกแบบ / ครุศาสตร์ (เพิ่ม 12 พ.ย. 2569) · src = แหล่งของสาขานี้ (ถ้าต่างจากของมหาวิทยาลัย) ---- */
   dru_ee:    {u:"dru", name:"วิศวกรรมไฟฟ้า", sem:17000, fixed:1000, field:"eng", note:"เทอมแรก ~18,000 เทอมถัดไป ~17,000 · ค่าประมาณจากเว็บศูนย์"},
+  /* ---- ทาง A เพิ่ม 12 พ.ย. 2569: สาขาอื่นของราชภัฏธนบุรี ศูนย์สมุทรปราการ และหัวเฉียวฯ ---- */
+  dru_acc:   {u:"dru", name:"บัญชีบัณฑิต", sem:12000, fixed:2000, field:"biz", src:"druProg", note:"เทอมแรก ~14,000 เทอมถัดไป ~12,000 (คิดส่วนต่างเทอมแรก 2,000 ครั้งเดียว) · ค่าประมาณจากเว็บศูนย์"},
+  dru_hotel: {u:"dru", name:"อุตสาหกรรมบริการ (โรงแรม / ท่องเที่ยว / ธุรกิจการบิน)", sem:12000, fixed:2000, field:"biz", src:"druProg", note:"เทอมแรก ~14,000 เทอมถัดไป ~12,000 (คิดส่วนต่างเทอมแรก 2,000 ครั้งเดียว) · ค่าประมาณจากเว็บศูนย์"},
+  dru_cs:    {u:"dru", name:"วิทยาการคอมพิวเตอร์", sem:12000, fixed:2000, field:"sci", src:"druProg", note:"เทอมแรก ~14,000 เทอมถัดไป ~12,000 (คิดส่วนต่างเทอมแรก 2,000 ครั้งเดียว) · ค่าประมาณจากเว็บศูนย์"},
+  dru_food:  {u:"dru", name:"อุตสาหกรรมอาหาร / คหกรรมศาสตร์ / การจัดการสิ่งแวดล้อม", sem:12000, fixed:2000, field:"sci", src:"druProg", note:"เทอมแรก ~14,000 เทอมถัดไป ~12,000 (คิดส่วนต่างเทอมแรก 2,000 ครั้งเดียว) · ค่าประมาณจากเว็บศูนย์"},
+  dru_rail:  {u:"dru", name:"วิศวกรรมการจัดการระบบราง", sem:12000, fixed:2000, field:"eng", src:"druProg", note:"เว็บศูนย์บอกอัตราสูงเฉพาะวิศวกรรมไฟฟ้า สาขานี้จึงใช้อัตราทั่วไป ~12,000 ควรโทรถามศูนย์อีกครั้ง"},
+  dru_tech:  {u:"dru", name:"เทคโนโลยีไฟฟ้า / เทคโนโลยีการจัดการอุตสาหกรรม", sem:12000, fixed:2000, field:"eng", src:"druProg", note:"เทอมแรก ~14,000 เทอมถัดไป ~12,000 (คิดส่วนต่างเทอมแรก 2,000 ครั้งเดียว) · ค่าประมาณจากเว็บศูนย์"},
+  dru_art:   {u:"dru", name:"ศิลปกรรม: ออกแบบทัศนศิลป์ / ออกแบบนิเทศศิลป์", sem:12000, fixed:2000, field:"art", src:"druProg", note:"เทอมแรก ~14,000 เทอมถัดไป ~12,000 (คิดส่วนต่างเทอมแรก 2,000 ครั้งเดียว) · ค่าประมาณจากเว็บศูนย์"},
+  dru_edu:   {u:"dru", name:"ครุศาสตร์ (คอมพิวเตอร์ศึกษา / การศึกษาปฐมวัย / พลศึกษา)", sem:12000, fixed:2000, field:"edu", src:"druProg", note:"เทอมแรก ~14,000 เทอมถัดไป ~12,000 (คิดส่วนต่างเทอมแรก 2,000 ครั้งเดียว) · ค่าประมาณจากเว็บศูนย์"},
+  hcu_ai:    {u:"hcu", name:"ปัญญาประดิษฐ์ (AI)", sem:49650, field:"sci"},
+  hcu_chi:   {u:"hcu", name:"วิทยาลัยจีนศึกษา (ภาษาและวัฒนธรรมจีน / ภาษาจีนธุรกิจ)", sem:43000, field:"lang", note:"มีช่วงไปเรียนต่างประเทศ ค่าเดินทาง วีซ่า ค่าใช้จ่ายส่วนตัวจ่ายเอง"},
   kmitl_eng: {u:"kmitl", name:"วิศวกรรมศาสตร์ (หลักสูตรทั่วไป: ไฟฟ้า โยธา เครื่องกล คอมพิวเตอร์ ฯลฯ)", sem:25000, field:"eng", src:"kmitlEng", note:"บางสาขาแพงกว่า เช่น เซมิคอนดักเตอร์ 40,000"},
   kmitl_it:  {u:"kmitl", name:"เทคโนโลยีสารสนเทศ", sem:32000, field:"sci"},
   kmitl_arch:{u:"kmitl", name:"สถาปัตยกรรม ศิลปะและการออกแบบ (ทุกสาขาภาคปกติ)", sem:29000, field:"arch"},
@@ -205,13 +217,13 @@ const P = {
 };
 
 const TRACKS = {
-  biz:   {name:"ธุรกิจ บัญชี โลจิสติกส์", icon:"💼", priv:["hcu_biz","dru_biz"], pub:["kmitl_biz","ku_mgt","buu_log","mfu_mgt","up_mgt","rmutk_biz","cmu_biz","nu_biz","psuh_biz","kku_acc","kku_mgt","kku_fin","msu_biz","pim_log","pim_agri","pim_hotel","pim_bba","pim_food","pim_culi","su_mgt"]},
+  biz:   {name:"ธุรกิจ บัญชี โลจิสติกส์", icon:"💼", priv:["hcu_biz","dru_biz","dru_acc","dru_hotel"], pub:["kmitl_biz","ku_mgt","buu_log","mfu_mgt","up_mgt","rmutk_biz","cmu_biz","nu_biz","psuh_biz","kku_acc","kku_mgt","kku_fin","msu_biz","pim_log","pim_agri","pim_hotel","pim_bba","pim_food","pim_culi","su_mgt"]},
   health:{name:"สุขภาพ พยาบาล เทคนิคการแพทย์", icon:"🩺", priv:["hcu_nur","hcu_mt","hcu_pt","hcu_medsci","hcu_oh","dru_nur"], pub:["buu_nur","buu_mt","buu_pt","buu_medsci","mfu_oh","up_nur","up_medsci","rmutk_health","cmu_nur","cmu_mt","cmu_pt","nu_nur","nu_medsci","nu_mt","nu_pt","dru_nur","psuh_nur","psuh_mt","psuh_pt","kku_nur","kku_mt","kku_pt","kku_oh","msu_nur","msu_oh","su_pharm"]},
-  sci:   {name:"วิทยาศาสตร์ คอมพิวเตอร์ วิศวกรรม (TPAT3)", icon:"🔬", priv:["hcu_cs","dru_ee"], pub:["kmitl_sci","ku_sci","buu_sci","up_sci","rmutk_cs","cmu_sci","nu_sci","psuh_sci","kku_sci","msu_sci","msu_info","pim_digit","pim_robot","pim_ai","su_sci","su_agri","su_eng","su_biotech","kmitl_eng","kmitl_it","rmutk_eng","ku_eng","buu_eng","buu_info","up_eng","up_ict","cmu_eng","cmu_camt","nu_eng","psuh_eng","kku_eng","msu_eng","dru_ee"]},
-  lang:  {name:"ภาษา ศิลปศาสตร์", icon:"🌏", priv:["hcu_eng","dru_eng","dru_chi","dru_thai"], pub:["kmitl_lang","buu_eng","up_lang","rmutk_eng","cmu_lang","nu_lang","psuh_lang","kku_hum","msu_hum","dru_eng","dru_chi","dru_thai","pim_art","su_letters","su_arc_lang","su_arc"]},
-  /* หมวดตามวิชา TPAT · ยังไม่มีมหาวิทยาลัยใกล้บ้านในระบบ (priv ว่าง) ทาง A ให้กรอกเอง */
-  arch:  {name:"สถาปัตย์ ศิลปะ การออกแบบ (TPAT2, TPAT4)", icon:"📐", priv:[], pub:["su_arch","su_decor","su_paint","kmitl_arch","up_arch","up_art","cmu_arch","cmu_art","nu_arch","nu_art","psuh_arch","kku_arch","kku_art","msu_arch","msu_art","buu_art"]},
-  edu:   {name:"ครุศาสตร์ ศึกษาศาสตร์ (TPAT5)", icon:"🍎", priv:[], pub:["su_edu","kmitl_edu","rmutk_tedu","buu_edu","up_edu","cmu_edu","nu_edu","kku_edu","msu_edu"]}
+  sci:   {name:"วิทยาศาสตร์ คอมพิวเตอร์ วิศวกรรม (TPAT3)", icon:"🔬", priv:["hcu_cs","dru_ee","hcu_ai","dru_cs","dru_food","dru_rail","dru_tech"], pub:["kmitl_sci","ku_sci","buu_sci","up_sci","rmutk_cs","cmu_sci","nu_sci","psuh_sci","kku_sci","msu_sci","msu_info","pim_digit","pim_robot","pim_ai","su_sci","su_agri","su_eng","su_biotech","kmitl_eng","kmitl_it","rmutk_eng","ku_eng","buu_eng","buu_info","up_eng","up_ict","cmu_eng","cmu_camt","nu_eng","psuh_eng","kku_eng","msu_eng","dru_ee"]},
+  lang:  {name:"ภาษา ศิลปศาสตร์", icon:"🌏", priv:["hcu_eng","dru_eng","dru_chi","dru_thai","hcu_chi"], pub:["kmitl_lang","buu_eng","up_lang","rmutk_eng","cmu_lang","nu_lang","psuh_lang","kku_hum","msu_hum","dru_eng","dru_chi","dru_thai","pim_art","su_letters","su_arc_lang","su_arc"]},
+  /* หมวดตามวิชา TPAT · ทาง A ตอนนี้มีราชภัฏธนบุรี ศูนย์สมุทรปราการ */
+  arch:  {name:"สถาปัตย์ ศิลปะ การออกแบบ (TPAT2, TPAT4)", icon:"📐", priv:["dru_art"], pub:["su_arch","su_decor","su_paint","kmitl_arch","up_arch","up_art","cmu_arch","cmu_art","nu_arch","nu_art","psuh_arch","kku_arch","kku_art","msu_arch","msu_art","buu_art"]},
+  edu:   {name:"ครุศาสตร์ ศึกษาศาสตร์ (TPAT5)", icon:"🍎", priv:["dru_edu"], pub:["su_edu","kmitl_edu","rmutk_tedu","buu_edu","up_edu","cmu_edu","nu_edu","kku_edu","msu_edu"]}
 };
 
 const HOUSING = {home:"อยู่บ้าน ไป-กลับทุกวัน", dorm_in:"หอใน (หอของมหาวิทยาลัย)", dorm_out:"หอนอก (เช่ารายเดือน)"};
