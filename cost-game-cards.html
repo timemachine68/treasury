@@ -48,7 +48,7 @@ function pairRows(t){
 }
 let html=`<section class="page"><h2>1) ตารางเฉลย: คู่เทียบ 4 ปี (ใช้ค่าตั้งต้น)</h2>
 <p class="muted">ค่าตั้งต้น: ค่ารถไป-กลับ ${d.commute} บาท/วัน · ข้าวที่มหาวิทยาลัย ${d.lunch}/วัน · ค่ากินตอนอยู่หอ ${d.dormFood}/วัน · กับข้าวที่บ้าน ${d.homeFood}/วัน · เรียน ${C.K.studyDays} วัน/ปี · อยู่หอ ${C.K.dormMonths} เดือน/ปี · ตรวจข้อมูลเมื่อ ${C.CHECKED}</p>`;
-Object.values(C.TRACKS).forEach(t=>{html+=`<h3 style="margin-top:10px">${t.icon} ${esc(t.name)}</h3><table><thead><tr><th>A ใกล้บ้าน (ไป-กลับ)</th><th>B มหาวิทยาลัยรัฐ</th><th>A ค่าเทอม</th><th>A รวม</th><th>B ค่าเทอม</th><th>B ที่พัก</th><th>B รวม</th><th>A − B</th></tr></thead><tbody>${pairRows(t)}</tbody></table>`});
+Object.values(C.TRACKS).forEach(t=>{html+=`<h3 style="margin-top:10px">${t.icon} ${esc(t.name)}</h3><table><thead><tr><th>A ใกล้บ้าน (ไป-กลับ)</th><th>B ไกลบ้าน / เลือกเอง</th><th>A ค่าเทอม</th><th>A รวม</th><th>B ค่าเทอม</th><th>B ที่พัก</th><th>B รวม</th><th>A − B</th></tr></thead><tbody>${pairRows(t)}</tbody></table>`});
 html+=`<p class="src">ที่มา: ${Object.values(C.SRC).map(s=>esc(s.t)).join(" · ")}</p></section>`;
 
 html+=`<section class="page"><h2>2) การ์ดหมวดค่าใช้จ่าย (เปิดทีละใบ ทายก่อนเปิด)</h2><div class="grid">

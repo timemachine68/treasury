@@ -31,7 +31,8 @@ const SRC = {
   msu:  {t:"อัตราค่าธรรมเนียมการศึกษา ป.ตรี ม.มหาสารคาม ระบบปกติ ต่อภาค (ไฟล์ msu-fee-70 ไม่ระบุปีการศึกษาในเนื้อหา ไม่รวมค่าแรกเข้า)", u:"https://admission.msu.ac.th/downloads/70/msu-fee-70.pdf"},
   msuTrip:{t:"รถทัวร์ กรุงเทพฯ–มหาสารคาม ประมาณ 15–16 ดอลลาร์สหรัฐ (~550 บาท) ต่อเที่ยว ราว 7–8 ชม. (Bookaway) · ไป-กลับ ~1,100 บาท / 15 ชม. · แปลงบาทด้วยอัตราประมาณ", u:"https://www.bookaway.com/routes/thailand/bangkok-to-maha-sarakham"},
   rentN:{t:"ค่าเช่าหอนอก: ใช้ค่ากลางเดียวกับ ม.พะเยา/แม่ฟ้าหลวง (ค่าประมาณ ยังไม่ได้สำรวจเฉพาะเมืองนี้ และยังไม่ได้ใส่ราคาหอในของมหาวิทยาลัย)", u:""},
-  dru:  {t:"ค่าเทอม ม.ราชภัฏธนบุรี ศูนย์สมุทรปราการ ภาคปกติ (เว็บศูนย์สมุทรปราการ เป็นค่าประมาณ ไม่ระบุปี แบ่งชำระ 2 ครั้ง/เทอม)", u:"https://sp.dru.ac.th/new/?page_id=14"}
+  dru:  {t:"ค่าเทอม ม.ราชภัฏธนบุรี ศูนย์สมุทรปราการ ภาคปกติ (เว็บศูนย์สมุทรปราการ เป็นค่าประมาณ ไม่ระบุปี แบ่งชำระ 2 ครั้ง/เทอม)", u:"https://sp.dru.ac.th/new/?page_id=14"},
+  pim:  {t:"หน้าค่าเทอม สถาบันการจัดการปัญญาภิวัฒน์ (PIM) · ภาพประกาศที่ครูส่งมา 12 พ.ย. 2569 · ตัวเลข 'จ่าย…เรียนได้ทันที' ผ่อนได้สูงสุด 43 เดือน ใช้เป็นค่าเทอมต่อภาคตามที่ครูกำหนด (เงื่อนไขตามที่สถาบันฯ กำหนด ยังไม่ได้ตรวจกับตารางค่าเทอมเต็ม)", u:"https://www.pim.ac.th/tuition-fee/"}
 };
 
 /* zone: near = ไป-กลับจากบ้านได้, mid = ชลบุรี กลับบ้านบ่อยได้, far = ต่างภาค */
@@ -50,7 +51,9 @@ const U = {
   psuh: {name:"ม.สงขลานครินทร์ หาดใหญ่", short:"ม.อ.หาดใหญ่", place:"หาดใหญ่ สงขลา", type:"public", zone:"far", housing:["dorm_in"], dormIn:{fee:4500, util:150, label:"ใช้ค่าหอศรีตรังของ ม.อ. เป็นค่าอ้างอิง: ห้อง 2 คน 3,800 + น้ำ 200 + ประกัน 500 บาท/ภาค (ค่าไฟประมาณ 150/เดือน)"}, dormSrc:"psuDorm", trip:{cost:500, hours:28}, tripSrc:"psuTrip", seniors:"0", src:"psuh"},
   kku:  {name:"ม.ขอนแก่น", short:"ม.ขอนแก่น", place:"เมือง ขอนแก่น", type:"public", zone:"far", housing:["dorm_out"], rent:2750, rentSrc:"rentN", trip:{cost:780, hours:14}, tripSrc:"kkuTrip", seniors:"N", src:"kku"},
   msu:  {name:"ม.มหาสารคาม", short:"ม.มหาสารคาม", place:"กันทรวิชัย มหาสารคาม", type:"public", zone:"far", housing:["dorm_out"], rent:2750, rentSrc:"rentN", trip:{cost:1100, hours:15}, tripSrc:"msuTrip", seniors:"N", src:"msu"},
-  dru:  {name:"ม.ราชภัฏธนบุรี ศูนย์สมุทรปราการ", short:"ราชภัฏธนบุรี", place:"ศูนย์สมุทรปราการ", type:"public", zone:"near", housing:["home"], seniors:"N", src:"dru"}
+  dru:  {name:"ม.ราชภัฏธนบุรี ศูนย์สมุทรปราการ", short:"ราชภัฏธนบุรี", place:"ศูนย์สมุทรปราการ", type:"public", zone:"near", housing:["home"], seniors:"N", src:"dru"},
+  /* PIM เอกชน อยู่ทาง B เท่านั้น (ไม่ใส่ใน TRACKS.priv) · ไม่ระบุวิทยาเขตในภาพ จึงใช้ค่าเช่าหอนอกค่ากลางเดียวกับ มทร.กรุงเทพ */
+  pim:  {name:"สถาบันการจัดการปัญญาภิวัฒน์ (PIM)", short:"PIM", place:"ดูวิทยาเขตที่ pim.ac.th", type:"private", zone:"near", housing:["home","dorm_out"], rent:3025, seniors:"N", src:"pim"}
 };
 
 /* sem = ค่าเทอมต่อภาค, summer = ค่าภาคฤดูร้อนรวมทั้งหลักสูตร (ถ้ามีบังคับ) */
@@ -131,14 +134,24 @@ const P = {
   dru_eng:   {u:"dru", name:"ภาษาอังกฤษธุรกิจ (ศศ.บ.)", sem:9000, fixed:1000, field:"lang", note:"เทอมแรก ~10,000 เทอมถัดไป ~9,000 (คิดส่วนต่างเทอมแรก 1,000 ครั้งเดียว) · ค่าประมาณจากเว็บศูนย์"},
   dru_chi:   {u:"dru", name:"ภาษาจีนเพื่อการสื่อสาร (ศศ.บ.)", sem:9000, fixed:1000, field:"lang", note:"เทอมแรก ~10,000 เทอมถัดไป ~9,000 (คิดส่วนต่างเทอมแรก 1,000 ครั้งเดียว) · ค่าประมาณจากเว็บศูนย์"},
   dru_thai:  {u:"dru", name:"ภาษาไทย (ศศ.บ.)", sem:9000, fixed:1000, field:"lang", note:"เทอมแรก ~10,000 เทอมถัดไป ~9,000 (คิดส่วนต่างเทอมแรก 1,000 ครั้งเดียว) · ค่าประมาณจากเว็บศูนย์"},
+  pim_log:{u:"pim", name:"การจัดการโลจิสติกส์และการคมนาคมขนส่ง", sem:13000, field:"biz", note:"ใช้ยอด 'จ่ายเริ่มเรียน' ในประกาศ PIM เป็นค่าเทอม/ภาค · ผ่อนได้สูงสุด 43 เดือน · ควรตรวจค่าเทอมเต็มกับ PIM"},
+  pim_agri:{u:"pim", name:"เกษตรนวัตและการจัดการ", sem:7000, field:"biz", note:"ใช้ยอด 'จ่ายเริ่มเรียน' ในประกาศ PIM เป็นค่าเทอม/ภาค · ผ่อนได้สูงสุด 43 เดือน · ควรตรวจค่าเทอมเต็มกับ PIM"},
+  pim_hotel:{u:"pim", name:"การจัดการธุรกิจบริการ โรงแรม และการบิน", sem:13000, field:"biz", note:"ใช้ยอด 'จ่ายเริ่มเรียน' ในประกาศ PIM เป็นค่าเทอม/ภาค · ผ่อนได้สูงสุด 43 เดือน · ควรตรวจค่าเทอมเต็มกับ PIM"},
+  pim_bba:{u:"pim", name:"บริหารธุรกิจ (การค้าสมัยใหม่)", sem:2000, field:"biz", note:"ใช้ยอด 'จ่ายเริ่มเรียน' ในประกาศ PIM เป็นค่าเทอม/ภาค · ผ่อนได้สูงสุด 43 เดือน · ควรตรวจค่าเทอมเต็มกับ PIM"},
+  pim_food:{u:"pim", name:"การจัดการธุรกิจอาหาร", sem:2000, field:"biz", note:"ใช้ยอด 'จ่ายเริ่มเรียน' ในประกาศ PIM เป็นค่าเทอม/ภาค · ผ่อนได้สูงสุด 43 เดือน · ควรตรวจค่าเทอมเต็มกับ PIM"},
+  pim_culi:{u:"pim", name:"ศิลปะการประกอบอาหารและการจัดการร้านอาหาร", sem:13000, field:"biz", note:"ใช้ยอด 'จ่ายเริ่มเรียน' ในประกาศ PIM เป็นค่าเทอม/ภาค · ผ่อนได้สูงสุด 43 เดือน · ควรตรวจค่าเทอมเต็มกับ PIM"},
+  pim_digit:{u:"pim", name:"เทคโนโลยีดิจิทัลและสารสนเทศ (วิศวกรรมศาสตร์ฯ)", sem:25000, field:"sci", note:"ใช้ยอด 'จ่ายเริ่มเรียน' ในประกาศ PIM เป็นค่าเทอม/ภาค · ผ่อนได้สูงสุด 43 เดือน · ควรตรวจค่าเทอมเต็มกับ PIM"},
+  pim_robot:{u:"pim", name:"วิศวกรรมหุ่นยนต์และระบบอัตโนมัติ", sem:22000, field:"sci", note:"ใช้ยอด 'จ่ายเริ่มเรียน' ในประกาศ PIM เป็นค่าเทอม/ภาค · ผ่อนได้สูงสุด 43 เดือน · ควรตรวจค่าเทอมเต็มกับ PIM"},
+  pim_ai:{u:"pim", name:"วิศวกรรมคอมพิวเตอร์และปัญญาประดิษฐ์", sem:22000, field:"sci", note:"ใช้ยอด 'จ่ายเริ่มเรียน' ในประกาศ PIM เป็นค่าเทอม/ภาค · ผ่อนได้สูงสุด 43 เดือน · ควรตรวจค่าเทอมเต็มกับ PIM"},
+  pim_art:{u:"pim", name:"ศิลปศาสตร์ (ภาษา การท่องเที่ยว ล่าม)", sem:13000, field:"lang", note:"ใช้ยอด 'จ่ายเริ่มเรียน' ในประกาศ PIM เป็นค่าเทอม/ภาค · ผ่อนได้สูงสุด 43 เดือน · ควรตรวจค่าเทอมเต็มกับ PIM"},
   dru_nur:   {u:"dru", name:"พยาบาลศาสตร์", sem:70000, fixed:3700, field:"nur", note:"~70,000 ต่อเทอม + ค่าใช้จ่ายเพิ่มเติมเทอมแรก ~3,700 · ยังไม่รวมภาคฤดูร้อน (เว็บไม่ระบุ) · ค่าประมาณจากเว็บศูนย์"}
 };
 
 const TRACKS = {
-  biz:   {name:"ธุรกิจ บัญชี โลจิสติกส์", icon:"💼", priv:["hcu_biz","bu_biz"], pub:["kmitl_biz","ku_mgt","buu_log","mfu_mgt","up_mgt","rmutk_biz","cmu_biz","nu_biz","psuh_biz","kku_acc","kku_mgt","kku_fin","msu_biz"]},
+  biz:   {name:"ธุรกิจ บัญชี โลจิสติกส์", icon:"💼", priv:["hcu_biz","bu_biz"], pub:["kmitl_biz","ku_mgt","buu_log","mfu_mgt","up_mgt","rmutk_biz","cmu_biz","nu_biz","psuh_biz","kku_acc","kku_mgt","kku_fin","msu_biz","pim_log","pim_agri","pim_hotel","pim_bba","pim_food","pim_culi"]},
   health:{name:"สุขภาพ พยาบาล เทคนิคการแพทย์", icon:"🩺", priv:["hcu_nur","hcu_mt","hcu_pt","hcu_medsci","hcu_oh","dru_nur"], pub:["buu_nur","buu_mt","buu_pt","buu_medsci","mfu_oh","up_nur","up_medsci","rmutk_health","cmu_nur","cmu_mt","cmu_pt","nu_nur","nu_medsci","nu_mt","nu_pt","dru_nur","psuh_nur","psuh_mt","psuh_pt","kku_nur","kku_mt","kku_pt","kku_oh","msu_nur","msu_oh"]},
-  sci:   {name:"วิทยาศาสตร์ คอมพิวเตอร์", icon:"🔬", priv:["hcu_cs"], pub:["kmitl_sci","ku_sci","buu_sci","up_sci","rmutk_cs","cmu_sci","nu_sci","psuh_sci","kku_sci","msu_sci","msu_info"]},
-  lang:  {name:"ภาษา ศิลปศาสตร์", icon:"🌏", priv:["hcu_eng","bu_eng","dru_eng","dru_chi","dru_thai"], pub:["kmitl_lang","buu_eng","up_lang","rmutk_eng","cmu_lang","nu_lang","psuh_lang","kku_hum","msu_hum","dru_eng","dru_chi","dru_thai"]}
+  sci:   {name:"วิทยาศาสตร์ คอมพิวเตอร์", icon:"🔬", priv:["hcu_cs"], pub:["kmitl_sci","ku_sci","buu_sci","up_sci","rmutk_cs","cmu_sci","nu_sci","psuh_sci","kku_sci","msu_sci","msu_info","pim_digit","pim_robot","pim_ai"]},
+  lang:  {name:"ภาษา ศิลปศาสตร์", icon:"🌏", priv:["hcu_eng","bu_eng","dru_eng","dru_chi","dru_thai"], pub:["kmitl_lang","buu_eng","up_lang","rmutk_eng","cmu_lang","nu_lang","psuh_lang","kku_hum","msu_hum","dru_eng","dru_chi","dru_thai","pim_art"]}
 };
 
 const HOUSING = {home:"อยู่บ้าน ไป-กลับทุกวัน", dorm_in:"หอใน (หอของมหาวิทยาลัย)", dorm_out:"หอนอก (เช่ารายเดือน)"};
