@@ -182,7 +182,7 @@ function regCustom(w){
   const c=G["c"+w],name=String(c.name||"").trim().slice(0,40);
   if(!name)return "ใส่ชื่อมหาวิทยาลัย/สาขาก่อนนะ";
   if(!cfill(c.sem)||cnum(c.sem,CLIM.sem)<=0)return "ใส่ค่าเทอมต่อเทอม (มากกว่า 0)";
-  const sem=cnum(c.sem,CLIM.sem),fixed=cnum(c.fixed,CLIM.fixed);
+  const sem=cnum(c.sem,CLIM.sem),fixed=0;
   if(w==="A"){
     C.U.custom_a={name,short:name,place:"ข้อมูลกรอกเอง",type:"custom",zone:"near",housing:["home"],seniors:"-",src:"custom",dormSrc:"custom",rentSrc:"custom"};
     C.P.custom_a={u:"custom_a",name:"กรอกเอง",sem,fixed,field:"custom"};
@@ -212,12 +212,10 @@ const CNOTE=`<p class="muted" style="margin:0">ชื่อที่พิมพ
 function customFormA(){return `<section class="card stack" style="gap:8px"><h3 style="font-size:17px">✏️ กรอกข้อมูลทาง A เอง</h3>
   ${cfld("A","name","ชื่อมหาวิทยาลัย / สาขา","เช่น ม.… คณะ…",true)}
   ${cfld("A","sem","ค่าเทอมต่อเทอม (บาท)","เช่น 20000")}
-  ${cfld("A","fixed","ค่าแรกเข้าหรือค่าอื่นที่จ่ายครั้งเดียวตลอด 4 ปี (ถ้ามี)","ไม่มีใส่ 0")}
   <p class="muted" style="margin:0">ทาง A คิดว่าอยู่บ้านไป-กลับ ใช้ค่ารถกับเวลาจากขั้นที่ 5 · คิด 8 เทอม</p>${CNOTE}</section>`}
 function customFormB(){const c=G.cB;return `<section class="card stack" style="gap:8px"><h3 style="font-size:17px">✏️ กรอกข้อมูลทาง B เอง</h3>
   ${cfld("B","name","ชื่อมหาวิทยาลัย / สาขา","เช่น ม.… คณะ…",true)}
   ${cfld("B","sem","ค่าเทอมต่อเทอม (บาท)","เช่น 15000")}
-  ${cfld("B","fixed","ค่าแรกเข้าหรือค่าอื่นที่จ่ายครั้งเดียวตลอด 4 ปี (ถ้ามี)","ไม่มีใส่ 0")}
   <b>จะอยู่ที่ไหน?</b>
   ${[["home","🏠","อยู่บ้าน ไป-กลับ"],["dorm_in","🏫","หอใน"],["dorm_out","🏢","หอนอก / บ้านเช่า"]].map(([h,ic,t])=>`<button class="opt pub" aria-pressed="${c.h===h}" onclick="setCH('${h}')"><span class="ic">${ic}</span><span>${t}</span></button>`).join("")}
   ${c.h==="dorm_in"?cfld("B","dfee","ค่าหอต่อเทอม (บาท)","เช่น 10000"):""}
