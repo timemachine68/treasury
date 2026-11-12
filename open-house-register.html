@@ -34,6 +34,7 @@
   .msg.err{display:block;background:#fbe9e7;color:var(--danger);border:1px solid #f5c6c0}
   .msg.ok{display:block;background:var(--pine-tint);color:var(--pine-deep);border:1px solid var(--pine)}
   .hidden{display:none !important}
+  .lnkbtn{display:inline-block;margin:6px 8px 0 0;padding:7px 16px;border-radius:999px;background:var(--pine-tint);color:var(--pine-deep);border:1px solid var(--pine);text-decoration:none;font-size:15px;font-weight:600}
   .sel{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font:inherit;background:#fff}
   a{color:var(--pine)}
 </style>
@@ -67,6 +68,7 @@
         <h2>เลือกงาน *</h2>
         <select id="evSel" class="sel"></select>
         <p class="hint" id="evDate"></p>
+        <div id="evLinks"></div>
       </div>
 
       <div class="card">
@@ -138,7 +140,7 @@
     $('pSid').textContent = p.student_id || '-';
 
     const { data: evs, error: eErr } = await sb.from('open_house_events')
-      .select('event_code, university, event_date').eq('is_open', true).order('event_date');
+      .select('event_code, university, event_date, info_links').eq('is_open', true).order('event_date');
     if (eErr || !evs || !evs.length){ msg('ยังไม่มีงานที่เปิดรับลงทะเบียนค่ะ', false); return; }
     EVENTS = evs;
     const want = new URLSearchParams(location.search).get('event');
@@ -153,6 +155,14 @@
     const code = $('evSel').value;
     const ev = EVENTS.find(e => e.event_code === code);
     $('evDate').textContent = ev ? 'วันที่ ' + new Date(ev.event_date + 'T00:00:00').toLocaleDateString('th-TH', { dateStyle: 'long' }) : '';
+
+    // ลิงก์ประชาสัมพันธ์ของงาน (แสดงเฉพาะ http/https)
+    const links = (ev && Array.isArray(ev.info_links))
+      ? ev.info_links.filter(l => l && l.label && /^https?:\/\//i.test(l.url)) : [];
+    $('evLinks').innerHTML = links.length
+      ? '<p class="hint" style="margin-top:8px">ข้อมูลเพิ่มเติมของงานนี้</p>' +
+        links.map(l => `<a class="lnkbtn" href="${esc(l.url)}" target="_blank" rel="noopener noreferrer">🔗 ${esc(l.label)}</a>`).join('')
+      : '';
 
     // ล้างค่าเดิมก่อน แล้วโหลดการลงทะเบียนของงานนี้ (ถ้ามี)
     document.querySelectorAll('input[name="interest"],input[name="transport"],input[name="faculty"]').forEach(i => i.checked = false);

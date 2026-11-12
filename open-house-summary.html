@@ -45,6 +45,11 @@
   .tag.yes{background:var(--pine-tint);border-color:var(--pine)}
   .tag.maybe{background:#FFF6D6;border-color:var(--note)}
   .empty{text-align:center;color:var(--ink-soft);padding:24px}
+  .btn.sm{padding:4px 12px;font-size:13px}
+  .edrow td{background:#F7FAF9}
+  .lnk{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:6px 0;border-bottom:1px dashed var(--line)}
+  .lnk a{color:var(--pine-deep);font-weight:600}
+  .lnkurl{color:var(--ink-soft);font-size:13px;max-width:360px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .err{color:var(--danger)}
 </style>
 </head>
@@ -76,7 +81,7 @@
       <p class="hint">ปิดรับแล้วนักเรียนจะไม่เห็นงานนั้นในหน้าลงทะเบียน ข้อมูลที่ลงทะเบียนไว้แล้วยังอยู่ครบ</p>
       <div class="tbl-wrap" style="margin-top:10px">
         <table>
-          <thead><tr><th>มหาวิทยาลัย</th><th>วันที่งาน</th><th>สถานะรับลงทะเบียน</th><th></th></tr></thead>
+          <thead><tr><th>มหาวิทยาลัย</th><th>วันที่งาน</th><th>สถานะรับลงทะเบียน</th><th>ลิงก์ประชาสัมพันธ์</th><th></th></tr></thead>
           <tbody id="evRows"></tbody>
         </table>
       </div>
@@ -144,6 +149,8 @@
   const FACULTIES = ['ครุศาสตร์/ศึกษาศาสตร์', 'บริหารธุรกิจ', 'คอมพิวเตอร์/IT', 'นิเทศศาสตร์/สื่อ',
     'วิศวกรรมศาสตร์', 'สุขภาพ/พยาบาล', 'ท่องเที่ยว/โรงแรม', 'ออกแบบ', 'นิติศาสตร์', 'ยังไม่ตัดสินใจ'];
   const INTEREST = { yes: 'ไป', no: 'ไม่ไป' };
+  const EV_COLS = 'event_code, university, event_date, is_open, info_links';   // ใช้ที่เดียว กันลืมดึงคอลัมน์
+  const MAX_LINKS = 5;
 
   const $ = id => document.getElementById(id);
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -151,6 +158,7 @@
   let REGS = [];        // การลงทะเบียนทั้งหมดของงานนี้
   let STUDENTS = [];    // นักเรียนที่ active (สำหรับนับคนที่ยังไม่ลงทะเบียน)
   let EVENTS = [];      // รายการงานทั้งหมด
+  let EDIT_EV = null;   // งานที่เปิดแผงแก้ลิงก์อยู่
 
   function roomKey(r){ const m = /^ม\.(\d)\/(\d+)$/.exec(r || ''); return m ? [+m[1], +m[2]] : [9, 0]; }
   function byRoom(a, b){ const x = roomKey(a), y = roomKey(b); return x[0] - y[0] || x[1] - y[1]; }
@@ -181,7 +189,7 @@
     $('main').classList.remove('hidden');
 
     try {
-      EVENTS = await fetchAll(() => sb.from('open_house_events').select('event_code, university, event_date, is_open')
+      EVENTS = await fetchAll(() => sb.from('open_house_events').select(EV_COLS)
         .order('event_date').order('event_code'));
       REGS = await fetchAll(() => sb.from('open_house_registrations').select('*')
         .order('created_at').order('id'));
@@ -220,22 +228,103 @@
       `<option value="${esc(e.event_code)}">${esc(e.university)} (${esc(e.event_date)})</option>`).join('');
     if (EVENTS.some(e => e.event_code === cur)) $('fEv').value = cur;
 
-    $('evRows').innerHTML = EVENTS.length ? EVENTS.map(e => `
+    $('evRows').innerHTML = EVENTS.length ? EVENTS.map(e => {
+      const n = (e.info_links || []).length;
+      return `
       <tr>
         <td>${esc(e.university)}</td>
         <td>${esc(e.event_date)}</td>
         <td>${e.is_open ? '<span class="tag yes">เปิดรับ</span>' : '<span class="tag">ปิดรับแล้ว</span>'}</td>
+        <td><button class="btn ghost sm" data-lk="${esc(e.event_code)}">🔗 ลิงก์ (${n})</button></td>
         <td><button class="btn ghost" data-code="${esc(e.event_code)}" data-open="${e.is_open ? '0' : '1'}">
           ${e.is_open ? 'ปิดรับ' : 'เปิดรับ'}</button></td>
-      </tr>`).join('')
-      : '<tr><td colspan="4" class="empty">ยังไม่มีงาน</td></tr>';
+      </tr>` + (EDIT_EV === e.event_code ? linkEditor(e) : '');
+    }).join('')
+      : '<tr><td colspan="5" class="empty">ยังไม่มีงาน</td></tr>';
 
     $('evRows').querySelectorAll('button[data-code]').forEach(b => b.onclick = () =>
       setEventOpen(b.dataset.code, b.dataset.open === '1'));
+    $('evRows').querySelectorAll('button[data-lk]').forEach(b => b.onclick = () => {
+      EDIT_EV = (EDIT_EV === b.dataset.lk) ? null : b.dataset.lk;
+      renderEventAdmin();
+    });
+    $('evRows').querySelectorAll('button[data-del]').forEach(b => b.onclick = () => removeLink(EDIT_EV, +b.dataset.del));
+    if ($('lkAdd')){
+      $('lkAdd').onclick = () => addLink(EDIT_EV);
+      $('lkUrl').addEventListener('keydown', e => { if (e.key === 'Enter'){ e.preventDefault(); addLink(EDIT_EV); } });
+    }
+  }
+
+  // ── ลิงก์ประชาสัมพันธ์ของงาน (นักเรียนเห็นเป็นปุ่มในหน้าลงทะเบียน) ──
+  function safeUrl(u){ return /^https?:\/\//i.test(String(u || '')) ? String(u) : ''; }
+
+  // เติม https:// ให้ถ้าลืมพิมพ์ · รับเฉพาะ http/https (ฐานข้อมูลตรวจซ้ำอีกชั้น)
+  function normalizeUrl(raw){
+    let u = String(raw || '').trim();
+    if (!u) return { err: 'กรุณาวางลิงก์' };
+    if (/\s/.test(u)) return { err: 'ลิงก์ต้องไม่มีช่องว่าง' };
+    if (!/^https?:\/\//i.test(u)){
+      if (/^[a-z][a-z0-9+.\-]*:(?!\d)/i.test(u)) return { err: 'ลิงก์ต้องขึ้นต้นด้วย http:// หรือ https://' };
+      u = 'https://' + u;
+    }
+    try { new URL(u); } catch (_) { return { err: 'ลิงก์ไม่ถูกต้อง ลองคัดลอกมาวางใหม่' }; }
+    if (u.length > 500) return { err: 'ลิงก์ยาวเกินไป (ไม่เกิน 500 ตัวอักษร)' };
+    return { url: u };
+  }
+
+  function linkEditor(e){
+    const links = e.info_links || [];
+    const list = links.length ? links.map((l, i) => `
+        <div class="lnk">
+          <a href="${esc(safeUrl(l.url))}" target="_blank" rel="noopener noreferrer">🔗 ${esc(l.label)}</a>
+          <span class="lnkurl">${esc(l.url)}</span>
+          <button class="btn ghost sm" data-del="${i}">ลบ</button>
+        </div>`).join('') : '<p class="hint">ยังไม่มีลิงก์ของงานนี้</p>';
+    const form = links.length >= MAX_LINKS
+      ? `<p class="hint">ครบ ${MAX_LINKS} ลิงก์แล้ว ลบอันเก่าก่อนจึงจะเพิ่มได้</p><span class="hint" id="lkMsg"></span>`
+      : `<div class="filters" style="margin-top:8px">
+          <div><label for="lkLabel">ชื่อปุ่ม</label><input type="text" id="lkLabel" maxlength="60" placeholder="เช่น โปสเตอร์งาน / เพจมหาวิทยาลัย"></div>
+          <div><label for="lkUrl">ลิงก์</label><input type="text" id="lkUrl" maxlength="500" placeholder="https://..."></div>
+        </div>
+        <div class="btnrow"><button class="btn" id="lkAdd">เพิ่มลิงก์</button><span class="hint" id="lkMsg"></span></div>`;
+    return `<tr class="edrow"><td colspan="5">
+      <b>ลิงก์ประชาสัมพันธ์ของ ${esc(e.university)}</b>
+      <p class="hint">นักเรียนจะเห็นเป็นปุ่มในหน้าลงทะเบียนของงานนี้ · เพิ่มได้สูงสุด ${MAX_LINKS} ลิงก์</p>
+      ${list}${form}
+    </td></tr>`;
+  }
+
+  function sayLink(t){ const m = $('lkMsg'); if (m) m.textContent = t; else $('evMsg').textContent = t; }
+
+  async function saveLinks(code, links, okText){
+    const { data, error } = await sb.from('open_house_events')
+      .update({ info_links: links }).eq('event_code', code).select('event_code');
+    if (error) return sayLink('บันทึกลิงก์ไม่สำเร็จ: ' + error.message);
+    if (!data || !data.length) return sayLink('บันทึกไม่ได้ ไม่พบงานนี้หรือไม่มีสิทธิ์แก้ไข');
+    await reloadEvents();
+    sayLink(okText);
+  }
+
+  async function addLink(code){
+    const ev = EVENTS.find(e => e.event_code === code);
+    if (!ev) return;
+    const label = $('lkLabel').value.trim();
+    const n = normalizeUrl($('lkUrl').value);
+    if (!label) return sayLink('กรุณาใส่ชื่อปุ่ม');
+    if (n.err) return sayLink(n.err);
+    const links = (ev.info_links || []).concat([{ label, url: n.url }]);
+    if (links.length > MAX_LINKS) return sayLink('เพิ่มได้ไม่เกิน ' + MAX_LINKS + ' ลิงก์');
+    await saveLinks(code, links, 'เพิ่มลิงก์แล้ว');
+  }
+
+  async function removeLink(code, idx){
+    const ev = EVENTS.find(e => e.event_code === code);
+    if (!ev) return;
+    await saveLinks(code, (ev.info_links || []).filter((_, i) => i !== idx), 'ลบลิงก์แล้ว');
   }
 
   async function reloadEvents(){
-    EVENTS = await fetchAll(() => sb.from('open_house_events').select('event_code, university, event_date, is_open')
+    EVENTS = await fetchAll(() => sb.from('open_house_events').select(EV_COLS)
       .order('event_date').order('event_code'));
     renderEventAdmin();
     render();
