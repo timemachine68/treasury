@@ -32,7 +32,14 @@ const SRC = {
   rentN:{t:"ค่าเช่าหอนอก: ใช้ค่ากลางเดียวกับ ม.พะเยา/แม่ฟ้าหลวง (ค่าประมาณ ยังไม่ได้สำรวจเฉพาะเมืองนี้ และยังไม่ได้ใส่ราคาหอในของมหาวิทยาลัย)", u:""},
   dru:  {t:"ค่าเทอม ม.ราชภัฏธนบุรี ศูนย์สมุทรปราการ ภาคปกติ (เว็บศูนย์สมุทรปราการ เป็นค่าประมาณ ไม่ระบุปี แบ่งชำระ 2 ครั้ง/เทอม)", u:"https://sp.dru.ac.th/new/?page_id=14"},
   su:   {t:"อัตราค่าธรรมเนียมการศึกษา นักศึกษาใหม่ ปีการศึกษา 2568 ม.ศิลปากร (SU-TCAS68 ข้อมูล ณ 10 ก.พ. 68 · ใช้ยอด 'รวม' ในภาพเป็นค่าเทอมต่อภาค ซึ่งรวมค่าขึ้นทะเบียน 1,000 และค่าพัฒนาภาษาอังกฤษ 500 จึงสูงกว่าจริงเล็กน้อยเมื่อคิด 4 ปี · เป็นข้อมูลปีก่อน ควรตรวจประกาศปีล่าสุด)", u:"https://admission.su.ac.th"},
-  pim:  {t:"หน้าค่าเทอม สถาบันการจัดการปัญญาภิวัฒน์ (PIM) · ภาพประกาศที่ครูส่งมา 12 พ.ย. 2569 · ตัวเลข 'จ่าย…เรียนได้ทันที' ผ่อนได้สูงสุด 43 เดือน ใช้เป็นค่าเทอมต่อภาคตามที่ครูกำหนด (เงื่อนไขตามที่สถาบันฯ กำหนด ยังไม่ได้ตรวจกับตารางค่าเทอมเต็ม)", u:"https://www.pim.ac.th/tuition-fee/"}
+  pim:  {t:"หน้าค่าเทอม สถาบันการจัดการปัญญาภิวัฒน์ (PIM) · ภาพประกาศที่ครูส่งมา 12 พ.ย. 2569 · ตัวเลข 'จ่าย…เรียนได้ทันที' ผ่อนได้สูงสุด 43 เดือน ใช้เป็นค่าเทอมต่อภาคตามที่ครูกำหนด (เงื่อนไขตามที่สถาบันฯ กำหนด ยังไม่ได้ตรวจกับตารางค่าเทอมเต็ม)", u:"https://www.pim.ac.th/tuition-fee/"},
+  nu69: {t:"ตารางอัตราค่าบำรุงและค่าธรรมเนียมการศึกษา ป.ตรี ภาคปกติ ม.นเรศวร ผู้เข้าศึกษาตั้งแต่ปีการศึกษา 2569 (ต่อภาค)", u:"https://www.reg2.nu.ac.th/notification/NUREG_FEE_2569_bachelor.pdf"},
+  cmuFac:{t:"ค่าธรรมเนียมการศึกษา ป.ตรี หลักสูตรไทย ม.เชียงใหม่ (ไฟล์เดียวกับหน้ารับสมัคร TCAS 2570 · ตัวเลขเป็นภาคแรก)", u:"https://admission.reg.cmu.ac.th/tcas/files_download/%E0%B8%84%E0%B9%88%E0%B8%B2%E0%B8%98%E0%B8%A3%E0%B8%A3%E0%B8%A1%E0%B9%80%E0%B8%99%E0%B8%B5%E0%B8%A2%E0%B8%A1%E0%B8%81%E0%B8%B2%E0%B8%A3%E0%B8%A8%E0%B8%B6%E0%B8%81%E0%B8%A9%E0%B8%B2.pdf"},
+  kmitlEng:{t:"ประกาศ สจล. รับสมัคร วศ.บ. รอบ 1 Portfolio ปีการศึกษา 2569 (ข้อ 10 ค่าธรรมเนียม หลักสูตรทั่วไป 25,000/ภาค)", u:"https://www.reg.kmitl.ac.th/TCAS_old/news/files/2569_1_news1_4112_2025_10_17-08-36-24_fa4e1.pdf"},
+  upGuide:{t:"คู่มือรับสมัคร ม.พะเยา (ตารางค่าธรรมเนียมรายภาค ไม่ระบุปี ประมาณปี 2566 · วิศวะ 21,000 ตรงกับสรุปปี 2569)", u:"https://admission.up.ac.th/uploads/admission/media/file/66ed2582eb5b7LIYYa.pdf"},
+  kkuFac:{t:"สรุปค่าเทอม ม.ขอนแก่น แยกสาขา (dekuni.com ไม่ระบุปี ปรับปรุง ส.ค. 2568 · ไม่ใช่เว็บมหาวิทยาลัย)", u:"https://dekuni.com/tuitionfee-kku/"},
+  msuFac:{t:"สรุปค่าเทอม ม.มหาสารคาม แยกสาขา (dekuni.com ไม่ระบุปี ปรับปรุง พ.ค. 2569 · ไม่ใช่เว็บมหาวิทยาลัย)", u:"https://dekuni.com/tuitionfee-msu/"},
+  rmutkTcas:{t:"ค่าบำรุงการศึกษา มทร.กรุงเทพ จากข้อมูล ทปอ./mytcas TCAS70 (ภาคแรก 16,120 ภาคถัดไป 11,700 · ปรับปรุง 6 พ.ย. 2569)", u:"https://dreamnesthub.com/universities/rajamangala-university-of-technology-krungthep/faculty-of-engineering/civil-engineering-31920104302101A"}
 };
 
 /* zone: near = ไป-กลับจากบ้านได้, mid = ชลบุรี กลับบ้านบ่อยได้, far = ต่างภาค */
@@ -157,19 +164,54 @@ const P = {
   su_letters:{u:"su", name:"อักษรศาสตร์ (ไทย อังกฤษ ตะวันตก ประวัติศาสตร์ ภูมิศาสตร์ ฯลฯ)", sem:16500, field:"lang", note:"โครงการปกติ ปี 2568 · ใช้ยอด 'รวม' ในประกาศเป็นค่าเทอม/ภาค"},
   su_arc_lang:{u:"su", name:"โบราณคดี (ภาษาไทย / อังกฤษ / ฝรั่งเศส)", sem:16500, field:"lang", note:"โครงการปกติ ปี 2568 · ใช้ยอด 'รวม' ในประกาศเป็นค่าเทอม/ภาค"},
   su_arc:{u:"su", name:"โบราณคดี / ประวัติศาสตร์ศิลปะ / ประวัติศาสตร์ท้องถิ่น / มานุษยวิทยา", sem:18500, field:"lang", note:"โครงการปกติ ปี 2568 · ใช้ยอด 'รวม' ในประกาศเป็นค่าเทอม/ภาค"},
-  dru_nur:   {u:"dru", name:"พยาบาลศาสตร์", sem:70000, fixed:3700, field:"nur", note:"~70,000 ต่อเทอม + ค่าใช้จ่ายเพิ่มเติมเทอมแรก ~3,700 · ยังไม่รวมภาคฤดูร้อน (เว็บไม่ระบุ) · ค่าประมาณจากเว็บศูนย์"}
+  dru_nur:   {u:"dru", name:"พยาบาลศาสตร์", sem:70000, fixed:3700, field:"nur", note:"~70,000 ต่อเทอม + ค่าใช้จ่ายเพิ่มเติมเทอมแรก ~3,700 · ยังไม่รวมภาคฤดูร้อน (เว็บไม่ระบุ) · ค่าประมาณจากเว็บศูนย์"},
+  /* ---- วิศวกรรม เทคโนโลยี / สถาปัตย์ ศิลปะ การออกแบบ / ครุศาสตร์ (เพิ่ม 12 พ.ย. 2569) · src = แหล่งของสาขานี้ (ถ้าต่างจากของมหาวิทยาลัย) ---- */
+  dru_ee:    {u:"dru", name:"วิศวกรรมไฟฟ้า", sem:17000, fixed:1000, field:"eng", note:"เทอมแรก ~18,000 เทอมถัดไป ~17,000 · ค่าประมาณจากเว็บศูนย์"},
+  kmitl_eng: {u:"kmitl", name:"วิศวกรรมศาสตร์ (หลักสูตรทั่วไป: ไฟฟ้า โยธา เครื่องกล คอมพิวเตอร์ ฯลฯ)", sem:25000, field:"eng", src:"kmitlEng", note:"บางสาขาแพงกว่า เช่น เซมิคอนดักเตอร์ 40,000"},
+  kmitl_it:  {u:"kmitl", name:"เทคโนโลยีสารสนเทศ", sem:32000, field:"sci"},
+  kmitl_arch:{u:"kmitl", name:"สถาปัตยกรรม ศิลปะและการออกแบบ (ทุกสาขาภาคปกติ)", sem:29000, field:"arch"},
+  kmitl_edu: {u:"kmitl", name:"ครุศาสตร์อุตสาหกรรมและเทคโนโลยี (ครูช่าง ครูวิทย์-คณิต ฯลฯ)", sem:19000, field:"edu", note:"สาขาวิทยาการการจัดการเรียนรู้ 20,000"},
+  rmutk_eng: {u:"rmutk", name:"วิศวกรรมศาสตร์ (โยธา ไฟฟ้า เครื่องกล อุตสาหการ หุ่นยนต์ ฯลฯ)", sem:11700, fixed:4420, field:"eng", src:"rmutkTcas", note:"เทอมแรก 16,120 เทอมถัดไป 11,700"},
+  rmutk_tedu:{u:"rmutk", name:"ครุศาสตร์อุตสาหกรรม (ครูช่างเครื่องกล / อุตสาหการ)", sem:11700, fixed:4420, field:"edu", src:"rmutkTcas", note:"เทอมแรก 16,120 เทอมถัดไป 11,700"},
+  ku_eng:    {u:"ku", name:"วิศวกรรมศาสตร์ศรีราชา (ภาคปกติ ทุกสาขา)", sem:29100, field:"eng"},
+  buu_eng:   {u:"buu", name:"วิศวกรรมศาสตร์ (ทุกสาขา)", sem:25000, field:"eng"},
+  buu_info:  {u:"buu", name:"วิทยาการสารสนเทศ (วิทยาการคอมพิวเตอร์ / IT / วิศวกรรมซอฟต์แวร์)", sem:23000, field:"sci"},
+  buu_art:   {u:"buu", name:"ศิลปกรรมศาสตร์ (จิตรกรรม นิเทศศิลป์ ออกแบบเซรามิกส์ ฯลฯ)", sem:18800, field:"art", note:"สาขาออกแบบผลิตภัณฑ์ 39,000"},
+  buu_edu:   {u:"buu", name:"ศึกษาศาสตร์ (คณิต ปฐมวัย ประถม พลศึกษา ฯลฯ)", sem:15000, field:"edu", note:"บางสาขา 16,500–21,000 เช่น ฟิสิกส์ เคมี ชีวะ 17,500"},
+  up_eng:    {u:"up", name:"วิศวกรรมศาสตร์ (เครื่องกล ไฟฟ้า โยธา อุตสาหการ คอมพิวเตอร์ ซอฟต์แวร์)", sem:21000, field:"eng", src:"upGuide"},
+  up_ict:    {u:"up", name:"เทคโนโลยีสารสนเทศและการสื่อสาร (IT / วิทยาการคอมพิวเตอร์ / วิทยาการข้อมูล)", sem:18000, field:"sci", src:"upGuide"},
+  up_arch:   {u:"up", name:"สถาปัตยกรรม / สถาปัตยกรรมภายใน", sem:21000, field:"arch", src:"upGuide"},
+  up_art:    {u:"up", name:"ศิลปะและการออกแบบ", sem:21000, field:"art", src:"upGuide"},
+  up_edu:    {u:"up", name:"วิทยาลัยการศึกษา (หลักสูตร 2 ปริญญา)", sem:24000, field:"edu", src:"upGuide", note:"เป็นหลักสูตร 2 ปริญญา ควรตรวจจำนวนปีที่เรียนกับ ม.พะเยา (เกมคิด 4 ปี)"},
+  cmu_eng:   {u:"cmu", name:"วิศวกรรมศาสตร์ (โยธา ไฟฟ้า เครื่องกล คอมพิวเตอร์ ฯลฯ)", sem:23000, field:"eng", src:"cmuFac", note:"หุ่นยนต์และ AI 35,000"},
+  cmu_camt:  {u:"cmu", name:"วิทยาลัยศิลปะ สื่อ และเทคโนโลยี (ดิจิทัลเกม แอนิเมชัน ฯลฯ)", sem:33000, field:"sci", src:"cmuFac", note:"ดิจิทัลเกม / แอนิเมชัน 38,000"},
+  cmu_arch:  {u:"cmu", name:"สถาปัตยกรรมศาสตร์ (สถาปัตย์ ภูมิสถาปัตย์ ออกแบบอุตสาหกรรม ภายใน)", sem:30000, field:"arch", src:"cmuFac"},
+  cmu_art:   {u:"cmu", name:"วิจิตรศิลป์ (จิตรกรรม ประติมากรรม ภาพพิมพ์ ศิลปะการแสดง ฯลฯ)", sem:17000, field:"art", src:"cmuFac", note:"สาขาการออกแบบ 19,000 · สื่อศิลปะ 30,000"},
+  cmu_edu:   {u:"cmu", name:"ศึกษาศาสตร์ (ประถม ไทย อังกฤษ คณิต วิทย์ พลศึกษา ฯลฯ)", sem:15000, field:"edu", src:"cmuFac", note:"อุตสาหกรรมฯ 20,000 · ดนตรีศึกษา 23,000"},
+  nu_eng:    {u:"nu", name:"วิศวกรรมศาสตร์ (คอมพิวเตอร์ ไฟฟ้า โยธา เครื่องกล ฯลฯ)", sem:16000, field:"eng", src:"nu69"},
+  nu_arch:   {u:"nu", name:"สถาปัตยกรรมศาสตร์ (5 ปี)", sem:20000, field:"arch", src:"nu69", note:"หลักสูตร 5 ปี แต่เกมคิด 4 ปี ค่าจริงจะสูงกว่า"},
+  nu_art:    {u:"nu", name:"ออกแบบผลิตภัณฑ์และบรรจุภัณฑ์ / ศิลปกรรม", sem:16000, field:"art", src:"nu69", note:"ออกแบบสื่อนวัตกรรม 20,000"},
+  nu_edu:    {u:"nu", name:"ศึกษาศาสตร์ (ทุกสาขา หลักสูตร 4 ปี)", sem:15000, field:"edu", src:"nu69"},
+  psuh_eng:  {u:"psuh", name:"วิศวกรรมศาสตร์", sem:18000, field:"eng", note:"วิศวกรรม AI 28,000 · เซมิคอนดักเตอร์ 36,000"},
+  psuh_arch: {u:"psuh", name:"สถาปัตยกรรมศาสตร์", sem:30000, field:"arch"},
+  kku_eng:   {u:"kku", name:"วิศวกรรมศาสตร์ (ไฟฟ้า เครื่องกล โยธา คอมพิวเตอร์ ฯลฯ)", sem:20000, field:"eng", src:"kkuFac", note:"หุ่นยนต์และ AI 30,000"},
+  kku_arch:  {u:"kku", name:"สถาปัตยกรรมศาสตร์ (สถาปัตยกรรม / การออกแบบ)", sem:18000, field:"arch", src:"kkuFac"},
+  kku_art:   {u:"kku", name:"ศิลปกรรมศาสตร์ (ทัศนศิลป์ / นวัตกรรมศิลปะ)", sem:15000, field:"art", src:"kkuFac", note:"ออกแบบนิเทศศิลป์ 18,000"},
+  kku_edu:   {u:"kku", name:"ศึกษาศาสตร์ (คณิต วิทย์ ไทย สังคม ประถม ฯลฯ)", sem:15000, field:"edu", src:"kkuFac"},
+  msu_eng:   {u:"msu", name:"วิศวกรรมศาสตร์", sem:15000, field:"eng", src:"msuFac"},
+  msu_arch:  {u:"msu", name:"สถาปัตยกรรมศาสตร์ ผังเมืองและนฤมิตศิลป์ (ทุกสาขา)", sem:18000, field:"arch", src:"msuFac"},
+  msu_art:   {u:"msu", name:"ศิลปกรรมศาสตร์ (ทัศนศิลป์ / ออกแบบผลิตภัณฑ์)", sem:15000, field:"art", src:"msuFac"},
+  msu_edu:   {u:"msu", name:"ศึกษาศาสตร์ (ทุกสาขา)", sem:13000, field:"edu", src:"msuFac"}
 };
 
 const TRACKS = {
   biz:   {name:"ธุรกิจ บัญชี โลจิสติกส์", icon:"💼", priv:["hcu_biz","dru_biz"], pub:["kmitl_biz","ku_mgt","buu_log","mfu_mgt","up_mgt","rmutk_biz","cmu_biz","nu_biz","psuh_biz","kku_acc","kku_mgt","kku_fin","msu_biz","pim_log","pim_agri","pim_hotel","pim_bba","pim_food","pim_culi","su_mgt"]},
   health:{name:"สุขภาพ พยาบาล เทคนิคการแพทย์", icon:"🩺", priv:["hcu_nur","hcu_mt","hcu_pt","hcu_medsci","hcu_oh","dru_nur"], pub:["buu_nur","buu_mt","buu_pt","buu_medsci","mfu_oh","up_nur","up_medsci","rmutk_health","cmu_nur","cmu_mt","cmu_pt","nu_nur","nu_medsci","nu_mt","nu_pt","dru_nur","psuh_nur","psuh_mt","psuh_pt","kku_nur","kku_mt","kku_pt","kku_oh","msu_nur","msu_oh","su_pharm"]},
-  sci:   {name:"วิทยาศาสตร์ คอมพิวเตอร์", icon:"🔬", priv:["hcu_cs"], pub:["kmitl_sci","ku_sci","buu_sci","up_sci","rmutk_cs","cmu_sci","nu_sci","psuh_sci","kku_sci","msu_sci","msu_info","pim_digit","pim_robot","pim_ai","su_sci","su_agri"]},
+  sci:   {name:"วิทยาศาสตร์ คอมพิวเตอร์ วิศวกรรม (TPAT3)", icon:"🔬", priv:["hcu_cs","dru_ee"], pub:["kmitl_sci","ku_sci","buu_sci","up_sci","rmutk_cs","cmu_sci","nu_sci","psuh_sci","kku_sci","msu_sci","msu_info","pim_digit","pim_robot","pim_ai","su_sci","su_agri","su_eng","su_biotech","kmitl_eng","kmitl_it","rmutk_eng","ku_eng","buu_eng","buu_info","up_eng","up_ict","cmu_eng","cmu_camt","nu_eng","psuh_eng","kku_eng","msu_eng","dru_ee"]},
   lang:  {name:"ภาษา ศิลปศาสตร์", icon:"🌏", priv:["hcu_eng","dru_eng","dru_chi","dru_thai"], pub:["kmitl_lang","buu_eng","up_lang","rmutk_eng","cmu_lang","nu_lang","psuh_lang","kku_hum","msu_hum","dru_eng","dru_chi","dru_thai","pim_art","su_letters","su_arc_lang","su_arc"]},
   /* หมวดตามวิชา TPAT · ยังไม่มีมหาวิทยาลัยใกล้บ้านในระบบ (priv ว่าง) ทาง A ให้กรอกเอง */
-  eng:   {name:"วิศวกรรม เทคโนโลยี (TPAT3)", icon:"⚙️", priv:[], pub:["su_eng","su_biotech"]},
-  art:   {name:"ศิลปะ การออกแบบ (TPAT2)", icon:"🎨", priv:[], pub:["su_decor","su_paint"]},
-  arch:  {name:"สถาปัตยกรรม (TPAT4)", icon:"📐", priv:[], pub:["su_arch"]},
-  edu:   {name:"ครุศาสตร์ ศึกษาศาสตร์ (TPAT5)", icon:"🍎", priv:[], pub:["su_edu"]}
+  arch:  {name:"สถาปัตย์ ศิลปะ การออกแบบ (TPAT2, TPAT4)", icon:"📐", priv:[], pub:["su_arch","su_decor","su_paint","kmitl_arch","up_arch","up_art","cmu_arch","cmu_art","nu_arch","nu_art","psuh_arch","kku_arch","kku_art","msu_arch","msu_art","buu_art"]},
+  edu:   {name:"ครุศาสตร์ ศึกษาศาสตร์ (TPAT5)", icon:"🍎", priv:[], pub:["su_edu","kmitl_edu","rmutk_tedu","buu_edu","up_edu","cmu_edu","nu_edu","kku_edu","msu_edu"]}
 };
 
 const HOUSING = {home:"อยู่บ้าน ไป-กลับทุกวัน", dorm_in:"หอใน (หอของมหาวิทยาลัย)", dorm_out:"หอนอก (เช่ารายเดือน)"};
