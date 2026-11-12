@@ -362,11 +362,11 @@ track:()=>`<div class="stack">${stepHead(2,"อยากเรียนสาย
   <p class="muted">รายชื่อทาง B ส่วนใหญ่มาจากที่รุ่นพี่พูลเจริญฯ ติดจริงใน TCAS ปี 2569</p></div>`,
 
 priv:()=>{const t=C.TRACKS[G.track];return `<div class="stack">${stepHead(3,"ทาง A: ใกล้บ้าน (ไป-กลับ)")}
-  <p class="muted" style="margin:0">มหาวิทยาลัยที่เดินทางไป-กลับจากบ้านได้ มีทั้งเอกชนและรัฐ หรือกรอกเองก็ได้</p>
+  <p class="muted" style="margin:0">${t.priv.length?"มหาวิทยาลัยที่เดินทางไป-กลับจากบ้านได้ มีทั้งเอกชนและรัฐ หรือกรอกเองก็ได้":"หมวดนี้ยังไม่มีมหาวิทยาลัยใกล้บ้านในระบบ ให้กด “กรอกเอง” แล้วใส่ชื่อกับค่าเทอมของที่ใกล้บ้านที่สนใจ"}</p>
   ${t.priv.map(k=>{const p=C.P[k],u=C.U[p.u];return `<button class="opt priv" aria-pressed="${G.priv===k}" onclick="pickPriv('${k}')"><span class="ic">🏠</span><span>${esc(u.short)} · ${esc(p.name)}<small>${u.type==="public"?"รัฐ":"เอกชน"} · ${esc(u.place)} · ค่าเทอม ${baht(p.sem)} บาท/เทอม${p.note?" · "+esc(p.note):""}</small></span></button>`}).join("")}
   <button class="opt priv" aria-pressed="${G.priv==="custom_a"}" onclick="pickCustom('A')"><span class="ic">✏️</span><span>กรอกเอง<small>ใส่ชื่อและค่าเทอมของที่ที่เราสนใจ</small></span></button>
   ${G.priv==="custom_a"?customFormA():""}
-  ${srcLine([...t.priv.map(k=>C.U[C.P[k].u].src),...(G.priv==="custom_a"?["custom"]:[])])}
+  ${t.priv.length||G.priv==="custom_a"?srcLine([...t.priv.map(k=>C.U[C.P[k].u].src),...(G.priv==="custom_a"?["custom"]:[])]):""}
   <button class="btn" ${G.priv?"":"disabled"} onclick="nextFromPriv()">ต่อไป</button></div>`},
 
 pub:()=>{const t=C.TRACKS[G.track],field=G.priv?C.P[G.priv].field:null;

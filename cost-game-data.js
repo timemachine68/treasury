@@ -31,6 +31,7 @@ const SRC = {
   msuTrip:{t:"รถทัวร์ กรุงเทพฯ–มหาสารคาม ประมาณ 15–16 ดอลลาร์สหรัฐ (~550 บาท) ต่อเที่ยว ราว 7–8 ชม. (Bookaway) · ไป-กลับ ~1,100 บาท / 15 ชม. · แปลงบาทด้วยอัตราประมาณ", u:"https://www.bookaway.com/routes/thailand/bangkok-to-maha-sarakham"},
   rentN:{t:"ค่าเช่าหอนอก: ใช้ค่ากลางเดียวกับ ม.พะเยา/แม่ฟ้าหลวง (ค่าประมาณ ยังไม่ได้สำรวจเฉพาะเมืองนี้ และยังไม่ได้ใส่ราคาหอในของมหาวิทยาลัย)", u:""},
   dru:  {t:"ค่าเทอม ม.ราชภัฏธนบุรี ศูนย์สมุทรปราการ ภาคปกติ (เว็บศูนย์สมุทรปราการ เป็นค่าประมาณ ไม่ระบุปี แบ่งชำระ 2 ครั้ง/เทอม)", u:"https://sp.dru.ac.th/new/?page_id=14"},
+  su:   {t:"อัตราค่าธรรมเนียมการศึกษา นักศึกษาใหม่ ปีการศึกษา 2568 ม.ศิลปากร (SU-TCAS68 ข้อมูล ณ 10 ก.พ. 68 · ใช้ยอด 'รวม' ในภาพเป็นค่าเทอมต่อภาค ซึ่งรวมค่าขึ้นทะเบียน 1,000 และค่าพัฒนาภาษาอังกฤษ 500 จึงสูงกว่าจริงเล็กน้อยเมื่อคิด 4 ปี · เป็นข้อมูลปีก่อน ควรตรวจประกาศปีล่าสุด)", u:"https://admission.su.ac.th"},
   pim:  {t:"หน้าค่าเทอม สถาบันการจัดการปัญญาภิวัฒน์ (PIM) · ภาพประกาศที่ครูส่งมา 12 พ.ย. 2569 · ตัวเลข 'จ่าย…เรียนได้ทันที' ผ่อนได้สูงสุด 43 เดือน ใช้เป็นค่าเทอมต่อภาคตามที่ครูกำหนด (เงื่อนไขตามที่สถาบันฯ กำหนด ยังไม่ได้ตรวจกับตารางค่าเทอมเต็ม)", u:"https://www.pim.ac.th/tuition-fee/"}
 };
 
@@ -51,6 +52,8 @@ const U = {
   msu:  {name:"ม.มหาสารคาม", short:"ม.มหาสารคาม", place:"กันทรวิชัย มหาสารคาม", type:"public", zone:"far", housing:["dorm_out"], rent:2750, rentSrc:"rentN", trip:{cost:1100, hours:15}, tripSrc:"msuTrip", seniors:"N", src:"msu"},
   dru:  {name:"ม.ราชภัฏธนบุรี ศูนย์สมุทรปราการ", short:"ราชภัฏธนบุรี", place:"ศูนย์สมุทรปราการ", type:"public", zone:"near", housing:["home"], seniors:"N", src:"dru"},
   /* PIM เอกชน อยู่ทาง B เท่านั้น (ไม่ใส่ใน TRACKS.priv) · ไม่ระบุวิทยาเขตในภาพ จึงใช้ค่าเช่าหอนอกค่ากลางเดียวกับ มทร.กรุงเทพ */
+  /* ม.ศิลปากร ทาง B เท่านั้น · ภาพไม่ระบุวิทยาเขต/ราคาหอ จึงใช้โซนกลาง (กลับบ้านได้บ่อย) และราคาหอในกับหอนอกค่าอ้างอิงกลางของเกม */
+  su:   {name:"ม.ศิลปากร", short:"ม.ศิลปากร", place:"นครปฐม / กรุงเทพฯ (ตามคณะ)", type:"public", zone:"mid", housing:["dorm_in","dorm_out"], dormIn:{fee:3850, util:100, label:"ค่าอ้างอิงหอในมหาวิทยาลัยรัฐ 3,850 บาท/เทอม (ยังไม่ได้ตรวจราคาหอ ม.ศิลปากร)"}, rent:3250, seniors:"N", src:"su"},
   pim:  {name:"สถาบันการจัดการปัญญาภิวัฒน์ (PIM)", short:"PIM", place:"ดูวิทยาเขตที่ pim.ac.th", type:"private", zone:"near", housing:["home","dorm_out"], rent:3025, seniors:"N", src:"pim"}
 };
 
@@ -141,14 +144,32 @@ const P = {
   pim_robot:{u:"pim", name:"วิศวกรรมหุ่นยนต์และระบบอัตโนมัติ", sem:22000, field:"sci", note:"ใช้ยอด 'จ่ายเริ่มเรียน' ในประกาศ PIM เป็นค่าเทอม/ภาค · ผ่อนได้สูงสุด 43 เดือน · ควรตรวจค่าเทอมเต็มกับ PIM"},
   pim_ai:{u:"pim", name:"วิศวกรรมคอมพิวเตอร์และปัญญาประดิษฐ์", sem:22000, field:"sci", note:"ใช้ยอด 'จ่ายเริ่มเรียน' ในประกาศ PIM เป็นค่าเทอม/ภาค · ผ่อนได้สูงสุด 43 เดือน · ควรตรวจค่าเทอมเต็มกับ PIM"},
   pim_art:{u:"pim", name:"ศิลปศาสตร์ (ภาษา การท่องเที่ยว ล่าม)", sem:13000, field:"lang", note:"ใช้ยอด 'จ่ายเริ่มเรียน' ในประกาศ PIM เป็นค่าเทอม/ภาค · ผ่อนได้สูงสุด 43 เดือน · ควรตรวจค่าเทอมเต็มกับ PIM"},
+  su_edu:{u:"su", name:"ครุศาสตร์/ศึกษาศาสตร์ (ทุกสาขา)", sem:16500, field:"edu", note:"โครงการปกติ ปี 2568 · ใช้ยอด 'รวม' ในประกาศเป็นค่าเทอม/ภาค"},
+  su_decor:{u:"su", name:"มัณฑนศิลป์ (ออกแบบภายใน / ผลิตภัณฑ์ / เครื่องประดับ ฯลฯ)", sem:23500, field:"art", note:"โครงการปกติ ปี 2568 · ใช้ยอด 'รวม' ในประกาศเป็นค่าเทอม/ภาค"},
+  su_paint:{u:"su", name:"จิตรกรรม ประติมากรรมและภาพพิมพ์ (ทุกสาขา)", sem:23500, field:"art", note:"โครงการปกติ ปี 2568 · ใช้ยอด 'รวม' ในประกาศเป็นค่าเทอม/ภาค"},
+  su_eng:{u:"su", name:"วิศวกรรมศาสตร์และเทคโนโลยีอุตสาหกรรม (เคมี เครื่องกล คอมพิวเตอร์ ไฟฟ้า ฯลฯ)", sem:23500, field:"eng", note:"โครงการปกติ ปี 2568 · ใช้ยอด 'รวม' ในประกาศเป็นค่าเทอม/ภาค"},
+  su_biotech:{u:"su", name:"เทคโนโลยีชีวภาพ / เทคโนโลยีอาหาร", sem:21500, field:"eng", note:"โครงการปกติ ปี 2568 · ใช้ยอด 'รวม' ในประกาศเป็นค่าเทอม/ภาค"},
+  su_arch:{u:"su", name:"สถาปัตยกรรมศาสตร์ (ทุกสาขา)", sem:23500, field:"arch", note:"โครงการปกติ ปี 2568 · ใช้ยอด 'รวม' ในประกาศเป็นค่าเทอม/ภาค"},
+  su_sci:{u:"su", name:"วิทยาศาสตร์ (ทุกสาขา)", sem:20500, field:"sci", note:"โครงการปกติ ปี 2568 · ใช้ยอด 'รวม' ในประกาศเป็นค่าเทอม/ภาค"},
+  su_agri:{u:"su", name:"สัตวศาสตร์และเทคโนโลยีการเกษตร (ทุกสาขา)", sem:16500, field:"sci", note:"โครงการปกติ ปี 2568 · ใช้ยอด 'รวม' ในประกาศเป็นค่าเทอม/ภาค"},
+  su_pharm:{u:"su", name:"เภสัชศาสตร์ (เภสัชศาสตรบัณฑิต)", sem:31500, field:"pharm", note:"โครงการปกติ ปี 2568 · ใช้ยอด 'รวม' ในประกาศเป็นค่าเทอม/ภาค"},
+  su_mgt:{u:"su", name:"วิทยาการจัดการ (การจัดการชุมชน)", sem:16500, field:"biz", note:"โครงการปกติ ปี 2568 · ใช้ยอด 'รวม' ในประกาศเป็นค่าเทอม/ภาค"},
+  su_letters:{u:"su", name:"อักษรศาสตร์ (ไทย อังกฤษ ตะวันตก ประวัติศาสตร์ ภูมิศาสตร์ ฯลฯ)", sem:16500, field:"lang", note:"โครงการปกติ ปี 2568 · ใช้ยอด 'รวม' ในประกาศเป็นค่าเทอม/ภาค"},
+  su_arc_lang:{u:"su", name:"โบราณคดี (ภาษาไทย / อังกฤษ / ฝรั่งเศส)", sem:16500, field:"lang", note:"โครงการปกติ ปี 2568 · ใช้ยอด 'รวม' ในประกาศเป็นค่าเทอม/ภาค"},
+  su_arc:{u:"su", name:"โบราณคดี / ประวัติศาสตร์ศิลปะ / ประวัติศาสตร์ท้องถิ่น / มานุษยวิทยา", sem:18500, field:"lang", note:"โครงการปกติ ปี 2568 · ใช้ยอด 'รวม' ในประกาศเป็นค่าเทอม/ภาค"},
   dru_nur:   {u:"dru", name:"พยาบาลศาสตร์", sem:70000, fixed:3700, field:"nur", note:"~70,000 ต่อเทอม + ค่าใช้จ่ายเพิ่มเติมเทอมแรก ~3,700 · ยังไม่รวมภาคฤดูร้อน (เว็บไม่ระบุ) · ค่าประมาณจากเว็บศูนย์"}
 };
 
 const TRACKS = {
-  biz:   {name:"ธุรกิจ บัญชี โลจิสติกส์", icon:"💼", priv:["hcu_biz","dru_biz"], pub:["kmitl_biz","ku_mgt","buu_log","mfu_mgt","up_mgt","rmutk_biz","cmu_biz","nu_biz","psuh_biz","kku_acc","kku_mgt","kku_fin","msu_biz","pim_log","pim_agri","pim_hotel","pim_bba","pim_food","pim_culi"]},
-  health:{name:"สุขภาพ พยาบาล เทคนิคการแพทย์", icon:"🩺", priv:["hcu_nur","hcu_mt","hcu_pt","hcu_medsci","hcu_oh","dru_nur"], pub:["buu_nur","buu_mt","buu_pt","buu_medsci","mfu_oh","up_nur","up_medsci","rmutk_health","cmu_nur","cmu_mt","cmu_pt","nu_nur","nu_medsci","nu_mt","nu_pt","dru_nur","psuh_nur","psuh_mt","psuh_pt","kku_nur","kku_mt","kku_pt","kku_oh","msu_nur","msu_oh"]},
-  sci:   {name:"วิทยาศาสตร์ คอมพิวเตอร์", icon:"🔬", priv:["hcu_cs"], pub:["kmitl_sci","ku_sci","buu_sci","up_sci","rmutk_cs","cmu_sci","nu_sci","psuh_sci","kku_sci","msu_sci","msu_info","pim_digit","pim_robot","pim_ai"]},
-  lang:  {name:"ภาษา ศิลปศาสตร์", icon:"🌏", priv:["hcu_eng","dru_eng","dru_chi","dru_thai"], pub:["kmitl_lang","buu_eng","up_lang","rmutk_eng","cmu_lang","nu_lang","psuh_lang","kku_hum","msu_hum","dru_eng","dru_chi","dru_thai","pim_art"]}
+  biz:   {name:"ธุรกิจ บัญชี โลจิสติกส์", icon:"💼", priv:["hcu_biz","dru_biz"], pub:["kmitl_biz","ku_mgt","buu_log","mfu_mgt","up_mgt","rmutk_biz","cmu_biz","nu_biz","psuh_biz","kku_acc","kku_mgt","kku_fin","msu_biz","pim_log","pim_agri","pim_hotel","pim_bba","pim_food","pim_culi","su_mgt"]},
+  health:{name:"สุขภาพ พยาบาล เทคนิคการแพทย์", icon:"🩺", priv:["hcu_nur","hcu_mt","hcu_pt","hcu_medsci","hcu_oh","dru_nur"], pub:["buu_nur","buu_mt","buu_pt","buu_medsci","mfu_oh","up_nur","up_medsci","rmutk_health","cmu_nur","cmu_mt","cmu_pt","nu_nur","nu_medsci","nu_mt","nu_pt","dru_nur","psuh_nur","psuh_mt","psuh_pt","kku_nur","kku_mt","kku_pt","kku_oh","msu_nur","msu_oh","su_pharm"]},
+  sci:   {name:"วิทยาศาสตร์ คอมพิวเตอร์", icon:"🔬", priv:["hcu_cs"], pub:["kmitl_sci","ku_sci","buu_sci","up_sci","rmutk_cs","cmu_sci","nu_sci","psuh_sci","kku_sci","msu_sci","msu_info","pim_digit","pim_robot","pim_ai","su_sci","su_agri"]},
+  lang:  {name:"ภาษา ศิลปศาสตร์", icon:"🌏", priv:["hcu_eng","dru_eng","dru_chi","dru_thai"], pub:["kmitl_lang","buu_eng","up_lang","rmutk_eng","cmu_lang","nu_lang","psuh_lang","kku_hum","msu_hum","dru_eng","dru_chi","dru_thai","pim_art","su_letters","su_arc_lang","su_arc"]},
+  /* หมวดตามวิชา TPAT · ยังไม่มีมหาวิทยาลัยใกล้บ้านในระบบ (priv ว่าง) ทาง A ให้กรอกเอง */
+  eng:   {name:"วิศวกรรม เทคโนโลยี (TPAT3)", icon:"⚙️", priv:[], pub:["su_eng","su_biotech"]},
+  art:   {name:"ศิลปะ การออกแบบ (TPAT2)", icon:"🎨", priv:[], pub:["su_decor","su_paint"]},
+  arch:  {name:"สถาปัตยกรรม (TPAT4)", icon:"📐", priv:[], pub:["su_arch"]},
+  edu:   {name:"ครุศาสตร์ ศึกษาศาสตร์ (TPAT5)", icon:"🍎", priv:[], pub:["su_edu"]}
 };
 
 const HOUSING = {home:"อยู่บ้าน ไป-กลับทุกวัน", dorm_in:"หอใน (หอของมหาวิทยาลัย)", dorm_out:"หอนอก (เช่ารายเดือน)"};
