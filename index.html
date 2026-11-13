@@ -515,7 +515,7 @@ textarea.csvbox{font-family:monospace;font-size:.82rem;min-height:120px}
           <h2 style="margin:0">🧑‍🎓 ภาพรวมนักเรียน 360°</h2>
           <a id="ovRosterLink" class="btn ghost sm hidden" href="student-roster.html" style="text-decoration:none" title="ดูรูป ชื่อ-สกุล ชื่อเล่นเป็นรายห้อง และพิมพ์ใบติดบอร์ดห้อง A4">🌼 ทำเนียบนักเรียน</a>
         </div>
-        <p class="field hint" style="margin-bottom:10px">รวมข้อมูลจากทุกระบบในคลังแนะแนวไว้ในหน้าเดียวต่อคน: ผลงานนักเรียน · ทุนการศึกษา · ขออนุญาตทำงาน (กดที่ช่องเพื่อดูรายละเอียดของคนนั้น)</p>
+        <p class="field hint" style="margin-bottom:10px">รวมข้อมูลจากทุกระบบในคลังแนะแนวไว้ในหน้าเดียวต่อคน: ผลงานนักเรียน · ทุนการศึกษา · ขออนุญาตทำงาน (กดที่ชื่อหรือปุ่ม "เปิดโปรไฟล์" เพื่อดูข้อมูลทุกด้านของคนนั้น)</p>
         <div class="toolbar">
           <div class="search"><input id="ovQ" placeholder="ค้นหาชื่อ/ชื่อเล่น/โรงเรียนเดิม/ห้อง…"></div>
           <div class="chips" id="ovRooms"></div>
@@ -934,16 +934,6 @@ textarea.csvbox{font-family:monospace;font-size:.82rem;min-height:120px}
 
 <div id="printArea"></div>
 
-<!-- ═══════════ โมดัล: ภาพรวมนักเรียน 360° ═══════════ -->
-<div class="modal-back" id="ovModal">
-  <div class="modal" style="max-width:760px">
-    <div id="ovModalBody"></div>
-    <div class="foot">
-      <button class="btn ghost" id="btnOvClose">ปิด</button>
-    </div>
-  </div>
-</div>
-
 <!-- ═══════════ โมดัล: สิทธิ์เมนูของครู ═══════════ -->
 <div class="modal-back" id="permModal">
   <div class="modal" style="max-width:420px">
@@ -955,7 +945,7 @@ textarea.csvbox{font-family:monospace;font-size:.82rem;min-height:120px}
       <label><input type="checkbox" value="work" checked>📝 งานมอบหมาย</label>
       <label><input type="checkbox" value="survey" checked>🎓 สำรวจเรียนต่อ</label>
       <label><input type="checkbox" value="strength" checked>🌟 จุดแข็ง</label>
-      <label><input type="checkbox" value="overview" checked>🧑‍🎓 ภาพรวมนักเรียน</label>
+      <label><input type="checkbox" value="overview" checked>🧑‍🎓 ภาพรวมนักเรียน <small style="color:var(--ink-soft)">(ใช้ได้เฉพาะครูแนะแนว)</small></label>
       <label><input type="checkbox" value="manage" checked>👥 จัดการบัญชี</label>
       <label><input type="checkbox" value="announcements" data-default="off">📢 ประกาศข่าวประชาสัมพันธ์ได้</label>
     </div>
@@ -1209,7 +1199,8 @@ async function enterApp(){
   const staff = ["teacher","admin"].includes(profile.role);
   const perms = computeMyPerms();
   $("tabManage").classList.toggle("hidden", !staff || !perms.manage);
-  $("tabOverview").classList.toggle("hidden", !staff || !perms.overview);
+  // ภาพรวมนักเรียนเปิดโปรไฟล์ student-profile.html ซึ่งใช้ได้เฉพาะแอดมินและครูแนะแนว
+  $("tabOverview").classList.toggle("hidden", !staff || !perms.overview || !canSeeSubs());
   document.querySelectorAll("#nuRole .adminOnly").forEach(o=>o.classList.toggle("hidden", profile.role!=="admin"));
   renderGradeTabs(); renderTypeChips(); renderRoleChips();
   $("tabLibrary").classList.toggle("hidden", !perms.library);
@@ -1219,6 +1210,7 @@ async function enterApp(){
   let initial = perms.library? "library" : perms.work? "work" : perms.survey? "survey" : perms.strength? "strength" : "apps";
   if(location.hash==="#announce") initial = "announce";   // จากปุ่ม "ดูข่าวทั้งหมด" ในหน้าแรก
   if(location.hash==="#apps") initial = "apps";           // จากปุ่ม "ระบบงานทั้งหมด" ในหน้าแรก
+  if(location.hash==="#overview" && staff && perms.overview && canSeeSubs()) initial = "overview"; // กลับมาจากหน้าโปรไฟล์นักเรียน
   switchView(initial);
   preloadAnnBadge();
   if(profile.role==="student") checkOverdueOnEnter();
@@ -3295,71 +3287,35 @@ async function delTag(id){
 }
 
 /* ═══════════ ภาพรวมนักเรียน 360° ═══════════ */
-let ovStudents=[], ovAssignments=[], ovSubmissions=[], ovRounds=[], ovResponses=[], ovAssess=[], ovTags=[], ovTgat=[], ovF={room:"all",q:""}, ovSid=null;
+let ovStudents=[], ovF={room:"all",q:""};
 // ตารางภาพรวมแสดงทีละ OV_PAGE แถว (กด "แสดงเพิ่ม") — วาด 2,000+ แถวพร้อมกันทำให้แท็บเล็ตเก่าค้าง
 const OV_PAGE = 100;
 let ovShow = OV_PAGE, ovByStudent = null, ovQTimer = null;
-// ovTags รวมทั้ง RIASEC tags และ award records (type="award")
 
-// เชื่อมข้อมูลจากระบบย่อยอื่นๆ ("ระบบของเรา") เข้ามารวมในภาพรวม 360°
-// หมายเหตุ: quota/scholarship/chang_phueak/vulnerable ถูก RLS จำกัดไว้ให้ admin หรือครูที่ is_guidance=true เท่านั้น
-// (ดูฟังก์ชัน is_scholarship_officer() ในฐานข้อมูล) — ครูทั่วไปที่มีสิทธิ์ดูแท็บนี้จะเห็นช่องพวกนี้ว่างเปล่า ไม่ error
-// ovTcasAwards ถูก RLS จำกัดไว้เหมือนกัน: admin/ครู is_guidance หรือครูในกลุ่มสาระที่รับผิดชอบเท่านั้น (ดู awards_is_officer())
-let ovQuota=[], ovQuotaLookup=[], ovScholarship=[], ovScholarshipLookup=[], ovWorkPermit=[], ovChangPhueak=[], ovIv=[], ovIvCat=[], ovVulnerable=[], ovTcasAwards=[];
+// สรุป 3 คอลัมน์ในตาราง: ผลงานที่ยืนยันแล้ว / ทุนการศึกษา / ขออนุญาตทำงาน-ฝึกงาน
+// RLS: ทุนและผลงานจำกัดไว้ที่แอดมิน/ครูแนะแนว ซึ่งเป็นกลุ่มเดียวกับที่เห็นแท็บนี้
+let ovScholarship=[], ovWorkPermit=[], ovTcasAwards=[];
 
-const OV_QUOTA_STATUS = {submitted:"ส่งแล้ว",under_review:"กำลังพิจารณา",shortlisted:"ผ่านเข้ารอบ",waitlisted:"บัญชีสำรอง",approved:"ได้รับโควตา",promoted:"ได้รับ(เลื่อน)",rejected:"ไม่ผ่าน",withdrawn:"ยกเลิก"};
 const OV_SCHOLARSHIP_STATUS = {submitted:"ส่งใบสมัครแล้ว",under_review:"กำลังพิจารณา",shortlisted:"ผ่านเบื้องต้น",approved:"ได้รับทุน",rejected:"ไม่ผ่าน",withdrawn:"ยกเลิก"};
 const OV_WORKPERMIT_TYPE = {work_permit:"อนุญาตทำงาน", internship:"ฝึกงาน"};
 const OV_WORKPERMIT_STATUS = {submitted:"ยื่นแล้ว", processing:"กำลังดำเนินการ", ready:"พร้อมรับ", received:"รับเอกสารแล้ว", cancelled:"ยกเลิก"};
-const OV_CHANGPHUEAK_STATUS = {submitted:"ส่งแล้ว", reviewed:"ตรวจแล้ว"};
-const OV_IV_STATUS = {draft:"ฉบับซ้อม", submitted:"รอครูตรวจ", reviewed:"ตรวจแล้ว"};
 
 async function loadOverview(){
   $("ovLoading").classList.remove("hidden");
-  const [{data:stu},{data:asg},{data:sub},{data:rnd},{data:resp},{data:asm},{data:tg},{data:tgat},
-    {data:qa},{data:ql},{data:sa},{data:sl},{data:wp},{data:cp},{data:iv},{data:ivc},{data:vp},{data:tca}] = await Promise.all([
-    fetchAllStudents("id,username,student_id,display_name,class_room,avatar_path,nickname,previous_school"),
-    sb.from("assignments").select("id,title,class_rooms,due_at"),
-    // ดึง content ด้วยเพื่อให้ AI วิเคราะห์ได้ (text_answer, file_name, external_url)
-    fetchAllRows(()=> sb.from("submissions").select("id,assignment_id,student_id,submitted_at,text_answer,file_name,external_url,note").order("submitted_at").order("id")),
-    sb.from("survey_rounds").select("id,grade,title,is_open,created_at"),
-    fetchAllRows(()=> sb.from("survey_responses").select("*").order("submitted_at").order("id")),
-    fetchAllRows(()=> sb.from("strength_assessments").select("*").order("done_at").order("id")),
-    fetchAllRows(()=> sb.from("strength_tags").select("*").order("created_at").order("id")),
-    fetchAllTgatAttempts(),
-    fetchAllRows(()=> sb.from("quota_applications").select("id,profile_id,quota_id,status,applied_faculty,applied_major,submitted_at").order("submitted_at").order("id")),
-    sb.from("quotas").select("id,name,university,faculty"),
+  // ตารางนี้ใช้แค่รายชื่อ + 3 คอลัมน์สรุป ข้อมูลรายคนที่ละเอียดอยู่ในหน้าโปรไฟล์นักเรียน (student-profile.html)
+  const [{data:stu},{data:sa},{data:wp},{data:tca}] = await Promise.all([
+    fetchAllStudents("id,username,student_id,display_name,class_room,nickname,previous_school"),
     fetchAllRows(()=> sb.from("applications").select("id,profile_id,scholarship_id,status,submitted_at").order("submitted_at").order("id")),
-    sb.from("scholarships").select("id,name"),
-    fetchAllRows(()=> sb.from("work_permit_requests").select("id,student_id,request_type,employer_name,status,work_start_date,created_at").order("created_at").order("id")),
-    fetchAllRows(()=> sb.from("chang_phueak_applications").select("id,profile_id,track,status,submitted_at").order("submitted_at").order("id")),
-    fetchAllIvSessions(),
-    sb.from("iv_categories").select("id,name,emoji"),
-    fetchAllRows(()=> sb.from("vulnerable_profiles").select("id,profile_id,urgency_level,academic_year,verified_at").order("created_at").order("id")),
+    fetchAllRows(()=> sb.from("work_permit_requests").select("id,student_id,request_type,status,created_at").order("created_at").order("id")),
     fetchAllRows(()=> sb.from("award_participants")
-      .select("id,profile_id,prize_name,exp_name,score,award_events!inner(id,title,tcas_type,level,academic_year,status)")
+      .select("id,profile_id,award_events!inner(id,status)")
       .eq("award_events.status","verified").order("created_at").order("id")),
   ]);
-  ovStudents=stu||[]; ovAssignments=asg||[]; ovSubmissions=sub||[]; ovRounds=rnd||[]; ovResponses=resp||[]; ovAssess=asm||[]; ovTags=tg||[]; ovTgat=tgat||[];
-  ovQuota=qa||[]; ovQuotaLookup=ql||[]; ovScholarship=sa||[]; ovScholarshipLookup=sl||[]; ovWorkPermit=wp||[]; ovChangPhueak=cp||[]; ovIv=iv||[]; ovIvCat=ivc||[]; ovVulnerable=vp||[]; ovTcasAwards=tca||[];
+  ovStudents=stu||[]; ovScholarship=sa||[]; ovWorkPermit=wp||[]; ovTcasAwards=tca||[];
   ovBuildIndex_();
   ovShow = OV_PAGE;
   renderOverview();
   $("ovLoading").classList.add("hidden");
-}
-
-function studentGrade_(classRoom){
-  if(!classRoom) return null;
-  return classRoom.split("/")[0].trim(); // "ม.6/8" -> "ม.6"
-}
-
-function ovAssignmentsFor_(classRoom){
-  return ovAssignments.filter(a => !a.class_rooms || a.class_rooms.length===0 || a.class_rooms.includes(classRoom));
-}
-
-function ovLatestRoundFor_(grade){
-  const rounds = ovRounds.filter(r=>r.grade===grade).sort((a,b)=> b.created_at.localeCompare(a.created_at));
-  return rounds[0] || null;
 }
 
 // จัดกลุ่มข้อมูลตามนักเรียนครั้งเดียวหลังโหลด (แทนการ filter ทั้งตารางซ้ำทุกแถว)
@@ -3411,15 +3367,15 @@ function renderOverview(){
     const wpLabel = !wpl.length ? "-" : `${esc(OV_WORKPERMIT_TYPE[wpl[0].request_type]||"")} · ${esc(OV_WORKPERMIT_STATUS[wpl[0].status]||wpl[0].status)}${wpl.length>1?` (${wpl.length} คำขอ)`:""}`;
     return `<tr>
       <td><b>${esc(s.username)}</b></td>
-      <td>${esc(s.display_name)}${s.nickname ? ` <span style="display:inline-block;background:var(--pine-tint);color:var(--pine-deep);border-radius:999px;padding:0 10px;font-size:.8rem;font-weight:600;white-space:nowrap">${esc(s.nickname)}</span>` : ""}</td>
+      <td data-ovp="${s.id}" style="cursor:pointer">${esc(s.display_name)}${s.nickname ? ` <span style="display:inline-block;background:var(--pine-tint);color:var(--pine-deep);border-radius:999px;padding:0 10px;font-size:.8rem;font-weight:600;white-space:nowrap">${esc(s.nickname)}</span>` : ""}</td>
       <td>${esc(s.class_room||"-")}</td>
       <td data-ovp="${s.id}" style="cursor:pointer">${awLabel}</td>
       <td data-ovp="${s.id}" style="cursor:pointer">${schLabel}</td>
       <td data-ovp="${s.id}" style="cursor:pointer">${wpLabel}</td>
-      <td><button class="btn primary sm" data-ovp="${s.id}">ดูรายละเอียด</button></td>
+      <td><button class="btn primary sm" data-ovp="${s.id}">เปิดโปรไฟล์</button></td>
     </tr>`;
   }).join("") || `<tr><td colspan="7" style="text-align:center;color:var(--ink-soft)">ไม่พบนักเรียน</td></tr>`;
-  $("ovRows").querySelectorAll("[data-ovp]").forEach(b=> b.onclick=()=>openOvModal(b.dataset.ovp));
+  $("ovRows").querySelectorAll("[data-ovp]").forEach(b=> b.onclick=()=>openStudentProfile(b.dataset.ovp));
 
   // แถบ "แสดงเพิ่ม"
   const more = $("ovMore");
@@ -3436,324 +3392,11 @@ function renderOverview(){
 }
 
 
-/* ดูรูปขยาย: แตะรูปเพื่อขยาย แตะที่ไหนก็ได้เพื่อปิด */
-function openPhoto(url){
-  let lb = document.getElementById("photoLb");
-  if(!lb){
-    lb = document.createElement("div"); lb.id = "photoLb"; lb.className = "photo-lb";
-    lb.innerHTML = '<img alt="รูปนักเรียน"><span>แตะที่ว่างเพื่อปิด</span>';
-    lb.onclick = ()=> lb.classList.remove("show");
-    document.addEventListener("keydown", e=>{ if(e.key==="Escape") lb.classList.remove("show"); });
-    document.body.appendChild(lb);
-  }
-  lb.querySelector("img").src = url;
-  lb.classList.add("show");
-}
-
-$("btnOvClose").onclick = ()=> $("ovModal").classList.remove("show");
-async function openOvModal(sid){
-  ovSid = sid;
-  const s = ovStudents.find(x=>x.id===sid); if(!s) return;
-  $("ovModal").classList.add("show");
-
-  // รูปโปรไฟล์เก็บใน bucket ส่วนตัว (profile-photos) — ต้องขอ signed URL ก่อนถึงจะแสดงได้
-  let ovAvatarUrl = null;
-  if(s.avatar_path){
-    const {data:sig} = await sb.storage.from("profile-photos").createSignedUrl(s.avatar_path, 3600);
-    ovAvatarUrl = sig?.signedUrl || null;
-  }
-
-  const asgs = ovAssignmentsFor_(s.class_room);
-  const grade = studentGrade_(s.class_room);
-  const rounds = grade? ovRounds.filter(r=>r.grade===grade).sort((a,b)=> b.created_at.localeCompare(a.created_at)) : [];
-  const assess = ovAssess.find(a=>a.student_id===sid)||null;
-  const tags = ovTags.filter(t=>t.student_id===sid && t.type!=="award").sort((a,b)=> b.created_at.localeCompare(a.created_at));
-  const awards = ovTags.filter(t=>t.student_id===sid && t.type==="award").sort((a,b)=> b.created_at.localeCompare(a.created_at));
-  const tcasAwards = ovTcasAwards.filter(x=>x.profile_id===sid)
-    .sort((a,b)=> (b.award_events?.academic_year||0)-(a.award_events?.academic_year||0));
-
-  // ─── งานมอบหมาย: checkbox สำหรับติ๊กเลือกงานที่ต้องการรวมในภาพรวม/ส่งไปวิเคราะห์ต่อ ───
-  const asgRows = asgs.length? asgs.map(a=>{
-    const sub = ovSubmissions.find(x=>x.assignment_id===a.id && x.student_id===sid);
-    const hasContent = sub && (sub.text_answer || sub.file_name || sub.external_url);
-    const checkBox = sub ? `<input type="checkbox" class="ov-sub-check" ${hasContent?"checked":""} data-subid="${sub.id}" data-asgname="${esc(a.title)}" data-text="${esc(sub.text_answer||"")}" data-file="${esc(sub.file_name||"")}" data-url="${esc(sub.external_url||"")}" data-submitted="${esc(thDateTime(sub.submitted_at))}" ${hasContent?"":"disabled"} title="${hasContent?"ติ๊กเพื่อรวมในสรุปภาพรวม":"ไม่มีเนื้อหาที่สรุปได้ — ไม่รวมในสรุปอัตโนมัติ"}">` : `<input type="checkbox" disabled title="ยังไม่ส่งงาน">`;
-    const subLabel = sub
-      ? (sub.text_answer ? `<span class="status sent">✅ ส่งข้อความ</span>`
-        : sub.file_name  ? `<span class="status sent">✅ ${esc(sub.file_name)}</span>`
-        : sub.external_url ? `<span class="status sent">✅ ลิงก์</span>`
-        : `<span class="status sent">✅ ส่งแล้ว</span>`)
-      : `<span class="status missing">ยังไม่ส่ง</span>`;
-    return `<div class="sub-check-row">${checkBox}<span style="flex:1">${esc(a.title)}</span>${subLabel}</div>`;
-  }).join("") : `<p style="color:var(--ink-soft);font-size:.85rem;padding:8px 0">ไม่มีงานมอบหมาย</p>`;
-
-  const svRows = rounds.length? rounds.map(r=>{
-    const resp = ovResponses.find(x=>x.round_id===r.id && x.student_id===sid);
-    if(!resp) return `<tr><td>${esc(r.title)}</td><td colspan="2" style="color:var(--ink-soft)">⏳ ยังไม่ตอบ</td></tr>`;
-    return `<tr><td>${esc(r.title)}</td><td>${esc(resp.status||"-")}</td><td>${esc(resp.institution||"-")} ${resp.program? "· "+esc(resp.program):""}</td></tr>`;
-  }).join("") : `<tr><td colspan="3" style="text-align:center;color:var(--ink-soft)">ยังไม่มีรอบสำรวจสำหรับชั้นนี้</td></tr>`;
-
-  const tcasAwardList = tcasAwards.length ? tcasAwards.map(x=>{
-    const ev = x.award_events || {};
-    const lvLabel = AW_LEVEL_LABEL_MAP[ev.level] || ev.level || "";
-    const typeLabel = OV_TCAS_TYPE_LABEL[ev.tcas_type] || ev.tcas_type || "";
-    return `<span class="awardchip">🎖️ ${esc(ev.title||"-")}${typeLabel? " · "+esc(typeLabel):""}${lvLabel? " · "+esc(lvLabel):""}${ev.academic_year? " (ปี "+esc(ev.academic_year)+")":""}${x.prize_name? " · "+esc(x.prize_name):""}</span>`;
-  }).join("") : "";
-  const awardList = awards.length ? awards.map(aw=>{
-    const p = parseAwardNote(aw.note);
-    const lvLabel = AW_LEVEL_LABEL_MAP[p.level] || p.level;
-    return `<span class="awardchip">🏆 ${esc(p.title)}${lvLabel? " · "+esc(lvLabel):""}${p.year? " ("+esc(p.year)+")":""}${p.extra? " · "+esc(p.extra):""}</span>`;
-  }).join("") : "";
-  const awardBody = [
-    tcasAwardList ? `<div style="margin-bottom:8px"><span style="font-size:.72rem;font-weight:600;color:var(--ink-soft);display:block;margin-bottom:4px">🔗 จากระบบ TCASVerified (ยืนยันแล้ว)</span>${tcasAwardList}</div>` : "",
-    awardList ? `<div><span style="font-size:.72rem;font-weight:600;color:var(--ink-soft);display:block;margin-bottom:4px">📌 ครูบันทึกเพิ่มเติม</span>${awardList}</div>` : "",
-  ].filter(Boolean).join("");
-
-  // ─── ฝึกข้อสอบ TGAT/TPAT: ประวัติรอบล่าสุด ───
-  const tgatRows = ovTgat.filter(t=>t.student_id===sid).sort((a,b)=> b.completed_at.localeCompare(a.completed_at));
-  const tgatList = tgatRows.length ? `
-    <div class="tbl-wrap"><table><thead><tr><th>วันที่</th><th>พาร์ท</th><th>คะแนน</th><th>% ถูก</th></tr></thead><tbody>
-      ${tgatRows.slice(0,10).map(t=>`<tr>
-        <td>${esc(thDateTime(t.completed_at))}</td>
-        <td>${esc((t.subjects||[]).join(" · "))}</td>
-        <td>${t.raw_score}/${t.max_score}</td>
-        <td>${t.percentage}%</td>
-      </tr>`).join("")}
-    </tbody></table></div>
-    <p style="font-size:.78rem;color:var(--ink-soft);margin-top:6px">ทำไปแล้วทั้งหมด ${tgatRows.length} รอบ${tgatRows.length>10? " · แสดง 10 รอบล่าสุด":""}</p>
-  ` : `<p style="color:var(--ink-soft);font-size:.85rem;padding:8px 0">ยังไม่เคยทำข้อสอบ</p>`;
-
-  // ─── เชื่อมข้อมูลจากระบบย่อยอื่นๆ ("ระบบของเรา") — ดูหมายเหตุ RLS ที่ loadOverview() ───
-  const quotaRows = ovQuota.filter(x=>x.profile_id===sid).sort((a,b)=> (b.submitted_at||"").localeCompare(a.submitted_at||""));
-  const quotaList = quotaRows.length ? quotaRows.map(x=>{
-    const q = ovQuotaLookup.find(y=>y.id===x.quota_id);
-    return `<div class="sub-check-row"><span style="flex:1">${esc(q? q.name+(q.university?" · "+q.university:"") : (x.applied_faculty||"โควตา"))}${x.applied_major? " · "+esc(x.applied_major):""}</span><span class="status sent">${esc(OV_QUOTA_STATUS[x.status]||x.status)}</span></div>`;
-  }).join("") : `<p style="color:var(--ink-soft);font-size:.85rem;padding:8px 0">ยังไม่ได้สมัครโควตา</p>`;
-
-  const schRows = ovScholarship.filter(x=>x.profile_id===sid).sort((a,b)=> (b.submitted_at||"").localeCompare(a.submitted_at||""));
-  const schList = schRows.length ? schRows.map(x=>{
-    const sc = ovScholarshipLookup.find(y=>y.id===x.scholarship_id);
-    return `<div class="sub-check-row"><span style="flex:1">${esc(sc?.name||"ทุนการศึกษา")}</span><span class="status sent">${esc(OV_SCHOLARSHIP_STATUS[x.status]||x.status)}</span></div>`;
-  }).join("") : `<p style="color:var(--ink-soft);font-size:.85rem;padding:8px 0">ยังไม่ได้สมัครทุนการศึกษา</p>`;
-
-  const wpRows = ovWorkPermit.filter(x=>x.student_id===sid).sort((a,b)=> (b.created_at||"").localeCompare(a.created_at||""));
-  const wpList = wpRows.length ? wpRows.map(x=>
-    `<div class="sub-check-row"><span style="flex:1">${esc(OV_WORKPERMIT_TYPE[x.request_type]||x.request_type)} · ${esc(x.employer_name||"-")}</span><span class="status sent">${esc(OV_WORKPERMIT_STATUS[x.status]||x.status)}</span></div>`
-  ).join("") : `<p style="color:var(--ink-soft);font-size:.85rem;padding:8px 0">ยังไม่มีคำขอฝึกงาน/ใบอนุญาตทำงาน</p>`;
-
-  const cpRows = ovChangPhueak.filter(x=>x.profile_id===sid).sort((a,b)=> (b.submitted_at||"").localeCompare(a.submitted_at||""));
-  const cpList = cpRows.length ? cpRows.map(x=>
-    `<div class="sub-check-row"><span style="flex:1">โครงการช้างเผือก · ${esc(x.track||"-")}</span><span class="status sent">${esc(OV_CHANGPHUEAK_STATUS[x.status]||x.status)}</span></div>`
-  ).join("") : `<p style="color:var(--ink-soft);font-size:.85rem;padding:8px 0">ยังไม่ได้สมัครช้างเผือก</p>`;
-
-  const ivRows = ovIv.filter(x=>x.student_id===sid).sort((a,b)=> (b.submitted_at||"").localeCompare(a.submitted_at||""));
-  const ivList = ivRows.length ? ivRows.map(x=>{
-    const cat = ovIvCat.find(y=>y.id===x.category_id);
-    return `<div class="sub-check-row"><span style="flex:1">${cat?esc(cat.emoji)+" ":"🎤 "}${esc(cat?.name||"ฝึกสัมภาษณ์")}${x.kind==="mock"?" (นัดซ้อมกับครู)":""}</span><span class="status sent">${esc(OV_IV_STATUS[x.status]||x.status)}</span></div>`;
-  }).join("") : `<p style="color:var(--ink-soft);font-size:.85rem;padding:8px 0">ยังไม่เคยฝึกซ้อมสัมภาษณ์</p>`;
-
-  const vulnRow = ovVulnerable.find(x=>x.profile_id===sid);
-  const vulnBadge = vulnRow
-    ? `<span class="awardchip">📋 อยู่ในทะเบียนกลุ่มเปราะบาง${vulnRow.urgency_level? " · ระดับความเร่งด่วน "+esc(vulnRow.urgency_level)+"/5" : ""}${vulnRow.verified_at? " · ยืนยันแล้ว":" · รอยืนยัน"}</span>`
-    : `<span class="duechip" style="font-size:.8rem">ไม่มีในทะเบียนกลุ่มเปราะบาง</span>`;
-
-  // แสดงเฉพาะหัวข้อที่นักเรียนมีข้อมูล/เข้าร่วมจริง — หัวข้อไหนไม่มีข้อมูลเลยไม่ต้องขึ้นหัวข้อนั้น
-  const ovPanel = (title, bodyHtml) => `
-    <div class="panel" style="margin-top:12px">
-      <h2 style="font-size:1rem">${title}</h2>
-      <div>${bodyHtml}</div>
-    </div>`;
-  const ovSections = [
-    asgs.length ? `
-    <div class="panel" style="margin-top:12px">
-      <h2 style="font-size:1rem">📝 งานมอบหมาย <span style="font-weight:400;font-size:.8rem;color:var(--ink-soft)">(ติ๊กงานที่ต้องการรวมในสรุปภาพรวมด้านล่าง)</span></h2>
-      <div id="ovAsgList">${asgRows}</div>
-    </div>` : "",
-    rounds.length ? ovPanel("🎓 สำรวจเรียนต่อ",
-      `<div class="tbl-wrap"><table><thead><tr><th>รอบ</th><th>สถานะ</th><th>รายละเอียด</th></tr></thead><tbody>${svRows}</tbody></table></div>`) : "",
-    (awards.length || tcasAwards.length) ? ovPanel("🏆 เกียรติบัตร / รางวัล", awardBody) : "",
-    tgatRows.length ? ovPanel("🎯 ฝึกข้อสอบ TGAT/TPAT", tgatList) : "",
-    quotaRows.length ? ovPanel("🎓 สมัครโควตา", quotaList) : "",
-    schRows.length ? ovPanel("💰 สมัครทุนการศึกษา", schList) : "",
-    wpRows.length ? ovPanel("📋 ฝึกงาน / ใบอนุญาตทำงาน", wpList) : "",
-    cpRows.length ? ovPanel("🐘 โครงการช้างเผือก", cpList) : "",
-    ivRows.length ? ovPanel("🎤 ฝึกซ้อมสัมภาษณ์", ivList) : "",
-    vulnRow ? ovPanel("🛟 ทะเบียนกลุ่มเปราะบาง", vulnBadge) : "",
-  ].filter(Boolean).join("");
-
-  // ครูแนะแนว/admin: ปุ่มเปิดโปรไฟล์เต็ม (รวมบันทึกให้คำปรึกษา) — ฐานข้อมูลตรวจสิทธิ์ซ้ำอีกชั้น
-  const ovProfileLink = canSeeSubs()
-    ? `<a class="btn ghost sm" style="margin-left:auto;text-decoration:none" href="student-profile.html?id=${encodeURIComponent(sid)}">🧭 เปิดโปรไฟล์เต็ม</a>` : "";
-  $("ovModalBody").innerHTML = `
-    <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
-      <div style="width:60px;height:60px;border-radius:50%;overflow:hidden;flex:none;background:var(--pine-tint);display:grid;place-items:center;font-family:'Mitr';font-size:1.5rem;color:var(--pine-deep)">
-        ${ovAvatarUrl ? `<img src="${ovAvatarUrl}" class="zoomable" title="แตะเพื่อดูรูปขยาย" onclick="openPhoto(this.src)" style="width:100%;height:100%;object-fit:cover" alt="">` : esc((s.display_name||"?").trim().charAt(0).toUpperCase())}
-      </div>
-      <h2 style="margin:0">🧑‍🎓 ${esc(s.display_name)}${s.nickname ? ` <span style="font-size:.85rem;background:var(--pine-tint);color:var(--pine-deep);border-radius:999px;padding:1px 12px">${esc(s.nickname)}</span>` : ""} <small style="font-weight:400;color:var(--ink-soft)">${esc(s.username)} · ${esc(s.class_room||"-")}${s.previous_school ? " · เดิม: "+esc(s.previous_school) : ""}</small></h2>
-      ${ovProfileLink}
-    </div>
-
-    <div class="panel" style="margin-top:12px">
-      <h2 style="font-size:1rem">📋 สรุปภาพรวม (จากข้อมูลทุกระบบย่อยของนักเรียนคนนี้)</h2>
-      <div id="ovSummaryBox" class="ai-result"></div>
-      <div style="margin-top:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-        <button class="btn note sm" id="btnOvCopy">📋 คัดลอกสรุปนี้</button>
-        <button class="btn ghost sm" id="btnOvOpenClaude">🔗 เปิด Claude.ai เพื่อวิเคราะห์ต่อ (ฟรี)</button>
-        <span style="font-size:.76rem;color:var(--ink-soft)">คัดลอกแล้วนำไปวางในแชทฟรีได้เลยค่ะ ไม่มีค่าใช้จ่ายเพิ่ม</span>
-      </div>
-    </div>
-
-    ${ovSections}
-
-    ${profileHTML(s, assess, tags, {})}
-  `;
-
-  // อัปเดตสรุปภาพรวมทันทีตอนเปิด + ทุกครั้งที่ติ๊ก/ยกเลิกติ๊ก
-  updateOvSummary(s);
-  $("ovModalBody").querySelectorAll(".ov-sub-check").forEach(cb=>{
-    cb.onchange = ()=> updateOvSummary(s);
-  });
-  $("btnOvCopy").onclick = ()=> copyOvSummary();
-  $("btnOvOpenClaude").onclick = ()=>{
-    copyOvSummary(true);
-    window.open("https://claude.ai/new", "_blank", "noopener");
-  };
-}
-
-/* ── สร้างข้อความสรุปภาพรวม จากข้อมูลทุกระบบย่อยที่มีในโมดัลนี้ (ไม่เรียก API ใดๆ ทั้งสิ้น — ไม่มีค่าใช้จ่าย) ── */
-function buildOvSummaryText(s){
-  const sid = s.id;
-  const sec = []; // [หัวข้อ, [บรรทัดย่อย...]]
-  const add = (title, rows) => { if(rows && rows.length) sec.push([title, rows]); };
-
-  // งานมอบหมาย: สถานะรวมทุกชิ้น + เนื้อหาเต็มของชิ้นที่ติ๊กเลือกไว้
-  const asgs = ovAssignmentsFor_(s.class_room);
-  const checked = [...($("ovModalBody")?.querySelectorAll(".ov-sub-check:checked") || [])];
-  if(asgs.length){
-    const rows = asgs.map(a=>{
-      const sub = ovSubmissions.find(x=>x.assignment_id===a.id && x.student_id===sid);
-      return `${a.title}: ${sub ? "ส่งแล้ว" : "ยังไม่ส่ง"}`;
-    });
-    add("📝 งานมอบหมาย", rows);
-  }
-  if(checked.length){
-    const rows = checked.map(cb=>{
-      const parts = [];
-      if(cb.dataset.text)  parts.push(`คำตอบ: "${cb.dataset.text}"`);
-      if(cb.dataset.file)  parts.push(`ไฟล์ที่ส่ง: ${cb.dataset.file}`);
-      if(cb.dataset.url)   parts.push(`ลิงก์: ${cb.dataset.url}`);
-      return `${cb.dataset.asgname} (ส่งเมื่อ ${cb.dataset.submitted}) — ${parts.join(" / ")||"(ส่งแล้วแต่ไม่มีเนื้อหา)"}`;
-    });
-    add("✅ เนื้อหาชิ้นงานที่ติ๊กเลือกไว้", rows);
-  }
-
-  // สำรวจเรียนต่อ
-  const grade = studentGrade_(s.class_room);
-  const rounds = grade? ovRounds.filter(r=>r.grade===grade) : [];
-  add("🎓 สำรวจเรียนต่อ", rounds.map(r=>{
-    const resp = ovResponses.find(x=>x.round_id===r.id && x.student_id===sid);
-    return resp
-      ? `${r.title}: ${resp.status||"-"}${resp.institution? " · "+resp.institution:""}${resp.program? " · "+resp.program:""}`
-      : `${r.title}: ยังไม่ตอบ`;
-  }));
-
-  // จุดแข็ง RIASEC (จากแบบประเมิน + แท็กครู)
-  const assess = ovAssess.find(a=>a.student_id===sid)||null;
-  const riasecTags = ovTags.filter(t=>t.student_id===sid && TYPE_KEYS.includes(t.type));
-  const c = combineScores(assess, riasecTags);
-  const top3 = [...TYPE_KEYS].sort((a,b)=> c[b]-c[a]).slice(0,3).filter(k=>c[k]>0);
-  const riasecRows = [];
-  if(top3.length) riasecRows.push("อันดับต้นๆ: " + top3.map(k=>`${RIASEC[k].name} (${c[k]})`).join(", "));
-  if(riasecTags.length) riasecRows.push("แท็กจากครู: " + riasecTags.map(t=> (RIASEC[t.type]?.name||t.type) + (t.note? ` (${t.note})`:"")).join(", "));
-  add("🌟 จุดแข็ง (RIASEC)", riasecRows);
-
-  // เกียรติบัตร / รางวัล — ทั้ง TCASVerified และที่ครูบันทึกเอง
-  const tcasAwards = ovTcasAwards.filter(x=>x.profile_id===sid);
-  const awardTagRows = ovTags.filter(t=>t.student_id===sid && t.type==="award");
-  const awardRows = [
-    ...tcasAwards.map(x=>{
-      const ev = x.award_events||{};
-      return `[TCASVerified] ${ev.title||"-"}${ev.academic_year? " (ปี "+ev.academic_year+")":""}${x.prize_name? " · "+x.prize_name:""}`;
-    }),
-    ...awardTagRows.map(aw=>{
-      const p = parseAwardNote(aw.note);
-      const lvLabel = AW_LEVEL_LABEL_MAP[p.level] || p.level;
-      return `[ครูบันทึก] ${p.title}${lvLabel? " · "+lvLabel:""}${p.year? " ("+p.year+")":""}${p.extra? " · "+p.extra:""}`;
-    }),
-  ];
-  add("🏆 เกียรติบัตร / รางวัล", awardRows);
-
-  // ฝึกข้อสอบ TGAT/TPAT
-  const tgatRows = ovTgat.filter(t=>t.student_id===sid).sort((a,b)=> b.completed_at.localeCompare(a.completed_at));
-  if(tgatRows.length){
-    const rows = [`ทำไปแล้วทั้งหมด ${tgatRows.length} รอบ`];
-    tgatRows.slice(0,3).forEach(t=> rows.push(`${thDateTime(t.completed_at)} — ${(t.subjects||[]).join("/")}: ${t.raw_score}/${t.max_score} (${t.percentage}%)`));
-    add("🎯 ฝึกข้อสอบ TGAT/TPAT", rows);
-  }
-
-  // โควตา
-  const quotaRows = ovQuota.filter(x=>x.profile_id===sid);
-  add("🎓 สมัครโควตา", quotaRows.map(x=>{
-    const q = ovQuotaLookup.find(y=>y.id===x.quota_id);
-    return `${q? q.name+(q.university?" · "+q.university:"") : (x.applied_faculty||"โควตา")}${x.applied_major? " · "+x.applied_major:""} — ${OV_QUOTA_STATUS[x.status]||x.status}`;
-  }));
-
-  // ทุนการศึกษา
-  const schRows = ovScholarship.filter(x=>x.profile_id===sid);
-  add("💰 สมัครทุนการศึกษา", schRows.map(x=>{
-    const sc = ovScholarshipLookup.find(y=>y.id===x.scholarship_id);
-    return `${sc?.name||"ทุนการศึกษา"} — ${OV_SCHOLARSHIP_STATUS[x.status]||x.status}`;
-  }));
-
-  // ฝึกงาน / ใบอนุญาตทำงาน
-  const wpRows = ovWorkPermit.filter(x=>x.student_id===sid);
-  add("📋 ฝึกงาน / ใบอนุญาตทำงาน", wpRows.map(x=>
-    `${OV_WORKPERMIT_TYPE[x.request_type]||x.request_type} · ${x.employer_name||"-"} — ${OV_WORKPERMIT_STATUS[x.status]||x.status}`));
-
-  // ช้างเผือก
-  const cpRows = ovChangPhueak.filter(x=>x.profile_id===sid);
-  add("🐘 โครงการช้างเผือก", cpRows.map(x=> `${x.track||"-"} — ${OV_CHANGPHUEAK_STATUS[x.status]||x.status}`));
-
-  // ฝึกซ้อมสัมภาษณ์
-  const ivRows = ovIv.filter(x=>x.student_id===sid);
-  add("🎤 ฝึกซ้อมสัมภาษณ์", ivRows.map(x=>{
-    const cat = ovIvCat.find(y=>y.id===x.category_id);
-    return `${cat?.name||"ฝึกสัมภาษณ์"}${x.kind==="mock"?" (นัดซ้อมกับครู)":""} — ${OV_IV_STATUS[x.status]||x.status}`;
-  }));
-
-  // ทะเบียนกลุ่มเปราะบาง
-  const vulnRow = ovVulnerable.find(x=>x.profile_id===sid);
-  if(vulnRow){
-    add("🛟 ทะเบียนกลุ่มเปราะบาง", [
-      `อยู่ในทะเบียน${vulnRow.urgency_level? " · ระดับความเร่งด่วน "+vulnRow.urgency_level+"/5":""}${vulnRow.verified_at? " · ยืนยันแล้ว":" · รอยืนยัน"}`
-    ]);
-  }
-
-  const lines = [`ข้อมูลนักเรียน: ${s.display_name} (${s.username}) ห้อง ${s.class_room||"-"}`];
-  if(sec.length){
-    sec.forEach(([title, rows])=>{
-      lines.push("", `── ${title} ──`);
-      rows.forEach(r=> lines.push(`• ${r}`));
-    });
-  } else {
-    lines.push("", "ยังไม่มีข้อมูลในระบบย่อยใดๆ สำหรับนักเรียนคนนี้ค่ะ");
-  }
-  lines.push("", "โปรดช่วยวิเคราะห์ภาพรวมของนักเรียนคนนี้จากข้อมูลทุกด้านข้างต้น (จุดแข็ง ความสนใจ กิจกรรม/รางวัล เส้นทางการศึกษาต่อ) แล้วให้คำแนะนำเชิงแนะแนว (ตอบเป็นภาษาไทย ไม่เกิน 300 คำ)");
-  return lines.join("\n");
-}
-function updateOvSummary(s){
-  const box = $("ovSummaryBox");
-  if(!box) return;
-  box.textContent = buildOvSummaryText(s);
-}
-function copyOvSummary(silent){
-  const box = $("ovSummaryBox");
-  if(!box) return;
-  const text = box.textContent || "";
-  navigator.clipboard.writeText(text).then(()=>{
-    if(!silent) toast("คัดลอกสรุปแล้วค่ะ นำไปวางในแชท AI ที่ใช้อยู่ได้เลย 📋");
-  }).catch(()=>{
-    if(!silent) toast("คัดลอกไม่สำเร็จ ลองเลือกข้อความแล้วคัดลอกเองนะคะ");
-  });
+/* เปิดโปรไฟล์นักเรียน (หน้าเดียวรวมทุกระบบย่อย) — ตั้ง #overview ไว้ให้กดย้อนกลับแล้วมาที่แท็บนี้ */
+function openStudentProfile(sid){
+  if(!/^[0-9a-f-]{36}$/i.test(sid||"")) return;
+  history.replaceState(null, "", "#overview");
+  location.href = "student-profile.html?id=" + encodeURIComponent(sid);
 }
 
 /* ═══════════ เฟส 5: สิทธิ์เมนูของครู ═══════════ */

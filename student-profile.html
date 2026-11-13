@@ -91,6 +91,20 @@ header.app a{color:#fff}
 .msg{border-radius:12px;padding:12px 16px;margin:12px 0}
 .msg.err{background:#FBEAE7;color:var(--danger)}
 .hint{color:var(--ink-soft);font-size:14px}
+.chk{display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-bottom:1px dashed var(--line)}
+.chk:last-child{border-bottom:0}
+.chk input{margin-top:5px;width:18px;height:18px;flex:none;accent-color:var(--pine)}
+.chk .grow{flex:1;min-width:0}
+.stbar{display:grid;grid-template-columns:150px 1fr 34px;gap:10px;align-items:center;margin:6px 0;font-size:14px}
+.stbar .track{height:12px;background:var(--board);border-radius:999px;overflow:hidden}
+.stbar .fill{height:100%;border-radius:999px}
+.sttop{border-left:4px solid;border-radius:10px;background:var(--board);padding:8px 12px;margin:8px 0;font-size:14px}
+.sttop b{font-family:'Mitr';font-weight:500}
+.tagchip{display:inline-block;border-radius:999px;padding:2px 12px;font-size:13px;margin:3px 4px 3px 0}
+.sumbox{background:var(--board);border-radius:10px;padding:10px 12px;font-size:14px;white-space:pre-wrap;word-break:break-word;max-height:320px;overflow:auto}
+.btnrow{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:#fff;border-radius:999px;padding:10px 18px;font-size:14px;z-index:90}
+@media(max-width:560px){.stbar{grid-template-columns:110px 1fr 28px}}
 .embed header.app,.embed .search,.embed .results{display:none !important}
 .embed body{background:var(--board)}
 .embed .wrap{padding-top:8px}
@@ -100,7 +114,7 @@ header.app a{color:#fff}
 <body>
 <header class="app">
   <div><div class="brand">🧭 โปรไฟล์นักเรียนรวม</div><small>แนะให้แนว · พูลเจริญวิทยาคม</small></div>
-  <div><a href="index.html" class="hint" style="color:#fff;margin-right:10px">← กลับคลังแนะแนว</a><span class="userchip" id="who">กำลังโหลด...</span></div>
+  <div><a href="index.html#overview" class="hint" style="color:#fff;margin-right:10px">← กลับภาพรวมนักเรียน</a><span class="userchip" id="who">กำลังโหลด...</span></div>
 </header>
 
 <div class="wrap">
@@ -137,8 +151,32 @@ function fmtTs(t){ if (!t) return ''; return fmtDate(new Date(new Date(t).getTim
 function yearBE(y){ return y ? `ปี ${y}` : ''; }
 
 const LEVEL = { school:'ระดับโรงเรียน', district:'ระดับอำเภอ/เขต', area:'ระดับเขตพื้นที่', province:'ระดับจังหวัด', region:'ระดับภาค', national:'ระดับชาติ', international:'ระดับนานาชาติ' };
-const QSTATUS = { submitted:'ส่งใบสมัครแล้ว', under_review:'กำลังพิจารณา', withdrawn:'ถอนใบสมัคร' };
-const SSTATUS = { approved:'ได้รับทุน', shortlisted:'ผ่านเข้ารอบ' };
+const QSTATUS = { submitted:'ส่งใบสมัครแล้ว', under_review:'กำลังพิจารณา', shortlisted:'ผ่านเข้ารอบ', waitlisted:'บัญชีสำรอง', approved:'ได้รับโควตา', promoted:'ได้รับ (เลื่อนจากสำรอง)', rejected:'ไม่ผ่าน', withdrawn:'ยกเลิก' };
+const SSTATUS = { submitted:'ส่งใบสมัครแล้ว', under_review:'กำลังพิจารณา', shortlisted:'ผ่านเบื้องต้น', approved:'ได้รับทุน', rejected:'ไม่ผ่าน', withdrawn:'ยกเลิก' };
+const WP_TYPE = { work_permit:'ขออนุญาตทำงาน', internship:'ฝึกงาน' };
+const WP_STATUS = { submitted:'ยื่นแล้ว', processing:'กำลังดำเนินการ', ready:'พร้อมรับเอกสาร', received:'รับเอกสารแล้ว', cancelled:'ยกเลิก' };
+const IV_STATUS = { draft:'ฉบับซ้อม', submitted:'รอครูตรวจ', reviewed:'ครูตรวจแล้ว' };
+const RIASEC = {
+  R:{ name:'นักปฏิบัติ', emoji:'🔧', color:'#F28C6B', fac:'วิศวกรรมศาสตร์ · เกษตรศาสตร์ · วิทยาศาสตร์การกีฬา · เทคโนโลยีอุตสาหกรรม' },
+  I:{ name:'นักคิดวิเคราะห์', emoji:'🔬', color:'#4E9BB9', fac:'แพทยศาสตร์ · เภสัชศาสตร์ · วิทยาศาสตร์ · วิศวกรรมคอมพิวเตอร์' },
+  A:{ name:'นักสร้างสรรค์', emoji:'🎨', color:'#D96A9C', fac:'สถาปัตยกรรมศาสตร์ · นิเทศศาสตร์ · ศิลปกรรมศาสตร์ · อักษรศาสตร์/มนุษยศาสตร์' },
+  S:{ name:'นักช่วยเหลือสังคม', emoji:'🤝', color:'#7FB069', fac:'ครุศาสตร์/ศึกษาศาสตร์ · พยาบาลศาสตร์ · จิตวิทยา · สังคมสงเคราะห์' },
+  E:{ name:'นักบริหารจัดการ', emoji:'🚀', color:'#F2B84B', fac:'บริหารธุรกิจ · เศรษฐศาสตร์ · นิติศาสตร์ · รัฐศาสตร์ · การตลาด' },
+  C:{ name:'นักจัดระเบียบ', emoji:'📋', color:'#8E7CC3', fac:'บัญชี · การเงิน · สถิติ · การจัดการ' }
+};
+const RKEYS = ['R','I','A','S','E','C'];
+// คะแนนจุดแข็ง = แบบประเมิน + แท็กจากครู (แท็กละ 2) — สูตรเดียวกับแท็บจุดแข็งใน index.html
+function riasecScores(st){
+  const c = {};
+  RKEYS.forEach(k => c[k] = Number(st?.assessment?.scores?.[k] || 0) + (st?.tags || []).filter(t => t.type === k).length * 2);
+  return c;
+}
+// รางวัลที่บันทึกในระบบจุดแข็ง: note = ชื่อ|ระดับ|ปี|หมายเหตุ
+function parseAwardNote(note){ const p = String(note || '').split('|'); return { title:p[0] || '', level:p[1] || '', year:p[2] || '', extra:p[3] || '' }; }
+function toast(t){
+  const el = document.createElement('div'); el.className = 'toast'; el.setAttribute('role', 'status'); el.textContent = t;
+  document.body.appendChild(el); setTimeout(() => el.remove(), 2600);
+}
 
 function empty(icon, txt){ return `<div class="empty"><span class="e">${icon}</span>${esc(txt)}</div>`; }
 function sec(id, title, count, body, extra){
@@ -276,34 +314,36 @@ function render(d){
   h += `<div class="stats">
     ${stat(d.awards.length, 'ผลงาน/เกียรติบัตร', 'awards')}
     ${stat(d.scholarships.filter(x => x.status === 'approved').length, 'ทุนที่ได้รับ', 'schol')}
-    ${stat(d.quotas.length + d.chang_phueak.length, 'โควตา/โครงการ', 'quota')}
+    ${stat(d.quotas.length, 'สมัครโควตา', 'quota')}
     ${stat(admitCount, 'ที่ติดแล้ว', 'survey')}
     ${stat(cases.length, 'ครั้งที่ปรึกษา', 'cases')}
   </div>`;
 
   // ผลงาน
-  h += sec('awards', '🌟 ผลงานและเกียรติบัตร', d.awards.length ? `${d.awards.length} รายการ` : 'ยังไม่มี',
-    d.awards.length ? d.awards.map(a => row(
+  const awardTags = d.award_tags || [];
+  const awN = d.awards.length + awardTags.length;
+  h += sec('awards', '🌟 ผลงานและเกียรติบัตร', awN ? `${awN} รายการ` : 'ยังไม่มี',
+    awN ? d.awards.map(a => row(
       `<div class="t">${esc(a.title)}</div><div class="s">${[esc(a.prize_name), esc(a.category), yearBE(a.academic_year)].filter(Boolean).join(' · ')}</div>`,
-      a.level ? `<span class="badge">${esc(LEVEL[a.level] || a.level)}</span>` : '')).join('')
-    : empty('🌟', 'ยังไม่มีผลงานที่ครูยืนยันแล้ว'));
+      `${a.level ? `<span class="badge">${esc(LEVEL[a.level] || a.level)}</span>` : ''}<span class="badge">ยืนยันแล้ว</span>`)).join('')
+      + awardTags.map(t => { const p = parseAwardNote(t.note); return row(
+      `<div class="t">${esc(p.title || '-')}</div><div class="s">${[p.extra ? esc(p.extra) : '', p.year ? 'ปี ' + esc(p.year) : '', t.self_recorded ? 'นักเรียนบันทึกเอง' : 'บันทึกโดย ' + esc(t.tagger_name || 'ครู')].filter(Boolean).join(' · ')}</div>`,
+      p.level ? `<span class="badge warn">${esc(LEVEL[p.level] || p.level)}</span>` : ''); }).join('')
+    : empty('🌟', 'ยังไม่มีผลงานหรือเกียรติบัตร'));
 
   // ทุน
   h += sec('schol', '💰 ทุนการศึกษา', d.scholarships.length ? `${d.scholarships.length} รายการ` : 'ยังไม่มี',
     d.scholarships.length ? d.scholarships.map(x => row(
       `<div class="t">${esc(x.name)}</div><div class="s">${[esc(x.provider), x.amount ? `${Number(x.amount).toLocaleString('th-TH')} บาท` : '', yearBE(x.academic_year)].filter(Boolean).join(' · ')}</div>`,
-      `<span class="badge ${x.status === 'approved' ? '' : 'warn'}">${esc(SSTATUS[x.status] || x.status)}</span>`)).join('')
-    : empty('💰', 'ยังไม่เคยได้รับทุนหรือผ่านเข้ารอบ'));
+      `<span class="badge ${x.status === 'approved' ? '' : ['rejected', 'withdrawn'].includes(x.status) ? 'red' : 'warn'}">${esc(SSTATUS[x.status] || x.status)}</span>`)).join('')
+    : empty('💰', 'ยังไม่เคยสมัครทุนการศึกษา'));
 
-  // โควตา + ช้างเผือก
-  const qn = d.quotas.length + d.chang_phueak.length;
-  h += sec('quota', '🏫 โควตาและโครงการพิเศษ', qn ? `${qn} รายการ` : 'ยังไม่มี',
+  // โควตา
+  const qn = d.quotas.length;
+  h += sec('quota', '🏫 สมัครโควตา', qn ? `${qn} รายการ` : 'ยังไม่มี',
     qn ? d.quotas.map(q => row(
       `<div class="t">${esc(q.name)}</div><div class="s">${[esc(q.university), esc(q.applied_faculty || q.faculty), esc(q.applied_major)].filter(Boolean).join(' · ')}</div>`,
       `${esc(QSTATUS[q.status] || q.status)}${q.rank ? ` · อันดับ ${esc(q.rank)}` : ''}${q.disqualified ? ' <span class="badge red">ไม่ผ่านเกณฑ์</span>' : ''}`)).join('')
-      + d.chang_phueak.map(c => row(
-      `<div class="t">โครงการช้างเผือก ม.บูรพา ${yearBE(c.academic_year)}</div><div class="s">${['เลือก 1: ' + (c.major_choice_1 || '-'), c.major_choice_2 ? 'เลือก 2: ' + c.major_choice_2 : ''].filter(Boolean).map(esc).join(' · ')}</div>`,
-      esc(c.status || ''))).join('')
     : empty('🏫', 'ยังไม่เคยสมัครโควตา'));
 
   // เรียนต่อ
@@ -322,26 +362,67 @@ function render(d){
   const wn = d.work_permits.length + d.work_experiences.length;
   h += sec('work', '💼 การทำงานและหนังสืออนุญาต', wn ? `${wn} รายการ` : 'ยังไม่มี',
     wn ? d.work_permits.map(w => row(
-      `<div class="t">${esc(w.employer_name)}</div><div class="s">${[esc(w.job_description), (w.work_start_date ? fmtDate(w.work_start_date) : '') + (w.work_end_date ? ' – ' + fmtDate(w.work_end_date) : '')].filter(Boolean).join(' · ')}</div>`,
-      `<span class="badge">${esc(w.status === 'received' ? 'รับเรื่องแล้ว' : w.status)}</span>`)).join('')
+      `<div class="t">${esc(w.employer_name || '-')}</div><div class="s">${[esc(WP_TYPE[w.request_type] || ''), esc(w.job_description), (w.work_start_date ? fmtDate(w.work_start_date) : '') + (w.work_end_date ? ' – ' + fmtDate(w.work_end_date) : '')].filter(Boolean).join(' · ')}</div>`,
+      `<span class="badge ${w.status === 'cancelled' ? 'red' : ''}">${esc(WP_STATUS[w.status] || w.status)}</span>`)).join('')
       + d.work_experiences.map(w => row(
       `<div class="t">${esc(w.job_title)}</div><div class="s">ประสบการณ์ที่นักเรียนบันทึกเอง${w.start_date ? ' · ' + fmtDate(w.start_date) : ''}${w.end_date ? ' – ' + fmtDate(w.end_date) : ''}</div>`)).join('')
     : empty('💼', 'ยังไม่เคยขอหนังสืออนุญาตทำงาน'));
 
   // TGAT
-  h += sec('tgat', '📝 ฝึกข้อสอบ TGAT/TPAT', d.tgat.length ? `${d.tgat.length} ครั้ง` : 'ยังไม่มี',
+  const tgTotal = Number(d.tgat_total || d.tgat.length);
+  h += sec('tgat', '📝 ฝึกข้อสอบ TGAT/TPAT', tgTotal ? `${tgTotal} ครั้ง` : 'ยังไม่มี',
     d.tgat.length ? d.tgat.map((t, i) => row(
-      `<div class="t">ครั้งที่ ${d.tgat.length - i}</div>`,
-      `${t.percentage != null ? esc(Math.round(Number(t.percentage))) + '%' : ''}${t.question_count ? ` (${esc(t.correct_count)}/${esc(t.question_count)})` : ''} · ${fmtTs(t.completed_at)}`)).join('')
+      `<div class="t">ครั้งที่ ${tgTotal - i}${(t.subjects || []).length ? ` <span class="s" style="font-weight:400">· ${esc(t.subjects.join(' · '))}</span>` : ''}</div>`,
+      `${t.percentage != null ? esc(Math.round(Number(t.percentage))) + '%' : ''}${t.max_score ? ` (${esc(t.raw_score)}/${esc(t.max_score)})` : t.question_count ? ` (${esc(t.correct_count)}/${esc(t.question_count)})` : ''} · ${fmtTs(t.completed_at)}`)).join('')
+      + (tgTotal > d.tgat.length ? `<div class="hint" style="padding-top:6px">แสดง ${d.tgat.length} ครั้งล่าสุด จากทั้งหมด ${tgTotal} ครั้ง</div>` : '')
     : empty('📝', 'ยังไม่เคยฝึกข้อสอบในระบบ'));
 
   // งานที่มอบหมาย
-  const as = d.assignments || { total: 0, done: 0, late: [] };
+  const as = d.assignments || { total: 0, done: 0, late: [], items: [] };
+  const now = Date.now();
   h += sec('assign', '📚 งานที่ได้รับมอบหมาย', as.total ? `ส่งแล้ว ${as.done}/${as.total}` : 'ยังไม่มี',
-    as.total ? (as.late.length
-      ? as.late.map(l => row(`<span class="badge red">ค้างส่ง</span> ${esc(l.title)}`, 'เลยกำหนด ' + fmtTs(l.due_at))).join('')
-      : empty('✅', 'ส่งครบทุกงานที่เลยกำหนดแล้ว'))
-    : empty('📚', 'ยังไม่มีงานที่มอบหมายให้ห้องนี้'));
+    (as.items || []).length
+      ? `<div class="hint" style="padding-top:6px">ติ๊กงานที่อยากให้ใส่เนื้อหาไว้ใน "สรุปสำหรับให้ AI วิเคราะห์" ด้านล่าง</div>`
+        + as.items.map((a, i) => {
+          const has = a.submitted && (a.text_answer || a.file_name || a.external_url);
+          const late = !a.submitted && a.due_at && new Date(a.due_at).getTime() < now;
+          const st = a.submitted
+            ? `<span class="badge">ส่งแล้ว${a.text_answer ? ' (ข้อความ)' : a.file_name ? ' (ไฟล์)' : a.external_url ? ' (ลิงก์)' : ''}</span>`
+            : late ? `<span class="badge red">ค้างส่ง</span>` : `<span class="badge warn">ยังไม่ส่ง</span>`;
+          return `<label class="chk"><input type="checkbox" class="asg-pick" data-i="${i}" ${has ? 'checked' : 'disabled'} aria-label="ใส่งาน ${esc(a.title)} ในสรุป">
+            <span class="grow"><span class="t" style="font-weight:600">${esc(a.title)}</span><br><span class="hint">${a.submitted ? 'ส่งเมื่อ ' + fmtTs(a.submitted_at) : a.due_at ? 'กำหนดส่ง ' + fmtTs(a.due_at) : 'ไม่มีกำหนดส่ง'}</span></span>${st}</label>`;
+        }).join('')
+      : empty('📚', 'ยังไม่มีงานที่มอบหมายให้ห้องนี้'));
+
+  // จุดแข็ง RIASEC
+  const st = d.strength || {}, sc = riasecScores(st), stTags = st.tags || [];
+  const smax = Math.max(8, ...Object.values(sc));
+  const top3 = [...RKEYS].sort((a, b) => sc[b] - sc[a]).slice(0, 3).filter(k => sc[k] > 0);
+  h += sec('strength', '🧩 จุดแข็ง (RIASEC)', st.assessment ? 'ทำแบบประเมิน ' + fmtTs(st.assessment.done_at) : stTags.length ? 'จากแท็กของครู' : 'ยังไม่มี',
+    (st.assessment || stTags.length)
+      ? (st.assessment ? '' : `<div class="hint" style="padding-top:6px">⚠️ ยังไม่ได้ทำแบบประเมิน ผลนี้มาจากแท็กของครูเท่านั้น</div>`)
+        + `<div style="padding-top:6px">` + RKEYS.map(k => `<div class="stbar"><span>${RIASEC[k].emoji} ${RIASEC[k].name}</span><div class="track"><div class="fill" style="width:${Math.round(sc[k] / smax * 100)}%;background:${RIASEC[k].color}"></div></div><b style="text-align:right">${sc[k]}</b></div>`).join('') + `</div>`
+        + top3.map((k, i) => `<div class="sttop" style="border-color:${RIASEC[k].color}"><b>อันดับ ${i + 1}: ${RIASEC[k].emoji} ${RIASEC[k].name}</b><br>คณะ/สาขาที่น่ามอง: ${RIASEC[k].fac}</div>`).join('')
+        + (stTags.length ? `<div style="margin-top:8px"><span class="hint">จุดแข็งที่ครูมองเห็น:</span><br>` + stTags.map(t => `<span class="tagchip" style="background:${RIASEC[t.type].color}22;color:${RIASEC[t.type].color}">${RIASEC[t.type].emoji} ${RIASEC[t.type].name}${t.note ? ' · ' + esc(t.note) : ''} <small>(${esc(t.tagger_name || 'ครู')})</small></span>`).join('') + `</div>` : '')
+        + `<div class="hint" style="padding-top:6px">คะแนน = แบบประเมิน + แท็กจากครู (แท็กละ 2 คะแนน)</div>`
+      : empty('🧩', 'ยังไม่ได้ทำแบบประเมินจุดแข็ง และยังไม่มีแท็กจากครู'));
+
+  // ฝึกซ้อมสัมภาษณ์
+  const ivs = d.interviews || [];
+  h += sec('iv', '🎤 ฝึกซ้อมสัมภาษณ์', ivs.length ? `${ivs.length} ครั้ง` : 'ยังไม่มี',
+    ivs.length ? ivs.map(x => row(
+      `<div class="t">${esc(x.emoji ? x.emoji + ' ' : '')}${esc(x.category)}${x.kind === 'mock' ? ' <span class="s" style="font-weight:400">(นัดซ้อมกับครู)</span>' : ''}</div><div class="s">${fmtTs(x.at)}</div>`,
+      `<span class="badge ${x.status === 'reviewed' ? '' : 'warn'}">${esc(IV_STATUS[x.status] || x.status)}</span>`)).join('')
+    : empty('🎤', 'ยังไม่เคยฝึกซ้อมสัมภาษณ์'));
+
+  // ทะเบียนกลุ่มเปราะบาง: แสดงเฉพาะเมื่อนักเรียนอยู่ในทะเบียน
+  if (d.vulnerable){
+    const v = d.vulnerable;
+    h += sec('vul', '🛟 ทะเบียนกลุ่มเปราะบาง', v.academic_year ? 'ปี ' + v.academic_year : '',
+      row(`อยู่ในทะเบียนกลุ่มเปราะบาง${v.urgency_level ? ` · ระดับความเร่งด่วน <b>${esc(v.urgency_level)}/5</b>` : ''}`,
+        `<span class="badge ${v.verified ? '' : 'warn'}">${v.verified ? 'ยืนยันแล้ว' : 'รอยืนยัน'}</span>`)
+      + `<div class="hint" style="padding-top:4px">ดูรายละเอียดได้ที่ <a href="vulnerable-registry-teacher.html">หน้าทะเบียนกลุ่มเปราะบาง</a></div>`);
+  }
 
   // บันทึกให้คำปรึกษา (เฉพาะครูแนะแนว)
   h += sec('cases', '💬 บันทึกให้คำปรึกษา', cases.length ? `${cases.length} ครั้ง` : 'ยังไม่มี',
@@ -358,7 +439,29 @@ function render(d){
     : empty('💬', 'ยังไม่เคยมีบันทึกให้คำปรึกษา'),
     ' <span class="lock">🔒 เฉพาะครูแนะแนว</span>');
 
+  // สรุปสำหรับให้ AI วิเคราะห์ (สร้างจากข้อมูลบนหน้านี้ ไม่เรียก API ใด ๆ ไม่มีค่าใช้จ่าย · ไม่รวมบันทึกให้คำปรึกษา)
+  h += sec('ai', '🤖 สรุปสำหรับให้ AI วิเคราะห์', '',
+    `<div class="hint" style="padding:6px 0">คัดลอกข้อความนี้ไปวางในแชท AI ฟรี (เช่น Claude.ai) เพื่อขอคำแนะนำเชิงแนะแนว · ไม่รวมบันทึกให้คำปรึกษา</div>
+     <div class="sumbox" id="aiSum"></div>
+     <div class="btnrow"><button class="btn primary" type="button" id="btnCopySum">📋 คัดลอกสรุปนี้</button>
+       <button class="btn" type="button" id="btnOpenClaude">🔗 คัดลอกแล้วเปิด Claude.ai</button></div>`);
+
   $('app').innerHTML = h;
+  const refreshSum = () => { const b = $('aiSum'); if (b) b.textContent = buildSummary(d); };
+  refreshSum();
+  document.querySelectorAll('.asg-pick').forEach(cb => cb.addEventListener('change', refreshSum));
+  const copySum = (after) => {
+    const text = $('aiSum').textContent || '';
+    (navigator.clipboard ? navigator.clipboard.writeText(text) : Promise.reject())
+      .then(() => { toast('คัดลอกสรุปแล้ว นำไปวางในแชท AI ได้เลยค่ะ'); if (after) after(); })
+      .catch(() => { toast('คัดลอกไม่สำเร็จ ลองลากเลือกข้อความแล้วคัดลอกเองนะคะ'); if (after) after(); });
+  };
+  $('btnCopySum').addEventListener('click', () => copySum());
+  $('btnOpenClaude').addEventListener('click', () => {
+    const w = window.open('https://claude.ai/new', '_blank', 'noopener');   // เปิดก่อนเพื่อไม่ให้เบราว์เซอร์บล็อกป๊อปอัป
+    copySum();
+    if (!w) toast('เบราว์เซอร์บล็อกหน้าต่างใหม่ เปิด claude.ai เองได้เลยค่ะ');
+  });
 
   document.querySelectorAll('[data-go]').forEach(b => b.addEventListener('click', () => {
     const t = $(b.dataset.go); if (t) t.scrollIntoView({ behavior: 'smooth' });
@@ -375,6 +478,47 @@ function render(d){
       box.style.display = 'block'; b.textContent = 'ซ่อนเนื้อหา';
     } else { box.style.display = 'none'; b.textContent = 'ดูเนื้อหา'; }
   }));
+}
+
+function buildSummary(d){
+  const s = d.student, out = [], add = (t, rows) => { if (rows && rows.length){ out.push('', '── ' + t + ' ──'); rows.forEach(r => out.push('• ' + r)); } };
+  const items = (d.assignments && d.assignments.items) || [];
+  add('📝 งานมอบหมาย', items.map(a => `${a.title}: ${a.submitted ? 'ส่งแล้ว' : 'ยังไม่ส่ง'}`));
+  const picked = [...document.querySelectorAll('.asg-pick:checked')].map(cb => items[Number(cb.dataset.i)]).filter(Boolean);
+  add('✅ เนื้อหางานที่เลือกไว้', picked.map(a => {
+    const p = [];
+    if (a.text_answer) p.push(`คำตอบ: "${a.text_answer}"`);
+    if (a.file_name) p.push('ไฟล์ที่ส่ง: ' + a.file_name);
+    if (a.external_url) p.push('ลิงก์: ' + a.external_url);
+    return `${a.title} (ส่งเมื่อ ${fmtTs(a.submitted_at)}) — ${p.join(' / ')}`;
+  }));
+  add('🎓 การเรียนต่อ', (d.surveys || []).map(sv => {
+    const adm = (sv.admissions || []).map(a => [a.institution, a.faculty, a.major].filter(Boolean).join(' ') + (a.is_chosen ? ' (เลือกเรียน)' : ''));
+    return `${sv.title}${sv.academic_year ? ' ปี ' + sv.academic_year : ''}: ${adm.length ? 'ติด ' + adm.join(', ') : [sv.status, sv.institution, sv.program].filter(Boolean).join(' · ') || 'ตอบแล้ว'}`;
+  }));
+  const sc = riasecScores(d.strength), top = [...RKEYS].sort((a, b) => sc[b] - sc[a]).slice(0, 3).filter(k => sc[k] > 0);
+  const tags = (d.strength && d.strength.tags) || [];
+  add('🧩 จุดแข็ง (RIASEC)', [
+    top.length ? 'อันดับต้น ๆ: ' + top.map(k => `${RIASEC[k].name} (${sc[k]})`).join(', ') : '',
+    tags.length ? 'แท็กจากครู: ' + tags.map(t => RIASEC[t.type].name + (t.note ? ` (${t.note})` : '')).join(', ') : ''
+  ].filter(Boolean));
+  add('🏆 เกียรติบัตร / รางวัล', [
+    ...d.awards.map(a => [a.title, a.prize_name, LEVEL[a.level] || a.level, a.academic_year ? 'ปี ' + a.academic_year : ''].filter(Boolean).join(' · ')),
+    ...(d.award_tags || []).map(t => { const p = parseAwardNote(t.note); return [p.title, LEVEL[p.level] || p.level, p.year ? 'ปี ' + p.year : '', p.extra].filter(Boolean).join(' · '); })
+  ]);
+  const tgTotal = Number(d.tgat_total || d.tgat.length);
+  if (tgTotal) add('🎯 ฝึกข้อสอบ TGAT/TPAT', [`ทำไปแล้ว ${tgTotal} ครั้ง`, ...d.tgat.slice(0, 3).map(t => `${fmtTs(t.completed_at)} — ${(t.subjects || []).join('/')}: ${t.percentage != null ? Math.round(Number(t.percentage)) + '%' : '-'}`)]);
+  add('🏫 สมัครโควตา', d.quotas.map(q => `${[q.name, q.university, q.applied_faculty || q.faculty, q.applied_major].filter(Boolean).join(' · ')} — ${QSTATUS[q.status] || q.status}`));
+  add('💰 ทุนการศึกษา', d.scholarships.map(x => `${x.name} — ${SSTATUS[x.status] || x.status}`));
+  add('💼 การทำงาน/ฝึกงาน', [
+    ...d.work_permits.map(w => `${WP_TYPE[w.request_type] || ''} ${w.employer_name || '-'} — ${WP_STATUS[w.status] || w.status}`.trim()),
+    ...d.work_experiences.map(w => `${w.job_title} (นักเรียนบันทึกเอง)`)
+  ]);
+  add('🎤 ฝึกซ้อมสัมภาษณ์', (d.interviews || []).map(x => `${x.category}${x.kind === 'mock' ? ' (นัดซ้อมกับครู)' : ''} — ${IV_STATUS[x.status] || x.status}`));
+  if (d.vulnerable) add('🛟 ทะเบียนกลุ่มเปราะบาง', [`อยู่ในทะเบียน${d.vulnerable.urgency_level ? ' · ระดับความเร่งด่วน ' + d.vulnerable.urgency_level + '/5' : ''}`]);
+  const head = `ข้อมูลนักเรียน: ${s.display_name}${s.nickname ? ' (' + s.nickname + ')' : ''} รหัส ${s.student_id || s.username || '-'} ห้อง ${s.class_room || '-'}`;
+  return [head, ...(out.length ? out : ['', 'ยังไม่มีข้อมูลในระบบย่อยใด ๆ ของนักเรียนคนนี้'])].join('\n')
+    + '\n\nโปรดช่วยวิเคราะห์ภาพรวมของนักเรียนคนนี้จากข้อมูลทุกด้านข้างต้น (จุดแข็ง ความสนใจ กิจกรรม/รางวัล เส้นทางการศึกษาต่อ) แล้วให้คำแนะนำเชิงแนะแนว (ตอบเป็นภาษาไทย ไม่เกิน 300 คำ)';
 }
 
 init();
