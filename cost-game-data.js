@@ -10,6 +10,7 @@ const SRC = {
   custom:{t:"ตัวเลขที่นักเรียนกรอกเอง (ไม่ได้ตรวจกับประกาศของมหาวิทยาลัย)", u:""},
   druProg:{t:"รายชื่อสาขาภาคปกติ ม.ราชภัฏธนบุรี ศูนย์สมุทรปราการ (บางสาขาอาจไม่เปิดรับทุกปี)", u:"https://sp.dru.ac.th/new/?page_id=7496"},
   kmitlAgri:{t:"ประกาศ สจล. รับสมัคร TCAS รอบ 1 คณะเทคโนโลยีการเกษตร ปีการศึกษา 2569 (ค่าธรรมเนียมเหมาจ่ายต่อภาค)", u:"https://www.reg.kmitl.ac.th/TCAS_old/news/files/2569_1_news1_4079_2025_10_16-17-33-50_9c3b4.pdf"},
+  upTcas:{t:"ค่าเทอม วิทยาลัยการศึกษา ม.พะเยา จากข้อมูล ทปอ./mytcas TCAS70 (ปริญญาเดียว 18,000 · 2 ปริญญา 24,000 ต่อภาค · ปรับปรุง 6 พ.ย. 2569)", u:"https://dreamnesthub.com/universities/university-of-phayao/school-of-education"},
   upLaw:{t:"หน้าหลักสูตรนิติศาสตรบัณฑิต คณะนิติศาสตร์ ม.พะเยา (ภาคปกติ 15,000 · ฤดูร้อน 7,500 ไม่ระบุปี)", u:"https://law.up.ac.th/Bachelor.aspx"},
   suTR:{t:"ค่าเทอม ม.ศิลปากร ปีการศึกษา 2567 แยกคณะ (ไทยรัฐ · กลุ่มคณะที่ไม่ใช่โครงการปกติแบบเดิม ยังไม่รวมค่าบำรุงมหาวิทยาลัย 4,000)", u:"https://www.thairath.co.th/news/society/2788757"},
   hcu:  {t:"ตารางค่าธรรมเนียมเหมาจ่าย ป.ตรี ปี 2569 ม.หัวเฉียวเฉลิมพระเกียรติ", u:"https://admission.hcu.ac.th/Files/payment.pdf"},
@@ -229,7 +230,8 @@ const P = {
   up_ict:    {u:"up", name:"เทคโนโลยีสารสนเทศและการสื่อสาร (IT / วิทยาการคอมพิวเตอร์ / วิทยาการข้อมูล)", sem:18000, field:"sci", src:"upGuide"},
   up_arch:   {u:"up", name:"สถาปัตยกรรม / สถาปัตยกรรมภายใน", sem:21000, field:"arch", src:"upGuide"},
   up_art:    {u:"up", name:"ศิลปะและการออกแบบ", sem:21000, field:"art", src:"upGuide"},
-  up_edu:    {u:"up", name:"วิทยาลัยการศึกษา (หลักสูตร 2 ปริญญา)", sem:24000, field:"edu", src:"upGuide", note:"เป็นหลักสูตร 2 ปริญญา ควรตรวจจำนวนปีที่เรียนกับ ม.พะเยา (เกมคิด 4 ปี)"},
+  up_eledu:  {u:"up", name:"การประถมศึกษา (ปริญญาเดียว · ครูประถม)", sem:18000, field:"edu", src:"upTcas", note:"ฤดูร้อน 9,000"},
+  up_edu:    {u:"up", name:"วิทยาลัยการศึกษา หลักสูตร 2 ปริญญา (ครู + คณิต / วิทย์ / ไทย / อังกฤษ / จีน ฯลฯ)", sem:24000, field:"edu", src:"upTcas", note:"เป็นหลักสูตร 2 ปริญญา ควรตรวจจำนวนปีที่เรียนกับ ม.พะเยา (เกมคิด 4 ปี)"},
   cmu_eng:   {u:"cmu", name:"วิศวกรรมศาสตร์ (โยธา ไฟฟ้า เครื่องกล คอมพิวเตอร์ ฯลฯ)", sem:23000, field:"eng", src:"cmuFac", note:"หุ่นยนต์และ AI 35,000"},
   cmu_camt:  {u:"cmu", name:"วิทยาลัยศิลปะ สื่อ และเทคโนโลยี (ดิจิทัลเกม แอนิเมชัน ฯลฯ)", sem:33000, field:"sci", src:"cmuFac", note:"ดิจิทัลเกม / แอนิเมชัน 38,000"},
   cmu_arch:  {u:"cmu", name:"สถาปัตยกรรมศาสตร์ (สถาปัตย์ ภูมิสถาปัตย์ ออกแบบอุตสาหกรรม ภายใน)", sem:30000, field:"arch", src:"cmuFac"},
@@ -259,7 +261,7 @@ const TRACKS = {
   soc:   {name:"สังคม นิเทศ กฎหมาย", icon:"⚖️", priv:["hcu_law","hcu_comm","hcu_sw","dru_law","dru_comm","dru_pa"], pub:["kmitl_agcomm","su_dev","su_comm","su_pa","buu_law","buu_pol","buu_soc","buu_comm","up_law","up_pol","up_comm","cmu_law","cmu_pol","cmu_soc","cmu_mc","nu_law","nu_soc","nu_comm","psuh_law","kku_law","kku_soc","msu_law","msu_pol","msu_soc","msu_comm"]},
   /* หมวดตามวิชา TPAT · ทาง A ตอนนี้มีราชภัฏธนบุรี ศูนย์สมุทรปราการ */
   arch:  {name:"สถาปัตย์ ศิลปะ การออกแบบ (TPAT2, TPAT4)", icon:"📐", priv:["dru_art"], pub:["su_arch","su_decor","su_paint","kmitl_arch","up_arch","up_art","cmu_arch","cmu_art","nu_arch","nu_art","psuh_arch","kku_arch","kku_art","msu_arch","msu_art","buu_art"]},
-  edu:   {name:"ครุศาสตร์ ศึกษาศาสตร์ (TPAT5)", icon:"🍎", priv:["dru_edu"], pub:["su_edu","kmitl_edu","rmutk_tedu","buu_edu","up_edu","cmu_edu","nu_edu","kku_edu","msu_edu"]}
+  edu:   {name:"ครุศาสตร์ ศึกษาศาสตร์ (TPAT5)", icon:"🍎", priv:["dru_edu"], pub:["su_edu","kmitl_edu","rmutk_tedu","buu_edu","up_eledu","up_edu","cmu_edu","nu_edu","kku_edu","msu_edu"]}
 };
 
 const HOUSING = {home:"อยู่บ้าน ไป-กลับทุกวัน", dorm_in:"หอใน (หอของมหาวิทยาลัย)", dorm_out:"หอนอก (เช่ารายเดือน)"};
