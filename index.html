@@ -642,6 +642,9 @@ textarea.csvbox{font-family:monospace;font-size:.82rem;min-height:120px}
     <h2 id="annModalTitle">ประกาศข่าวใหม่</h2>
     <div id="annMsg" class="msg"></div>
     <div class="field"><label for="annTitle">หัวข้อข่าว *</label><input id="annTitle" placeholder="เช่น กำหนดการยื่นพอร์ต TCAS รอบ 1"></div>
+    <div class="field"><label for="annCat">หมวดหมู่</label>
+      <select id="annCat"><option value="">ไม่ระบุหมวด</option><option value="quota">โควตา</option><option value="tcas">TCAS</option><option value="scholarship">ทุนการศึกษา</option><option value="award">เก็บเกียรติบัตร</option></select>
+    </div>
     <div class="field"><label for="annContent">เนื้อหา</label><textarea id="annContent"></textarea></div>
     <div class="field"><label>สิ่งที่แนบ (ไม่บังคับ)</label>
       <div class="seg">
@@ -2352,7 +2355,7 @@ function openAnnModal(id){
   editingAnnId = id; msg("annMsg","");
   const a = id? announcements.find(x=>x.id===id) : null;
   $("annModalTitle").textContent = a? "แก้ไขข่าว" : "ประกาศข่าวใหม่";
-  $("annTitle").value = a?.title||""; $("annContent").value = a?.content||"";
+  $("annTitle").value = a?.title||""; $("annCat").value = a?.category||""; $("annContent").value = a?.content||"";
   $("annFile").value = ""; $("annUrl").value = a?.external_url||"";
   $("annActive").checked = a? a.is_active : true;
   $("annPublic").checked = !!a?.is_public;
@@ -2368,7 +2371,7 @@ $("btnAnnSave").onclick = async ()=>{
   session = freshSession;
   const title = $("annTitle").value.trim();
   if(!title) return msg("annMsg","ใส่หัวข้อข่าวก่อนนะคะ","err");
-  const base = { title, content:$("annContent").value.trim()||null, is_active:$("annActive").checked, is_public:$("annPublic").checked };
+  const base = { title, category:$("annCat").value||null, content:$("annContent").value.trim()||null, is_active:$("annActive").checked, is_public:$("annPublic").checked };
   if(base.is_public && /รหัสผ่าน|password|pass\s*:/i.test(title+" "+(base.content||""))
      && !confirm("ข่าวนี้มีคำว่า \"รหัสผ่าน\" ถ้าเผยแพร่สาธารณะ คนนอกจะเห็นด้วย\nยืนยันจะเผยแพร่สาธารณะไหมคะ?")) return;
   $("btnAnnSave").disabled = true;

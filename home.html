@@ -207,7 +207,7 @@ button.next:hover{background:#D5EAE3}
     </div>
     <div class="spacer"></div>
     <div class="userchip hidden" id="uChip"><span id="uName"></span><span class="role" id="uRole"></span></div>
-    <a class="hbtn go" href="index.html">เข้าระบบงานทั้งหมด</a>
+    <a class="hbtn go" href="index.html">เข้าสู่หน้าหลัก</a>
     <button type="button" class="hbtn out hidden" id="btnLogout">ออกจากระบบ</button>
   </div>
 </header>
@@ -335,7 +335,8 @@ var SHORTCUTS=[
   {files:['interview.html'],icon:'🗣',title:'ซ้อมสัมภาษณ์',sub:{student:'ฝึกตอบคำถาม ส่งให้ครูตรวจ',staff:'ตรวจการซ้อมของนักเรียน'},c:'#4E9BB9'}
 ];
 
-var S={user:null,profile:null,staff:false,today:'',news:[],reads:{},events:[],apps:[],
+var NEWS_CATS=[['all','ทั้งหมด'],['quota','โควตา'],['tcas','TCAS'],['scholarship','ทุนการศึกษา'],['award','เก็บเกียรติบัตร']];
+var S={newsCat:'all',user:null,profile:null,staff:false,today:'',news:[],reads:{},events:[],apps:[],
   filter:'all',ym:null,selDay:null,openNews:null,editId:null,editCat:'national',pinId:null,loadErr:''};
 
 /* ---------- ตัวช่วย ---------- */
@@ -384,7 +385,7 @@ function showMsg(id,text,kind){var el=$(id);if(!text){el.className='msg hidden';
 
 /* ---------- โหลดข้อมูล ---------- */
 async function loadNews(){
-  var r=await sb.from('announcements').select('id,title,content,file_path,file_name,external_url,is_active,is_pinned,pinned_until,created_by,creator_name,created_at')
+  var r=await sb.from('announcements').select('id,title,content,category,file_path,file_name,external_url,is_active,is_pinned,pinned_until,created_by,creator_name,created_at')
     .eq('is_active',true).order('created_at',{ascending:false}).limit(60);
   if(r.error)throw r.error;
   S.news=r.data||[];
@@ -516,7 +517,9 @@ function newsBody(n,inPin){
   return '<div class="news-body">'+(n.content?'<p>'+esc(n.content)+'</p>':'')+(acts?'<div class="acts">'+acts+'</div>':'')+'</div>';
 }
 function renderNews(){
-  var h='<div class="panel-h"><h2 id="hNews">📢 ข่าวประชาสัมพันธ์</h2><a href="index.html#announce" style="font-size:.9rem;font-weight:600">ดูข่าวทั้งหมด</a></div>';
+  var h='<div class="panel-h"><h2 id="hNews">📢 ข่าวประชาสัมพันธ์</h2><a href="index.html#announce" style="font-size:.9rem;font-weight:600">ดูข่าวทั้งหมด</a></div>'+
+    '<div class="chips" role="group" aria-label="กรองข่าวตามหมวด" style="margin-bottom:12px">'+NEWS_CATS.map(function(c){
+      return '<button type="button" class="chip'+(S.newsCat===c[0]?' active':'')+'" data-ncat="'+c[0]+'" aria-pressed="'+(S.newsCat===c[0])+'">'+c[1]+'</button>';}).join('')+'</div>';
   var pins=pinnedNews(), pinIds={};
   pins.forEach(function(n){
     pinIds[n.id]=true;
@@ -527,8 +530,8 @@ function renderNews(){
       '<p class="nm">'+esc(n.creator_name||'')+(n.creator_name?' · ':'')+esc(thDate(tsToBkkDate(n.created_at)))+
       (n.pinned_until?' · ปักหมุดถึง '+esc(thDate(n.pinned_until)):'')+'</p>'+newsBody(n,true)+'</article>';
   });
-  var rest=S.news.filter(function(n){return !pinIds[n.id];}).slice(0,NEWS_N);
-  if(!rest.length&&!pins.length)return h+'<div class="empty">ยังไม่มีข่าวประชาสัมพันธ์</div>';
+  var rest=S.news.filter(function(n){return !pinIds[n.id]&&(S.newsCat==='all'||n.category===S.newsCat);}).slice(0,NEWS_N);
+  if(!rest.length&&!pins.length)return h+'<div class="empty">'+(S.newsCat==='all'?'ยังไม่มีข่าวประชาสัมพันธ์':'ยังไม่มีข่าวในหมวดนี้')+'</div>';
   h+='<div>';
   rest.forEach(function(n){
     var d=tsToBkkDate(n.created_at), p=parts(d), open=S.openNews===n.id, unread=!S.reads[n.id];
@@ -791,7 +794,7 @@ async function setPin(id,on,until,btn){
 
 /* ---------- จับคลิกในหน้า ---------- */
 $('root').addEventListener('click',function(ev){
-  var el=ev.target.closest('[data-act],[data-filter],[data-day],[data-ev],[data-news],[data-att],[data-pin],[data-unpin]');
+  var el=ev.target.closest('[data-act],[data-filter],[data-ncat],[data-day],[data-ev],[data-news],[data-att],[data-pin],[data-unpin]');
   if(!el)return;
   if(el.hasAttribute('data-act')){
     var a=el.getAttribute('data-act');
@@ -805,6 +808,7 @@ $('root').addEventListener('click',function(ev){
     }
     return;
   }
+  if(el.hasAttribute('data-ncat')){S.newsCat=el.getAttribute('data-ncat');render();return;}
   if(el.hasAttribute('data-filter')){S.filter=el.getAttribute('data-filter');render();return;}
   if(el.hasAttribute('data-day')){var d=el.getAttribute('data-day');S.selDay=S.selDay===d?null:d;render();return;}
   if(el.hasAttribute('data-ev')){showEvent(el.getAttribute('data-ev'));return;}
