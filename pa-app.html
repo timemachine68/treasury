@@ -100,6 +100,255 @@ input[type=date]{width:100%;font:inherit;font-size:16px;color:var(--ink);backgro
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script>var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],f={},c=function(t,r){o=function(t){for(var r=new Array(t),e=0;e<t;e+=1){r[e]=new Array(t);for(var n=0;n<t;n+=1)r[e][n]=null}return r}(i=4*e+17),l(0,0),l(i-7,0),l(0,i-7),s(),h(),d(t,r),e>=7&&v(t),null==a&&(a=p(e,n,u)),w(a,r)},l=function(t,r){for(var e=-1;e<=7;e+=1)if(!(t+e<=-1||i<=t+e))for(var n=-1;n<=7;n+=1)r+n<=-1||i<=r+n||(o[t+e][r+n]=0<=e&&e<=6&&(0==n||6==n)||0<=n&&n<=6&&(0==e||6==e)||2<=e&&e<=4&&2<=n&&n<=4)},h=function(){for(var t=8;t<i-8;t+=1)null==o[t][6]&&(o[t][6]=t%2==0);for(var r=8;r<i-8;r+=1)null==o[6][r]&&(o[6][r]=r%2==0)},s=function(){for(var t=B.getPatternPosition(e),r=0;r<t.length;r+=1)for(var n=0;n<t.length;n+=1){var i=t[r],a=t[n];if(null==o[i][a])for(var u=-2;u<=2;u+=1)for(var f=-2;f<=2;f+=1)o[i+u][a+f]=-2==u||2==u||-2==f||2==f||0==u&&0==f}},v=function(t){for(var r=B.getBCHTypeNumber(e),n=0;n<18;n+=1){var a=!t&&1==(r>>n&1);o[Math.floor(n/3)][n%3+i-8-3]=a}for(n=0;n<18;n+=1){a=!t&&1==(r>>n&1);o[n%3+i-8-3][Math.floor(n/3)]=a}},d=function(t,r){for(var e=n<<3|r,a=B.getBCHTypeInfo(e),u=0;u<15;u+=1){var f=!t&&1==(a>>u&1);u<6?o[u][8]=f:u<8?o[u+1][8]=f:o[i-15+u][8]=f}for(u=0;u<15;u+=1){f=!t&&1==(a>>u&1);u<8?o[8][i-u-1]=f:u<9?o[8][15-u-1+1]=f:o[8][15-u-1]=f}o[i-8][8]=!t},w=function(t,r){for(var e=-1,n=i-1,a=7,u=0,f=B.getMaskFunction(r),c=i-1;c>0;c-=2)for(6==c&&(c-=1);;){for(var g=0;g<2;g+=1)if(null==o[n][c-g]){var l=!1;u<t.length&&(l=1==(t[u]>>>a&1)),f(n,c-g)&&(l=!l),o[n][c-g]=l,-1==(a-=1)&&(u+=1,a=7)}if((n+=e)<0||i<=n){n-=e,e=-e;break}}},p=function(t,r,e){for(var n=A.getRSBlocks(t,r),o=b(),i=0;i<e.length;i+=1){var a=e[i];o.put(a.getMode(),4),o.put(a.getLength(),B.getLengthInBits(a.getMode(),t)),a.write(o)}var u=0;for(i=0;i<n.length;i+=1)u+=n[i].dataCount;if(o.getLengthInBits()>8*u)throw"code length overflow. ("+o.getLengthInBits()+">"+8*u+")";for(o.getLengthInBits()+4<=8*u&&o.put(0,4);o.getLengthInBits()%8!=0;)o.putBit(!1);for(;!(o.getLengthInBits()>=8*u||(o.put(236,8),o.getLengthInBits()>=8*u));)o.put(17,8);return function(t,r){for(var e=0,n=0,o=0,i=new Array(r.length),a=new Array(r.length),u=0;u<r.length;u+=1){var f=r[u].dataCount,c=r[u].totalCount-f;n=Math.max(n,f),o=Math.max(o,c),i[u]=new Array(f);for(var g=0;g<i[u].length;g+=1)i[u][g]=255&t.getBuffer()[g+e];e+=f;var l=B.getErrorCorrectPolynomial(c),h=k(i[u],l.getLength()-1).mod(l);for(a[u]=new Array(l.getLength()-1),g=0;g<a[u].length;g+=1){var s=g+h.getLength()-a[u].length;a[u][g]=s>=0?h.getAt(s):0}}var v=0;for(g=0;g<r.length;g+=1)v+=r[g].totalCount;var d=new Array(v),w=0;for(g=0;g<n;g+=1)for(u=0;u<r.length;u+=1)g<i[u].length&&(d[w]=i[u][g],w+=1);for(g=0;g<o;g+=1)for(u=0;u<r.length;u+=1)g<a[u].length&&(d[w]=a[u][g],w+=1);return d}(o,n)};f.addData=function(t,r){var e=null;switch(r=r||"Byte"){case"Numeric":e=M(t);break;case"Alphanumeric":e=x(t);break;case"Byte":e=m(t);break;case"Kanji":e=L(t);break;default:throw"mode:"+r}u.push(e),a=null},f.isDark=function(t,r){if(t<0||i<=t||r<0||i<=r)throw t+","+r;return o[t][r]},f.getModuleCount=function(){return i},f.make=function(){if(e<1){for(var t=1;t<40;t++){for(var r=A.getRSBlocks(t,n),o=b(),i=0;i<u.length;i++){var a=u[i];o.put(a.getMode(),4),o.put(a.getLength(),B.getLengthInBits(a.getMode(),t)),a.write(o)}var g=0;for(i=0;i<r.length;i++)g+=r[i].dataCount;if(o.getLengthInBits()<=8*g)break}e=t}c(!1,function(){for(var t=0,r=0,e=0;e<8;e+=1){c(!0,e);var n=B.getLostPoint(f);(0==e||t>n)&&(t=n,r=e)}return r}())},f.createTableTag=function(t,r){t=t||2;var e="";e+='<table style="',e+=" border-width: 0px; border-style: none;",e+=" border-collapse: collapse;",e+=" padding: 0px; margin: "+(r=void 0===r?4*t:r)+"px;",e+='">',e+="<tbody>";for(var n=0;n<f.getModuleCount();n+=1){e+="<tr>";for(var o=0;o<f.getModuleCount();o+=1)e+='<td style="',e+=" border-width: 0px; border-style: none;",e+=" border-collapse: collapse;",e+=" padding: 0px; margin: 0px;",e+=" width: "+t+"px;",e+=" height: "+t+"px;",e+=" background-color: ",e+=f.isDark(n,o)?"#000000":"#ffffff",e+=";",e+='"/>';e+="</tr>"}return e+="</tbody>",e+="</table>"},f.createSvgTag=function(t,r,e,n){var o={};"object"==typeof arguments[0]&&(t=(o=arguments[0]).cellSize,r=o.margin,e=o.alt,n=o.title),t=t||2,r=void 0===r?4*t:r,(e="string"==typeof e?{text:e}:e||{}).text=e.text||null,e.id=e.text?e.id||"qrcode-description":null,(n="string"==typeof n?{text:n}:n||{}).text=n.text||null,n.id=n.text?n.id||"qrcode-title":null;var i,a,u,c,g=f.getModuleCount()*t+2*r,l="";for(c="l"+t+",0 0,"+t+" -"+t+",0 0,-"+t+"z ",l+='<svg version="1.1" xmlns="http://www.w3.org/2000/svg"',l+=o.scalable?"":' width="'+g+'px" height="'+g+'px"',l+=' viewBox="0 0 '+g+" "+g+'" ',l+=' preserveAspectRatio="xMinYMin meet"',l+=n.text||e.text?' role="img" aria-labelledby="'+y([n.id,e.id].join(" ").trim())+'"':"",l+=">",l+=n.text?'<title id="'+y(n.id)+'">'+y(n.text)+"</title>":"",l+=e.text?'<description id="'+y(e.id)+'">'+y(e.text)+"</description>":"",l+='<rect width="100%" height="100%" fill="white" cx="0" cy="0"/>',l+='<path d="',a=0;a<f.getModuleCount();a+=1)for(u=a*t+r,i=0;i<f.getModuleCount();i+=1)f.isDark(a,i)&&(l+="M"+(i*t+r)+","+u+c);return l+='" stroke="transparent" fill="black"/>',l+="</svg>"},f.createDataURL=function(t,r){t=t||2,r=void 0===r?4*t:r;var e=f.getModuleCount()*t+2*r,n=r,o=e-r;return I(e,e,function(r,e){if(n<=r&&r<o&&n<=e&&e<o){var i=Math.floor((r-n)/t),a=Math.floor((e-n)/t);return f.isDark(a,i)?0:1}return 1})},f.createImgTag=function(t,r,e){t=t||2,r=void 0===r?4*t:r;var n=f.getModuleCount()*t+2*r,o="";return o+="<img",o+=' src="',o+=f.createDataURL(t,r),o+='"',o+=' width="',o+=n,o+='"',o+=' height="',o+=n,o+='"',e&&(o+=' alt="',o+=y(e),o+='"'),o+="/>"};var y=function(t){for(var r="",e=0;e<t.length;e+=1){var n=t.charAt(e);switch(n){case"<":r+="&lt;";break;case">":r+="&gt;";break;case"&":r+="&amp;";break;case'"':r+="&quot;";break;default:r+=n}}return r};return f.createASCII=function(t,r){if((t=t||1)<2)return function(t){t=void 0===t?2:t;var r,e,n,o,i,a=1*f.getModuleCount()+2*t,u=t,c=a-t,g={"██":"█","█ ":"▀"," █":"▄","  ":" "},l={"██":"▀","█ ":"▀"," █":" ","  ":" "},h="";for(r=0;r<a;r+=2){for(n=Math.floor((r-u)/1),o=Math.floor((r+1-u)/1),e=0;e<a;e+=1)i="█",u<=e&&e<c&&u<=r&&r<c&&f.isDark(n,Math.floor((e-u)/1))&&(i=" "),u<=e&&e<c&&u<=r+1&&r+1<c&&f.isDark(o,Math.floor((e-u)/1))?i+=" ":i+="█",h+=t<1&&r+1>=c?l[i]:g[i];h+="\n"}return a%2&&t>0?h.substring(0,h.length-a-1)+Array(a+1).join("▀"):h.substring(0,h.length-1)}(r);t-=1,r=void 0===r?2*t:r;var e,n,o,i,a=f.getModuleCount()*t+2*r,u=r,c=a-r,g=Array(t+1).join("██"),l=Array(t+1).join("  "),h="",s="";for(e=0;e<a;e+=1){for(o=Math.floor((e-u)/t),s="",n=0;n<a;n+=1)i=1,u<=n&&n<c&&u<=e&&e<c&&f.isDark(o,Math.floor((n-u)/t))&&(i=0),s+=i?g:l;for(o=0;o<t;o+=1)h+=s+"\n"}return h.substring(0,h.length-1)},f.renderTo2dContext=function(t,r){r=r||2;for(var e=f.getModuleCount(),n=0;n<e;n++)for(var o=0;o<e;o++)t.fillStyle=f.isDark(n,o)?"black":"white",t.fillRect(n*r,o*r,r,r)},f};t.stringToBytes=(t.stringToBytesFuncs={default:function(t){for(var r=[],e=0;e<t.length;e+=1){var n=t.charCodeAt(e);r.push(255&n)}return r}}).default,t.createStringToBytes=function(t,r){var e=function(){for(var e=S(t),n=function(){var t=e.read();if(-1==t)throw"eof";return t},o=0,i={};;){var a=e.read();if(-1==a)break;var u=n(),f=n()<<8|n();i[String.fromCharCode(a<<8|u)]=f,o+=1}if(o!=r)throw o+" != "+r;return i}(),n="?".charCodeAt(0);return function(t){for(var r=[],o=0;o<t.length;o+=1){var i=t.charCodeAt(o);if(i<128)r.push(i);else{var a=e[t.charAt(o)];"number"==typeof a?(255&a)==a?r.push(a):(r.push(a>>>8),r.push(255&a)):r.push(n)}}return r}};var r,e,n,o,i,a=1,u=2,f=4,c=8,g={L:1,M:0,Q:3,H:2},l=0,h=1,s=2,v=3,d=4,w=5,p=6,y=7,B=(r=[[],[6,18],[6,22],[6,26],[6,30],[6,34],[6,22,38],[6,24,42],[6,26,46],[6,28,50],[6,30,54],[6,32,58],[6,34,62],[6,26,46,66],[6,26,48,70],[6,26,50,74],[6,30,54,78],[6,30,56,82],[6,30,58,86],[6,34,62,90],[6,28,50,72,94],[6,26,50,74,98],[6,30,54,78,102],[6,28,54,80,106],[6,32,58,84,110],[6,30,58,86,114],[6,34,62,90,118],[6,26,50,74,98,122],[6,30,54,78,102,126],[6,26,52,78,104,130],[6,30,56,82,108,134],[6,34,60,86,112,138],[6,30,58,86,114,142],[6,34,62,90,118,146],[6,30,54,78,102,126,150],[6,24,50,76,102,128,154],[6,28,54,80,106,132,158],[6,32,58,84,110,136,162],[6,26,54,82,110,138,166],[6,30,58,86,114,142,170]],e=1335,n=7973,i=function(t){for(var r=0;0!=t;)r+=1,t>>>=1;return r},(o={}).getBCHTypeInfo=function(t){for(var r=t<<10;i(r)-i(e)>=0;)r^=e<<i(r)-i(e);return 21522^(t<<10|r)},o.getBCHTypeNumber=function(t){for(var r=t<<12;i(r)-i(n)>=0;)r^=n<<i(r)-i(n);return t<<12|r},o.getPatternPosition=function(t){return r[t-1]},o.getMaskFunction=function(t){switch(t){case l:return function(t,r){return(t+r)%2==0};case h:return function(t,r){return t%2==0};case s:return function(t,r){return r%3==0};case v:return function(t,r){return(t+r)%3==0};case d:return function(t,r){return(Math.floor(t/2)+Math.floor(r/3))%2==0};case w:return function(t,r){return t*r%2+t*r%3==0};case p:return function(t,r){return(t*r%2+t*r%3)%2==0};case y:return function(t,r){return(t*r%3+(t+r)%2)%2==0};default:throw"bad maskPattern:"+t}},o.getErrorCorrectPolynomial=function(t){for(var r=k([1],0),e=0;e<t;e+=1)r=r.multiply(k([1,C.gexp(e)],0));return r},o.getLengthInBits=function(t,r){if(1<=r&&r<10)switch(t){case a:return 10;case u:return 9;case f:case c:return 8;default:throw"mode:"+t}else if(r<27)switch(t){case a:return 12;case u:return 11;case f:return 16;case c:return 10;default:throw"mode:"+t}else{if(!(r<41))throw"type:"+r;switch(t){case a:return 14;case u:return 13;case f:return 16;case c:return 12;default:throw"mode:"+t}}},o.getLostPoint=function(t){for(var r=t.getModuleCount(),e=0,n=0;n<r;n+=1)for(var o=0;o<r;o+=1){for(var i=0,a=t.isDark(n,o),u=-1;u<=1;u+=1)if(!(n+u<0||r<=n+u))for(var f=-1;f<=1;f+=1)o+f<0||r<=o+f||0==u&&0==f||a==t.isDark(n+u,o+f)&&(i+=1);i>5&&(e+=3+i-5)}for(n=0;n<r-1;n+=1)for(o=0;o<r-1;o+=1){var c=0;t.isDark(n,o)&&(c+=1),t.isDark(n+1,o)&&(c+=1),t.isDark(n,o+1)&&(c+=1),t.isDark(n+1,o+1)&&(c+=1),0!=c&&4!=c||(e+=3)}for(n=0;n<r;n+=1)for(o=0;o<r-6;o+=1)t.isDark(n,o)&&!t.isDark(n,o+1)&&t.isDark(n,o+2)&&t.isDark(n,o+3)&&t.isDark(n,o+4)&&!t.isDark(n,o+5)&&t.isDark(n,o+6)&&(e+=40);for(o=0;o<r;o+=1)for(n=0;n<r-6;n+=1)t.isDark(n,o)&&!t.isDark(n+1,o)&&t.isDark(n+2,o)&&t.isDark(n+3,o)&&t.isDark(n+4,o)&&!t.isDark(n+5,o)&&t.isDark(n+6,o)&&(e+=40);var g=0;for(o=0;o<r;o+=1)for(n=0;n<r;n+=1)t.isDark(n,o)&&(g+=1);return e+=Math.abs(100*g/r/r-50)/5*10},o),C=function(){for(var t=new Array(256),r=new Array(256),e=0;e<8;e+=1)t[e]=1<<e;for(e=8;e<256;e+=1)t[e]=t[e-4]^t[e-5]^t[e-6]^t[e-8];for(e=0;e<255;e+=1)r[t[e]]=e;var n={glog:function(t){if(t<1)throw"glog("+t+")";return r[t]},gexp:function(r){for(;r<0;)r+=255;for(;r>=256;)r-=255;return t[r]}};return n}();function k(t,r){if(void 0===t.length)throw t.length+"/"+r;var e=function(){for(var e=0;e<t.length&&0==t[e];)e+=1;for(var n=new Array(t.length-e+r),o=0;o<t.length-e;o+=1)n[o]=t[o+e];return n}(),n={getAt:function(t){return e[t]},getLength:function(){return e.length},multiply:function(t){for(var r=new Array(n.getLength()+t.getLength()-1),e=0;e<n.getLength();e+=1)for(var o=0;o<t.getLength();o+=1)r[e+o]^=C.gexp(C.glog(n.getAt(e))+C.glog(t.getAt(o)));return k(r,0)},mod:function(t){if(n.getLength()-t.getLength()<0)return n;for(var r=C.glog(n.getAt(0))-C.glog(t.getAt(0)),e=new Array(n.getLength()),o=0;o<n.getLength();o+=1)e[o]=n.getAt(o);for(o=0;o<t.getLength();o+=1)e[o]^=C.gexp(C.glog(t.getAt(o))+r);return k(e,0).mod(t)}};return n}var A=function(){var t=[[1,26,19],[1,26,16],[1,26,13],[1,26,9],[1,44,34],[1,44,28],[1,44,22],[1,44,16],[1,70,55],[1,70,44],[2,35,17],[2,35,13],[1,100,80],[2,50,32],[2,50,24],[4,25,9],[1,134,108],[2,67,43],[2,33,15,2,34,16],[2,33,11,2,34,12],[2,86,68],[4,43,27],[4,43,19],[4,43,15],[2,98,78],[4,49,31],[2,32,14,4,33,15],[4,39,13,1,40,14],[2,121,97],[2,60,38,2,61,39],[4,40,18,2,41,19],[4,40,14,2,41,15],[2,146,116],[3,58,36,2,59,37],[4,36,16,4,37,17],[4,36,12,4,37,13],[2,86,68,2,87,69],[4,69,43,1,70,44],[6,43,19,2,44,20],[6,43,15,2,44,16],[4,101,81],[1,80,50,4,81,51],[4,50,22,4,51,23],[3,36,12,8,37,13],[2,116,92,2,117,93],[6,58,36,2,59,37],[4,46,20,6,47,21],[7,42,14,4,43,15],[4,133,107],[8,59,37,1,60,38],[8,44,20,4,45,21],[12,33,11,4,34,12],[3,145,115,1,146,116],[4,64,40,5,65,41],[11,36,16,5,37,17],[11,36,12,5,37,13],[5,109,87,1,110,88],[5,65,41,5,66,42],[5,54,24,7,55,25],[11,36,12,7,37,13],[5,122,98,1,123,99],[7,73,45,3,74,46],[15,43,19,2,44,20],[3,45,15,13,46,16],[1,135,107,5,136,108],[10,74,46,1,75,47],[1,50,22,15,51,23],[2,42,14,17,43,15],[5,150,120,1,151,121],[9,69,43,4,70,44],[17,50,22,1,51,23],[2,42,14,19,43,15],[3,141,113,4,142,114],[3,70,44,11,71,45],[17,47,21,4,48,22],[9,39,13,16,40,14],[3,135,107,5,136,108],[3,67,41,13,68,42],[15,54,24,5,55,25],[15,43,15,10,44,16],[4,144,116,4,145,117],[17,68,42],[17,50,22,6,51,23],[19,46,16,6,47,17],[2,139,111,7,140,112],[17,74,46],[7,54,24,16,55,25],[34,37,13],[4,151,121,5,152,122],[4,75,47,14,76,48],[11,54,24,14,55,25],[16,45,15,14,46,16],[6,147,117,4,148,118],[6,73,45,14,74,46],[11,54,24,16,55,25],[30,46,16,2,47,17],[8,132,106,4,133,107],[8,75,47,13,76,48],[7,54,24,22,55,25],[22,45,15,13,46,16],[10,142,114,2,143,115],[19,74,46,4,75,47],[28,50,22,6,51,23],[33,46,16,4,47,17],[8,152,122,4,153,123],[22,73,45,3,74,46],[8,53,23,26,54,24],[12,45,15,28,46,16],[3,147,117,10,148,118],[3,73,45,23,74,46],[4,54,24,31,55,25],[11,45,15,31,46,16],[7,146,116,7,147,117],[21,73,45,7,74,46],[1,53,23,37,54,24],[19,45,15,26,46,16],[5,145,115,10,146,116],[19,75,47,10,76,48],[15,54,24,25,55,25],[23,45,15,25,46,16],[13,145,115,3,146,116],[2,74,46,29,75,47],[42,54,24,1,55,25],[23,45,15,28,46,16],[17,145,115],[10,74,46,23,75,47],[10,54,24,35,55,25],[19,45,15,35,46,16],[17,145,115,1,146,116],[14,74,46,21,75,47],[29,54,24,19,55,25],[11,45,15,46,46,16],[13,145,115,6,146,116],[14,74,46,23,75,47],[44,54,24,7,55,25],[59,46,16,1,47,17],[12,151,121,7,152,122],[12,75,47,26,76,48],[39,54,24,14,55,25],[22,45,15,41,46,16],[6,151,121,14,152,122],[6,75,47,34,76,48],[46,54,24,10,55,25],[2,45,15,64,46,16],[17,152,122,4,153,123],[29,74,46,14,75,47],[49,54,24,10,55,25],[24,45,15,46,46,16],[4,152,122,18,153,123],[13,74,46,32,75,47],[48,54,24,14,55,25],[42,45,15,32,46,16],[20,147,117,4,148,118],[40,75,47,7,76,48],[43,54,24,22,55,25],[10,45,15,67,46,16],[19,148,118,6,149,119],[18,75,47,31,76,48],[34,54,24,34,55,25],[20,45,15,61,46,16]],r=function(t,r){var e={};return e.totalCount=t,e.dataCount=r,e},e={};return e.getRSBlocks=function(e,n){var o=function(r,e){switch(e){case g.L:return t[4*(r-1)+0];case g.M:return t[4*(r-1)+1];case g.Q:return t[4*(r-1)+2];case g.H:return t[4*(r-1)+3];default:return}}(e,n);if(void 0===o)throw"bad rs block @ typeNumber:"+e+"/errorCorrectionLevel:"+n;for(var i=o.length/3,a=[],u=0;u<i;u+=1)for(var f=o[3*u+0],c=o[3*u+1],l=o[3*u+2],h=0;h<f;h+=1)a.push(r(c,l));return a},e}(),b=function(){var t=[],r=0,e={getBuffer:function(){return t},getAt:function(r){var e=Math.floor(r/8);return 1==(t[e]>>>7-r%8&1)},put:function(t,r){for(var n=0;n<r;n+=1)e.putBit(1==(t>>>r-n-1&1))},getLengthInBits:function(){return r},putBit:function(e){var n=Math.floor(r/8);t.length<=n&&t.push(0),e&&(t[n]|=128>>>r%8),r+=1}};return e},M=function(t){var r=a,e=t,n={getMode:function(){return r},getLength:function(t){return e.length},write:function(t){for(var r=e,n=0;n+2<r.length;)t.put(o(r.substring(n,n+3)),10),n+=3;n<r.length&&(r.length-n==1?t.put(o(r.substring(n,n+1)),4):r.length-n==2&&t.put(o(r.substring(n,n+2)),7))}},o=function(t){for(var r=0,e=0;e<t.length;e+=1)r=10*r+i(t.charAt(e));return r},i=function(t){if("0"<=t&&t<="9")return t.charCodeAt(0)-"0".charCodeAt(0);throw"illegal char :"+t};return n},x=function(t){var r=u,e=t,n={getMode:function(){return r},getLength:function(t){return e.length},write:function(t){for(var r=e,n=0;n+1<r.length;)t.put(45*o(r.charAt(n))+o(r.charAt(n+1)),11),n+=2;n<r.length&&t.put(o(r.charAt(n)),6)}},o=function(t){if("0"<=t&&t<="9")return t.charCodeAt(0)-"0".charCodeAt(0);if("A"<=t&&t<="Z")return t.charCodeAt(0)-"A".charCodeAt(0)+10;switch(t){case" ":return 36;case"$":return 37;case"%":return 38;case"*":return 39;case"+":return 40;case"-":return 41;case".":return 42;case"/":return 43;case":":return 44;default:throw"illegal char :"+t}};return n},m=function(r){var e=f,n=t.stringToBytes(r),o={getMode:function(){return e},getLength:function(t){return n.length},write:function(t){for(var r=0;r<n.length;r+=1)t.put(n[r],8)}};return o},L=function(r){var e=c,n=t.stringToBytesFuncs.SJIS;if(!n)throw"sjis not supported.";!function(){var t=n("友");if(2!=t.length||38726!=(t[0]<<8|t[1]))throw"sjis not supported."}();var o=n(r),i={getMode:function(){return e},getLength:function(t){return~~(o.length/2)},write:function(t){for(var r=o,e=0;e+1<r.length;){var n=(255&r[e])<<8|255&r[e+1];if(33088<=n&&n<=40956)n-=33088;else{if(!(57408<=n&&n<=60351))throw"illegal char at "+(e+1)+"/"+n;n-=49472}n=192*(n>>>8&255)+(255&n),t.put(n,13),e+=2}if(e<r.length)throw"illegal char at "+(e+1)}};return i},D=function(){var t=[],r={writeByte:function(r){t.push(255&r)},writeShort:function(t){r.writeByte(t),r.writeByte(t>>>8)},writeBytes:function(t,e,n){e=e||0,n=n||t.length;for(var o=0;o<n;o+=1)r.writeByte(t[o+e])},writeString:function(t){for(var e=0;e<t.length;e+=1)r.writeByte(t.charCodeAt(e))},toByteArray:function(){return t},toString:function(){var r="";r+="[";for(var e=0;e<t.length;e+=1)e>0&&(r+=","),r+=t[e];return r+="]"}};return r},S=function(t){var r=t,e=0,n=0,o=0,i={read:function(){for(;o<8;){if(e>=r.length){if(0==o)return-1;throw"unexpected end of file./"+o}var t=r.charAt(e);if(e+=1,"="==t)return o=0,-1;t.match(/^\s$/)||(n=n<<6|a(t.charCodeAt(0)),o+=6)}var i=n>>>o-8&255;return o-=8,i}},a=function(t){if(65<=t&&t<=90)return t-65;if(97<=t&&t<=122)return t-97+26;if(48<=t&&t<=57)return t-48+52;if(43==t)return 62;if(47==t)return 63;throw"c:"+t};return i},I=function(t,r,e){for(var n=function(t,r){var e=t,n=r,o=new Array(t*r),i={setPixel:function(t,r,n){o[r*e+t]=n},write:function(t){t.writeString("GIF87a"),t.writeShort(e),t.writeShort(n),t.writeByte(128),t.writeByte(0),t.writeByte(0),t.writeByte(0),t.writeByte(0),t.writeByte(0),t.writeByte(255),t.writeByte(255),t.writeByte(255),t.writeString(","),t.writeShort(0),t.writeShort(0),t.writeShort(e),t.writeShort(n),t.writeByte(0);var r=a(2);t.writeByte(2);for(var o=0;r.length-o>255;)t.writeByte(255),t.writeBytes(r,o,255),o+=255;t.writeByte(r.length-o),t.writeBytes(r,o,r.length-o),t.writeByte(0),t.writeString(";")}},a=function(t){for(var r=1<<t,e=1+(1<<t),n=t+1,i=u(),a=0;a<r;a+=1)i.add(String.fromCharCode(a));i.add(String.fromCharCode(r)),i.add(String.fromCharCode(e));var f,c,g,l=D(),h=(f=l,c=0,g=0,{write:function(t,r){if(t>>>r!=0)throw"length over";for(;c+r>=8;)f.writeByte(255&(t<<c|g)),r-=8-c,t>>>=8-c,g=0,c=0;g|=t<<c,c+=r},flush:function(){c>0&&f.writeByte(g)}});h.write(r,n);var s=0,v=String.fromCharCode(o[s]);for(s+=1;s<o.length;){var d=String.fromCharCode(o[s]);s+=1,i.contains(v+d)?v+=d:(h.write(i.indexOf(v),n),i.size()<4095&&(i.size()==1<<n&&(n+=1),i.add(v+d)),v=d)}return h.write(i.indexOf(v),n),h.write(e,n),h.flush(),l.toByteArray()},u=function(){var t={},r=0,e={add:function(n){if(e.contains(n))throw"dup key:"+n;t[n]=r,r+=1},size:function(){return r},indexOf:function(r){return t[r]},contains:function(r){return void 0!==t[r]}};return e};return i}(t,r),o=0;o<r;o+=1)for(var i=0;i<t;i+=1)n.setPixel(i,o,e(i,o));var a=D();n.write(a);for(var u=function(){var t=0,r=0,e=0,n="",o={},i=function(t){n+=String.fromCharCode(a(63&t))},a=function(t){if(t<0);else{if(t<26)return 65+t;if(t<52)return t-26+97;if(t<62)return t-52+48;if(62==t)return 43;if(63==t)return 47}throw"n:"+t};return o.writeByte=function(n){for(t=t<<8|255&n,r+=8,e+=1;r>=6;)i(t>>>r-6),r-=6},o.flush=function(){if(r>0&&(i(t<<6-r),t=0,r=0),e%3!=0)for(var o=3-e%3,a=0;a<o;a+=1)n+="="},o.toString=function(){return n},o}(),f=a.toByteArray(),c=0;c<f.length;c+=1)u.writeByte(f[c]);return u.flush(),"data:image/gif;base64,"+u};return t}();qrcode.stringToBytesFuncs["UTF-8"]=function(t){return function(t){for(var r=[],e=0;e<t.length;e++){var n=t.charCodeAt(e);n<128?r.push(n):n<2048?r.push(192|n>>6,128|63&n):n<55296||n>=57344?r.push(224|n>>12,128|n>>6&63,128|63&n):(e++,n=65536+((1023&n)<<10|1023&t.charCodeAt(e)),r.push(240|n>>18,128|n>>12&63,128|n>>6&63,128|63&n))}return r}(t)},function(t){"function"==typeof define&&define.amd?define([],t):"object"==typeof exports&&(module.exports=t())}(function(){return qrcode});</script>
+<script>
+/* ===== PA 1/ส Word generator (ย้ายมาจากแอป "ข้อตกลง PA รายปี" — ไม่แก้ยกเว้นเพิ่มข้อ 1.4) — builds the .docx parts from one year's data ===== */
+var PADocx = (function () {
+  var FONT = "TH SarabunPSK";
+  var PH_RE = /(\[รอข้อมูลจริง[^\]]*\])/;
+  var seg = null;
+  try { if (typeof Intl !== "undefined" && Intl.Segmenter) seg = new Intl.Segmenter("th", { granularity: "word" }); } catch (e) { seg = null; }
+
+  function zw(s) {
+    if (!seg) return s;
+    return s.replace(/[฀-๿]+/g, function (m) {
+      var out = [];
+      var it = seg.segment(m)[Symbol.iterator]();
+      for (var r = it.next(); !r.done; r = it.next()) out.push(r.value.segment);
+      return out.join("​");
+    });
+  }
+  function xesc(s) {
+    return String(s == null ? "" : s)
+      .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, "")
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+  function tw(cm) { return Math.round(cm * 567); }
+
+  /* ---- hours ---- */
+  function parseHours(s) {
+    s = String(s || "").trim();
+    if (!s) return null;
+    var m = s.match(/^(?:(\d+)\s*ชั่วโมง)?\s*(?:(\d+)\s*นาที)?$/);
+    if (!m || (m[1] == null && m[2] == null)) return null;
+    return (parseInt(m[1] || "0", 10) * 60) + parseInt(m[2] || "0", 10);
+  }
+  function fmtHours(min) {
+    var h = Math.floor(min / 60), m = min % 60, out = [];
+    if (h) out.push(h + " ชั่วโมง");
+    if (m || !h) out.push(m + " นาที");
+    return out.join(" ");
+  }
+  /* one period (คาบ) = 50 minutes; periods win over a typed hours string */
+  var PERIOD_MIN = 50;
+  function parsePeriods(s) {
+    s = String(s == null ? "" : s).replace(/คาบ/g, "").trim();
+    if (!s || !/^\d+(\.\d+)?$/.test(s)) return null;
+    var n = Number(s);
+    return n > 0 ? n : null;
+  }
+  function rowMin(r) {
+    if (!r) return null;
+    var p = parsePeriods(r.periods);
+    if (p != null) return Math.round(p * PERIOD_MIN);
+    if (r.periods != null && String(r.periods).trim() !== "") return null;
+    return parseHours(r.hours);
+  }
+  function rowText(r) { var m = rowMin(r); return m == null ? "[รอข้อมูลจริง]" : fmtHours(m); }
+  function sumHours(rows) {
+    var t = 0;
+    for (var i = 0; i < rows.length; i++) {
+      var v = rowMin(rows[i]);
+      if (v == null) return null;
+      t += v;
+    }
+    return t;
+  }
+  function totalText(rows) { var t = sumHours(rows || []); return t == null ? "[รอข้อมูลจริง]" : fmtHours(t); }
+
+  function lines(s) { return String(s || "").split(/\n/).map(function (x) { return x.trim(); }).filter(Boolean); }
+
+  /* ---- xml pieces ---- */
+  function run(text, o) {
+    o = o || {};
+    var sz = (o.size || 16) * 2;
+    var rpr = '<w:rFonts w:ascii="' + FONT + '" w:hAnsi="' + FONT + '" w:cs="' + FONT + '" w:eastAsia="' + FONT + '"/>' +
+      (o.b ? "<w:b/><w:bCs/>" : "") + (o.hl ? '<w:highlight w:val="yellow"/>' : "") +
+      '<w:sz w:val="' + sz + '"/><w:szCs w:val="' + sz + '"/>';
+    return '<w:r><w:rPr>' + rpr + '</w:rPr><w:t xml:space="preserve">' + xesc(zw(text)) + "</w:t></w:r>";
+  }
+  function runs(text, o) {
+    var parts = String(text == null ? "" : text).split(PH_RE), out = "";
+    for (var i = 0; i < parts.length; i++) {
+      if (!parts[i]) continue;
+      var isPh = PH_RE.test(parts[i]) && /^\[รอข้อมูลจริง/.test(parts[i]);
+      out += run(parts[i], { b: o && o.b, size: o && o.size, hl: isPh });
+    }
+    return out;
+  }
+  function pPr(o) {
+    o = o || {};
+    var x = '<w:spacing w:before="0" w:after="' + Math.round((o.after || 0) * 20) + '" w:line="240" w:lineRule="auto"/>';
+    if (o.ind || o.first) x += '<w:ind w:left="' + tw(o.ind || 0) + '"' + (o.first ? ' w:firstLine="' + tw(o.first) + '"' : "") + "/>";
+    if (o.align) x += '<w:jc w:val="' + ({ c: "center", r: "right" })[o.align] + '"/>';
+    return "<w:pPr>" + x + "</w:pPr>";
+  }
+  function para(text, o) { o = o || {}; return "<w:p>" + pPr(o) + runs(text, o) + "</w:p>"; }
+  function paraRuns(pieces, o) { // pieces: [[text, {b}]]
+    var r = "";
+    for (var i = 0; i < pieces.length; i++) r += runs(pieces[i][0], { b: pieces[i][1], size: o && o.size });
+    return "<w:p>" + pPr(o) + r + "</w:p>";
+  }
+  function pageBreak() { return '<w:p><w:r><w:br w:type="page"/></w:r></w:p>'; }
+
+  function cell(width, paras, o) {
+    o = o || {};
+    var pr = '<w:tcW w:w="' + tw(width) + '" w:type="dxa"/>' + (o.span ? '<w:gridSpan w:val="' + o.span + '"/>' : "") +
+      (o.fill ? '<w:shd w:val="clear" w:color="auto" w:fill="' + o.fill + '"/>' : "");
+    var body = "";
+    if (!paras.length) paras = [""];
+    for (var i = 0; i < paras.length; i++) body += para(paras[i], { b: o.b, size: 14, align: o.align });
+    return "<w:tc><w:tcPr>" + pr + "</w:tcPr>" + body + "</w:tc>";
+  }
+  function table(widths, rowsXml) {
+    var b = "", sides = ["top", "left", "bottom", "right", "insideH", "insideV"];
+    for (var i = 0; i < sides.length; i++) b += "<w:" + sides[i] + ' w:val="single" w:sz="4" w:space="0" w:color="000000"/>';
+    var total = 0, grid = "";
+    for (var j = 0; j < widths.length; j++) { total += tw(widths[j]); grid += '<w:gridCol w:w="' + tw(widths[j]) + '"/>'; }
+    return '<w:tbl><w:tblPr><w:tblW w:w="' + total + '" w:type="dxa"/><w:jc w:val="center"/><w:tblBorders>' + b +
+      '</w:tblBorders><w:tblLayout w:type="fixed"/><w:tblCellMar><w:left w:w="85" w:type="dxa"/><w:right w:w="85" w:type="dxa"/></w:tblCellMar></w:tblPr><w:tblGrid>' +
+      grid + "</w:tblGrid>" + rowsXml + "</w:tbl>";
+  }
+  function row(cellsXml, header) { return "<w:tr>" + (header ? "<w:trPr><w:tblHeader/></w:trPr>" : "") + cellsXml + "</w:tr>"; }
+
+  /* ---- the form ---- */
+  function body(d) {
+    var fy = Number(d.fiscalYear), h = d.header || {}, c = d.challenge || {}, x = "";
+    var rank = h.rank ? " วิทยฐานะ" + h.rank : "";
+    var rankSp = h.rank ? "   วิทยฐานะ " + h.rank : "";
+    x += para(h.formCode || "PA 1/ส", { b: true, align: "r" });
+    x += para("แบบข้อตกลงในการพัฒนางาน (PA)", { b: true, size: 18, align: "c" });
+    x += para("สำหรับข้าราชการครูและบุคลากรทางการศึกษา ตำแหน่ง" + (h.position || "ครู") + rank, { b: true, align: "c" });
+    x += para("ประจำปีงบประมาณ พ.ศ. " + fy, { b: true, align: "c" });
+    x += para("ระหว่างวันที่ 1 เดือน ตุลาคม พ.ศ. " + (fy - 1) + " ถึงวันที่ 30 เดือน กันยายน พ.ศ. " + fy, { b: true, align: "c", after: 6 });
+    x += para("ผู้จัดทำข้อตกลง", { b: true });
+    x += para("ชื่อ " + (h.prefix || "") + (h.firstName || "") + "   นามสกุล " + (h.lastName || "") + "   ตำแหน่ง " + (h.position || "") + rankSp);
+    x += para("สถานศึกษา " + (h.school || "") + "   สังกัด " + (h.office || ""));
+    x += para("รับเงินเดือนในอันดับ " + (h.salaryLevel || "") + "   อัตราเงินเดือน " + (h.salary || "[รอข้อมูลจริง]") + " บาท");
+    x += paraRuns([["ประเภทห้องเรียนที่จัดการเรียนรู้ ", true], ["(สามารถระบุได้มากกว่า 1 ประเภทห้องเรียน ตามสภาพการจัดการเรียนรู้จริง)", false]]);
+    (h.classrooms || []).forEach(function (r) { x += para((r.checked ? "☑ " : "☐ ") + r.label, { ind: 1.0 }); });
+    x += para("ข้าพเจ้าขอแสดงเจตจำนงในการจัดทำข้อตกลงในการพัฒนางาน ตำแหน่ง" + (h.position || "ครู") + rank +
+      " ซึ่งเป็นตำแหน่งที่ดำรงอยู่ในปัจจุบันกับผู้อำนวยการสถานศึกษา ไว้ดังต่อไปนี้", { first: 1.25, after: 6 });
+
+    x += para("ส่วนที่ 1 ข้อตกลงในการพัฒนางานตามมาตรฐานตำแหน่ง", { b: true, after: 4 });
+    (d.terms || []).forEach(function (t) {
+      x += para(t.title + (t.projected ? " (คาดการณ์)" : ""), { b: true, after: 2 });
+      if (t.note) x += para("หมายเหตุ: " + t.note, { ind: 0.5 });
+      x += para("1. ภาระงาน จะมีภาระงานเป็นไปตามที่ ก.ค.ศ. กำหนด", { ind: 0.5 });
+      var teach = t.teach || [], tt = totalText(teach);
+      x += para("1.1 ชั่วโมงสอนตามตารางสอน รวมจำนวน " + tt + "/สัปดาห์ ดังนี้", { ind: 1.0, after: 2 });
+      var W = [12.0, 4.6], rx = row(cell(W[0], ["กลุ่มสาระการเรียนรู้/รายวิชา/กิจกรรม"], { b: true, align: "c", fill: "D9E2F3" }) +
+        cell(W[1], ["จำนวนชั่วโมง/สัปดาห์"], { b: true, align: "c", fill: "D9E2F3" }), true);
+      teach.forEach(function (r) { rx += row(cell(W[0], [r.name]) + cell(W[1], [rowText(r)])); });
+      rx += row(cell(W[0], ["รวม"]) + cell(W[1], [tt]));
+      x += table(W, rx);
+      x += para("");
+      x += para("1.2 งานส่งเสริมและสนับสนุนการจัดการเรียนรู้ จำนวน " + totalText(t.support) + "/สัปดาห์", { ind: 1.0 });
+      (t.support || []).forEach(function (r) { x += para(r.name + "  จำนวน " + rowText(r) + "/สัปดาห์", { ind: 1.5 }); });
+      x += para("1.3 งานพัฒนาคุณภาพการจัดการศึกษาของสถานศึกษา จำนวน " + totalText(t.quality) + "/สัปดาห์", { ind: 1.0 });
+      (t.quality || []).forEach(function (r) { x += para(r.name + "  จำนวน " + rowText(r) + "/สัปดาห์", { ind: 1.5 }); });
+      if (t.qualityNote) x += para(t.qualityNote, { ind: 1.5 });
+      if ((t.policy || []).length) {
+        x += para("1.4 งานตอบสนองนโยบายและจุดเน้น จำนวน " + totalText(t.policy) + "/สัปดาห์", { ind: 1.0 });
+        t.policy.forEach(function (r) { x += para(r.name + "  จำนวน " + rowText(r) + "/สัปดาห์", { ind: 1.5 }); });
+      }
+      x += para("", { after: 6 });
+    });
+
+    x += para("2. งานที่จะปฏิบัติตามมาตรฐานตำแหน่งครู", { b: true, ind: 0.5, after: 4 });
+    var BW = [3.2, 6.3, 3.55, 3.55];
+    var hdr = ["ลักษณะงานที่ปฏิบัติตามมาตรฐานตำแหน่ง",
+      "งาน (Tasks) ที่จะดำเนินการพัฒนาตามข้อตกลง ใน 1 รอบการประเมิน ภาคเรียนที่ 2/" + (fy - 1) + " และ 1/" + fy,
+      "ผลลัพธ์ (Outcomes) ของงานตามข้อตกลงที่คาดหวังให้เกิดขึ้นกับผู้เรียน",
+      "ตัวชี้วัด (Indicators) ที่จะเกิดขึ้นกับผู้เรียน ที่แสดงให้เห็นถึงการเปลี่ยนแปลงไปในทางที่ดีขึ้นหรือมีการพัฒนามากขึ้นหรือผลสัมฤทธิ์สูงขึ้น"];
+    var bx = "", hc = "";
+    for (var i = 0; i < 4; i++) hc += cell(BW[i], [hdr[i]], { b: true, align: "c", fill: "D9E2F3" });
+    bx += row(hc, true);
+    var dash = function (s) { return lines(s).map(function (l) { return "- " + l; }); };
+    (d.standards || []).forEach(function (g) {
+      bx += row(cell(BW[0] + BW[1] + BW[2] + BW[3], [g.title], { b: true, span: 4, fill: "F2F2F2" }));
+      (g.items || []).forEach(function (it) {
+        bx += row(cell(BW[0], [it.name], { b: true }) + cell(BW[1], dash(it.tasks)) + cell(BW[2], dash(it.outcomes)) + cell(BW[3], dash(it.indicators)));
+      });
+    });
+    x += table(BW, bx);
+
+    x += pageBreak();
+    x += para("ส่วนที่ 2 ข้อตกลงในการพัฒนางานที่เป็นประเด็นท้าทายในการพัฒนาผลลัพธ์การเรียนรู้ของผู้เรียน", { b: true, after: 4 });
+    if (c.intro) x += para(c.intro, { first: 1.25, after: 6 });
+    x += "<w:p>" + pPr({ after: 6 }) + runs("ประเด็นท้าทาย เรื่อง ", { b: true }) + runs(c.title || "[รอข้อมูลจริง]", { b: true }) + "</w:p>";
+    x += para("1. สภาพปัญหาของผู้เรียนและการจัดการเรียนรู้", { b: true });
+    var pl = lines(c.problem);
+    pl.forEach(function (p, i) { x += para(p, { first: 1.25, after: i === pl.length - 1 ? 6 : 0 }); });
+    x += para("2. วิธีการดำเนินการให้บรรลุผล", { b: true });
+    if (c.target) x += para("กลุ่มเป้าหมาย: " + c.target, { first: 1.25 });
+    if (c.methodIntro) x += para(c.methodIntro, { first: 1.25, after: 4 });
+    var n = 0;
+    (c.phases || []).forEach(function (ph) {
+      x += para(ph.head, { b: true, ind: 0.75 });
+      lines(ph.steps).forEach(function (s) { n++; x += para(n + ". " + s, { ind: 1.25 }); });
+    });
+    x += para("", { after: 2 });
+    if (c.resources) x += para("ทรัพยากรที่ใช้: " + c.resources, { first: 1.25 });
+    if (c.evidence) x += para("หลักฐานร่องรอย: " + c.evidence, { first: 1.25, after: 6 });
+    x += para("3. ผลลัพธ์การพัฒนาที่คาดหวัง", { b: true });
+    x += para("3.1 เชิงปริมาณ", { b: true, ind: 0.75 });
+    lines(c.quantitative).forEach(function (s) { x += para("• " + s, { ind: 1.25 }); });
+    x += para("3.2 เชิงคุณภาพ", { b: true, ind: 0.75 });
+    lines(c.qualitative).forEach(function (s) { x += para("• " + s, { ind: 1.25 }); });
+    x += para("", { after: 10 });
+
+    var nm = (h.prefix || "") + (h.firstName || "") + " " + (h.lastName || "");
+    ["ลงชื่อ........................................................................", "(" + nm.trim() + ")",
+      "ตำแหน่ง " + (h.position || "") + rankSp.replace(/^\s+/, " "), "ผู้จัดทำข้อตกลงในการพัฒนางาน", "........../........../.........."]
+      .forEach(function (l) { x += para(l, { align: "c" }); });
+    x += para("", { after: 6 });
+    var dr = d.director || {};
+    x += para("ความเห็นของผู้อำนวยการสถานศึกษา", { b: true });
+    x += para("(   ) เห็นชอบให้เป็นข้อตกลงในการพัฒนางาน");
+    x += para("(   ) ไม่เห็นชอบให้เป็นข้อตกลงในการพัฒนางาน โดยมีข้อเสนอแนะเพื่อนำไปแก้ไข และเสนอเพื่อพิจารณาอีกครั้ง ดังนี้");
+    x += para("....................................................................................................................................");
+    x += para("....................................................................................................................................");
+    x += para("", { after: 6 });
+    ["ลงชื่อ........................................................................", "(" + (dr.name || "") + ")",
+      "ตำแหน่ง " + (dr.position || ""), "........../........../.........."]
+      .forEach(function (l) { x += para(l, { align: "c" }); });
+    return x;
+  }
+
+  function parts(d) {
+    var W = 'xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"';
+    var head = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>';
+    return {
+      "[Content_Types].xml": head + '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/><Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/></Types>',
+      "_rels/.rels": head + '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>',
+      "word/_rels/document.xml.rels": head + '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>',
+      "word/styles.xml": head + "<w:styles " + W + '><w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="' + FONT + '" w:hAnsi="' + FONT + '" w:cs="' + FONT + '" w:eastAsia="' + FONT + '"/><w:sz w:val="32"/><w:szCs w:val="32"/></w:rPr></w:rPrDefault><w:pPrDefault><w:pPr><w:spacing w:after="0" w:line="240" w:lineRule="auto"/></w:pPr></w:pPrDefault></w:docDefaults><w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/><w:qFormat/></w:style></w:styles>',
+      "word/document.xml": head + "<w:document " + W + "><w:body>" + body(d) +
+        '<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1021" w:right="1021" w:bottom="1021" w:left="1440" w:header="567" w:footer="567" w:gutter="0"/></w:sectPr></w:body></w:document>'
+    };
+  }
+
+  function build(JSZipCtor, d) {
+    var z = new JSZipCtor(), p = parts(d);
+    Object.keys(p).forEach(function (k) { z.file(k, p[k]); });
+    return z;
+  }
+
+  return { build: build, parts: parts, parseHours: parseHours, parsePeriods: parsePeriods, rowMin: rowMin, rowText: rowText, PERIOD_MIN: PERIOD_MIN, fmtHours: fmtHours, sumHours: sumHours, totalText: totalText, lines: lines };
+})();
+if (typeof module !== "undefined") module.exports = PADocx;
+
+</script>
 <script>/* PA core — data model, import from .docx, export to .docx, checks.
    Storage-agnostic and DOM-free so it can be tested in Node. */
 (function (root) {
@@ -114,6 +363,92 @@ const escAttr = s => esc(s).replace(/"/g, '&quot;');
 const decodeXml = s => s.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/&amp;/g, '&');
 const uid = p => p + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 const num = v => { const n = parseFloat(String(v).replace(/,/g, '')); return isFinite(n) ? n : NaN; };
+
+/* ---------------- ข้อตกลงต้นปี (PA 1/ส) ---------------- */
+// ข้อมูลผู้จัดทำ ภาระงาน และชื่อ/สภาพปัญหาของประเด็นท้าทาย ใช้ร่วมกับรายงานปลายปี (เก็บที่เดียว)
+// ส่วนที่เป็นของข้อตกลงเท่านั้นเก็บใน state.agreement
+const ADDIE = ['A – Analysis (วิเคราะห์)', 'D – Design (ออกแบบ)', 'D – Development (พัฒนา)', 'I – Implementation (นำไปใช้)', 'E – Evaluation (ประเมินผล)'];
+const STD_NAME = { '1.1': '1.1 การสร้างและหรือพัฒนาหลักสูตร', '1.2': '1.2 การออกแบบการจัดการเรียนรู้', '1.3': '1.3 การจัดกิจกรรมการเรียนรู้', '1.4': '1.4 การสร้างและหรือพัฒนาสื่อ นวัตกรรม เทคโนโลยี และแหล่งเรียนรู้', '1.5': '1.5 การวัดและประเมินผลการจัดการเรียนรู้', '1.6': '1.6 การศึกษา วิเคราะห์ สังเคราะห์ เพื่อแก้ปัญหาหรือพัฒนาการเรียนรู้', '1.7': '1.7 การจัดบรรยากาศที่ส่งเสริมและพัฒนาผู้เรียน', '1.8': '1.8 การอบรมและพัฒนาคุณลักษณะที่ดีของผู้เรียน', '2.1': '2.1 การจัดทำข้อมูลสารสนเทศของผู้เรียนและรายวิชา', '2.2': '2.2 การดำเนินการตามระบบดูแลช่วยเหลือผู้เรียน', '2.3': '2.3 การปฏิบัติงานวิชาการ และงานอื่น ๆ ของสถานศึกษา', '2.4': '2.4 การประสานความร่วมมือกับผู้ปกครอง ภาคีเครือข่าย และหรือสถานประกอบการ', '3.1': '3.1 การพัฒนาตนเองอย่างเป็นระบบและต่อเนื่อง', '3.2': '3.2 การมีส่วนร่วมในการแลกเปลี่ยนเรียนรู้ทางวิชาชีพ', '3.3': '3.3 การนำความรู้ ความสามารถ ทักษะที่ได้จากการพัฒนาตนเองและวิชาชีพมาใช้' };
+const AREA_FULL = { 1: 'ด้านที่ 1 ด้านการจัดการเรียนรู้', 2: 'ด้านที่ 2 ด้านการส่งเสริมและสนับสนุนการจัดการเรียนรู้', 3: 'ด้านที่ 3 ด้านการพัฒนาตนเองและวิชาชีพ' };
+function emptyAgreement() {
+  const std = {}; Object.keys(STD_NAME).forEach(id => { std[id] = { tasks: '', outcomes: '', indicators: '' }; });
+  return { rank: 'ครูชำนาญการ', formCode: 'PA 1/ส', std, intro: '', target: '', methodIntro: '',
+    phases: ADDIE.map(h => ({ id: uid('f'), head: h, steps: '' })), resources: '', evidence: '', quantitative: '', qualitative: '',
+    director: { name: '', position: '' } };
+}
+function normAgreement(a) {
+  const b = emptyAgreement(), o = Object.assign(b, a || {});
+  const std = {}; Object.keys(STD_NAME).forEach(id => { std[id] = Object.assign({ tasks: '', outcomes: '', indicators: '' }, (a && a.std && a.std[id]) || {}); }); o.std = std;
+  o.phases = Array.isArray(a && a.phases) ? a.phases.map(p => ({ id: p.id || uid('f'), head: String(p.head || ''), steps: String(p.steps || '') })) : b.phases;
+  o.director = Object.assign({ name: '', position: '' }, (a && a.director) || {});
+  return o;
+}
+// แปลงเป็นโครงข้อมูลของตัวสร้าง Word PA 1/ส
+function agreementDoc(st) {
+  const c = st.cover, a = normAgreement(st.agreement), ch = st.challenge, fy = +c.fy;
+  const LBL = [['general', 'ห้องเรียนวิชาสามัญหรือวิชาพื้นฐาน'], ['early', 'ห้องเรียนปฐมวัย'], ['special', 'ห้องเรียนการศึกษาพิเศษ'], ['voc', 'ห้องเรียนสายวิชาชีพ'], ['nonformal', 'ห้องเรียนการศึกษานอกระบบ / ตามอัธยาศัย']];
+  const rows = (sem, n) => sem.items.filter(i => i.cat === n && String(i.name || '').trim()).map(i => ({ name: i.name.trim(), periods: '', hours: fmtTotal(i.min || 0).replace(/^0 นาที$/, '0 นาที') }));
+  return {
+    schema: 1, fiscalYear: fy,
+    header: { formCode: a.formCode || 'PA 1/ส', prefix: '', firstName: c.first || '', lastName: c.last || '', position: 'ครู', rank: a.rank || '', school: c.school || '', office: c.affil || '', salaryLevel: c.rank || '', salary: c.salary || '',
+      classrooms: LBL.map(([k, l]) => ({ label: l, checked: !!(c.rooms || {})[k] })) },
+    terms: st.semesters.map(sem => ({ title: `ภาคเรียนที่ ${sem.term} ปีการศึกษา ${sem.year}`, projected: !!sem.projected, note: sem.note || '',
+      teach: rows(sem, 1), support: rows(sem, 2), quality: rows(sem, 3), policy: rows(sem, 4) })),
+    standards: [1, 2, 3].map(ar => ({ title: AREA_FULL[ar], items: INDICATORS.filter(d => d.area === ar).map(d => Object.assign({ name: STD_NAME[d.id] }, a.std[d.id])) })),
+    challenge: { intro: a.intro, title: ch.title, problem: ch.problem, target: a.target, methodIntro: a.methodIntro, phases: a.phases.map(p => ({ head: p.head, steps: p.steps })),
+      resources: a.resources, evidence: a.evidence, quantitative: a.quantitative, qualitative: a.qualitative },
+    director: a.director
+  };
+}
+// แปลงข้อมูลจากแอป "ข้อตกลง PA รายปี" เดิม → เล่มในแอปนี้ (ทับเฉพาะ ข้อมูลผู้จัดทำ ภาระงาน ชื่อ/สภาพปัญหาประเด็นท้าทาย และข้อตกลง)
+function fromAgreementDoc(d, base) {
+  const st = normalize(JSON.parse(JSON.stringify(base || emptyState(d.fiscalYear))));
+  const hd = d.header || {}, c = st.cover, keys = ['general', 'early', 'special', 'voc', 'nonformal'];
+  c.fy = String(d.fiscalYear);
+  c.first = ((hd.prefix || '') + (hd.firstName || '')).trim(); c.last = hd.lastName || '';
+  c.school = hd.school || ''; c.affil = hd.office || ''; c.rank = hd.salaryLevel || c.rank; c.salary = hd.salary || '';
+  (hd.classrooms || []).forEach((r, i) => { if (keys[i]) c.rooms[keys[i]] = !!r.checked; });
+  const G = root.PADocx;
+  const mins = r => { const m = G ? G.rowMin(r) : null; return m == null ? 0 : m; };
+  if (Array.isArray(d.terms) && d.terms.length) st.semesters = d.terms.map(t => {
+    const m = String(t.title || '').match(/ภาคเรียนที่\s*(\d)\s*ปีการศึกษา\s*(25\d\d)/);
+    const items = [];
+    [['teach', 1], ['support', 2], ['quality', 3], ['policy', 4]].forEach(([k, n]) => (t[k] || []).forEach(r => { if (String(r.name || '').trim()) items.push({ id: uid('w'), cat: n, name: String(r.name).trim(), min: mins(r) }); }));
+    return { id: uid('s'), term: m ? +m[1] : 1, year: m ? m[2] : String(d.fiscalYear), items, projected: !!t.projected, note: t.note || '' };
+  });
+  const ch = d.challenge || {};
+  st.challenge.title = ch.title || st.challenge.title; st.challenge.problem = ch.problem || st.challenge.problem;
+  const a = emptyAgreement();
+  a.rank = hd.rank || a.rank; a.formCode = hd.formCode || a.formCode;
+  (d.standards || []).forEach(g => (g.items || []).forEach(it => { const id = (String(it.name || '').match(/^([123]\.\d)/) || [])[1]; if (id && a.std[id]) a.std[id] = { tasks: it.tasks || '', outcomes: it.outcomes || '', indicators: it.indicators || '' }; }));
+  ['intro', 'target', 'methodIntro', 'resources', 'evidence', 'quantitative', 'qualitative'].forEach(k => { a[k] = ch[k] || ''; });
+  if (Array.isArray(ch.phases) && ch.phases.length) a.phases = ch.phases.map(p => ({ id: uid('f'), head: p.head || '', steps: p.steps || '' }));
+  a.director = Object.assign({ name: '', position: '' }, d.director || {});
+  st.agreement = a; st.started = true;
+  return st;
+}
+// สิ่งที่ยังว่างในข้อตกลง (ใช้แสดงเตือนก่อนส่งออก)
+function checkAgreement(st) {
+  const a = normAgreement(st.agreement), c = st.cover, out = [];
+  const miss = []; if (!c.first) miss.push('ชื่อ'); if (!c.last) miss.push('นามสกุล'); if (!c.school) miss.push('สถานศึกษา'); if (!c.affil) miss.push('สังกัด'); if (!/\d/.test(String(c.salary))) miss.push('อัตราเงินเดือน');
+  if (miss.length) out.push({ tab: 'info', text: 'ข้อมูลผู้จัดทำยังไม่ครบ: ' + miss.join(', ') });
+  st.semesters.forEach(s => { if (!s.items.some(i => i.cat === 1 && String(i.name || '').trim())) out.push({ tab: 'work', text: `ภาคเรียนที่ ${s.term}/${s.year} ยังไม่มีชั่วโมงสอน` }); });
+  const emptyStd = INDICATORS.filter(d => { const x = a.std[d.id]; return !lines(x.tasks).length || !lines(x.outcomes).length || !lines(x.indicators).length; }).map(d => d.id);
+  if (emptyStd.length) out.push({ tab: 'agree', text: 'ข้อตกลงส่วนที่ 1 ยังกรอกไม่ครบ: ข้อ ' + emptyStd.join(', ') });
+  if (!String(st.challenge.title || '').trim()) out.push({ tab: 'ch', text: 'ยังไม่มีชื่อประเด็นท้าทาย' });
+  if (!lines(st.challenge.problem).length) out.push({ tab: 'ch', text: 'ยังไม่มีสภาพปัญหา' });
+  if (!a.phases.some(p => lines(p.steps).length)) out.push({ tab: 'agree', text: 'ยังไม่มีวิธีดำเนินการ (ขั้นตอน)' });
+  if (!lines(a.quantitative).length || !lines(a.qualitative).length) out.push({ tab: 'agree', text: 'ยังไม่มีผลลัพธ์ที่คาดหวังเชิงปริมาณ/คุณภาพ' });
+  if (!String(a.director.name || '').trim()) out.push({ tab: 'agree', text: 'ยังไม่มีชื่อผู้อำนวยการ' });
+  return out;
+}
+// เลื่อนปีในข้อความของข้อตกลง: ปีการศึกษา/ปีงบ, "พ.ย. 2569", "1/2570"
+const MON_RE = '(ม\\.ค\\.|ก\\.พ\\.|มี\\.ค\\.|เม\\.ย\\.|พ\\.ค\\.|มิ\\.ย\\.|ก\\.ค\\.|ส\\.ค\\.|ก\\.ย\\.|ต\\.ค\\.|พ\\.ย\\.|ธ\\.ค\\.)';
+function bumpAgreeText(t) {
+  return bumpYears(t).replace(new RegExp(MON_RE + '(\\s*)(25\\d\\d)', 'g'), (m, mo, sp, y) => mo + sp + (+y + 1))
+    .replace(/(ภาคเรียนที่\s*[12]\s*\/\s*)(25\d\d)/g, (m, a, y) => a + (+y + 1))
+    .replace(/(คำสั่งที่\s*\d+\s*\/\s*)(25\d\d)/g, (m, a, y) => a + (+y + 1));
+}
 
 /* ---------------- trainings (อบรม/พัฒนาตนเอง) ---------------- */
 const MON_TH = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
@@ -158,6 +493,7 @@ function emptyState(fy) {
     indicators: ind,
     challenge: { title: '', problem: '', methods: [], quant: [], qual: [] },
     idplan: [],                 // ID Plan topics: {id, topic, method, period}
+    agreement: emptyAgreement(),
     evidenceMode: 'appendix',   // 'appendix' = table + large evidence pages at the end; 'table' = photos inside the table only
     updatedAt: 0
   };
@@ -170,6 +506,7 @@ function normalize(st) { // make sure a loaded state has every field
   INDICATORS.forEach(i => { out.indicators[i.id] = Object.assign({ action: '', evidenceText: '', items: [], plan: [] }, (st && st.indicators && st.indicators[i.id]) || {}); });
   out.challenge = Object.assign(base.challenge, (st && st.challenge) || {});
   out.idplan = Array.isArray(st && st.idplan) ? st.idplan : [];
+  out.agreement = normAgreement(st && st.agreement);
   return out;
 }
 
@@ -840,11 +1177,15 @@ function rollover(st) {
     quant: c.quant.map(q => ({ id: uid('q'), text: bumpYears(q.text), target: q.target, total: '', achieved: '' })),
     qual: c.qual.map(q => ({ id: uid('u'), text: bumpYears(q.text) }))
   };
+  const oa = normAgreement(old.agreement);
+  out.agreement = JSON.parse(JSON.stringify(oa), (k, v) => (typeof v === 'string' && k !== 'id' ? bumpAgreeText(v) : v));
+  out.agreement.phases.forEach(p => { p.id = uid('f'); });
+  out.semesters[1].projected = true;
   out.idplan = (old.idplan || []).map(t => ({ id: uid('t'), topic: t.topic || '', method: t.method || '', period: bumpYears(t.period || '') }));
   out.evidenceMode = old.evidenceMode; out.started = true; return out;
 }
 
-const api = { thDate, thRange, fmtHours, fyOfDate, MODE_TH, mergePlan, evidenceLines, rollover, bumpYears, INDICATORS, AREAS, CATS, fmtItem, fmtTotal, catMin, semMin, emptyState, normalize, importDocx, buildDocx, analyze, pct, applyPercent, uid, lines };
+const api = { fromAgreementDoc, agreementDoc, checkAgreement, normAgreement, emptyAgreement, bumpAgreeText, STD_NAME, ADDIE, thDate, thRange, fmtHours, fyOfDate, MODE_TH, mergePlan, evidenceLines, rollover, bumpYears, INDICATORS, AREAS, CATS, fmtItem, fmtTotal, catMin, semMin, emptyState, normalize, importDocx, buildDocx, analyze, pct, applyPercent, uid, lines };
 if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.PA = api;
 })(typeof window !== 'undefined' ? window : globalThis);
 </script>
@@ -852,7 +1193,7 @@ if (typeof module !== 'undefined' && module.exports) module.exports = api; else 
 (function () {
 'use strict';
 const PA = window.PA;
-const { INDICATORS, AREAS, CATS, fmtItem, fmtTotal, catMin, semMin, analyze, pct, applyPercent, uid, lines, thRange, fmtHours, fyOfDate, MODE_TH } = PA;
+const { agreementDoc, checkAgreement, normAgreement, INDICATORS, AREAS, CATS, fmtItem, fmtTotal, catMin, semMin, analyze, pct, applyPercent, uid, lines, thRange, fmtHours, fyOfDate, MODE_TH } = PA;
 
 const SUPABASE_URL = 'https://ikkhjslmtjwrxzxvtokb.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlra2hqc2xtdGp3cnh6eHZ0b2tiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM3NDMzNjksImV4cCI6MjA5OTMxOTM2OX0.3OR_9mEv82Ns1LLjx5nnRwJYzrtKFtWCWd1bPuQfNKU';
@@ -957,7 +1298,7 @@ async function removeFile(evId) { if (!evId) return; await driveCall({ action: '
 let S = null, CY = null, CYCLES = [], TR = [], ME = null, tab = 'home';
 let saveTimer = null, saving = null, dirty = false, conflict = false;
 const openInd = new Set(), urlCache = new Map();
-const TABS = [['home', 'ภาพรวม'], ['info', 'ข้อมูล'], ['work', 'ภาระงาน'], ['ind', 'ตัวชี้วัด'], ['ch', 'ประเด็นท้าทาย'], ['train', 'อบรม/ID Plan'], ['out', 'รูปเล่ม']];
+const TABS = [['home', 'ภาพรวม'], ['info', 'ข้อมูล'], ['work', 'ภาระงาน'], ['agree', 'ข้อตกลงต้นปี'], ['ind', 'ผลงานตามตัวชี้วัด'], ['ch', 'ประเด็นท้าทาย'], ['train', 'อบรม/ID Plan'], ['out', 'รูปเล่ม']];
 const KINDS = ['อบรม', 'ประชุมเชิงปฏิบัติการ', 'สัมมนา', 'ศึกษาดูงาน', 'PLC', 'ศึกษาด้วยตนเอง', 'อื่น ๆ'];
 
 function setStatus(t) { const e = $('#status'); if (e) e.textContent = t; }
@@ -1097,6 +1438,7 @@ function screenHome() {
   wrap.append(h('section', { class: 'grid3' },
     stat(`${a.withEvidence}/${a.total}`, 'ตัวชี้วัดที่มีหลักฐาน'),
     stat(String(a.photoCount), 'รูปหลักฐาน' + (a.linkCount ? ` + ${a.linkCount} ลิงก์` : '')),
+    stat(checkAgreement(S).length ? `ขาด ${checkAgreement(S).length} จุด` : 'ครบแล้ว', 'ข้อตกลงต้นปี (PA 1/ส)'),
     stat(`${tr.length} รายการ · ${fmtHours(hrs)} ชม.`, 'อบรม/พัฒนาตนเอง ปีนี้'),
     stat(S.semesters.map(s => fmtTotal(semMin(s)).replace(' ชั่วโมง', ' ชม.').replace(' นาที', ' น.')).join(' · ') || '–', 'ภาระงาน/สัปดาห์ ต่อภาค'),
     a.planTotal ? stat(`${a.planDone}/${a.planTotal}`, 'หลักฐานที่ควรเก็บ (เก็บแล้ว)') : null));
@@ -1149,7 +1491,9 @@ function screenWork() {
       h('div', { class: 'row' }, h('span', { class: 'lbl' }, 'ภาคเรียนที่'),
         h('select', { onchange: e => { sem.term = +e.target.value; touch(); } }, [1, 2].map(n => h('option', { value: n, selected: sem.term === n }, n))),
         h('span', { class: 'lbl' }, 'ปีการศึกษา'), h('input', { class: 'yr', type: 'text', inputmode: 'numeric', value: sem.year, oninput: e => { sem.year = e.target.value; touch(); } })),
+      h('label', { class: 'chk sm', title: 'ใช้ในข้อตกลงต้นปี: ภาคเรียนที่ยังไม่มีตารางสอนจริง' }, h('input', { type: 'checkbox', checked: !!sem.projected, onchange: e => { sem.projected = e.target.checked; touch(); render(); } }), ' คาดการณ์ (ยังไม่มีตารางสอนจริง)'),
       S.semesters.length > 1 ? h('button', { class: 'btn ghost sm', onclick: () => confirmBox('ลบภาคเรียนนี้?', 'รายการภาระงานในภาคเรียนนี้จะหายไป', 'ลบ', () => { S.semesters.splice(si, 1); touch(); render(); }) }, 'ลบภาคเรียน') : null));
+    if (sem.projected) card.append(field('หมายเหตุในข้อตกลง (ภาคเรียนคาดการณ์)', textInput(() => sem.note, v => sem.note = v, { ph: 'เช่น ใช้ตารางสอนภาคเรียนที่ 2/2569 เป็นฐาน จะปรับเมื่อได้ตารางจริง' })));
     CATS.forEach(c => {
       const items = sem.items.filter(i => i.cat === c.n);
       const sec = h('div', { class: 'cat' }, h('div', { class: 'row between' }, h('div', { class: 'cat-t' }, `${c.no} ${c.label}`), h('div', { class: 'cat-s', 'data-cat': `${sem.id}-${c.n}` }, fmtItem(catMin(sem, c.n)))));
@@ -1172,7 +1516,7 @@ function screenWork() {
     wrap.append(card);
   });
   wrap.append(h('button', { class: 'btn', onclick: () => { const last = S.semesters[S.semesters.length - 1]; const term = last && last.term === 2 ? 1 : 2; const yr = last ? String(+last.year + (last.term === 2 ? 1 : 0)) : S.cover.fy; S.semesters.push({ id: uid('s'), term, year: yr, items: [] }); touch(); render(); } }, '+ เพิ่มภาคเรียน'));
-  wrap.append(h('p', { class: 'hint' }, 'หมวดที่ไม่มีรายการจะไม่แสดงในรูปเล่ม ตัวเลขรวมคำนวณจากรายการทุกครั้ง จึงไม่คลาดเคลื่อน'));
+  wrap.append(h('p', { class: 'hint' }, 'ภาระงานชุดนี้ใช้ทั้งในข้อตกลงต้นปี (PA 1/ส) และรายงานปลายปี หมวดที่ไม่มีรายการจะไม่แสดงในเอกสาร ตัวเลขรวมคำนวณจากรายการทุกครั้ง · 1 คาบ = 50 นาที'));
   return wrap;
 }
 
@@ -1300,6 +1644,99 @@ function screenCh() {
     h('section', { class: 'card' }, h('h3', {}, '2. วิธีการดำเนินการให้บรรลุผล'), listEditor(ch.methods, '2.', () => ({ id: uid('m'), text: '' }), 'ขั้นตอนการดำเนินงาน')),
     h('section', { class: 'card' }, h('h3', {}, '3.1 ผลการจัดการเรียนรู้เชิงปริมาณ'), h('p', { class: 'hint' }, 'ปลายปีกรอกจำนวนนักเรียนจริง แอปคำนวณร้อยละและใส่ในข้อความให้ได้'), quant),
     h('section', { class: 'card' }, h('h3', {}, '3.2 ผลการจัดการเรียนรู้เชิงคุณภาพ'), listEditor(ch.qual, null, () => ({ id: uid('u'), text: '' }), 'ผลเชิงคุณภาพ')));
+}
+
+/* ---------- ข้อตกลงต้นปี (PA 1/ส) ---------- */
+const openStd = new Set();
+function screenAgree() {
+  if (!CY) return screenStart();
+  const a = S.agreement = normAgreement(S.agreement), issues = checkAgreement(S);
+  const wrap = h('div', { class: 'stack' });
+  wrap.append(h('section', { class: 'card hero' },
+    h('div', { class: 'row between wrap' }, h('div', {}, h('h3', { style: 'margin:0' }, 'ข้อตกลงในการพัฒนางาน (PA 1/ส) ปีงบ ' + S.cover.fy), h('p', { class: 'hint' }, 'ทำต้นปีงบประมาณ ส่งผู้อำนวยการ · ปลายปีใช้ข้อมูลชุดเดียวกันทำรายงานผลต่อได้เลย')),
+      h('button', { class: 'btn primary', id: 'btnAgree', onclick: doExportAgreement }, 'ส่งออกข้อตกลง (Word)')),
+    h('p', { class: 'note ok' }, 'ใช้ร่วมกับรายงานปลายปี (แก้ที่เดียว): ',
+      h('button', { class: 'linkbtn inl', onclick: () => go('info') }, 'ข้อมูลผู้จัดทำ'), ' · ',
+      h('button', { class: 'linkbtn inl', onclick: () => go('work') }, 'ภาระงาน'), ' · ',
+      h('button', { class: 'linkbtn inl', onclick: () => go('ch') }, 'ชื่อประเด็นท้าทายและสภาพปัญหา')),
+    issues.length ? h('details', { class: 'more', open: true }, h('summary', {}, `ยังไม่ครบ ${issues.length} จุด`), h('ul', { class: 'issues' }, issues.map(i => h('li', {}, h('button', { class: 'linkbtn', onclick: () => go(i.tab) }, chip('warn', 'เช็ก'), ' ', i.text))))) : h('p', { class: 'hint' }, '✓ กรอกครบทุกส่วนแล้ว')));
+  wrap.append(h('section', { class: 'card' }, h('h3', {}, 'ผู้จัดทำและผู้อนุมัติ'),
+    h('div', { class: 'two' }, field('วิทยฐานะ (ในข้อตกลง)', textInput(() => a.rank, v => a.rank = v, { ph: 'เช่น ครูชำนาญการ' })), field('รหัสแบบฟอร์ม', textInput(() => a.formCode, v => a.formCode = v, { ph: 'PA 1/ส' }))),
+    h('div', { class: 'two' }, field('ชื่อผู้อำนวยการ', textInput(() => a.director.name, v => a.director.name = v, { ph: 'เช่น นางสาวสมใจ ใจดี' })), field('ตำแหน่ง', textInput(() => a.director.position, v => a.director.position = v, { ph: 'ผู้อำนวยการโรงเรียน…' })))));
+  // ส่วนที่ 1
+  wrap.append(h('div', { class: 'row wrap between' }, h('h3', { class: 'area', style: 'margin:0' }, 'ส่วนที่ 1 งานที่จะปฏิบัติตามมาตรฐานตำแหน่ง'),
+    h('button', { class: 'btn ghost sm', onclick: copyTasksToReport }, 'ใช้ "งาน" เป็นร่างการดำเนินงานในรายงาน')));
+  [1, 2, 3].forEach(area => {
+    wrap.append(h('h3', { class: 'area' }, AREAS[area]));
+    INDICATORS.filter(d => d.area === area).forEach(d => {
+      const x = a.std[d.id], done = lines(x.tasks).length && lines(x.outcomes).length && lines(x.indicators).length;
+      const det = h('details', { class: 'ind', open: openStd.has(d.id) }, h('summary', {}, h('span', { class: 'ino' }, d.id), h('span', { class: 'ititle' }, d.title.replace(/^\S+\s/, '')), chip(done ? 'ok' : 'warn', done ? 'ครบ' : 'ยังไม่ครบ')));
+      det.addEventListener('toggle', () => { det.open ? openStd.add(d.id) : openStd.delete(d.id); });
+      det.append(h('div', { class: 'ibody' },
+        field('งาน (Tasks) ที่จะดำเนินการ — บรรทัดละ 1 ข้อ', textArea(() => x.tasks, v => x.tasks = v, { rows: 3 })),
+        field('ผลลัพธ์ (Outcomes) ที่คาดหวังให้เกิดกับผู้เรียน', textArea(() => x.outcomes, v => x.outcomes = v, { rows: 2 })),
+        field('ตัวชี้วัด (Indicators) ที่จะเกิดกับผู้เรียน', textArea(() => x.indicators, v => x.indicators = v, { rows: 2, ph: 'เช่น ผู้เรียนร้อยละ 80 …' }))));
+      wrap.append(det);
+    });
+  });
+  // ส่วนที่ 2
+  wrap.append(h('div', { class: 'row wrap between' }, h('h3', { class: 'area', style: 'margin:0' }, 'ส่วนที่ 2 ประเด็นท้าทาย (แผน)'),
+    h('button', { class: 'btn ghost sm', onclick: copyPlanToReport }, 'ใช้แผนนี้เป็นร่างรายงานปลายปี')));
+  wrap.append(h('section', { class: 'card' },
+    h('p', {}, h('b', {}, 'เรื่อง: '), S.challenge.title || h('span', { class: 'hint' }, '(ยังไม่ได้ตั้ง — กรอกที่แท็บประเด็นท้าทาย)')),
+    field('ย่อหน้านำ (ระดับการปฏิบัติที่คาดหวัง)', textArea(() => a.intro, v => a.intro = v, { rows: 3 })),
+    field('กลุ่มเป้าหมาย', textInput(() => a.target, v => a.target = v, { ph: 'เช่น นักเรียนชั้นมัธยมศึกษาปีที่ 6/2 จำนวน 40 คน' })),
+    field('ย่อหน้านำวิธีดำเนินการ', textArea(() => a.methodIntro, v => a.methodIntro = v, { rows: 2, ph: 'เช่น ข้าพเจ้าใช้รูปแบบ ADDIE เป็นกรอบการดำเนินการ ดังนี้' }))));
+  const ph = h('section', { class: 'card' }, h('h3', {}, '2. วิธีการดำเนินการ (แยกตามขั้น)'));
+  a.phases.forEach((x, i) => ph.append(h('div', { class: 'topic' },
+    h('div', { class: 'row between' }, h('b', { class: 'tno' }, `ขั้นที่ ${i + 1}`), h('span', {},
+      h('button', { class: 'iconbtn', 'aria-label': 'เลื่อนขึ้น', onclick: () => moveItem(a.phases, i, -1) }, '↑'),
+      h('button', { class: 'iconbtn', 'aria-label': 'ลบขั้น', onclick: () => confirmBox('ลบขั้นนี้?', x.head || 'ขั้นที่ ' + (i + 1), 'ลบ', () => { a.phases.splice(i, 1); touch(); render(); }) }, '✕'))),
+    field('หัวขั้น (ใส่ช่วงเวลาได้)', textInput(() => x.head, v => x.head = v, { ph: 'เช่น A – Analysis (วิเคราะห์)  พ.ย. 2569' })),
+    field('ขั้นตอน — บรรทัดละ 1 ข้อ (เลขข้อเรียงต่อกันทุกขั้นให้อัตโนมัติ)', textArea(() => x.steps, v => x.steps = v, { rows: 3 })))));
+  ph.append(h('button', { class: 'btn ghost sm', onclick: () => { if (a.phases.length >= 12) return toast('เพิ่มได้สูงสุด 12 ขั้น'); a.phases.push({ id: uid('f'), head: '', steps: '' }); touch(); render(); } }, '+ เพิ่มขั้น'));
+  wrap.append(ph);
+  wrap.append(h('section', { class: 'card' },
+    field('ทรัพยากรที่ใช้', textArea(() => a.resources, v => a.resources = v, { rows: 2 })),
+    field('หลักฐานร่องรอย', textArea(() => a.evidence, v => a.evidence = v, { rows: 2 })),
+    field('3.1 ผลลัพธ์ที่คาดหวัง เชิงปริมาณ — บรรทัดละ 1 ข้อ', textArea(() => a.quantitative, v => a.quantitative = v, { rows: 3, ph: 'เช่น นักเรียน ม.6/2 ร้อยละ 80 มีคะแนนความพร้อมหลังกิจกรรมสูงกว่าก่อนกิจกรรม' })),
+    field('3.2 ผลลัพธ์ที่คาดหวัง เชิงคุณภาพ — บรรทัดละ 1 ข้อ', textArea(() => a.qualitative, v => a.qualitative = v, { rows: 3 }))));
+  return wrap;
+}
+// ปลายปี: เติมเฉพาะช่องที่ยังว่างในรายงาน ไม่ทับของที่เขียนแล้ว
+function copyTasksToReport() {
+  const a = normAgreement(S.agreement); const todo = INDICATORS.filter(d => !lines(S.indicators[d.id].action || '').length && lines(a.std[d.id].tasks).length);
+  if (!todo.length) return toast('ไม่มีข้อที่ต้องเติม (การดำเนินงานในรายงานมีข้อความแล้ว หรือข้อตกลงยังไม่มีงาน)');
+  confirmBox('เติมร่างการดำเนินงาน?', `ใช้ "งาน (Tasks)" ในข้อตกลงเป็นร่างการดำเนินงานของรายงาน ${todo.length} ข้อ (${todo.map(d => d.id).join(', ')}) — ข้อที่เขียนไว้แล้วไม่ถูกแตะ ปลายปีควรแก้เป็นสิ่งที่ทำจริง`, 'เติม', () => {
+    todo.forEach(d => { S.indicators[d.id].action = lines(a.std[d.id].tasks).join('\n'); }); touch(); toast(`เติมแล้ว ${todo.length} ข้อ`); render();
+  });
+}
+function copyPlanToReport() {
+  const a = normAgreement(S.agreement), ch = S.challenge, did = [];
+  const run = () => {
+    if (!ch.methods.some(m => (m.text || '').trim())) { const st = a.phases.flatMap(p => lines(p.steps)); if (st.length) { ch.methods = st.map(t => ({ id: uid('m'), text: t })); did.push(`วิธีดำเนินการ ${st.length} ข้อ`); } }
+    if (!ch.quant.some(q => (q.text || '').trim())) { const q = lines(a.quantitative); if (q.length) { ch.quant = q.map(t => { const m = t.match(/ร้อยละ\s*(\d+(?:\.\d+)?)/); return { id: uid('q'), text: t, target: m ? +m[1] : 80, total: '', achieved: '' }; }); did.push(`ผลเชิงปริมาณ ${q.length} ข้อ`); } }
+    if (!ch.qual.some(q => (q.text || '').trim())) { const q = lines(a.qualitative); if (q.length) { ch.qual = q.map(t => ({ id: uid('u'), text: t })); did.push(`ผลเชิงคุณภาพ ${q.length} ข้อ`); } }
+    if (!did.length) return toast('ไม่มีช่องที่ต้องเติม (รายงานมีข้อความแล้ว หรือแผนยังว่าง)');
+    touch(); toast('เติมแล้ว: ' + did.join(', ')); render();
+  };
+  confirmBox('ใช้แผนเป็นร่างรายงาน?', 'เติมวิธีดำเนินการ ผลเชิงปริมาณ และเชิงคุณภาพ ในแท็บประเด็นท้าทาย เฉพาะส่วนที่ยังว่าง (ไม่ทับของเดิม) ปลายปีกรอกจำนวนนักเรียนจริงแล้วแอปคำนวณร้อยละให้', 'เติม', run);
+}
+async function doExportAgreement() {
+  if (!window.JSZip) return toast('โหลดตัวสร้างไฟล์ไม่สำเร็จ');
+  const run = async () => {
+    const b = $('#btnAgree'); if (b) { b.disabled = true; b.textContent = 'กำลังสร้างไฟล์…'; }
+    try {
+      await flush();
+      const blob = await window.PADocx.build(window.JSZip, agreementDoc(S)).generateAsync({ type: 'blob', mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', compression: 'DEFLATE' });
+      const st = await saveFile(`PA1_ข้อตกลง_${S.cover.fy}.docx`, blob);
+      if (st === 'saved') toast('ส่งออกข้อตกลงแล้ว — ช่องที่ยังไม่มีข้อมูลจะมีแถบสีเหลือง "[รอข้อมูลจริง]"');
+    } catch (e) { toast('ส่งออกไม่สำเร็จ: ' + (e.message || e)); }
+    if (b) { b.disabled = false; b.textContent = 'ส่งออกข้อตกลง (Word)'; }
+  };
+  const n = checkAgreement(S).length;
+  if (n) modal('ข้อตกลงยังไม่ครบ', h('p', {}, `ยังมี ${n} จุดที่ว่าง (ดูรายการที่หัวแท็บข้อตกลงต้นปี) ส่งออกตอนนี้ได้ ช่องที่ว่างจะเว้นไว้ให้เติมใน Word`), [{ label: 'ยกเลิก' }, { label: 'ส่งออกอยู่ดี', kind: 'primary', fn: run }]);
+  else await run();
 }
 
 /* ---------- อบรม/พัฒนาตนเอง + ID Plan ---------- */
@@ -1473,12 +1910,15 @@ function screenOut() {
          ['table', 'รูปในตารางอย่างเดียว (แบบเดิม)', 'ภาพย่อกว้างไม่เกิน 4.5 ซม. อยู่ในช่องเอกสารหลักฐาน ตรงกับแบบฟอร์มเดิม แต่ภาพเอกสารจะเล็กเกินอ่าน']]
         .map(([v, l, dsc]) => h('button', { class: 'opt' + (S.evidenceMode === v ? ' on' : ''), 'aria-pressed': S.evidenceMode === v ? 'true' : 'false', onclick: () => { S.evidenceMode = v; touch(); render(); } }, h('b', {}, l), h('span', { class: 'hint' }, dsc)))),
       h('p', { class: 'hint' }, 'การอบรม/พัฒนาตนเองและ ID Plan จะต่อท้ายเป็นภาคผนวก ข (ตารางรวมชั่วโมง + เกียรติบัตร) เกียรติบัตร PDF ที่เปิด "แชร์ลิงก์" จะขึ้นเป็น QR')),
-    h('section', { class: 'card' }, h('h3', {}, 'ส่งออกรูปเล่ม (Word)'),
+    h('section', { class: 'card' }, h('h3', {}, 'ข้อตกลงต้นปี (PA 1/ส)'),
+      h('p', {}, 'แบบข้อตกลงในการพัฒนางาน ใช้ข้อมูลผู้จัดทำ ภาระงาน และประเด็นท้าทายชุดเดียวกับรายงาน'),
+      h('div', { class: 'row wrap' }, h('button', { class: 'btn', id: 'btnAgree', onclick: doExportAgreement }, 'ส่งออกข้อตกลง (Word)'), h('button', { class: 'btn ghost', onclick: () => go('agree') }, 'ไปแก้ข้อตกลง'))),
+    h('section', { class: 'card' }, h('h3', {}, 'รายงานผลปลายปี (Word)'),
       h('p', {}, 'สร้างเอกสาร Word (A4) ตามโครงสร้างแบบฟอร์ม จากข้อมูลที่กรอกไว้ เปิดใน Word แล้วบันทึกเป็น PDF ต่อได้'),
       h('p', { class: 'hint' }, `ระบบจะดึงรูปจาก Drive มาใส่ (${nFiles} ไฟล์) ครั้งแรกอาจใช้เวลาสักครู่ ครั้งต่อไปเร็วขึ้นเพราะเก็บแคชไว้ในเครื่อง · ใช้ฟอนต์ TH SarabunPSK`),
       h('button', { class: 'btn primary', id: 'btnExport', onclick: doExport }, 'ส่งออกเป็น Word (.docx)')),
     h('section', { class: 'card' }, h('h3', {}, 'เริ่มปีงบประมาณถัดไป'),
-      h('p', {}, `สร้างเล่มปี ${(+S.cover.fy) + 1} โดยคัดลอกข้อมูลผู้จัดทำ ข้อความตัวชี้วัด ประเด็นท้าทาย และหัวข้อ ID Plan (เล่มปีนี้ยังอยู่ครบ)`),
+      h('p', {}, `สร้างเล่มปี ${(+S.cover.fy) + 1} โดยคัดลอกข้อมูลผู้จัดทำ ข้อตกลงต้นปี (เลื่อนปีในข้อความให้) ข้อความตัวชี้วัด ประเด็นท้าทาย และหัวข้อ ID Plan (เล่มปีนี้ยังอยู่ครบ)`),
       h('button', { class: 'btn', onclick: askNextYear }, `เริ่มปีงบ ${(+S.cover.fy) + 1}`)),
     h('section', { class: 'card' }, h('h3', {}, 'สำรองเก็บไว้เอง (.zip)'),
       h('p', {}, 'ข้อมูลอยู่ในระบบแล้ว ไฟล์สำรองมีไว้เก็บเป็นสำเนาส่วนตัว (รวมรูปหลักฐานตัวชี้วัด)'),
@@ -1488,12 +1928,13 @@ function screenOut() {
       h('div', { class: 'row wrap' },
         h('button', { class: 'btn ghost', onclick: () => pickFile('.docx', f => doImport(f, +S.cover.fy)) }, 'จากไฟล์ PA (.docx)'),
         h('button', { class: 'btn ghost', onclick: () => pickFile('.zip', f => doRestore(f)) }, 'จากไฟล์สำรอง (.zip)'),
-        h('button', { class: 'btn ghost', onclick: () => pickFile('.json,application/json', doImportPlan) }, 'แผนหลักฐาน (.json)'))),
+        h('button', { class: 'btn ghost', onclick: () => pickFile('.json,application/json', doImportPlan) }, 'แผนหลักฐาน (.json)'),
+        h('button', { class: 'btn ghost', onclick: () => pickFile('.json,application/json', doImportAgreement) }, 'ข้อตกลงจากแอปเดิม (.json)'))),
     h('section', { class: 'card' }, h('h3', {}, 'แคชในเครื่องนี้'),
       h('p', { class: 'hint' }, 'เครื่องนี้เก็บสำเนารูปไว้เพื่อให้เปิดเร็ว ล้างได้ไม่กระทบข้อมูลในระบบ (เหมาะกับเครื่องที่ใช้ร่วมกัน)'),
       h('button', { class: 'btn ghost', onclick: async () => { await Cache.clear('files'); await Cache.clear('drafts'); urlCache.forEach(u => URL.revokeObjectURL(u)); urlCache.clear(); toast('ล้างแคชแล้ว'); } }, 'ล้างแคชในเครื่องนี้')));
 }
-const SCREENS = { home: screenHome, info: screenInfo, work: screenWork, ind: screenInd, ch: screenCh, train: screenTrain, out: screenOut };
+const SCREENS = { home: screenHome, info: screenInfo, work: screenWork, agree: screenAgree, ind: screenInd, ch: screenCh, train: screenTrain, out: screenOut };
 
 /* ---------- เล่มตามปีงบ ---------- */
 async function loadCycles() {
@@ -1511,13 +1952,17 @@ async function openCycle(id) {
     const r = await sb.from('pa_cycles').select('id,fiscal_year,updated_at,data').eq('id', id).single();
     if (r.error) throw r.error;
     CY = { id: r.data.id, fiscal_year: r.data.fiscal_year, updated_at: r.data.updated_at }; conflict = false; dirty = false;
-    let st = PA.normalize(r.data.data && Object.keys(r.data.data).length ? r.data.data : PA.emptyState(r.data.fiscal_year));
+    const raw = r.data.data || {};
+    let st, migrated = false;
+    if (raw.pendingAgreement) { st = PA.fromAgreementDoc(Object.assign({}, raw.pendingAgreement, { fiscalYear: r.data.fiscal_year }), null); migrated = true; }   // ย้ายมาจากแอปข้อตกลงเดิม
+    else st = PA.normalize(Object.keys(raw).length ? raw : PA.emptyState(r.data.fiscal_year));
     st.cover.fy = String(r.data.fiscal_year); st.started = true; delete st.trainings;
     // ร่างที่ยังไม่ได้ขึ้นระบบ (เน็ตหลุด/ปิดหน้าเร็ว)
     const draft = await Cache.get('drafts', CY.id);
     if (draft && draft.base === CY.updated_at && draft.at > (st.updatedAt || 0)) { st = PA.normalize(draft.state); dirty = true; toast('พบข้อมูลที่ยังไม่ได้บันทึกขึ้นระบบ กำลังบันทึกต่อให้'); }
     else if (draft) await Cache.del('drafts', CY.id);
     S = st;
+    if (migrated) { dirty = true; S.updatedAt = Date.now(); toast('ย้ายข้อตกลง PA จากแอปเดิมเข้าเล่มนี้แล้ว'); }
     // จับคู่รูปกับไฟล์ในระบบ (กันกรณีอัปโหลดเสร็จแต่ยังไม่ได้บันทึกเล่ม)
     const ev = await fetchAllRows(() => sb.from('pa_evidence').select('id,item_id').eq('cycle_id', CY.id).is('deleted_at', null).order('id'));
     const byItem = {}; ev.forEach(e => { if (e.item_id) byItem[e.item_id] = e.id; });
@@ -1624,6 +2069,27 @@ async function doRestore(file) {
     if (exists) confirmBox(`แทนที่เล่มปีงบ ${fy}?`, 'ข้อมูลเล่มปีนั้นในระบบจะถูกแทนที่ด้วยไฟล์สำรอง', 'กู้คืนและแทนที่', run); else await run();
   } catch (e) { toast('กู้คืนไม่สำเร็จ: ' + (e.message || e)); }
 }
+// ไฟล์สำรองของแอป "ข้อตกลง PA รายปี" ({app:'pa-yearly', years:{2570:{…}}})
+async function doImportAgreement(file) {
+  try {
+    const j = JSON.parse(await file.text());
+    if (!j || j.app !== 'pa-yearly' || !j.years) throw new Error('ไม่ใช่ไฟล์สำรองของแอปข้อตกลง PA รายปี');
+    const ys = Object.keys(j.years).map(Number).filter(y => y >= 2560 && y <= 2650).sort();
+    if (!ys.length) throw new Error('ไม่พบปีงบในไฟล์');
+    const pick = h('select', {}, ys.map(y => h('option', { value: y, selected: y === +S.cover.fy }, 'ปีงบ ' + y)));
+    modal('นำเข้าข้อตกลงจากแอปเดิม', h('div', {}, field('เลือกปีงบ', pick),
+      h('p', { class: 'hint' }, 'จะแทนที่: ข้อมูลผู้จัดทำ ภาระงาน ชื่อ/สภาพปัญหาประเด็นท้าทาย และข้อตกลงต้นปี ของเล่มปีนั้น · ไม่แตะ: ผลงานตามตัวชี้วัด รูป ผลประเด็นท้าทาย และการอบรม')),
+      [{ label: 'ยกเลิก' }, { label: 'นำเข้า', kind: 'primary', fn: async () => {
+        const fy = +pick.value; const d = Object.assign({}, j.years[fy], { fiscalYear: fy });
+        try {
+          await flush(); busy('กำลังนำเข้า…');
+          const id = await ensureCycle(fy, {}); if (!CY || CY.id !== id) await openCycle(id);
+          S = PA.fromAgreementDoc(d, S); S.cover.fy = String(fy); dirty = true; S.updatedAt = Date.now(); await flush();
+          tab = 'agree'; render(); toast(`นำเข้าข้อตกลงปีงบ ${fy} แล้ว`);
+        } catch (e) { toast('นำเข้าไม่สำเร็จ: ' + thError(e)); } finally { busy(); }
+      } }]);
+  } catch (e) { toast('อ่านไฟล์ไม่ได้: ' + (e.message || e)); }
+}
 async function doImportPlan(file) {
   try {
     const plan = JSON.parse(await file.text());
@@ -1670,7 +2136,7 @@ function askNextYear() {
   const fy = (+S.cover.fy || 0) + 1;
   if (CYCLES.find(c => c.fiscal_year === fy)) { modal(`มีเล่มปีงบ ${fy} อยู่แล้ว`, h('p', {}, 'เปิดเล่มนั้นจากช่องเลือกปีด้านบนได้เลย'), [{ label: 'เปิดเล่มปี ' + fy, kind: 'primary', fn: () => switchYear(fy) }, { label: 'ปิด' }]); return; }
   modal(`เริ่มปีงบประมาณ ${fy} จากปีนี้?`,
-    h('div', {}, h('p', {}, 'คัดลอก: ข้อมูลผู้จัดทำ ข้อความตัวชี้วัด ประเด็นท้าทาย และหัวข้อ ID Plan (ปีการศึกษาในข้อความเลื่อนไป +1)'),
+    h('div', {}, h('p', {}, 'คัดลอก: ข้อมูลผู้จัดทำ ข้อตกลงต้นปี ข้อความตัวชี้วัด ประเด็นท้าทาย และหัวข้อ ID Plan (ปีในข้อความเลื่อนไป +1)'),
       h('p', {}, 'ไม่คัดลอก: ภาระงาน รูป ลิงก์ ตัวเลขผลจริง และเงินเดือน'),
       h('p', { class: 'note ok' }, `เล่มปี ${S.cover.fy} ยังอยู่ครบ สลับดูได้ที่ช่องเลือกปี`)),
     [{ label: 'ยกเลิก' }, { label: 'เริ่มเลย', kind: 'primary', fn: async () => {
