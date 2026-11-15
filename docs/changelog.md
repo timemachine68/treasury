@@ -3,6 +3,18 @@
 > เพิ่มรายการใหม่ไว้บนสุด · ระบุวันที่ ไฟล์ PR และผลต่อข้อมูล/สิทธิ์ทุกครั้ง
 > รายละเอียดโมดูลดู `docs/system-map.md` · บันทึกการ์ดแสดงความยินดีละเอียดอยู่ในเอกสารโปรเจกต์ `claude/congrats-cards.md`
 
+## 15 พ.ย. 2569 — ตรวจความปลอดภัยทั้งระบบ + แก้การแสดงผลบนมือถือ Android
+
+### ความปลอดภัย
+- `supabase/functions/manage-users/index.ts` (v3): สร้าง/รีเซ็ตรหัส/ลบบัญชี ทำได้เฉพาะแอดมิน หรือครูแนะแนวที่เปิดสิทธิ์เมนู "จัดการบัญชี" (`menu_permissions.manage = true`) · เดิมครูทุกบัญชีเรียกตรงได้ · ครูไม่เปลี่ยนบัญชีครูด้วยกันได้ (เฉพาะแอดมิน)
+- `20261115_security_audit_hardening.sql`: revoke ฟังก์ชัน trigger 5 ตัวจาก /rpc · `v_scholarship_annual_summary` ตั้ง `security_invoker = true` · ถอนสิทธิ์ anon จาก `student_identity`, `vulnerable_profiles`, `counseling_logs`
+- `20261115b_restrict_student_data_to_guidance_staff.sql` (ครูเลือก): โปรไฟล์นักเรียนทั้งโรงเรียน, `strength_assessments`, `strength_tags`, รูปใน bucket `profile-photos` เห็นได้เฉพาะเจ้าของ + ครูแนะแนว + แอดมิน (`iv_is_staff()`) · ครูกลุ่มสาระเห็นแค่แถวตัวเอง · ย้อนกลับ: `supabase/rollbacks/20261115b_..._rollback.sql`
+- ทดสอบสิทธิ์: anon อ่านได้ 0 แถว · นักเรียนเห็นแค่ตัวเอง · ครูแนะแนว/แอดมินเห็น 2,621 โปรไฟล์ · ครูกลุ่มสาระเห็น 1 · หน้าเกียรติบัตรของครูกลุ่มสาระยังใช้ได้ (ใช้ชื่อ snapshot + RPC)
+- ข้อควรระวัง: หน้าใหม่ที่ครูทั่วไปใช้ ห้าม select `profiles` ของนักเรียนตรง ๆ ให้ใช้ RPC security definer ที่ตรวจสิทธิ์
+
+### มือถือ (ทดสอบ Chrome Android จอ 360px)
+- ไฟล์: `vulnerable-registry-teacher.html` (ตารางเลื่อนแนวนอนเฉพาะตาราง), `survey-results.html` (ช่องเลือกรอบไม่ล้นจอ), `scholarship-admin/apply/results.html`, `tgat-prep-admin.html`, `mou.html` (ชื่อผู้ใช้ในหัวหน้าลงบรรทัดใหม่), `ledger-app.html` (ชื่อแท็บไม่ตัดคำ)
+
 ## 12 พ.ย. 2569 — ลงทะเบียน Open House (ไปชมงานมหาวิทยาลัย ม.6)
 
 ### เพิ่มลิงก์ประชาสัมพันธ์ต่องาน
