@@ -61,6 +61,8 @@
   .toolbar-sel .fld{margin:0}
   .searchbox{flex:1;min-width:200px}
 
+  .reg-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0 -4px;padding:0 4px}
+  .reg-scroll table.reg{min-width:600px}
   table.reg{width:100%;border-collapse:collapse;margin-top:6px}
   table.reg th{text-align:left;font-size:.74rem;letter-spacing:.03em;text-transform:uppercase;
     color:var(--ink-soft);padding:8px 9px;border-bottom:2px solid var(--line);font-weight:700}
@@ -101,6 +103,9 @@
   .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}
 
   h1,h2,h3,h2.sec,.eyebrow,.brand h1,.totalbox .n{font-family:"Mitr",sans-serif !important;font-weight:500}
+
+  /* มือถือ: ย้ายชื่อผู้ใช้ลงบรรทัดใหม่ ไม่ให้หัวหน้าบีบ */
+  @media (max-width:560px){header.top{flex-wrap:wrap}.whoami:not(.hidden){flex-basis:100%;margin-left:0;text-align:left;display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 8px}.whoami b{display:inline}}
 </style>
 </head>
 <body>
@@ -261,7 +266,7 @@ function renderList(){
     (r.p.display_name||"").toLowerCase().includes(q) || (r.p.student_id||"").includes(q));
   const box=$("#regList");
   if(!rows.length){box.innerHTML=`<div class="empty"><p>ไม่พบนักเรียนที่ค้นหา</p></div>`;return;}
-  let h=`<table class="reg"><thead><tr>
+  let h=`<div class="reg-scroll"><table class="reg"><thead><tr>
     <th>นักเรียน</th><th>ชั้น</th><th class="num">รายได้/เดือน</th>
     <th class="num">พี่น้อง</th><th class="num">ระยะทาง</th><th>เดือดร้อน</th><th>สถานะ</th></tr></thead><tbody>`;
   rows.forEach(r=>{
@@ -278,7 +283,7 @@ function renderList(){
       <td class="num">${r.travel_distance_km!=null?r.travel_distance_km+" กม.":"—"}</td>
       <td>${utag}</td><td>${vt}</td></tr>`;
   });
-  h+=`</tbody></table>`;
+  h+=`</tbody></table></div>`;
   box.innerHTML=h;
   box.querySelectorAll("[data-id]").forEach(tr=>tr.onclick=()=>openDetail(tr.dataset.id));
 }

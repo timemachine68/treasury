@@ -122,6 +122,9 @@
   .toolbar-inner{display:flex;gap:10px}
 
   h1,h2,h3,h2.sec,.eyebrow,.brand h1{font-family:"Mitr",sans-serif !important;font-weight:500}
+
+  /* มือถือ: ย้ายชื่อผู้ใช้ลงบรรทัดใหม่ ไม่ให้หัวหน้าบีบ */
+  @media (max-width:560px){header.top{flex-wrap:wrap}.whoami:not(.hidden){flex-basis:100%;margin-left:0;text-align:left;display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 8px}.whoami b{display:inline}}
 </style>
 </head>
 <body>
