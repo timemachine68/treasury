@@ -1,0 +1,1724 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>แอป PA · เก็บผลงานและเกียรติบัตร</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Mitr:wght@400;500;600&family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<style>:root{--bg:#EFF3F1;--surface:#fff;--ink:#22313A;--muted:#5B6B72;--line:#DCE4E1;--accent:#0F6B5C;--accent-ink:#fff;--warn:#7A5F00;--warn-bg:#FFF3CE;--ok:#0A4F44;--ok-bg:#E2F0EC;--info:#3d5382;--info-bg:#e9eef8;--danger:#C0392B;--shadow:0 2px 10px rgba(34,49,58,.08)}
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:calc(env(safe-area-inset-top,0px) + 96px);-webkit-text-size-adjust:100%}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 17px/1.55 'Sarabun','Noto Sans Thai','Leelawadee UI',Tahoma,system-ui,sans-serif}
+h2,h3{margin:0 0 .5rem;line-height:1.3}h2{font-size:1.4rem}h3{font-size:1.1rem}p{margin:.35rem 0}
+#top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);border-bottom:1px solid var(--line)}
+.brand{display:flex;gap:.7rem;align-items:center;padding:.6rem 1rem .2rem;max-width:760px;margin:0 auto}
+.logo{background:var(--accent);color:var(--accent-ink);font-weight:700;border-radius:10px;padding:.15rem .55rem;letter-spacing:.5px}
+.brand .t{font-weight:700;line-height:1.2}.brand .s{font-size:.8rem;color:var(--muted);min-height:1.1em}
+#nav{display:flex;gap:.35rem;overflow-x:auto;padding:.3rem 1rem .6rem;max-width:760px;margin:0 auto;scrollbar-width:none}#nav::-webkit-scrollbar{display:none}
+.tab{flex:0 0 auto;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:.35rem .9rem;font:inherit;font-size:.95rem;min-height:40px;cursor:pointer}
+.tab.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600}
+main{max-width:760px;margin:0 auto;padding:1rem 1rem 4rem}
+.stack{display:flex;flex-direction:column;gap:.9rem}.stack.sm{gap:.6rem}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:1rem;box-shadow:var(--shadow)}
+.hero{border-color:var(--accent)}
+.row{display:flex;gap:.6rem;align-items:center}.row.wrap{flex-wrap:wrap}.row.between{justify-content:space-between}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:.7rem}@media(max-width:520px){.two{grid-template-columns:1fr}}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:.6rem}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:.75rem .9rem}.sv{font-size:1.5rem;font-weight:700;line-height:1.2}.sl{font-size:.85rem;color:var(--muted)}
+.eyebrow{font-size:.85rem;color:var(--muted)}.big{font-size:1.7rem;font-weight:700;line-height:1.2}.hint{font-size:.85rem;color:var(--muted)}.lbl{font-size:.9rem;color:var(--muted);font-weight:600}
+.fld{display:flex;flex-direction:column;gap:.25rem;margin:.55rem 0}
+input[type=text],input[type=url],input[type=number],select,textarea{width:100%;font:inherit;font-size:16px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:.5rem .65rem;min-height:44px}
+textarea{resize:vertical;overflow:hidden;line-height:1.5}
+input:focus,textarea:focus,select:focus,button:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.btn{font:inherit;font-size:.98rem;min-height:44px;padding:.45rem 1rem;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600}.btn.danger{color:var(--danger);border-color:var(--danger)}.btn.ghost{background:transparent}.btn.sm{min-height:38px;padding:.25rem .8rem;font-size:.9rem}.btn:disabled{opacity:.6}
+.iconbtn{flex:0 0 auto;width:40px;height:40px;border-radius:10px;border:1px solid var(--line);background:transparent;color:var(--muted);font-size:1rem;cursor:pointer}
+.linkbtn{all:unset;cursor:pointer;display:block;width:100%;padding:.35rem 0}.linkbtn:focus-visible{outline:2px solid var(--accent)}
+.chip{display:inline-block;font-size:.75rem;font-weight:600;border-radius:999px;padding:.05rem .55rem;white-space:nowrap}
+.chip.ok{background:var(--ok-bg);color:var(--ok)}.chip.warn{background:var(--warn-bg);color:var(--warn)}.chip.info{background:var(--info-bg);color:var(--info)}
+.issues{list-style:none;margin:.3rem 0 0;padding:0}.issues li{border-top:1px solid var(--line)}.issues li:first-child{border-top:0}
+.more{margin-top:.5rem}.more summary{cursor:pointer;color:var(--muted);font-size:.9rem;min-height:36px}
+.checks{display:flex;flex-direction:column}.chk{display:flex;gap:.5rem;align-items:center;min-height:40px}.chk input{width:20px;height:20px}
+.area{margin:.8rem 0 0;color:var(--accent)}
+.ind{background:var(--surface);border:1px solid var(--line);border-radius:14px}
+.ind summary{list-style:none;cursor:pointer;display:flex;gap:.6rem;align-items:center;padding:.65rem .8rem;min-height:52px}.ind summary::-webkit-details-marker{display:none}
+.ino{font-weight:700;color:var(--accent);flex:0 0 2.2rem}.ititle{flex:1;font-size:.95rem;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.ibody{padding:.2rem .9rem .9rem;border-top:1px solid var(--line)}
+.photos{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:.6rem;margin:.4rem 0}
+.ph{position:relative;display:flex;flex-direction:column;gap:.35rem;border:1px solid var(--line);border-radius:12px;padding:.4rem}.ph img{width:100%;height:120px;object-fit:cover;border-radius:8px;background:var(--bg)}.ph .iconbtn{position:absolute;top:.5rem;right:.5rem;width:34px;height:34px;background:var(--surface)}
+.lrow{display:grid;grid-template-columns:1fr 1.4fr auto;gap:.4rem;margin:.4rem 0}@media(max-width:520px){.lrow{grid-template-columns:1fr auto}.lrow input:nth-child(2){grid-column:1/2}}
+.cat{margin-top:.9rem;padding-top:.6rem;border-top:1px dashed var(--line)}.cat-t{font-weight:600;font-size:.95rem}.cat-s{color:var(--muted);font-size:.9rem;white-space:nowrap}
+.wrow{display:grid;grid-template-columns:1fr auto auto;gap:.4rem;align-items:center;margin:.4rem 0}@media(max-width:520px){.wrow{grid-template-columns:1fr auto}.wrow .hm{grid-column:1/2}}
+.hm{display:flex;align-items:center;gap:.25rem;color:var(--muted);font-size:.85rem}.hm input{width:56px;text-align:center;padding:.5rem .2rem}
+.yr{width:90px!important}.total{margin-top:.9rem;padding-top:.7rem;border-top:2px solid var(--line);font-weight:600}
+.note{font-size:.88rem;border-radius:10px;padding:.5rem .7rem}.note.warn{background:var(--warn-bg);color:var(--warn)}
+.li{display:grid;grid-template-columns:2.6rem 1fr auto;gap:.4rem;align-items:start}.li .no{padding-top:.5rem;color:var(--accent);font-weight:700}.mv{display:flex;flex-direction:column;gap:.25rem}
+.qbox{border:1px solid var(--line);border-radius:12px;padding:.6rem;display:flex;flex-direction:column;gap:.5rem}.calc{display:flex;flex-wrap:wrap;gap:.45rem;align-items:center}.calc input{width:96px}
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;padding:1rem;z-index:20}
+.dlg{background:var(--surface);color:var(--ink);border-radius:16px;padding:1.1rem;max-width:420px;width:100%}.acts{display:flex;gap:.5rem;justify-content:flex-end;margin-top:.9rem}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(1.2rem + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:.6rem 1rem;border-radius:12px;z-index:30;max-width:90vw;font-size:.95rem}
+
+.lbl{white-space:nowrap}.fld .lbl{white-space:normal}
+
+.code{display:inline-block;font-size:.75rem;font-weight:700;color:var(--accent);background:var(--ok-bg);border-radius:8px;padding:.05rem .5rem;align-self:flex-start}
+select.place{font-size:14px;min-height:40px}
+.lrow{grid-template-columns:auto 1fr 1.4fr auto auto}@media(max-width:520px){.lrow{grid-template-columns:auto 1fr auto}.lrow input,.lrow select{grid-column:1/-1}}
+.opts{display:grid;gap:.6rem;margin:.5rem 0}.opt{text-align:left;font:inherit;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:12px;padding:.7rem .9rem;display:flex;flex-direction:column;gap:.15rem;cursor:pointer;min-height:44px}
+.opt.on{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent) inset;background:var(--ok-bg)}
+
+.plan{margin:.7rem 0;padding:.6rem .7rem;border:1px dashed var(--line);border-radius:12px}.prow{display:grid;grid-template-columns:auto 1fr auto;gap:.5rem;align-items:start;margin:.4rem 0}.prow input[type=checkbox]{width:22px;height:22px;margin-top:.75rem}.pbody{display:flex;flex-direction:column;gap:.15rem}
+
+h2,h3,.brand .t{font-family:'Mitr','Sarabun',sans-serif;font-weight:500}
+#top{background:var(--accent);color:#fff;border-bottom:0}
+#top .brand .s{color:#d7efe8}#top .logo{background:#FFD34D;color:#0A4F44}
+.brand{max-width:860px}#nav,main{max-width:860px}
+.tab{background:rgba(255,255,255,.12);border-color:transparent;color:#fff}.tab.on{background:#fff;color:var(--accent);border-color:#fff}
+.hdr-r{margin-left:auto;display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+#years select{min-height:38px;width:auto;background:#fff;color:var(--ink);border:0;font-weight:600}
+#who{font-size:.85rem;color:#d7efe8}.back{color:#fff;font-size:.85rem;font-weight:600;text-decoration:underline;min-height:38px;display:inline-flex;align-items:center}
+.three{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.7rem}@media(max-width:520px){.three{grid-template-columns:1fr}}
+input[type=date]{width:100%;font:inherit;font-size:16px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:.5rem .65rem;min-height:44px}
+.dlg{max-height:90vh;overflow:auto}.dlg.wide{max-width:680px}.acts .left{margin-right:auto}
+#busy{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 10px);transform:translateX(-50%);background:#FFD34D;color:#3d3000;font-weight:600;padding:.5rem 1rem;border-radius:999px;z-index:40;box-shadow:var(--shadow)}
+.note.ok{background:var(--ok-bg);color:var(--ok)}.linkbtn.inl{display:inline;width:auto;padding:0;color:var(--accent);text-decoration:underline;font-weight:600}
+.tr h3{margin:0}.trh{flex:1;min-width:220px}.chips{gap:.35rem;margin:.5rem 0}.small{font-size:.9rem;margin:.3rem 0;overflow-wrap:anywhere}
+.files{display:grid;gap:.5rem;margin:.6rem 0}.fc{display:grid;grid-template-columns:88px 1fr;gap:.6rem;align-items:center;border:1px solid var(--line);border-radius:12px;padding:.4rem}
+.fc img,.fc .miss{width:88px;height:66px;object-fit:cover;border-radius:8px;background:var(--bg)}.fcn{font-size:.9rem;overflow-wrap:anywhere}.fca{gap:.3rem;margin-top:.2rem}
+.pdf{width:88px;height:66px;border-radius:8px;border:1px solid var(--line);background:#fdecea;color:#b3261e;font-weight:700;cursor:pointer;font:inherit}
+.miss{display:flex;align-items:center;justify-content:center;font-size:.75rem;color:var(--muted);text-align:center;height:120px;border-radius:8px;background:var(--bg)}
+.btn.danger.ghost{background:transparent}.chk.sm{min-height:36px;font-size:.9rem}.chk.sm input{width:18px;height:18px}
+.indpick{display:grid;grid-template-columns:repeat(auto-fill,minmax(70px,1fr));gap:0 .4rem}
+.topic{border-top:1px dashed var(--line);padding-top:.6rem;margin-top:.6rem}.tno{color:var(--accent)}
+</style>
+</head>
+<body>
+<header id="top"><div class="brand"><span class="logo">PA</span><div><div class="t">แอป PA · ผลงานและเกียรติบัตร</div><div class="s" id="status"></div></div>
+<div class="hdr-r"><span id="years"></span><span id="who"></span><a class="back" href="index.html">กลับคลังแนะแนว</a></div></div><nav id="nav" aria-label="เมนูหลัก"></nav></header>
+<main id="main"><p class="hint">กำลังโหลด…</p></main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script>var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],f={},c=function(t,r){o=function(t){for(var r=new Array(t),e=0;e<t;e+=1){r[e]=new Array(t);for(var n=0;n<t;n+=1)r[e][n]=null}return r}(i=4*e+17),l(0,0),l(i-7,0),l(0,i-7),s(),h(),d(t,r),e>=7&&v(t),null==a&&(a=p(e,n,u)),w(a,r)},l=function(t,r){for(var e=-1;e<=7;e+=1)if(!(t+e<=-1||i<=t+e))for(var n=-1;n<=7;n+=1)r+n<=-1||i<=r+n||(o[t+e][r+n]=0<=e&&e<=6&&(0==n||6==n)||0<=n&&n<=6&&(0==e||6==e)||2<=e&&e<=4&&2<=n&&n<=4)},h=function(){for(var t=8;t<i-8;t+=1)null==o[t][6]&&(o[t][6]=t%2==0);for(var r=8;r<i-8;r+=1)null==o[6][r]&&(o[6][r]=r%2==0)},s=function(){for(var t=B.getPatternPosition(e),r=0;r<t.length;r+=1)for(var n=0;n<t.length;n+=1){var i=t[r],a=t[n];if(null==o[i][a])for(var u=-2;u<=2;u+=1)for(var f=-2;f<=2;f+=1)o[i+u][a+f]=-2==u||2==u||-2==f||2==f||0==u&&0==f}},v=function(t){for(var r=B.getBCHTypeNumber(e),n=0;n<18;n+=1){var a=!t&&1==(r>>n&1);o[Math.floor(n/3)][n%3+i-8-3]=a}for(n=0;n<18;n+=1){a=!t&&1==(r>>n&1);o[n%3+i-8-3][Math.floor(n/3)]=a}},d=function(t,r){for(var e=n<<3|r,a=B.getBCHTypeInfo(e),u=0;u<15;u+=1){var f=!t&&1==(a>>u&1);u<6?o[u][8]=f:u<8?o[u+1][8]=f:o[i-15+u][8]=f}for(u=0;u<15;u+=1){f=!t&&1==(a>>u&1);u<8?o[8][i-u-1]=f:u<9?o[8][15-u-1+1]=f:o[8][15-u-1]=f}o[i-8][8]=!t},w=function(t,r){for(var e=-1,n=i-1,a=7,u=0,f=B.getMaskFunction(r),c=i-1;c>0;c-=2)for(6==c&&(c-=1);;){for(var g=0;g<2;g+=1)if(null==o[n][c-g]){var l=!1;u<t.length&&(l=1==(t[u]>>>a&1)),f(n,c-g)&&(l=!l),o[n][c-g]=l,-1==(a-=1)&&(u+=1,a=7)}if((n+=e)<0||i<=n){n-=e,e=-e;break}}},p=function(t,r,e){for(var n=A.getRSBlocks(t,r),o=b(),i=0;i<e.length;i+=1){var a=e[i];o.put(a.getMode(),4),o.put(a.getLength(),B.getLengthInBits(a.getMode(),t)),a.write(o)}var u=0;for(i=0;i<n.length;i+=1)u+=n[i].dataCount;if(o.getLengthInBits()>8*u)throw"code length overflow. ("+o.getLengthInBits()+">"+8*u+")";for(o.getLengthInBits()+4<=8*u&&o.put(0,4);o.getLengthInBits()%8!=0;)o.putBit(!1);for(;!(o.getLengthInBits()>=8*u||(o.put(236,8),o.getLengthInBits()>=8*u));)o.put(17,8);return function(t,r){for(var e=0,n=0,o=0,i=new Array(r.length),a=new Array(r.length),u=0;u<r.length;u+=1){var f=r[u].dataCount,c=r[u].totalCount-f;n=Math.max(n,f),o=Math.max(o,c),i[u]=new Array(f);for(var g=0;g<i[u].length;g+=1)i[u][g]=255&t.getBuffer()[g+e];e+=f;var l=B.getErrorCorrectPolynomial(c),h=k(i[u],l.getLength()-1).mod(l);for(a[u]=new Array(l.getLength()-1),g=0;g<a[u].length;g+=1){var s=g+h.getLength()-a[u].length;a[u][g]=s>=0?h.getAt(s):0}}var v=0;for(g=0;g<r.length;g+=1)v+=r[g].totalCount;var d=new Array(v),w=0;for(g=0;g<n;g+=1)for(u=0;u<r.length;u+=1)g<i[u].length&&(d[w]=i[u][g],w+=1);for(g=0;g<o;g+=1)for(u=0;u<r.length;u+=1)g<a[u].length&&(d[w]=a[u][g],w+=1);return d}(o,n)};f.addData=function(t,r){var e=null;switch(r=r||"Byte"){case"Numeric":e=M(t);break;case"Alphanumeric":e=x(t);break;case"Byte":e=m(t);break;case"Kanji":e=L(t);break;default:throw"mode:"+r}u.push(e),a=null},f.isDark=function(t,r){if(t<0||i<=t||r<0||i<=r)throw t+","+r;return o[t][r]},f.getModuleCount=function(){return i},f.make=function(){if(e<1){for(var t=1;t<40;t++){for(var r=A.getRSBlocks(t,n),o=b(),i=0;i<u.length;i++){var a=u[i];o.put(a.getMode(),4),o.put(a.getLength(),B.getLengthInBits(a.getMode(),t)),a.write(o)}var g=0;for(i=0;i<r.length;i++)g+=r[i].dataCount;if(o.getLengthInBits()<=8*g)break}e=t}c(!1,function(){for(var t=0,r=0,e=0;e<8;e+=1){c(!0,e);var n=B.getLostPoint(f);(0==e||t>n)&&(t=n,r=e)}return r}())},f.createTableTag=function(t,r){t=t||2;var e="";e+='<table style="',e+=" border-width: 0px; border-style: none;",e+=" border-collapse: collapse;",e+=" padding: 0px; margin: "+(r=void 0===r?4*t:r)+"px;",e+='">',e+="<tbody>";for(var n=0;n<f.getModuleCount();n+=1){e+="<tr>";for(var o=0;o<f.getModuleCount();o+=1)e+='<td style="',e+=" border-width: 0px; border-style: none;",e+=" border-collapse: collapse;",e+=" padding: 0px; margin: 0px;",e+=" width: "+t+"px;",e+=" height: "+t+"px;",e+=" background-color: ",e+=f.isDark(n,o)?"#000000":"#ffffff",e+=";",e+='"/>';e+="</tr>"}return e+="</tbody>",e+="</table>"},f.createSvgTag=function(t,r,e,n){var o={};"object"==typeof arguments[0]&&(t=(o=arguments[0]).cellSize,r=o.margin,e=o.alt,n=o.title),t=t||2,r=void 0===r?4*t:r,(e="string"==typeof e?{text:e}:e||{}).text=e.text||null,e.id=e.text?e.id||"qrcode-description":null,(n="string"==typeof n?{text:n}:n||{}).text=n.text||null,n.id=n.text?n.id||"qrcode-title":null;var i,a,u,c,g=f.getModuleCount()*t+2*r,l="";for(c="l"+t+",0 0,"+t+" -"+t+",0 0,-"+t+"z ",l+='<svg version="1.1" xmlns="http://www.w3.org/2000/svg"',l+=o.scalable?"":' width="'+g+'px" height="'+g+'px"',l+=' viewBox="0 0 '+g+" "+g+'" ',l+=' preserveAspectRatio="xMinYMin meet"',l+=n.text||e.text?' role="img" aria-labelledby="'+y([n.id,e.id].join(" ").trim())+'"':"",l+=">",l+=n.text?'<title id="'+y(n.id)+'">'+y(n.text)+"</title>":"",l+=e.text?'<description id="'+y(e.id)+'">'+y(e.text)+"</description>":"",l+='<rect width="100%" height="100%" fill="white" cx="0" cy="0"/>',l+='<path d="',a=0;a<f.getModuleCount();a+=1)for(u=a*t+r,i=0;i<f.getModuleCount();i+=1)f.isDark(a,i)&&(l+="M"+(i*t+r)+","+u+c);return l+='" stroke="transparent" fill="black"/>',l+="</svg>"},f.createDataURL=function(t,r){t=t||2,r=void 0===r?4*t:r;var e=f.getModuleCount()*t+2*r,n=r,o=e-r;return I(e,e,function(r,e){if(n<=r&&r<o&&n<=e&&e<o){var i=Math.floor((r-n)/t),a=Math.floor((e-n)/t);return f.isDark(a,i)?0:1}return 1})},f.createImgTag=function(t,r,e){t=t||2,r=void 0===r?4*t:r;var n=f.getModuleCount()*t+2*r,o="";return o+="<img",o+=' src="',o+=f.createDataURL(t,r),o+='"',o+=' width="',o+=n,o+='"',o+=' height="',o+=n,o+='"',e&&(o+=' alt="',o+=y(e),o+='"'),o+="/>"};var y=function(t){for(var r="",e=0;e<t.length;e+=1){var n=t.charAt(e);switch(n){case"<":r+="&lt;";break;case">":r+="&gt;";break;case"&":r+="&amp;";break;case'"':r+="&quot;";break;default:r+=n}}return r};return f.createASCII=function(t,r){if((t=t||1)<2)return function(t){t=void 0===t?2:t;var r,e,n,o,i,a=1*f.getModuleCount()+2*t,u=t,c=a-t,g={"██":"█","█ ":"▀"," █":"▄","  ":" "},l={"██":"▀","█ ":"▀"," █":" ","  ":" "},h="";for(r=0;r<a;r+=2){for(n=Math.floor((r-u)/1),o=Math.floor((r+1-u)/1),e=0;e<a;e+=1)i="█",u<=e&&e<c&&u<=r&&r<c&&f.isDark(n,Math.floor((e-u)/1))&&(i=" "),u<=e&&e<c&&u<=r+1&&r+1<c&&f.isDark(o,Math.floor((e-u)/1))?i+=" ":i+="█",h+=t<1&&r+1>=c?l[i]:g[i];h+="\n"}return a%2&&t>0?h.substring(0,h.length-a-1)+Array(a+1).join("▀"):h.substring(0,h.length-1)}(r);t-=1,r=void 0===r?2*t:r;var e,n,o,i,a=f.getModuleCount()*t+2*r,u=r,c=a-r,g=Array(t+1).join("██"),l=Array(t+1).join("  "),h="",s="";for(e=0;e<a;e+=1){for(o=Math.floor((e-u)/t),s="",n=0;n<a;n+=1)i=1,u<=n&&n<c&&u<=e&&e<c&&f.isDark(o,Math.floor((n-u)/t))&&(i=0),s+=i?g:l;for(o=0;o<t;o+=1)h+=s+"\n"}return h.substring(0,h.length-1)},f.renderTo2dContext=function(t,r){r=r||2;for(var e=f.getModuleCount(),n=0;n<e;n++)for(var o=0;o<e;o++)t.fillStyle=f.isDark(n,o)?"black":"white",t.fillRect(n*r,o*r,r,r)},f};t.stringToBytes=(t.stringToBytesFuncs={default:function(t){for(var r=[],e=0;e<t.length;e+=1){var n=t.charCodeAt(e);r.push(255&n)}return r}}).default,t.createStringToBytes=function(t,r){var e=function(){for(var e=S(t),n=function(){var t=e.read();if(-1==t)throw"eof";return t},o=0,i={};;){var a=e.read();if(-1==a)break;var u=n(),f=n()<<8|n();i[String.fromCharCode(a<<8|u)]=f,o+=1}if(o!=r)throw o+" != "+r;return i}(),n="?".charCodeAt(0);return function(t){for(var r=[],o=0;o<t.length;o+=1){var i=t.charCodeAt(o);if(i<128)r.push(i);else{var a=e[t.charAt(o)];"number"==typeof a?(255&a)==a?r.push(a):(r.push(a>>>8),r.push(255&a)):r.push(n)}}return r}};var r,e,n,o,i,a=1,u=2,f=4,c=8,g={L:1,M:0,Q:3,H:2},l=0,h=1,s=2,v=3,d=4,w=5,p=6,y=7,B=(r=[[],[6,18],[6,22],[6,26],[6,30],[6,34],[6,22,38],[6,24,42],[6,26,46],[6,28,50],[6,30,54],[6,32,58],[6,34,62],[6,26,46,66],[6,26,48,70],[6,26,50,74],[6,30,54,78],[6,30,56,82],[6,30,58,86],[6,34,62,90],[6,28,50,72,94],[6,26,50,74,98],[6,30,54,78,102],[6,28,54,80,106],[6,32,58,84,110],[6,30,58,86,114],[6,34,62,90,118],[6,26,50,74,98,122],[6,30,54,78,102,126],[6,26,52,78,104,130],[6,30,56,82,108,134],[6,34,60,86,112,138],[6,30,58,86,114,142],[6,34,62,90,118,146],[6,30,54,78,102,126,150],[6,24,50,76,102,128,154],[6,28,54,80,106,132,158],[6,32,58,84,110,136,162],[6,26,54,82,110,138,166],[6,30,58,86,114,142,170]],e=1335,n=7973,i=function(t){for(var r=0;0!=t;)r+=1,t>>>=1;return r},(o={}).getBCHTypeInfo=function(t){for(var r=t<<10;i(r)-i(e)>=0;)r^=e<<i(r)-i(e);return 21522^(t<<10|r)},o.getBCHTypeNumber=function(t){for(var r=t<<12;i(r)-i(n)>=0;)r^=n<<i(r)-i(n);return t<<12|r},o.getPatternPosition=function(t){return r[t-1]},o.getMaskFunction=function(t){switch(t){case l:return function(t,r){return(t+r)%2==0};case h:return function(t,r){return t%2==0};case s:return function(t,r){return r%3==0};case v:return function(t,r){return(t+r)%3==0};case d:return function(t,r){return(Math.floor(t/2)+Math.floor(r/3))%2==0};case w:return function(t,r){return t*r%2+t*r%3==0};case p:return function(t,r){return(t*r%2+t*r%3)%2==0};case y:return function(t,r){return(t*r%3+(t+r)%2)%2==0};default:throw"bad maskPattern:"+t}},o.getErrorCorrectPolynomial=function(t){for(var r=k([1],0),e=0;e<t;e+=1)r=r.multiply(k([1,C.gexp(e)],0));return r},o.getLengthInBits=function(t,r){if(1<=r&&r<10)switch(t){case a:return 10;case u:return 9;case f:case c:return 8;default:throw"mode:"+t}else if(r<27)switch(t){case a:return 12;case u:return 11;case f:return 16;case c:return 10;default:throw"mode:"+t}else{if(!(r<41))throw"type:"+r;switch(t){case a:return 14;case u:return 13;case f:return 16;case c:return 12;default:throw"mode:"+t}}},o.getLostPoint=function(t){for(var r=t.getModuleCount(),e=0,n=0;n<r;n+=1)for(var o=0;o<r;o+=1){for(var i=0,a=t.isDark(n,o),u=-1;u<=1;u+=1)if(!(n+u<0||r<=n+u))for(var f=-1;f<=1;f+=1)o+f<0||r<=o+f||0==u&&0==f||a==t.isDark(n+u,o+f)&&(i+=1);i>5&&(e+=3+i-5)}for(n=0;n<r-1;n+=1)for(o=0;o<r-1;o+=1){var c=0;t.isDark(n,o)&&(c+=1),t.isDark(n+1,o)&&(c+=1),t.isDark(n,o+1)&&(c+=1),t.isDark(n+1,o+1)&&(c+=1),0!=c&&4!=c||(e+=3)}for(n=0;n<r;n+=1)for(o=0;o<r-6;o+=1)t.isDark(n,o)&&!t.isDark(n,o+1)&&t.isDark(n,o+2)&&t.isDark(n,o+3)&&t.isDark(n,o+4)&&!t.isDark(n,o+5)&&t.isDark(n,o+6)&&(e+=40);for(o=0;o<r;o+=1)for(n=0;n<r-6;n+=1)t.isDark(n,o)&&!t.isDark(n+1,o)&&t.isDark(n+2,o)&&t.isDark(n+3,o)&&t.isDark(n+4,o)&&!t.isDark(n+5,o)&&t.isDark(n+6,o)&&(e+=40);var g=0;for(o=0;o<r;o+=1)for(n=0;n<r;n+=1)t.isDark(n,o)&&(g+=1);return e+=Math.abs(100*g/r/r-50)/5*10},o),C=function(){for(var t=new Array(256),r=new Array(256),e=0;e<8;e+=1)t[e]=1<<e;for(e=8;e<256;e+=1)t[e]=t[e-4]^t[e-5]^t[e-6]^t[e-8];for(e=0;e<255;e+=1)r[t[e]]=e;var n={glog:function(t){if(t<1)throw"glog("+t+")";return r[t]},gexp:function(r){for(;r<0;)r+=255;for(;r>=256;)r-=255;return t[r]}};return n}();function k(t,r){if(void 0===t.length)throw t.length+"/"+r;var e=function(){for(var e=0;e<t.length&&0==t[e];)e+=1;for(var n=new Array(t.length-e+r),o=0;o<t.length-e;o+=1)n[o]=t[o+e];return n}(),n={getAt:function(t){return e[t]},getLength:function(){return e.length},multiply:function(t){for(var r=new Array(n.getLength()+t.getLength()-1),e=0;e<n.getLength();e+=1)for(var o=0;o<t.getLength();o+=1)r[e+o]^=C.gexp(C.glog(n.getAt(e))+C.glog(t.getAt(o)));return k(r,0)},mod:function(t){if(n.getLength()-t.getLength()<0)return n;for(var r=C.glog(n.getAt(0))-C.glog(t.getAt(0)),e=new Array(n.getLength()),o=0;o<n.getLength();o+=1)e[o]=n.getAt(o);for(o=0;o<t.getLength();o+=1)e[o]^=C.gexp(C.glog(t.getAt(o))+r);return k(e,0).mod(t)}};return n}var A=function(){var t=[[1,26,19],[1,26,16],[1,26,13],[1,26,9],[1,44,34],[1,44,28],[1,44,22],[1,44,16],[1,70,55],[1,70,44],[2,35,17],[2,35,13],[1,100,80],[2,50,32],[2,50,24],[4,25,9],[1,134,108],[2,67,43],[2,33,15,2,34,16],[2,33,11,2,34,12],[2,86,68],[4,43,27],[4,43,19],[4,43,15],[2,98,78],[4,49,31],[2,32,14,4,33,15],[4,39,13,1,40,14],[2,121,97],[2,60,38,2,61,39],[4,40,18,2,41,19],[4,40,14,2,41,15],[2,146,116],[3,58,36,2,59,37],[4,36,16,4,37,17],[4,36,12,4,37,13],[2,86,68,2,87,69],[4,69,43,1,70,44],[6,43,19,2,44,20],[6,43,15,2,44,16],[4,101,81],[1,80,50,4,81,51],[4,50,22,4,51,23],[3,36,12,8,37,13],[2,116,92,2,117,93],[6,58,36,2,59,37],[4,46,20,6,47,21],[7,42,14,4,43,15],[4,133,107],[8,59,37,1,60,38],[8,44,20,4,45,21],[12,33,11,4,34,12],[3,145,115,1,146,116],[4,64,40,5,65,41],[11,36,16,5,37,17],[11,36,12,5,37,13],[5,109,87,1,110,88],[5,65,41,5,66,42],[5,54,24,7,55,25],[11,36,12,7,37,13],[5,122,98,1,123,99],[7,73,45,3,74,46],[15,43,19,2,44,20],[3,45,15,13,46,16],[1,135,107,5,136,108],[10,74,46,1,75,47],[1,50,22,15,51,23],[2,42,14,17,43,15],[5,150,120,1,151,121],[9,69,43,4,70,44],[17,50,22,1,51,23],[2,42,14,19,43,15],[3,141,113,4,142,114],[3,70,44,11,71,45],[17,47,21,4,48,22],[9,39,13,16,40,14],[3,135,107,5,136,108],[3,67,41,13,68,42],[15,54,24,5,55,25],[15,43,15,10,44,16],[4,144,116,4,145,117],[17,68,42],[17,50,22,6,51,23],[19,46,16,6,47,17],[2,139,111,7,140,112],[17,74,46],[7,54,24,16,55,25],[34,37,13],[4,151,121,5,152,122],[4,75,47,14,76,48],[11,54,24,14,55,25],[16,45,15,14,46,16],[6,147,117,4,148,118],[6,73,45,14,74,46],[11,54,24,16,55,25],[30,46,16,2,47,17],[8,132,106,4,133,107],[8,75,47,13,76,48],[7,54,24,22,55,25],[22,45,15,13,46,16],[10,142,114,2,143,115],[19,74,46,4,75,47],[28,50,22,6,51,23],[33,46,16,4,47,17],[8,152,122,4,153,123],[22,73,45,3,74,46],[8,53,23,26,54,24],[12,45,15,28,46,16],[3,147,117,10,148,118],[3,73,45,23,74,46],[4,54,24,31,55,25],[11,45,15,31,46,16],[7,146,116,7,147,117],[21,73,45,7,74,46],[1,53,23,37,54,24],[19,45,15,26,46,16],[5,145,115,10,146,116],[19,75,47,10,76,48],[15,54,24,25,55,25],[23,45,15,25,46,16],[13,145,115,3,146,116],[2,74,46,29,75,47],[42,54,24,1,55,25],[23,45,15,28,46,16],[17,145,115],[10,74,46,23,75,47],[10,54,24,35,55,25],[19,45,15,35,46,16],[17,145,115,1,146,116],[14,74,46,21,75,47],[29,54,24,19,55,25],[11,45,15,46,46,16],[13,145,115,6,146,116],[14,74,46,23,75,47],[44,54,24,7,55,25],[59,46,16,1,47,17],[12,151,121,7,152,122],[12,75,47,26,76,48],[39,54,24,14,55,25],[22,45,15,41,46,16],[6,151,121,14,152,122],[6,75,47,34,76,48],[46,54,24,10,55,25],[2,45,15,64,46,16],[17,152,122,4,153,123],[29,74,46,14,75,47],[49,54,24,10,55,25],[24,45,15,46,46,16],[4,152,122,18,153,123],[13,74,46,32,75,47],[48,54,24,14,55,25],[42,45,15,32,46,16],[20,147,117,4,148,118],[40,75,47,7,76,48],[43,54,24,22,55,25],[10,45,15,67,46,16],[19,148,118,6,149,119],[18,75,47,31,76,48],[34,54,24,34,55,25],[20,45,15,61,46,16]],r=function(t,r){var e={};return e.totalCount=t,e.dataCount=r,e},e={};return e.getRSBlocks=function(e,n){var o=function(r,e){switch(e){case g.L:return t[4*(r-1)+0];case g.M:return t[4*(r-1)+1];case g.Q:return t[4*(r-1)+2];case g.H:return t[4*(r-1)+3];default:return}}(e,n);if(void 0===o)throw"bad rs block @ typeNumber:"+e+"/errorCorrectionLevel:"+n;for(var i=o.length/3,a=[],u=0;u<i;u+=1)for(var f=o[3*u+0],c=o[3*u+1],l=o[3*u+2],h=0;h<f;h+=1)a.push(r(c,l));return a},e}(),b=function(){var t=[],r=0,e={getBuffer:function(){return t},getAt:function(r){var e=Math.floor(r/8);return 1==(t[e]>>>7-r%8&1)},put:function(t,r){for(var n=0;n<r;n+=1)e.putBit(1==(t>>>r-n-1&1))},getLengthInBits:function(){return r},putBit:function(e){var n=Math.floor(r/8);t.length<=n&&t.push(0),e&&(t[n]|=128>>>r%8),r+=1}};return e},M=function(t){var r=a,e=t,n={getMode:function(){return r},getLength:function(t){return e.length},write:function(t){for(var r=e,n=0;n+2<r.length;)t.put(o(r.substring(n,n+3)),10),n+=3;n<r.length&&(r.length-n==1?t.put(o(r.substring(n,n+1)),4):r.length-n==2&&t.put(o(r.substring(n,n+2)),7))}},o=function(t){for(var r=0,e=0;e<t.length;e+=1)r=10*r+i(t.charAt(e));return r},i=function(t){if("0"<=t&&t<="9")return t.charCodeAt(0)-"0".charCodeAt(0);throw"illegal char :"+t};return n},x=function(t){var r=u,e=t,n={getMode:function(){return r},getLength:function(t){return e.length},write:function(t){for(var r=e,n=0;n+1<r.length;)t.put(45*o(r.charAt(n))+o(r.charAt(n+1)),11),n+=2;n<r.length&&t.put(o(r.charAt(n)),6)}},o=function(t){if("0"<=t&&t<="9")return t.charCodeAt(0)-"0".charCodeAt(0);if("A"<=t&&t<="Z")return t.charCodeAt(0)-"A".charCodeAt(0)+10;switch(t){case" ":return 36;case"$":return 37;case"%":return 38;case"*":return 39;case"+":return 40;case"-":return 41;case".":return 42;case"/":return 43;case":":return 44;default:throw"illegal char :"+t}};return n},m=function(r){var e=f,n=t.stringToBytes(r),o={getMode:function(){return e},getLength:function(t){return n.length},write:function(t){for(var r=0;r<n.length;r+=1)t.put(n[r],8)}};return o},L=function(r){var e=c,n=t.stringToBytesFuncs.SJIS;if(!n)throw"sjis not supported.";!function(){var t=n("友");if(2!=t.length||38726!=(t[0]<<8|t[1]))throw"sjis not supported."}();var o=n(r),i={getMode:function(){return e},getLength:function(t){return~~(o.length/2)},write:function(t){for(var r=o,e=0;e+1<r.length;){var n=(255&r[e])<<8|255&r[e+1];if(33088<=n&&n<=40956)n-=33088;else{if(!(57408<=n&&n<=60351))throw"illegal char at "+(e+1)+"/"+n;n-=49472}n=192*(n>>>8&255)+(255&n),t.put(n,13),e+=2}if(e<r.length)throw"illegal char at "+(e+1)}};return i},D=function(){var t=[],r={writeByte:function(r){t.push(255&r)},writeShort:function(t){r.writeByte(t),r.writeByte(t>>>8)},writeBytes:function(t,e,n){e=e||0,n=n||t.length;for(var o=0;o<n;o+=1)r.writeByte(t[o+e])},writeString:function(t){for(var e=0;e<t.length;e+=1)r.writeByte(t.charCodeAt(e))},toByteArray:function(){return t},toString:function(){var r="";r+="[";for(var e=0;e<t.length;e+=1)e>0&&(r+=","),r+=t[e];return r+="]"}};return r},S=function(t){var r=t,e=0,n=0,o=0,i={read:function(){for(;o<8;){if(e>=r.length){if(0==o)return-1;throw"unexpected end of file./"+o}var t=r.charAt(e);if(e+=1,"="==t)return o=0,-1;t.match(/^\s$/)||(n=n<<6|a(t.charCodeAt(0)),o+=6)}var i=n>>>o-8&255;return o-=8,i}},a=function(t){if(65<=t&&t<=90)return t-65;if(97<=t&&t<=122)return t-97+26;if(48<=t&&t<=57)return t-48+52;if(43==t)return 62;if(47==t)return 63;throw"c:"+t};return i},I=function(t,r,e){for(var n=function(t,r){var e=t,n=r,o=new Array(t*r),i={setPixel:function(t,r,n){o[r*e+t]=n},write:function(t){t.writeString("GIF87a"),t.writeShort(e),t.writeShort(n),t.writeByte(128),t.writeByte(0),t.writeByte(0),t.writeByte(0),t.writeByte(0),t.writeByte(0),t.writeByte(255),t.writeByte(255),t.writeByte(255),t.writeString(","),t.writeShort(0),t.writeShort(0),t.writeShort(e),t.writeShort(n),t.writeByte(0);var r=a(2);t.writeByte(2);for(var o=0;r.length-o>255;)t.writeByte(255),t.writeBytes(r,o,255),o+=255;t.writeByte(r.length-o),t.writeBytes(r,o,r.length-o),t.writeByte(0),t.writeString(";")}},a=function(t){for(var r=1<<t,e=1+(1<<t),n=t+1,i=u(),a=0;a<r;a+=1)i.add(String.fromCharCode(a));i.add(String.fromCharCode(r)),i.add(String.fromCharCode(e));var f,c,g,l=D(),h=(f=l,c=0,g=0,{write:function(t,r){if(t>>>r!=0)throw"length over";for(;c+r>=8;)f.writeByte(255&(t<<c|g)),r-=8-c,t>>>=8-c,g=0,c=0;g|=t<<c,c+=r},flush:function(){c>0&&f.writeByte(g)}});h.write(r,n);var s=0,v=String.fromCharCode(o[s]);for(s+=1;s<o.length;){var d=String.fromCharCode(o[s]);s+=1,i.contains(v+d)?v+=d:(h.write(i.indexOf(v),n),i.size()<4095&&(i.size()==1<<n&&(n+=1),i.add(v+d)),v=d)}return h.write(i.indexOf(v),n),h.write(e,n),h.flush(),l.toByteArray()},u=function(){var t={},r=0,e={add:function(n){if(e.contains(n))throw"dup key:"+n;t[n]=r,r+=1},size:function(){return r},indexOf:function(r){return t[r]},contains:function(r){return void 0!==t[r]}};return e};return i}(t,r),o=0;o<r;o+=1)for(var i=0;i<t;i+=1)n.setPixel(i,o,e(i,o));var a=D();n.write(a);for(var u=function(){var t=0,r=0,e=0,n="",o={},i=function(t){n+=String.fromCharCode(a(63&t))},a=function(t){if(t<0);else{if(t<26)return 65+t;if(t<52)return t-26+97;if(t<62)return t-52+48;if(62==t)return 43;if(63==t)return 47}throw"n:"+t};return o.writeByte=function(n){for(t=t<<8|255&n,r+=8,e+=1;r>=6;)i(t>>>r-6),r-=6},o.flush=function(){if(r>0&&(i(t<<6-r),t=0,r=0),e%3!=0)for(var o=3-e%3,a=0;a<o;a+=1)n+="="},o.toString=function(){return n},o}(),f=a.toByteArray(),c=0;c<f.length;c+=1)u.writeByte(f[c]);return u.flush(),"data:image/gif;base64,"+u};return t}();qrcode.stringToBytesFuncs["UTF-8"]=function(t){return function(t){for(var r=[],e=0;e<t.length;e++){var n=t.charCodeAt(e);n<128?r.push(n):n<2048?r.push(192|n>>6,128|63&n):n<55296||n>=57344?r.push(224|n>>12,128|n>>6&63,128|63&n):(e++,n=65536+((1023&n)<<10|1023&t.charCodeAt(e)),r.push(240|n>>18,128|n>>12&63,128|n>>6&63,128|63&n))}return r}(t)},function(t){"function"==typeof define&&define.amd?define([],t):"object"==typeof exports&&(module.exports=t())}(function(){return qrcode});</script>
+<script>/* PA core — data model, import from .docx, export to .docx, checks.
+   Storage-agnostic and DOM-free so it can be tested in Node. */
+(function (root) {
+'use strict';
+const META = {"indicators": [{"id": "1.1", "area": 1, "title": "1.1 สร้างและหรือพัฒนาหลักสูตร"}, {"id": "1.2", "area": 1, "title": "1.2 ออกแบบการจัดการเรียนรู้"}, {"id": "1.3", "area": 1, "title": "1.3 จัดกิจกรรมการเรียนรู้"}, {"id": "1.4", "area": 1, "title": "1.4 สร้างและหรือพัฒนาสื่อ นวัตกรรม เทคโนโลยีและแหล่งเรียนรู้"}, {"id": "1.5", "area": 1, "title": "1.5 วัดและประเมินผลการเรียนรู้"}, {"id": "1.6", "area": 1, "title": "1.6 ศึกษา วิเคราะห์ และสังเคราะห์ เพื่อแก้ปัญหาหรือพัฒนาการเรียนรู้"}, {"id": "1.7", "area": 1, "title": "1.7 จัดบรรยากาศที่ส่งเสริมและพัฒนาผู้เรียน"}, {"id": "1.8", "area": 1, "title": "1.8 อบรมและพัฒนาคุณลักษณที่ดีของผู้เรียน"}, {"id": "2.1", "area": 2, "title": "2.1 จัดทำข้อมูลสารสนเทศของผู้เรียนและรายวิชา"}, {"id": "2.2", "area": 2, "title": "2.2 ดำเนินการตามระบบดูแลช่วยเหลือนักเรียน"}, {"id": "2.3", "area": 2, "title": "2.3 ปฏิบัติงานวิชาการ และงานอื่นๆของสถานศึกษา"}, {"id": "2.4", "area": 2, "title": "2.4 ประสานความร่วมมือกับผู้ปกครอง ภาคีเครือข่าย และหรือสถานประกอบการ"}, {"id": "3.1", "area": 3, "title": "3.1 พัฒนาตนเองอย่างเป็นระบบและต่อเนื่อง"}, {"id": "3.2", "area": 3, "title": "3.2 มีส่วนร่วมในการแลกเปลี่ยนเรียนรู้ทางวิชาชีพ เพื่อแก้ปัญหาและพัฒนาการจัดการเรียนรู้"}, {"id": "3.3", "area": 3, "title": "3.3 นำความรู้ ความสามารถ ทักษะที่ได้จากการพัฒนาตนเองและวิชาชีพมาใช้ในการพัฒนาการจัดการเรียนรู้ การพัฒนาคุณภาพผู้เรียน และการพัฒนานวัตกรรมการจัดการเรียนรู้ที่มีผลต่อคุณภาพผู้เรียน"}], "areas": {"1": "1. ด้านการจัดการเรียนรู้", "2": "2. ด้านการส่งเสริมและสนับสนุนการจัดการเรียนรู้", "3": "3. ด้านการพัฒนาตนเองและวิชาชีพ"}};   // { indicators, areas } — the fixed indicator list of the ก.ค.ศ. form
+const INDICATORS = META.indicators;
+const AREAS = META.areas;
+
+/* ---------------- helpers ---------------- */
+const esc = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+const escAttr = s => esc(s).replace(/"/g, '&quot;');
+const decodeXml = s => s.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/&amp;/g, '&');
+const uid = p => p + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+const num = v => { const n = parseFloat(String(v).replace(/,/g, '')); return isFinite(n) ? n : NaN; };
+
+/* ---------------- trainings (อบรม/พัฒนาตนเอง) ---------------- */
+const MON_TH = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+const MODE_TH = { onsite: 'ออนไซต์', online: 'ออนไลน์', hybrid: 'ผสม' };
+const fmtHours = v => { v = Math.round((+v || 0) * 10) / 10; return v % 1 ? v.toFixed(1) : String(v); };
+function thDate(s) { const p = String(s || '').slice(0, 10).split('-').map(Number); return p.length === 3 && p[0] ? `${p[2]} ${MON_TH[p[1] - 1]} ${p[0] + 543}` : ''; }
+function thRange(a, b) {
+  if (!a) return ''; if (!b || a === b) return thDate(a);
+  const pa = a.split('-').map(Number), pb = b.split('-').map(Number);
+  if (pa[0] === pb[0] && pa[1] === pb[1]) return `${pa[2]}–${pb[2]} ${MON_TH[pa[1] - 1]} ${pa[0] + 543}`;
+  return `${thDate(a)} – ${thDate(b)}`;
+}
+const fyOfDate = s => { const y = +String(s).slice(0, 4), m = +String(s).slice(5, 7); return y + 543 + (m >= 10 ? 1 : 0); };
+
+/* ---------------- workload math ---------------- */
+const CATS = [
+  { n: 1, no: '1.1', label: 'ชั่วโมงสอนตามตารางสอน' },
+  { n: 2, no: '1.2', label: 'งานส่งเสริมและสนับสนุนการจัดการเรียนรู้' },
+  { n: 3, no: '1.3', label: 'งานพัฒนาคุณภาพการจัดการศึกษาของสถานศึกษา' },
+  { n: 4, no: '1.4', label: 'งานตอบสนองนโยบายและจุดเน้น' }
+];
+// item lines in the form read "4 ชั่วโมง 0 นาที" / "50 นาที"
+function fmtItem(min) { min = Math.round(min || 0); const h = Math.floor(min / 60), m = min % 60; return h > 0 ? `${h} ชั่วโมง ${m} นาที` : `${m} นาที`; }
+// totals read "28 ชั่วโมง" / "30 ชั่วโมง 30 นาที"
+function fmtTotal(min) { min = Math.round(min || 0); const h = Math.floor(min / 60), m = min % 60; if (h > 0 && m > 0) return `${h} ชั่วโมง ${m} นาที`; if (h > 0) return `${h} ชั่วโมง`; return `${m} นาที`; }
+const catMin = (sem, n) => sem.items.filter(i => i.cat === n).reduce((a, i) => a + (+i.min || 0), 0);
+const semMin = sem => sem.items.reduce((a, i) => a + (+i.min || 0), 0);
+
+/* ---------------- state ---------------- */
+function emptyState(fy) {
+  fy = String(fy || '2569'); const y = +fy;
+  const ind = {}; INDICATORS.forEach(i => { ind[i.id] = { action: '', evidenceText: '', items: [], plan: [] }; });
+  return {
+    v: 1,
+    cover: { first: '', last: '', school: '', affil: '', rank: 'คศ. 2', salary: '',
+      rooms: { general: true, early: false, special: false, voc: false, nonformal: false },
+      fy, start: `1 เดือน ตุลาคม พ.ศ. ${y - 1}`, end: `30 กันยายน พ.ศ. ${y}` },
+    semesters: [
+      { id: uid('s'), term: 2, year: String(y - 1), items: [] },
+      { id: uid('s'), term: 1, year: String(y), items: [] }
+    ],
+    indicators: ind,
+    challenge: { title: '', problem: '', methods: [], quant: [], qual: [] },
+    idplan: [],                 // ID Plan topics: {id, topic, method, period}
+    evidenceMode: 'appendix',   // 'appendix' = table + large evidence pages at the end; 'table' = photos inside the table only
+    updatedAt: 0
+  };
+}
+function normalize(st) { // make sure a loaded state has every field
+  const base = emptyState(st && st.cover && st.cover.fy);
+  const out = Object.assign(base, st || {});
+  out.cover = Object.assign(base.cover, (st && st.cover) || {});
+  out.cover.rooms = Object.assign(base.cover.rooms, (st && st.cover && st.cover.rooms) || {});
+  INDICATORS.forEach(i => { out.indicators[i.id] = Object.assign({ action: '', evidenceText: '', items: [], plan: [] }, (st && st.indicators && st.indicators[i.id]) || {}); });
+  out.challenge = Object.assign(base.challenge, (st && st.challenge) || {});
+  out.idplan = Array.isArray(st && st.idplan) ? st.idplan : [];
+  return out;
+}
+
+/* ---------------- XML utilities ---------------- */
+function topLevel(body) {
+  const out = []; const re = /<(\/?)w:(p|tbl|sectPr)\b[^>]*?(\/?)>/g; let m, depth = 0, start = -1, tag = '';
+  while ((m = re.exec(body))) {
+    const closing = m[1] === '/', selfc = m[3] === '/', t = m[2];
+    if (depth === 0) {
+      if (closing) continue;
+      if (selfc) { out.push({ tag: t, xml: m[0] }); continue; }
+      start = m.index; tag = t; depth = 1;
+    } else {
+      if (t !== tag) continue;
+      if (closing) { depth--; if (depth === 0) out.push({ tag, xml: body.slice(start, m.index + m[0].length) }); }
+      else if (!selfc) depth++;
+    }
+  }
+  return out;
+}
+function plain(x, paras) {
+  x = x.replace(/<w:drawing>[\s\S]*?<\/w:drawing>/g, '')
+       .replace(/<mc:AlternateContent>[\s\S]*?<\/mc:AlternateContent>/g, '')
+       .replace(/<w:pict>[\s\S]*?<\/w:pict>/g, '')
+       .replace(/<w:tab\/>/g, '\t').replace(/<w:br\/>/g, ' ');
+  if (paras) x = x.replace(/<\/w:p>/g, '\n');
+  return decodeXml(x.replace(/<[^>]+>/g, '')).replace(/\u00a0/g, ' ').replace(/\u200b/g, '');
+}
+const isBlankTxt = t => /^[\s.…]*$/.test(t || '');
+const normTxt = t => String(t || '').replace(/[\s\u200b]+/g, ' ').trim().toLowerCase();
+const lines = t => t.split('\n').map(s => s.replace(/\s+/g, ' ').trim()).filter(Boolean);
+
+/* ---------------- import (reads a PA .docx locally: the official form as filled by hand, or one exported by this app) ---------------- */
+async function importDocx(data, JSZipLib) {
+  const JSZ = JSZipLib || root.JSZip;
+  const zip = await JSZ.loadAsync(data);
+  const docF = zip.file('word/document.xml');
+  if (!docF) throw new Error('ไม่ใช่ไฟล์ Word (.docx)');
+  const doc = await docF.async('string');
+  const relsXml = zip.file('word/_rels/document.xml.rels') ? await zip.file('word/_rels/document.xml.rels').async('string') : '';
+  const relMap = {};
+  (relsXml.match(/<Relationship\b[^>]*>/g) || []).forEach(tag => {
+    const id = (tag.match(/\bId="([^"]+)"/) || [])[1], tg = (tag.match(/\bTarget="([^"]+)"/) || [])[1];
+    if (id && tg) relMap[id] = decodeXml(tg);
+  });
+  const bodyM = doc.match(/<w:body>([\s\S]*)<\/w:body>/);
+  if (!bodyM) throw new Error('อ่านโครงสร้างเอกสารไม่ได้');
+  const kids = topLevel(bodyM[1]);
+  const norm = t => t.replace(/\t+/g, ' ').replace(/\s+/g, ' ').trim();
+  const nodes = kids.map(k => ({ tag: k.tag, xml: k.xml, text: k.tag === 'p' ? plain(k.xml) : '' }));
+  nodes.forEach(n => { n.u = n.tag === 'p' ? norm(n.text) : ''; });
+  const st = emptyState();
+  const photos = [];
+  const found = { cover: 0, table: false, workload: 0, challenge: 0 };
+  const clean = v => (isBlankTxt(v) ? '' : String(v).trim());
+
+  /* cover */
+  for (const n of nodes) {
+    if (n.tag !== 'p') continue; let m; const u = n.u;
+    if ((m = u.match(/ประจำปีงบประมาณ\s*พ\.ศ\.\s*(\d{4})/))) { st.cover.fy = m[1]; found.cover++; }
+    else if ((m = u.match(/^ระหว่างวันที่\s*(.+?)\s*ถึงวันที่\s*(.+?)\s*$/))) { st.cover.start = clean(m[1]) || st.cover.start; st.cover.end = clean(m[2]) || st.cover.end; found.cover++; }
+    else if ((m = u.match(/^ชื่อ\s+(.+?)\s+นามสกุล\s+(.+?)(?:\s+ตำแหน่ง.*)?$/))) { st.cover.first = clean(m[1]); st.cover.last = clean(m[2]); found.cover++; }
+    else if ((m = u.match(/^สถานศึกษา\s+(.+?)\s+สังกัด\s+(.+)$/))) { st.cover.school = clean(m[1]); st.cover.affil = clean(m[2]); found.cover++; }
+    else if ((m = u.match(/^สถานศึกษา\s+(.+)$/))) { st.cover.school = clean(m[1]); found.cover++; }
+    else if ((m = u.match(/^สังกัด\s+(.+)$/))) { st.cover.affil = clean(m[1]); found.cover++; }
+    else if ((m = u.match(/^รับเงินเดือนในอันดับ\s+(.+?)\s+อัตราเงินเดือน\s*(.*?)\s*บาท/))) { st.cover.rank = clean(m[1]) || st.cover.rank; st.cover.salary = clean(m[2]); found.cover++; }
+    else if ((m = u.match(/^รับเงินเดือนในอันดับ\s+(.+)$/))) { st.cover.rank = clean(m[1]) || st.cover.rank; found.cover++; }
+    else if ((m = u.match(/^อัตราเงินเดือน\s*(.*?)\s*บาท/))) { st.cover.salary = clean(m[1]); found.cover++; }
+  }
+  const roomNodes = nodes.filter(n => n.tag === 'p' && /^ห้องเรียน(วิชาสามัญ|ปฐมวัย|การศึกษาพิเศษ|สายวิชาชีพ|การศึกษานอกระบบ)/.test(n.u));
+  if (roomNodes.length === 5) {
+    const keys = ['general', 'early', 'special', 'voc', 'nonformal'];
+    const overlay = nodes.some(n => n.tag === 'p' && /w:char="F0FC"/.test(n.xml) && /<w:pict>|<w:drawing>/.test(n.xml));
+    roomNodes.forEach((n, i) => { const c = (n.xml.match(/w:char="(\w+)"/) || [])[1]; st.cover.rooms[keys[i]] = (c === 'F0FE' || c === 'F0FC') || (i === 0 && overlay); });
+  }
+
+  /* workload: paragraphs (the hand-filled form) or tables (this app's export) */
+  const minutes = t => { const q = t.match(/(?:(\d+)\s*ชั่วโมง)?\s*(?:(\d+)\s*นาที)?/); return (+q[1] || 0) * 60 + (+q[2] || 0); };
+  const ia = nodes.findIndex(n => n.tag === 'p' && /^1\.\s*ภาระงาน/.test(n.u));
+  const ib = nodes.findIndex(n => n.tag === 'p' && /^2\.\s*งานที่จะปฏิบัติ/.test(n.u));
+  if (ia >= 0 && ib > ia) {
+    st.semesters = []; let sem = null, cat = 1;
+    for (let i = ia + 1; i < ib; i++) {
+      const n = nodes[i];
+      if (n.tag === 'tbl') {
+        if (!sem) continue;
+        for (const row of (n.xml.match(/<w:tr\b[\s\S]*?<\/w:tr>/g) || [])) {
+          const cells = (row.match(/<w:tc>[\s\S]*?<\/w:tc>/g) || []).map(c => norm(plain(c, true)));
+          const c0 = cells[0] || '', c1 = cells[1] || ''; let m;
+          if ((m = c0.match(/^1\.([1-4])\s/))) { cat = +m[1]; continue; }
+          if (/^รวมภาระงาน/.test(c0)) { if (/\d/.test(c1)) sem.importedTotal = minutes(c1); continue; }
+          if (!/\d/.test(c1) || isBlankTxt(c0)) continue;          // header row / fill-in placeholder
+          sem.items.push({ id: uid('w'), cat, name: c0.trim(), min: minutes(c1) }); found.workload++;
+        }
+        continue;
+      }
+      if (n.tag !== 'p') continue;
+      const t = n.u; if (!t) continue; let m;
+      if ((m = t.match(/^ภาคเรียนที่\s*(\d)\s*ปี\s*การศึกษา\s*(\d{4})/))) { sem = { id: uid('s'), term: +m[1], year: m[2], items: [] }; st.semesters.push(sem); cat = 1; continue; }
+      if (!sem) continue;
+      if ((m = t.match(/^1\.([1-4])\s+/))) { cat = +m[1]; continue; }
+      if (/^รวมภาระงาน/.test(t)) {
+        const q = t.match(/จำนวน\s*(?:(\d+)\s*ชั่วโมง)?\s*(?:(\d+)\s*นาที)?/);
+        if (q && (q[1] || q[2])) sem.importedTotal = (+q[1] || 0) * 60 + (+q[2] || 0);
+        continue;
+      }
+      if ((m = t.match(/^(.*?)\s*จำนวน\s*(?:(\d+)\s*ชั่วโมง)?\s*(?:(\d+)\s*นาที)?\s*\/\s*สัปดาห์\s*$/))) {
+        sem.items.push({ id: uid('w'), cat, name: m[1].trim(), min: (+m[2] || 0) * 60 + (+m[3] || 0) });
+        found.workload++;
+      }
+    }
+    if (!st.semesters.length) st.semesters = emptyState(st.cover.fy).semesters;
+  }
+
+  /* indicators table (+ photos, links, captions) */
+  const tbl = nodes.find(n => n.tag === 'tbl' && /เอกสารหลักฐาน/.test(plain(n.xml)));
+  if (tbl) {
+    const rows = tbl.xml.match(/<w:tr\b[\s\S]*?<\/w:tr>/g) || [];
+    for (let ri = 1; ri < rows.length && ri <= INDICATORS.length; ri++) {
+      const cells = rows[ri].match(/<w:tc>[\s\S]*?<\/w:tc>/g) || []; if (cells.length < 4) continue;
+      const id = INDICATORS[ri - 1].id, ind = st.indicators[id];
+      ind.action = lines(plain(cells[2], true)).join('\n');
+      const evi = [];
+      for (const pxml of (cells[3].match(/<w:p[ >][\s\S]*?<\/w:p>/g) || [])) {
+        if (/<w:pStyle w:val="EvidenceRef"\/>/.test(pxml)) continue;      // "ดูภาคผนวก: …" is a generated pointer, not evidence text
+        const text = lines(plain(pxml)).join(' ');
+        for (const d of (pxml.match(/<w:drawing>[\s\S]*?<\/w:drawing>/g) || [])) {
+          const rid = (d.match(/r:embed="([^"]+)"/) || [])[1]; const tgt = relMap[rid]; if (!tgt) continue;
+          const f = zip.file('word/' + tgt.replace(/^\.?\//, '')); if (!f) continue;
+          const ext = (tgt.split('.').pop() || '').toLowerCase();
+          const mime = ext === 'png' ? 'image/png' : (ext === 'jpg' || ext === 'jpeg') ? 'image/jpeg' : null; if (!mime) continue;
+          const ex = d.match(/<wp:extent cx="(\d+)" cy="(\d+)"/);
+          const bytes = await f.async('uint8array'); const pid = uid('p'); photos.push({ id: pid, bytes, mime });
+          ind.items.push({ id: pid, type: 'photo', caption: '', mime, w: ex ? +ex[1] : 4, h: ex ? +ex[2] : 3, place: 'table' });
+        }
+        if (!text) continue;
+        const hl = pxml.match(/<w:hyperlink\b[^>]*r:id="([^"]+)"/);
+        if (/<w:pStyle w:val="Caption"\/>/.test(pxml)) { const last = ind.items[ind.items.length - 1]; if (last && last.type === 'photo' && !last.caption) { last.caption = text; continue; } }
+        if (hl && relMap[hl[1]]) { ind.items.push({ id: uid('l'), type: 'link', caption: text, url: relMap[hl[1]], place: 'table' }); continue; }
+        evi.push(text);
+      }
+      ind.evidenceText = evi.join('\n');
+      found.table = true;
+    }
+  }
+
+  /* appendix (this app's layout): evidence cards after the signature */
+  const ax = nodes.findIndex(n => n.tag === 'p' && /^ภาคผนวก/.test(n.u));
+  let appendixFound = false;
+  if (ax >= 0) {
+    const got = [];
+    for (let i = ax + 1; i < nodes.length; i++) {
+      if (nodes[i].tag !== 'tbl') continue;
+      for (const tc of (nodes[i].xml.match(/<w:tc>[\s\S]*?<\/w:tc>/g) || [])) {
+        const full = /<w:gridSpan w:val="2"\/>/.test(tc); let code = null, caption = '', url = null, photo = null; const ptexts = [];
+        for (const pxml of (tc.match(/<w:p[ >][\s\S]*?<\/w:p>/g) || [])) {
+          const text = lines(plain(pxml)).join(' '); let m;
+          if (text) ptexts.push(text);
+          if ((m = text.match(/^หลักฐาน\s+(\d\.\d)-(\d+)\s*(.*)$/))) { code = m; caption = m[3].trim(); }
+          const hl = pxml.match(/<w:hyperlink\b[^>]*r:id="([^"]+)"/); if (hl && relMap[hl[1]]) url = relMap[hl[1]];
+          for (const d of (pxml.match(/<w:drawing>[\s\S]*?<\/w:drawing>/g) || [])) {
+            if (/<wp:docPr [^>]*name="QR /.test(d) || photo) continue;
+            photo = d;
+          }
+        }
+        if (!code || !st.indicators[code[1]]) continue;
+        let item = null;
+        if (photo) {
+          const rid = (photo.match(/r:embed="([^"]+)"/) || [])[1]; const tgt = relMap[rid]; const f = tgt && zip.file('word/' + tgt.replace(/^\.?\//, ''));
+          const ext = tgt ? (tgt.split('.').pop() || '').toLowerCase() : '';
+          if (f && (ext === 'png' || ext === 'jpg' || ext === 'jpeg')) {
+            const mime = ext === 'png' ? 'image/png' : 'image/jpeg', ex = photo.match(/<wp:extent cx="(\d+)" cy="(\d+)"/), pid = uid('p');
+            photos.push({ id: pid, bytes: await f.async('uint8array'), mime });
+            item = { id: pid, type: 'photo', caption, mime, w: ex ? +ex[1] : 4, h: ex ? +ex[2] : 3, place: full ? 'full' : 'half' };
+          }
+        } else if (url || ptexts.length > 1) item = { id: uid('l'), type: 'link', caption, url: url || ptexts[ptexts.length - 1], place: 'half' };
+        if (item) got.push({ id: code[1], n: +code[2], item });
+      }
+    }
+    got.sort((p, q) => (p.n - q.n));
+    got.forEach(g => st.indicators[g.id].items.push(g.item)); appendixFound = got.length > 0;
+  }
+  st.evidenceMode = appendixFound ? 'appendix' : (photos.length ? 'table' : 'appendix');
+
+  /* challenge */
+  const s2 = nodes.findIndex(n => n.tag === 'p' && /^ส่วนที่\s*2/.test(n.u));
+  if (s2 >= 0) {
+    let mode = ''; const ch = st.challenge;
+    for (let i = s2 + 1; i < nodes.length; i++) {
+      const n = nodes[i]; if (n.tag !== 'p') continue;
+      const t = n.u; if (!t) continue; let m;
+      if ((m = t.match(/^ประเด็นท้าทาย\s*เรื่อง\s+(.*)$/))) { ch.title = clean(m[1]); found.challenge++; continue; }
+      if (/^(?:1\.\s*)?สภาพปัญหา/.test(t)) { mode = 'problem'; continue; }
+      if (/^2\.\s*วิธีการดำเนินการ/.test(t)) { mode = 'methods'; continue; }
+      if (/^3\.\s*ผลการจัดการเรียนรู้/.test(t)) { mode = 'results'; continue; }
+      if (/^3\.1\s*เชิงปริมาณ/.test(t)) { mode = 'quant'; continue; }
+      if (/^3\.2\s*เชิงคุณภาพ/.test(t)) { mode = 'qual'; continue; }
+      if (/ลงชื่อ/.test(t)) break;
+      if (isBlankTxt(t)) continue;
+      if (mode === 'problem') ch.problem += (ch.problem ? '\n' : '') + t;
+      else if (mode === 'methods' && (m = t.match(/^2\.(\d+)\s*(.*)$/)) && !isBlankTxt(m[2])) ch.methods.push({ id: uid('m'), text: m[2].trim() });
+      else if (mode === 'quant' && (m = t.match(/^(\d+)\.\s*(.*)$/)) && !isBlankTxt(m[2])) {
+        const tg = m[2].match(/ร้อยละ\s*(\d+(?:\.\d+)?)/);
+        ch.quant.push({ id: uid('q'), text: m[2].trim(), target: tg ? +tg[1] : 80, total: '', achieved: '' });
+      }
+      else if (mode === 'qual' && (m = t.match(/^(\d+)\.\s*(.*)$/)) && !isBlankTxt(m[2])) ch.qual.push({ id: uid('u'), text: m[2].trim() });
+    }
+  }
+  return { state: st, photos, found };
+}
+
+
+/* ---------------- QR code as PNG bytes (works in browser and Node; needs the qrcode-generator library) ---------------- */
+function crc32(buf) { let crc = -1; for (let n = 0; n < buf.length; n++) { crc ^= buf[n]; for (let k = 0; k < 8; k++) crc = (crc >>> 1) ^ (0xEDB88320 & -(crc & 1)); } return (crc ^ -1) >>> 0; }
+function adler32(buf) { let a = 1, b = 0; for (let i = 0; i < buf.length; i++) { a = (a + buf[i]) % 65521; b = (b + a) % 65521; } return ((b << 16) | a) >>> 0; }
+function concatBytes(list) { let n = 0; list.forEach(x => { n += x.length; }); const out = new Uint8Array(n); let o = 0; list.forEach(x => { out.set(x, o); o += x.length; }); return out; }
+function zlibStored(raw) {
+  const parts = [new Uint8Array([0x78, 0x01])];
+  for (let i = 0; i === 0 || i < raw.length; i += 65535) {
+    const chunk = raw.subarray(i, Math.min(i + 65535, raw.length)), last = i + 65535 >= raw.length, len = chunk.length;
+    parts.push(new Uint8Array([last ? 1 : 0, len & 255, len >> 8, (~len) & 255, ((~len) >> 8) & 255]), chunk);
+  }
+  const ad = adler32(raw); parts.push(new Uint8Array([ad >>> 24, (ad >>> 16) & 255, (ad >>> 8) & 255, ad & 255]));
+  return concatBytes(parts);
+}
+function pngChunk(type, data) {
+  const out = new Uint8Array(12 + data.length), dv = new DataView(out.buffer);
+  dv.setUint32(0, data.length); for (let i = 0; i < 4; i++) out[4 + i] = type.charCodeAt(i); out.set(data, 8);
+  dv.setUint32(8 + data.length, crc32(out.subarray(4, 8 + data.length))); return out;
+}
+function qrPng(text) {
+  const lib = root.qrcode; if (!lib) throw new Error('no qr library');
+  const t = /[^\x00-\x7F]/.test(text) ? encodeURI(text) : text;
+  const qr = lib(0, 'M'); qr.addData(t); qr.make();
+  const n = qr.getModuleCount(), scale = 8, margin = 4, size = (n + 2 * margin) * scale, rb = Math.ceil(size / 8);
+  const raw = new Uint8Array((rb + 1) * size).fill(0xFF);
+  for (let y = 0; y < size; y++) {
+    raw[y * (rb + 1)] = 0; const mr = Math.floor(y / scale) - margin;
+    for (let x = 0; x < size; x++) {
+      const mc = Math.floor(x / scale) - margin;
+      if (mr >= 0 && mc >= 0 && mr < n && mc < n && qr.isDark(mr, mc)) raw[y * (rb + 1) + 1 + (x >> 3)] &= ~(0x80 >> (x & 7));
+    }
+  }
+  const ihdr = new Uint8Array(13), dv = new DataView(ihdr.buffer); dv.setUint32(0, size); dv.setUint32(4, size); ihdr[8] = 1; ihdr[9] = 0;
+  return concatBytes([new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10]), pngChunk('IHDR', ihdr), pngChunk('IDAT', zlibStored(raw)), pngChunk('IEND', new Uint8Array(0))]);
+}
+
+/* ---------------- export: builds the report from the form structure + the entered data ---------------- */
+const FONT = 'TH SarabunPSK';
+const COL = { accent: '1F6F5C', tint: 'E8F3F0', line: 'A9BDB6', mute: '5F6B67' };
+const PG = { w: 11906, h: 16838, t: 1247, b: 1134, l: 1418, r: 1134 };   // A4
+const TEXTW = PG.w - PG.l - PG.r;                                          // 9354 dxa
+const DOTS = '..........';
+
+// Word does not know where Thai words end, so lines break early. Insert zero-width spaces
+// between Thai words (invisible) — left-aligned text then fills the line properly.
+const segTh = (typeof Intl !== 'undefined' && Intl.Segmenter) ? new Intl.Segmenter('th', { granularity: 'word' }) : null;
+function thai(text) {
+  if (!segTh) return text;
+  return text.replace(/[\u0E00-\u0E7F]+/g, run => { const parts = []; for (const sg of segTh.segment(run)) parts.push(sg.segment); return parts.join('\u200b'); });
+}
+function rpr(o) {
+  let x = '';
+  if (o.style) x += `<w:rStyle w:val="${o.style}"/>`;
+  if (o.b) x += '<w:b/><w:bCs/>';
+  if (o.i) x += '<w:i/><w:iCs/>';
+  if (o.color) x += `<w:color w:val="${o.color}"/>`;
+  if (o.sz) x += `<w:sz w:val="${Math.round(o.sz * 2)}"/><w:szCs w:val="${Math.round(o.sz * 2)}"/>`;
+  if (o.u) x += `<w:u w:val="${o.u}"/>`;
+  return x ? `<w:rPr>${x}</w:rPr>` : '';
+}
+function R(text, o) {
+  o = o || {};
+  return `<w:r>${rpr(o)}${String(text == null ? '' : text).split('\t').map((sg, i) => (i ? '<w:tab/>' : '') + (sg ? `<w:t xml:space="preserve">${esc(thai(sg))}</w:t>` : '')).join('')}</w:r>`;
+}
+const SYM = (ch, o) => `<w:r>${rpr(o || {})}<w:sym w:font="Wingdings" w:char="${ch}"/></w:r>`;
+function ppr(o) {
+  let x = '';
+  if (o.style) x += `<w:pStyle w:val="${o.style}"/>`;
+  if (o.keepNext) x += '<w:keepNext/>';
+  if (o.keepLines) x += '<w:keepLines/>';
+  if (o.pageBreak) x += '<w:pageBreakBefore/>';
+  if (o.num) x += '<w:numPr><w:ilvl w:val="0"/><w:numId w:val="1"/></w:numPr>';
+  if (o.bdr) x += `<w:pBdr>${o.bdr}</w:pBdr>`;
+  if (o.shd) x += `<w:shd w:val="clear" w:color="auto" w:fill="${o.shd}"/>`;
+  if (o.tabs) x += '<w:tabs>' + o.tabs.map(t => `<w:tab w:val="${t.v || 'left'}"${t.leader ? ` w:leader="${t.leader}"` : ''} w:pos="${t.p}"/>`).join('') + '</w:tabs>';
+  if (o.sp) x += `<w:spacing${o.sp.b != null ? ` w:before="${o.sp.b}"` : ''}${o.sp.a != null ? ` w:after="${o.sp.a}"` : ''}/>`;
+  if (o.ind) x += `<w:ind${o.ind.l != null ? ` w:left="${o.ind.l}"` : ''}${o.ind.h ? ` w:hanging="${o.ind.h}"` : ''}${o.ind.f ? ` w:firstLine="${o.ind.f}"` : ''}/>`;
+  if (o.jc) x += `<w:jc w:val="${o.jc}"/>`;
+  return x ? `<w:pPr>${x}</w:pPr>` : '';
+}
+const PP = (runs, o) => `<w:p>${ppr(o || {})}${Array.isArray(runs) ? runs.join('') : (runs || '')}</w:p>`;
+const EMPTY_P = '<w:p/>';
+const bord = c => ['top', 'left', 'bottom', 'right', 'insideH', 'insideV'].map(k => `<w:${k} w:val="single" w:sz="4" w:space="0" w:color="${c}"/>`).join('');
+function TC(w, content, o) {
+  o = o || {};
+  return `<w:tc><w:tcPr><w:tcW w:w="${w}" w:type="dxa"/>${o.span ? `<w:gridSpan w:val="${o.span}"/>` : ''}${o.vm ? (o.vm === 'restart' ? '<w:vMerge w:val="restart"/>' : '<w:vMerge/>') : ''}${o.nb ? '<w:tcBorders><w:top w:val="nil"/><w:left w:val="nil"/><w:bottom w:val="nil"/><w:right w:val="nil"/></w:tcBorders>' : ''}${o.shd ? `<w:shd w:val="clear" w:color="auto" w:fill="${o.shd}"/>` : ''}${o.va ? `<w:vAlign w:val="${o.va}"/>` : ''}</w:tcPr>${content || EMPTY_P}</w:tc>`;
+}
+const TR = (cells, o) => `<w:tr>${o && (o.header || o.cant) ? `<w:trPr>${o.cant ? '<w:cantSplit/>' : ''}${o.header ? '<w:tblHeader/>' : ''}</w:trPr>` : ''}${cells.join('')}</w:tr>`;
+function TBL(widths, rows, o) {
+  const mv = o && o.mar; const cm = mv ? `<w:top w:w="${mv}" w:type="dxa"/><w:left w:w="${mv}" w:type="dxa"/><w:bottom w:w="${mv}" w:type="dxa"/><w:right w:w="${mv}" w:type="dxa"/>` : '<w:top w:w="50" w:type="dxa"/><w:left w:w="100" w:type="dxa"/><w:bottom w:w="50" w:type="dxa"/><w:right w:w="100" w:type="dxa"/>';
+  return `<w:tbl><w:tblPr><w:tblW w:w="${widths.reduce((a, c) => a + c, 0)}" w:type="dxa"/><w:tblBorders>${bord(COL.line)}</w:tblBorders><w:tblLayout w:type="fixed"/><w:tblCellMar>${cm}</w:tblCellMar><w:tblLook w:val="04A0" w:firstRow="1" w:lastRow="0" w:firstColumn="1" w:lastColumn="0" w:noHBand="0" w:noVBand="1"/></w:tblPr><w:tblGrid>${widths.map(w => `<w:gridCol w:w="${w}"/>`).join('')}</w:tblGrid>${rows.join('')}</w:tbl>`;
+}
+const cellText = (t, o) => PP(R(t, Object.assign({ sz: 15 }, o || {})), { sp: { a: 30 } });
+const orDots = (v, n) => (String(v || '').trim() ? String(v).trim() : (n ? '.'.repeat(n) : DOTS));
+
+/* ---- workload tables (one per semester) ---- */
+function workloadTables(st) {
+  const W2 = [6054, TEXTW - 6054]; let out = '';
+  for (const sem of st.semesters) {
+    out += PP(R(`ภาคเรียนที่ ${sem.term} ปีการศึกษา ${sem.year}`, { b: true, color: COL.accent }), { keepNext: true, sp: { b: 140, a: 60 } });
+    const head = TR([TC(W2[0], cellText('รายการภาระงาน', { b: true, color: 'FFFFFF' }), { shd: COL.accent, va: 'center' }), TC(W2[1], PP(R('จำนวนชั่วโมง/สัปดาห์', { b: true, sz: 15, color: 'FFFFFF' }), { jc: 'center', sp: { a: 30 } }), { shd: COL.accent, va: 'center' })], { header: true, cant: true });
+    const rows = [head];
+    const catRow = (c, right) => TR([TC(W2[0], cellText(`${c.no} ${c.label}`, { b: true }), { shd: COL.tint }), TC(W2[1], PP(R(right, { b: true, sz: 15 }), { jc: 'right', sp: { a: 30 } }), { shd: COL.tint })], { cant: true });
+    const itemRow = (name, right) => TR([TC(W2[0], PP(R(name, { sz: 15 }), { ind: { l: 220 }, sp: { a: 30 } })), TC(W2[1], PP(R(right, { sz: 15 }), { jc: 'right', sp: { a: 30 } }))], { cant: true });
+    let total;
+    if (!sem.items.length) {   // fill-in skeleton
+      for (const c of CATS) { rows.push(catRow(c, 'รวม ..... ชั่วโมง ..... นาที')); rows.push(itemRow('..........................................', '..... ชั่วโมง ..... นาที')); }
+      total = '..... ชั่วโมง/สัปดาห์';
+    } else {
+      for (const c of CATS) {
+        const items = sem.items.filter(i => i.cat === c.n); if (!items.length) continue;
+        rows.push(catRow(c, 'รวม ' + fmtItem(catMin(sem, c.n))));
+        items.forEach(it => rows.push(itemRow(it.name, fmtItem(it.min))));
+      }
+      total = fmtTotal(semMin(sem)) + '/สัปดาห์';
+    }
+    rows.push(TR([TC(W2[0], cellText('รวมภาระงานที่ ก.ค.ศ. กำหนด', { b: true, color: COL.accent }), { shd: COL.tint }), TC(W2[1], PP(R(total, { b: true, sz: 15, color: COL.accent }), { jc: 'right', sp: { a: 30 } }), { shd: COL.tint })], { cant: true }));
+    out += TBL(W2, rows) + PP('', { sp: { a: 60 } });
+  }
+  return out;
+}
+
+async function buildDocx(state, getPhotoBytes, JSZipLib) {
+  const JSZ = JSZipLib || root.JSZip;
+  const st = normalize(JSON.parse(JSON.stringify(state)));
+  const c = st.cover, ch = st.challenge;
+  const mode = st.evidenceMode === 'table' ? 'table' : 'appendix';
+  const TRN = Array.isArray(st.trainings) ? st.trainings.slice().sort((p, q) => String(p.start_date).localeCompare(String(q.start_date))) : [];
+  const trnByInd = {}; let trnHours = 0;
+  TRN.forEach(t => { trnHours += +t.hours || 0; (t.indicators || []).forEach(i => { const b = trnByInd[i] || (trnByInd[i] = { n: 0, h: 0 }); b.n++; b.h += +t.hours || 0; }); });
+  // where an evidence item goes: 'table' (thumbnail / link inside the table), 'half' or 'full' (large, in the appendix).
+  // Items without their own choice follow the default for the whole report.
+  const dflt = mode === 'table' ? 'table' : 'half';
+  const placeOf = e => { const p = e.place || dflt; return (e.type === 'link' && p === 'full') ? 'half' : p; };
+  const rels = [], media = []; let nMedia = 0, nLink = 0, docPr = 100; const skipped = [];
+  const MAXW = 1620000, MAXH = 2160000;   // 4.5 cm × 6 cm max in the evidence column
+
+  function imageP(rid, w, h, name, maxw, maxh, keep) {
+    w = w > 0 ? w : 4; h = h > 0 ? h : 3; const ratio = h / w;
+    const cx = Math.min(maxw || MAXW, Math.round((maxh || MAXH) / ratio)), cy = Math.round(cx * ratio); docPr++;
+    return `<w:p>${ppr({ jc: 'center', keepNext: keep !== false, sp: { b: 40, a: 30 } })}<w:r><w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0"><wp:extent cx="${cx}" cy="${cy}"/><wp:docPr id="${docPr}" name="${escAttr(name)}"/><wp:cNvGraphicFramePr><a:graphicFrameLocks noChangeAspect="1"/></wp:cNvGraphicFramePr><a:graphic><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:pic><pic:nvPicPr><pic:cNvPr id="${docPr}" name="${escAttr(name)}"/><pic:cNvPicPr/></pic:nvPicPr><pic:blipFill><a:blip r:embed="${rid}"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="${cx}" cy="${cy}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r></w:p>`;
+  }
+  const RTY = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships';
+  function addMedia(bytes, ext) { const rid = 'rIdPaImg' + (++nMedia), fname = `pa${nMedia}.${ext}`; media.push({ name: fname, bytes }); rels.push(`<Relationship Id="${rid}" Type="${RTY}/image" Target="media/${fname}"/>`); return rid; }
+  function addLink(url) { const rid = 'rIdPaLk' + (++nLink); rels.push(`<Relationship Id="${rid}" Type="${RTY}/hyperlink" Target="${escAttr(url)}" TargetMode="External"/>`); return rid; }
+  const codeOf = (id, i) => `${id}-${i + 1}`;
+  const isUrl = u => /^https?:\/\//i.test(u);
+  async function evidenceCell(id) {
+    const it = st.indicators[id]; let out = ''; const away = [];
+    evidenceLines(it).forEach(l => { out += PP(R(l, { sz: 15 }), { num: true, sp: { a: 30 } }); });
+    const tb = trnByInd[id];
+    if (tb) out += PP(R(`เกียรติบัตร/หลักฐานการอบรมและพัฒนาตนเอง ${tb.n} รายการ รวม ${fmtHours(tb.h)} ชั่วโมง (ดูภาคผนวก ข)`, { sz: 15 }), { num: true, sp: { a: 30 } });
+    for (let i = 0; i < it.items.length; i++) {
+      const e = it.items[i];
+      if (placeOf(e) !== 'table') { away.push(codeOf(id, i)); continue; }
+      if (e.type === 'link') {
+        const url = String(e.url || '').trim(), label = e.caption || url || 'ลิงก์หลักฐาน';
+        if (isUrl(url)) out += PP(`<w:hyperlink r:id="${addLink(url)}" w:history="1">${R(label, { style: 'Hyperlink', sz: 15 })}</w:hyperlink>`, { num: true, sp: { a: 30 } });
+        else out += PP(R(label, { sz: 15 }), { num: true, sp: { a: 30 } });
+      } else {
+        const bytes = await getPhotoBytes(e.id);
+        if (!bytes) { skipped.push(e.id); continue; }
+        out += imageP(addMedia(bytes, e.mime === 'image/png' ? 'png' : 'jpeg'), e.w, e.h, `หลักฐาน ${id}`);
+        if ((e.caption || '').trim()) out += PP(R(e.caption.trim()), { style: 'Caption' });
+      }
+    }
+    if (away.length) out += PP(R('ดูภาคผนวก: ' + away.join(', ')), { style: 'EvidenceRef' });
+    return out || EMPTY_P;
+  }
+  /* appendix: evidence shown large, grouped by indicator, 2 per row (or full width), links as QR codes */
+  async function cardContent(id, e, i, full) {
+    const code = codeOf(id, i);
+    const cap = label => PP([R(`หลักฐาน ${code}`, { b: true, color: COL.accent }), R(label ? '  ' + label : '')], { style: 'EvidenceCaption' });
+    if (e.type === 'link') {
+      const url = String(e.url || '').trim(); let x = '';
+      if (isUrl(url)) { try { const qr = qrPng(url); x += imageP(addMedia(qr, 'png'), 1, 1, `QR ${code}`, 1000000, 1000000, false); } catch (err) { /* no QR library: URL is still printed */ } }
+      x += cap((e.caption || '').trim());
+      x += isUrl(url) ? PP(`<w:hyperlink r:id="${addLink(url)}" w:history="1">${R(url, { style: 'Hyperlink', sz: 12 })}</w:hyperlink>`, { sp: { a: 20 } }) : PP(R(url, { sz: 12 }));
+      return x;
+    }
+    const bytes = await getPhotoBytes(e.id); if (!bytes) { skipped.push(e.id); return null; }
+    return imageP(addMedia(bytes, e.mime === 'image/png' ? 'png' : 'jpeg'), e.w, e.h, `หลักฐาน ${code}`, full ? 5400000 : 2664000, full ? 5580000 : 3060000, false) + cap((e.caption || '').trim());
+  }
+  async function appendixXml() {
+    let out = '', any = false; const HW = Math.floor(TEXTW / 2);
+    for (const d of INDICATORS) {
+      const it = st.indicators[d.id]; if (!it.items.length) continue;
+      const cards = [];
+      for (let i = 0; i < it.items.length; i++) { const e = it.items[i], p = placeOf(e); if (p === 'table') continue; const x = await cardContent(d.id, e, i, p === 'full'); if (x) cards.push({ x, full: p === 'full' }); }
+      if (!cards.length) continue;
+      if (!any) {
+        out += PP(R('ภาคผนวก เอกสารหลักฐานประกอบการรายงาน'), { style: 'Heading1', pageBreak: true });
+        out += PP(R('หลักฐานเรียงตามตัวชี้วัด อ้างอิงด้วยรหัส "ตัวชี้วัด-ลำดับ" ตามช่องเอกสารหลักฐานในตารางส่วนที่ 1', { color: COL.mute }), { sp: { a: 100 } });
+        any = true;
+      }
+      out += PP(R('ตัวชี้วัด ' + d.title, { b: true }), { shd: COL.tint, bdr: `<w:left w:val="single" w:sz="24" w:space="8" w:color="${COL.accent}"/>`, ind: { l: 160 }, keepNext: true, sp: { b: 160, a: 80 } });
+      const rows = []; let pend = null;
+      const flush = () => { if (pend) { rows.push(TR([TC(HW, pend), TC(TEXTW - HW, EMPTY_P, { nb: true })], { cant: true })); pend = null; } };
+      for (const c2 of cards) {
+        if (c2.full) { flush(); rows.push(TR([TC(TEXTW, c2.x, { span: 2 })], { cant: true })); }
+        else if (pend) { rows.push(TR([TC(HW, pend), TC(TEXTW - HW, c2.x)], { cant: true })); pend = null; }
+        else pend = c2.x;
+      }
+      flush();
+      out += TBL([HW, TEXTW - HW], rows, { mar: 120 }) + PP('', { sp: { a: 60 } });
+    }
+    return out;
+  }
+  /* appendix ข: trainings + ID Plan + certificates */
+  async function trainingsXml() {
+    if (!TRN.length && !(st.idplan || []).length) return '';
+    let out = PP(R('ภาคผนวก ข สรุปการอบรมและพัฒนาตนเอง'), { style: 'Heading1', pageBreak: true });
+    out += PP(R(`ปีงบประมาณ พ.ศ. ${c.fy} · ${TRN.length} รายการ · รวม ${fmtHours(trnHours)} ชั่วโมง`, { color: COL.mute }), { sp: { a: 100 } });
+    const hcell = (w, t) => TC(w, PP(R(t, { b: true, sz: 14, color: 'FFFFFF' }), { jc: 'center', sp: { a: 30 } }), { shd: COL.accent, va: 'center' });
+    const topicName = id => { const t = (st.idplan || []).find(x => x.id === id); return t ? (t.topic || '').trim() : ''; };
+    if (TRN.length) {
+      const W = [520, 3250, 1950, 760, 1350, TEXTW - 7830];
+      const rows = [TR([hcell(W[0], 'ที่'), hcell(W[1], 'เรื่อง / หน่วยงานที่จัด'), hcell(W[2], 'วันที่'), hcell(W[3], 'ชม.'), hcell(W[4], 'รูปแบบ'), hcell(W[5], 'ตาม ID Plan')], { header: true, cant: true })];
+      TRN.forEach((t, i) => {
+        const name = PP(R(t.title || '', { b: true, sz: 15 }), { sp: { a: 10 } }) + (t.organizer ? PP(R(t.organizer, { sz: 14, color: COL.mute }), { sp: { a: 20 } }) : '');
+        rows.push(TR([
+          TC(W[0], PP(R(String(i + 1), { sz: 15 }), { jc: 'center', sp: { a: 30 } })), TC(W[1], name),
+          TC(W[2], cellText(thRange(t.start_date, t.end_date))), TC(W[3], PP(R(fmtHours(t.hours), { sz: 15 }), { jc: 'center', sp: { a: 30 } })),
+          TC(W[4], cellText(`${t.kind || ''}${t.mode ? ' (' + (MODE_TH[t.mode] || t.mode) + ')' : ''}`)),
+          TC(W[5], cellText(t.idplan_topic ? (topicName(t.idplan_topic) || '✓') : '–'))
+        ], { cant: true }));
+      });
+      rows.push(TR([TC(W[0] + W[1] + W[2], PP(R('รวม', { b: true, sz: 15, color: COL.accent }), { jc: 'right', sp: { a: 30 } }), { span: 3, shd: COL.tint }),
+        TC(W[3], PP(R(fmtHours(trnHours), { b: true, sz: 15, color: COL.accent }), { jc: 'center', sp: { a: 30 } }), { shd: COL.tint }),
+        TC(W[4] + W[5], cellText('ชั่วโมง', { b: true, color: COL.accent }), { span: 2, shd: COL.tint })], { cant: true }));
+      out += TBL(W, rows) + PP('', { sp: { a: 80 } });
+    }
+    const topics = (st.idplan || []).filter(t => (t.topic || '').trim());
+    if (topics.length) {
+      out += PP(R('ผลการพัฒนาตามแผนพัฒนาตนเอง (ID Plan)', { b: true, color: COL.accent }), { keepNext: true, sp: { b: 120, a: 60 } });
+      const W = [3300, 2654, 1900, TEXTW - 7854];
+      const rows = [TR([hcell(W[0], 'สมรรถนะ/ประเด็นที่พัฒนา'), hcell(W[1], 'วิธีการ / ช่วงเวลา'), hcell(W[2], 'กิจกรรมที่ทำแล้ว'), hcell(W[3], 'ชั่วโมง')], { header: true, cant: true })];
+      topics.forEach(tp => {
+        const done = TRN.filter(t => t.idplan_topic === tp.id), hrs = done.reduce((a, t) => a + (+t.hours || 0), 0);
+        rows.push(TR([TC(W[0], cellText(tp.topic.trim())), TC(W[1], cellText([tp.method, tp.period].map(x => (x || '').trim()).filter(Boolean).join(' · ') || '–')),
+          TC(W[2], done.length ? done.map(t => cellText('• ' + t.title)).join('') : cellText('ยังไม่มี', { color: COL.mute })),
+          TC(W[3], PP(R(done.length ? fmtHours(hrs) : '–', { sz: 15 }), { jc: 'center', sp: { a: 30 } }))], { cant: true }));
+      });
+      out += TBL(W, rows) + PP('', { sp: { a: 80 } });
+    }
+    // certificates and photos, 2 per row; PDFs become a QR (if shared) or a note
+    const cards = []; let n = 0;
+    for (let ti = 0; ti < TRN.length; ti++) {
+      const t = TRN[ti];
+      for (const f of (t.files || [])) {
+        n++; const code = `ข-${ti + 1}.${(t.files || []).indexOf(f) + 1}`;
+        const label = `${f.kind === 'cert' ? 'เกียรติบัตร' : 'ภาพกิจกรรม'}: ${t.title}`;
+        const cap = PP([R(`หลักฐาน ${code}`, { b: true, color: COL.accent }), R('  ' + label)], { style: 'EvidenceCaption' });
+        if (f.mime === 'application/pdf') {
+          let x = '';
+          if (f.url) { try { x += imageP(addMedia(qrPng(f.url), 'png'), 1, 1, `QR ${code}`, 1000000, 1000000, false); } catch (e) { /* no QR lib */ } }
+          x += cap + (f.url ? PP(`<w:hyperlink r:id="${addLink(f.url)}" w:history="1">${R(f.url, { style: 'Hyperlink', sz: 12 })}</w:hyperlink>`, { sp: { a: 20 } })
+                            : PP(R(`ไฟล์ PDF "${f.name || 'เกียรติบัตร'}" เก็บใน Google Drive`, { sz: 13, color: COL.mute })));
+          cards.push(x); continue;
+        }
+        const bytes = await getPhotoBytes('ev:' + f.ev); if (!bytes) { skipped.push(f.ev); continue; }
+        cards.push(imageP(addMedia(bytes, f.mime === 'image/png' ? 'png' : 'jpeg'), f.w, f.h, `หลักฐาน ${code}`, 2664000, 3060000, false) + cap);
+      }
+    }
+    if (cards.length) {
+      out += PP(R('เกียรติบัตรและภาพกิจกรรม', { b: true, color: COL.accent }), { keepNext: true, sp: { b: 120, a: 60 } });
+      const HW = Math.floor(TEXTW / 2), rows = [];
+      for (let i = 0; i < cards.length; i += 2) rows.push(TR([TC(HW, cards[i]), cards[i + 1] ? TC(TEXTW - HW, cards[i + 1]) : TC(TEXTW - HW, EMPTY_P, { nb: true })], { cant: true }));
+      out += TBL([HW, TEXTW - HW], rows, { mar: 120 });
+    }
+    return out;
+  }
+  async function indicatorsTable() {
+    const inline = INDICATORS.some(d => st.indicators[d.id].items.some(e => placeOf(e) === 'table'));
+    const W4 = inline ? [1700, 2300, 2554, TEXTW - 6554] : [1700, 2300, 3254, TEXTW - 7254];
+    const hcell = (w, t) => TC(w, PP(R(t, { b: true, sz: 14, color: 'FFFFFF' }), { jc: 'center', sp: { a: 30 } }), { shd: COL.accent, va: 'center' });
+    const rows = [TR([hcell(W4[0], 'ลักษณะงานที่ปฏิบัติตามมาตรฐานตำแหน่ง'), hcell(W4[1], 'ตัวชี้วัด'), hcell(W4[2], 'การดำเนินงาน'), hcell(W4[3], 'เอกสารหลักฐาน')], { header: true, cant: true })];
+    let lastArea = 0;
+    for (const d of INDICATORS) {
+      const it = st.indicators[d.id]; const first = d.area !== lastArea; lastArea = d.area;
+      const act = lines(it.action || '').map(t => cellText(t)).join('') || EMPTY_P;
+      rows.push(TR([
+        first ? TC(W4[0], cellText(AREAS[d.area], { b: true, color: COL.accent }), { vm: 'restart', shd: COL.tint }) : TC(W4[0], EMPTY_P, { vm: 'cont', shd: COL.tint }),
+        TC(W4[1], cellText(d.title, { b: true })),
+        TC(W4[2], act),
+        TC(W4[3], await evidenceCell(d.id))
+      ]));
+    }
+    return TBL(W4, rows);
+  }
+
+  /* ---- body ---- */
+  const H1 = (t, o) => PP(R(t), Object.assign({ style: 'Heading1' }, o || {}));
+  const bold = (t, o) => PP(R(t, { b: true }), o);
+  const TABS = [{ p: 2700 }, { p: 4900 }, { p: 6300 }];
+  const field = (label, value, label2, value2) => PP([R(label, { color: COL.mute }), R('\t'), R(value, { b: true })].concat(label2 ? [R('\t'), R(label2, { color: COL.mute }), R('\t'), R(value2, { b: true })] : []), { tabs: TABS, ind: { l: 2700, h: 2700 }, sp: { a: 50 } });
+  const chk = (ch, label) => PP([SYM(ch), R('   ' + label)], { ind: { l: 567 }, sp: { a: 20 } });
+  const rm = c.rooms;
+  const fullname = [c.first, c.last].filter(Boolean).join(' ');
+  let body = '';
+  body += PP(R('แบบรายงานผลการพัฒนางานตามข้อตกลง (PA)'), { style: 'Title' });
+  body += PP(R('สำหรับข้าราชการครูและบุคลากรทางการศึกษา ตำแหน่งครู วิทยฐานะ ครูชำนาญการ', { b: true }), { jc: 'center', sp: { a: 120 } });
+  body += PP(R(orDots(c.school, 30), { b: true, sz: 20 }), { jc: 'center', sp: { a: 60 } });
+  body += PP(R(`ประจำปีงบประมาณ พ.ศ. ${orDots(c.fy, 4)}`, { b: true, sz: 18 }), { jc: 'center', sp: { a: 40 } });
+  body += PP(R(`ระหว่างวันที่ ${orDots(c.start, 20)} ถึงวันที่ ${orDots(c.end, 20)}`), { jc: 'center', bdr: `<w:bottom w:val="single" w:sz="12" w:space="10" w:color="${COL.accent}"/>`, sp: { a: 240 } });
+  body += PP(R('ผู้จัดทำข้อตกลง'), { style: 'Heading2' });
+  body += field('ชื่อ', orDots(c.first, 20), 'นามสกุล', orDots(c.last, 20));
+  body += field('ตำแหน่ง', 'ครู', 'วิทยฐานะ', 'ชำนาญการ');
+  body += field('สถานศึกษา', orDots(c.school, 30));
+  body += field('สังกัด', orDots(c.affil, 30));
+  body += field('รับเงินเดือนในอันดับ', orDots(c.rank, 8));
+  body += field('อัตราเงินเดือน', orDots(c.salary, 10) + ' บาท');
+  body += bold('ประเภทห้องเรียนที่จัดการเรียนรู้ (สามารถระบุได้มากกว่า 1 ประเภทห้องเรียน ตามสภาพการจัดการเรียนรู้จริง)', { sp: { b: 200, a: 60 }, keepNext: true });
+  const on = 'F0FE', off = 'F0A8';
+  body += chk(rm.general ? on : off, 'ห้องเรียนวิชาสามัญหรือวิชาพื้นฐาน') + chk(rm.early ? on : off, 'ห้องเรียนปฐมวัย') + chk(rm.special ? on : off, 'ห้องเรียนการศึกษาพิเศษ') + chk(rm.voc ? on : off, 'ห้องเรียนสายวิชาชีพ') + chk(rm.nonformal ? on : off, 'ห้องเรียนการศึกษานอกระบบ / ตามอัธยาศัย');
+  body += PP(R('ข้าพเจ้าขอแสดงเจตจำนงในการจัดทำข้อตกลงในการพัฒนางาน ตำแหน่งครู วิทยฐานะ ชำนาญการ ซึ่งเป็นตำแหน่งและวิทยฐานะที่ดำรงอยู่ในปัจจุบันกับผู้อำนวยการสถานศึกษา ไว้ดังต่อไปนี้'), { ind: { f: 720 }, sp: { b: 240, a: 60 } });
+
+  body += H1('ส่วนที่ 1 ข้อตกลงในการพัฒนางานตามมาตรฐานตำแหน่ง', { pageBreak: true });
+  body += bold('1. ภาระงาน จะมีภาระงานเป็นไปตามที่ ก.ค.ศ. กำหนด', { keepNext: true, sp: { a: 40 } });
+  body += workloadTables(st);
+  body += PP([R('2. งานที่จะปฏิบัติตามมาตรฐานตำแหน่งครู ', { b: true }), R('(ให้ระบุรายละเอียดของงานที่จะปฏิบัติในแต่ละด้านว่าจะดำเนินการอย่างไร โดยอาจระบุระยะเวลาที่ใช้ในการดำเนินการด้วยก็ได้)')], { keepNext: true, sp: { b: 120, a: 100 } });
+  body += await indicatorsTable();
+  body += PP('', { sp: { a: 60 } });
+
+  body += H1('ส่วนที่ 2 ข้อตกลงในการพัฒนางานที่เป็นประเด็นท้าทายในการพัฒนาผลลัพธ์การเรียนรู้ของผู้เรียน', { pageBreak: true });
+  body += PP(R('ประเด็นที่ท้าทายในการพัฒนาผลลัพธ์การเรียนรู้ของผู้เรียนของผู้จัดทำข้อตกลง ซึ่งปัจจุบันดำรงตำแหน่งครู วิทยฐานะชำนาญการ ต้องแสดงให้เห็นถึงระดับการปฏิบัติที่คาดหวัง คือ การแก้ไขปัญหา การจัดการเรียนรู้และการพัฒนาคุณภาพการเรียนรู้ของผู้เรียน ให้เกิดการเปลี่ยนแปลงไปในทางที่ดีขึ้นหรือมีการพัฒนามากขึ้น (ทั้งนี้ประเด็นท้าทายอาจจะแสดงให้เห็นถึงระดับการปฏิบัติที่คาดหวังที่สูงกว่าได้)', { color: COL.mute }), { ind: { f: 720 }, sp: { a: 140 } });
+  body += PP(R('ประเด็นท้าทาย เรื่อง ' + (ch.title.trim() || '.'.repeat(50)), { b: true }), { shd: COL.tint, bdr: `<w:left w:val="single" w:sz="24" w:space="8" w:color="${COL.accent}"/>`, ind: { l: 160 }, sp: { b: 60, a: 160 }, keepNext: true });
+  body += bold('1. สภาพปัญหาของผู้เรียนและการจัดการเรียนรู้', { keepNext: true, sp: { a: 40 } });
+  const prob = lines(ch.problem || ''); (prob.length ? prob : [DOTS + DOTS + DOTS]).forEach(t => { body += PP(R(t), { ind: { f: 720 }, sp: { a: 60 } }); });
+  body += bold('2. วิธีการดำเนินการให้บรรลุผล', { keepNext: true, sp: { b: 140, a: 40 } });
+  const meth = ch.methods.filter(m => (m.text || '').trim()); (meth.length ? meth : [{ text: DOTS + DOTS }]).forEach((m, i) => { body += PP(R(`2.${i + 1}\t${m.text.trim()}`), { ind: { l: 1000, h: 560 }, sp: { a: 50 } }); });
+  body += bold('3. ผลการจัดการเรียนรู้', { keepNext: true, sp: { b: 140, a: 40 } });
+  body += bold('3.1 เชิงปริมาณ', { keepNext: true, ind: { l: 360 }, sp: { a: 40 } });
+  const qn = ch.quant.filter(m => (m.text || '').trim()); (qn.length ? qn : [{ text: DOTS + DOTS }]).forEach((m, i) => { body += PP(R(`${i + 1}.\t${m.text.trim()}`), { ind: { l: 1000, h: 560 }, sp: { a: 50 } }); });
+  body += bold('3.2 เชิงคุณภาพ', { keepNext: true, ind: { l: 360 }, sp: { b: 80, a: 40 } });
+  const ql = ch.qual.filter(m => (m.text || '').trim()); const qlx = ql.length ? ql : [{ text: DOTS + DOTS }]; qlx.forEach((m, i) => { body += PP(R(`${i + 1}.\t${m.text.trim()}`), { ind: { l: 1000, h: 560 }, sp: { a: 50 }, keepNext: i === qlx.length - 1 }); });
+  const SIG = { ind: { l: 4700 }, jc: 'center', keepNext: true, sp: { a: 20 } };
+  body += PP(R('ลงชื่อ ' + '.'.repeat(38), { b: true }), Object.assign({}, SIG, { sp: { b: 520, a: 20 } }));
+  body += PP(R(`( ${fullname || '..............................'} )`), SIG);
+  body += PP(R('ตำแหน่ง ครู วิทยฐานะ ชำนาญการ'), Object.assign({}, SIG, { keepNext: false }));
+  body += await appendixXml();
+  body += await trainingsXml();
+
+  /* ---- package ---- */
+  const NS = 'xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"';
+  const docXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document ${NS} xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"><w:body>${body}<w:sectPr><w:footerReference w:type="default" r:id="rIdFtr"/><w:pgSz w:w="${PG.w}" w:h="${PG.h}"/><w:pgMar w:top="${PG.t}" w:right="${PG.r}" w:bottom="${PG.b}" w:left="${PG.l}" w:header="567" w:footer="567" w:gutter="0"/><w:cols w:space="708"/><w:docGrid w:linePitch="360"/></w:sectPr></w:body></w:document>`;
+  const F = `w:ascii="${FONT}" w:hAnsi="${FONT}" w:eastAsia="${FONT}" w:cs="${FONT}"`;
+  const stylesXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:styles ${NS}><w:docDefaults><w:rPrDefault><w:rPr><w:rFonts ${F}/><w:sz w:val="32"/><w:szCs w:val="32"/><w:lang w:val="en-US" w:eastAsia="th-TH" w:bidi="th-TH"/></w:rPr></w:rPrDefault><w:pPrDefault><w:pPr><w:spacing w:after="80" w:line="240" w:lineRule="auto"/></w:pPr></w:pPrDefault></w:docDefaults>`
+    + `<w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/><w:qFormat/></w:style>`
+    + `<w:style w:type="character" w:default="1" w:styleId="DefaultParagraphFont"><w:name w:val="Default Paragraph Font"/><w:uiPriority w:val="1"/><w:semiHidden/><w:unhideWhenUsed/></w:style>`
+    + `<w:style w:type="table" w:default="1" w:styleId="TableNormal"><w:name w:val="Normal Table"/><w:uiPriority w:val="99"/><w:semiHidden/><w:unhideWhenUsed/><w:tblPr><w:tblInd w:w="0" w:type="dxa"/><w:tblCellMar><w:top w:w="0" w:type="dxa"/><w:left w:w="108" w:type="dxa"/><w:bottom w:w="0" w:type="dxa"/><w:right w:w="108" w:type="dxa"/></w:tblCellMar></w:tblPr></w:style>`
+    + `<w:style w:type="numbering" w:default="1" w:styleId="NoList"><w:name w:val="No List"/><w:uiPriority w:val="99"/><w:semiHidden/><w:unhideWhenUsed/></w:style>`
+    + `<w:style w:type="paragraph" w:styleId="Title"><w:name w:val="Title"/><w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:qFormat/><w:pPr><w:spacing w:before="120" w:after="80"/><w:jc w:val="center"/></w:pPr><w:rPr><w:b/><w:bCs/><w:color w:val="${COL.accent}"/><w:sz w:val="44"/><w:szCs w:val="44"/></w:rPr></w:style>`
+    + `<w:style w:type="paragraph" w:styleId="Heading1"><w:name w:val="heading 1"/><w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:qFormat/><w:pPr><w:keepNext/><w:keepLines/><w:pBdr><w:bottom w:val="single" w:sz="8" w:space="4" w:color="${COL.accent}"/></w:pBdr><w:spacing w:before="0" w:after="160"/><w:outlineLvl w:val="0"/></w:pPr><w:rPr><w:b/><w:bCs/><w:color w:val="${COL.accent}"/><w:sz w:val="34"/><w:szCs w:val="34"/></w:rPr></w:style>`
+    + `<w:style w:type="paragraph" w:styleId="Heading2"><w:name w:val="heading 2"/><w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:qFormat/><w:pPr><w:keepNext/><w:keepLines/><w:spacing w:before="120" w:after="80"/><w:outlineLvl w:val="1"/></w:pPr><w:rPr><w:b/><w:bCs/><w:color w:val="${COL.accent}"/><w:sz w:val="34"/><w:szCs w:val="34"/></w:rPr></w:style>`
+    + `<w:style w:type="paragraph" w:styleId="Caption"><w:name w:val="caption"/><w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:qFormat/><w:pPr><w:spacing w:before="0" w:after="80"/><w:jc w:val="center"/></w:pPr><w:rPr><w:color w:val="${COL.mute}"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr></w:style>`
+    + `<w:style w:type="paragraph" w:styleId="EvidenceRef"><w:name w:val="Evidence Ref"/><w:basedOn w:val="Normal"/><w:pPr><w:spacing w:before="20" w:after="30"/></w:pPr><w:rPr><w:color w:val="${COL.mute}"/><w:sz w:val="26"/><w:szCs w:val="26"/></w:rPr></w:style>`
+    + `<w:style w:type="paragraph" w:styleId="EvidenceCaption"><w:name w:val="Evidence Caption"/><w:basedOn w:val="Normal"/><w:pPr><w:spacing w:before="20" w:after="40"/></w:pPr><w:rPr><w:sz w:val="26"/><w:szCs w:val="26"/></w:rPr></w:style>`
+    + `<w:style w:type="paragraph" w:styleId="Footer"><w:name w:val="footer"/><w:basedOn w:val="Normal"/><w:pPr><w:spacing w:after="0"/><w:jc w:val="center"/></w:pPr><w:rPr><w:color w:val="${COL.mute}"/><w:sz w:val="26"/><w:szCs w:val="26"/></w:rPr></w:style>`
+    + `<w:style w:type="character" w:styleId="Hyperlink"><w:name w:val="Hyperlink"/><w:basedOn w:val="DefaultParagraphFont"/><w:uiPriority w:val="99"/><w:unhideWhenUsed/><w:rPr><w:color w:val="0563C1"/><w:u w:val="single"/></w:rPr></w:style></w:styles>`;
+  const numberingXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:numbering ${NS}><w:abstractNum w:abstractNumId="0"><w:multiLevelType w:val="hybridMultilevel"/><w:lvl w:ilvl="0"><w:start w:val="1"/><w:numFmt w:val="bullet"/><w:lvlText w:val="•"/><w:lvlJc w:val="left"/><w:pPr><w:ind w:left="284" w:hanging="227"/></w:pPr><w:rPr><w:rFonts ${F} w:hint="default"/></w:rPr></w:lvl></w:abstractNum><w:num w:numId="1"><w:abstractNumId w:val="0"/></w:num></w:numbering>`;
+  const settingsXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:settings ${NS}><w:zoom w:percent="100"/><w:defaultTabStop w:val="720"/><w:characterSpacingControl w:val="doNotCompress"/><w:compat><w:compatSetting w:name="compatibilityMode" w:uri="http://schemas.microsoft.com/office/word" w:val="15"/></w:compat><w:themeFontLang w:val="en-US" w:bidi="th-TH"/></w:settings>`;
+  const fld = t => `<w:r><w:fldChar w:fldCharType="begin"/></w:r><w:r><w:instrText xml:space="preserve"> ${t} </w:instrText></w:r><w:r><w:fldChar w:fldCharType="separate"/></w:r><w:r><w:t>1</w:t></w:r><w:r><w:fldChar w:fldCharType="end"/></w:r>`;
+  const footerXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:ftr ${NS}><w:p><w:pPr><w:pStyle w:val="Footer"/></w:pPr><w:r><w:t xml:space="preserve">- </w:t></w:r>${fld('PAGE')}<w:r><w:t xml:space="preserve"> -</w:t></w:r></w:p></w:ftr>`;
+  const RT = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships';
+  const docRels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rIdSty" Type="${RT}/styles" Target="styles.xml"/><Relationship Id="rIdSet" Type="${RT}/settings" Target="settings.xml"/><Relationship Id="rIdNum" Type="${RT}/numbering" Target="numbering.xml"/><Relationship Id="rIdFtr" Type="${RT}/footer" Target="footer1.xml"/>${rels.join('')}</Relationships>`;
+  const now = new Date().toISOString().replace(/\.\d+Z$/, 'Z');
+  const ct = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Default Extension="png" ContentType="image/png"/><Default Extension="jpeg" ContentType="image/jpeg"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/><Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/><Override PartName="/word/settings.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.settings+xml"/><Override PartName="/word/numbering.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.numbering+xml"/><Override PartName="/word/footer1.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.footer+xml"/><Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/><Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/></Types>`;
+  const rootRels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="${RT}/officeDocument" Target="word/document.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/><Relationship Id="rId3" Type="${RT}/extended-properties" Target="docProps/app.xml"/></Relationships>`;
+  const core = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><dc:title>${esc('แบบรายงานผลการพัฒนางานตามข้อตกลง (PA) ปีงบประมาณ ' + c.fy)}</dc:title><dc:creator>PA App</dc:creator><dcterms:created xsi:type="dcterms:W3CDTF">${now}</dcterms:created><dcterms:modified xsi:type="dcterms:W3CDTF">${now}</dcterms:modified></cp:coreProperties>`;
+  const app = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties"><Application>PA App</Application></Properties>`;
+
+  const zip = new JSZ(); const opt = { createFolders: false };
+  zip.file('[Content_Types].xml', ct, opt); zip.file('_rels/.rels', rootRels, opt);
+  zip.file('word/document.xml', docXml, opt); zip.file('word/styles.xml', stylesXml, opt); zip.file('word/settings.xml', settingsXml, opt);
+  zip.file('word/numbering.xml', numberingXml, opt); zip.file('word/footer1.xml', footerXml, opt); zip.file('word/_rels/document.xml.rels', docRels, opt);
+  zip.file('docProps/core.xml', core, opt); zip.file('docProps/app.xml', app, opt);
+  media.forEach(m => zip.file('word/media/' + m.name, m.bytes, opt));
+  const bytes = await zip.generateAsync({ type: 'uint8array', compression: 'DEFLATE' });
+  return { bytes, skipped };
+}
+
+/* ---------------- checks for the dashboard ---------------- */
+function pct(total, done) { const t = num(total), d = num(done); if (!(t > 0) || !isFinite(d)) return NaN; return Math.round(d / t * 1000) / 10; }
+function applyPercent(text, p) { const s = (p % 1 === 0) ? String(p) : p.toFixed(1); return /ร้อยละ\s*\d/.test(text) ? text.replace(/ร้อยละ\s*\d+(?:\.\d+)?/, 'ร้อยละ ' + s) : text; }
+
+function analyze(st) {
+  const issues = []; let withEvidence = 0, photoCount = 0, linkCount = 0, planTotal = 0, planDone = 0;
+  const c = st.cover;
+  const missingCover = []; if (!c.first) missingCover.push('ชื่อ'); if (!c.last) missingCover.push('นามสกุล'); if (!c.school) missingCover.push('สถานศึกษา'); if (!c.affil) missingCover.push('สังกัด'); if (!/\d/.test(String(c.salary))) missingCover.push('อัตราเงินเดือน');
+  if (missingCover.length) issues.push({ level: 'warn', tab: 'info', text: 'ข้อมูลผู้จัดทำยังไม่ครบ: ' + missingCover.join(', ') });
+  for (const sem of st.semesters) {
+    const label = `ภาคเรียนที่ ${sem.term}/${sem.year}`;
+    if (!sem.items.length) issues.push({ level: 'warn', tab: 'work', text: `${label} ยังไม่มีรายการภาระงาน` });
+    else if (sem.importedTotal != null && sem.importedTotal !== semMin(sem)) issues.push({ level: 'warn', tab: 'work', text: `${label}: ยอดรวมในไฟล์เดิม (${fmtTotal(sem.importedTotal)}) ไม่ตรงกับผลบวกรายการ (${fmtTotal(semMin(sem))})` });
+  }
+  for (const d of INDICATORS) {
+    const it = st.indicators[d.id]; const ph = it.items.filter(x => x.type === 'photo'), lk = it.items.filter(x => x.type === 'link');
+    photoCount += ph.length; linkCount += lk.length;
+    const has = it.items.length > 0 || evidenceLines(it).length > 0 || (st.trainings || []).some(t => (t.indicators || []).includes(d.id));
+    const pl = it.plan || [], pd = pl.filter(p => p.done).length; planTotal += pl.length; planDone += pd;
+    if (pl.length > pd) issues.push({ level: 'info', tab: 'ind', ref: d.id, text: `ตัวชี้วัด ${d.id}: ยังต้องเก็บหลักฐานอีก ${pl.length - pd} รายการ` });
+    if (has) withEvidence++; else issues.push({ level: 'warn', tab: 'ind', ref: d.id, text: `ตัวชี้วัด ${d.id} ยังไม่มีหลักฐาน` });
+    if (!lines(it.action || '').length) issues.push({ level: 'warn', tab: 'ind', ref: d.id, text: `ตัวชี้วัด ${d.id} ยังไม่ได้เขียนการดำเนินงาน` });
+    const nc = ph.filter(x => !(x.caption || '').trim()).length;
+    if (nc) issues.push({ level: 'info', tab: 'ind', ref: d.id, text: `ตัวชี้วัด ${d.id}: รูป ${nc} รูปยังไม่มีคำอธิบาย` });
+  }
+  const ch = st.challenge;
+  if (!ch.title.trim()) issues.push({ level: 'warn', tab: 'ch', text: 'ประเด็นท้าทายยังไม่มีชื่อเรื่อง' });
+  ch.quant.forEach((q, i) => { if (isNaN(pct(q.total, q.achieved))) issues.push({ level: 'info', tab: 'ch', text: `ผลเชิงปริมาณข้อ ${i + 1} ยังไม่ได้กรอกจำนวนนักเรียนจริง` }); });
+  return { issues, withEvidence, photoCount, linkCount, planTotal, planDone, total: INDICATORS.length };
+}
+
+/* ---------------- evidence checklist (what to collect per indicator) ---------------- */
+// Lines printed in the "เอกสารหลักฐาน" column: typed lines + checklist items that are ticked (no duplicates).
+function evidenceLines(it) {
+  const out = lines(it.evidenceText || ''); const seen = new Set(out.map(normTxt));
+  (it.plan || []).forEach(p => { const t = (p.text || '').trim(); if (p.done && t && !seen.has(normTxt(t))) { out.push(t); seen.add(normTxt(t)); } });
+  return out;
+}
+// Adds items from a plan file ({kind:'pa-evidence-plan', items:{'1.1':[{text,ref}]}}) — never removes or overwrites anything.
+function mergePlan(state, plan) {
+  const st = normalize(JSON.parse(JSON.stringify(state))); let added = 0, skipped = 0;
+  const items = (plan && plan.items) || {};
+  for (const id of Object.keys(items)) {
+    const ind = st.indicators[id]; if (!ind || !Array.isArray(items[id])) continue;
+    const have = new Set(ind.plan.map(p => normTxt(p.text)).concat(lines(ind.evidenceText || '').map(normTxt)));
+    for (const raw of items[id]) {
+      const text = String((raw && raw.text) || '').trim(); if (!text) continue;
+      if (have.has(normTxt(text))) { skipped++; continue; }
+      ind.plan.push({ id: uid('e'), text, ref: String((raw && raw.ref) || ''), done: false }); have.add(normTxt(text)); added++;
+    }
+  }
+  return { state: st, added, skipped };
+}
+
+/* ---------------- start next fiscal year from this one ---------------- */
+// Only bumps "ปีการศึกษา 25xx" / "ปีงบประมาณ 25xx" — never bare years (e.g. curriculum year in a citation).
+function bumpYears(t) {
+  return String(t == null ? '' : t)
+    .replace(/(ปีการศึกษา\s*)(25\d\d)/g, (m, a, y) => a + (+y + 1))
+    .replace(/(ปีงบประมาณ\s*(?:พ\.ศ\.\s*)?)(25\d\d)/g, (m, a, y) => a + (+y + 1));
+}
+function rollover(st) {
+  const old = normalize(JSON.parse(JSON.stringify(st)));
+  const oldFy = +old.cover.fy || 2569, fy = oldFy + 1;
+  const out = emptyState(fy);
+  out.cover = Object.assign({}, old.cover, { fy: String(fy), start: `1 เดือน ตุลาคม พ.ศ. ${fy - 1}`, end: `30 กันยายน พ.ศ. ${fy}`, salary: '' });
+  // new fiscal year = term 2 of (fy-1) + term 1 of fy. The timetable is deliberately left empty:
+  // the teacher fills it in from the real schedule.
+  out.semesters = [{ term: 2, year: String(fy - 1) }, { term: 1, year: String(fy) }].map(x => ({ id: uid('s'), term: x.term, year: x.year, items: [] }));
+  INDICATORS.forEach(d => { const o = old.indicators[d.id]; out.indicators[d.id] = { action: bumpYears(o.action), evidenceText: o.evidenceText, items: [], plan: (o.plan || []).map(p => ({ id: uid('e'), text: p.text, ref: p.ref || '', done: false })) }; });
+  const c = old.challenge;
+  out.challenge = {
+    title: c.title, problem: bumpYears(c.problem),
+    methods: c.methods.map(m => ({ id: uid('m'), text: bumpYears(m.text) })),
+    quant: c.quant.map(q => ({ id: uid('q'), text: bumpYears(q.text), target: q.target, total: '', achieved: '' })),
+    qual: c.qual.map(q => ({ id: uid('u'), text: bumpYears(q.text) }))
+  };
+  out.idplan = (old.idplan || []).map(t => ({ id: uid('t'), topic: t.topic || '', method: t.method || '', period: bumpYears(t.period || '') }));
+  out.evidenceMode = old.evidenceMode; out.started = true; return out;
+}
+
+const api = { thDate, thRange, fmtHours, fyOfDate, MODE_TH, mergePlan, evidenceLines, rollover, bumpYears, INDICATORS, AREAS, CATS, fmtItem, fmtTotal, catMin, semMin, emptyState, normalize, importDocx, buildDocx, analyze, pct, applyPercent, uid, lines };
+if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.PA = api;
+})(typeof window !== 'undefined' ? window : globalThis);
+</script>
+<script>/* แอป PA (แนะให้แนว) — ข้อมูลอยู่ใน Supabase (เห็นเฉพาะเจ้าของ) ไฟล์รูป/เกียรติบัตรอยู่ใน Google Drive ผ่าน Apps Script */
+(function () {
+'use strict';
+const PA = window.PA;
+const { INDICATORS, AREAS, CATS, fmtItem, fmtTotal, catMin, semMin, analyze, pct, applyPercent, uid, lines, thRange, fmtHours, fyOfDate, MODE_TH } = PA;
+
+const SUPABASE_URL = 'https://ikkhjslmtjwrxzxvtokb.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlra2hqc2xtdGp3cnh6eHZ0b2tiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM3NDMzNjksImV4cCI6MjA5OTMxOTM2OX0.3OR_9mEv82Ns1LLjx5nnRwJYzrtKFtWCWd1bPuQfNKU';
+const DRIVE_URL = 'https://script.google.com/macros/s/AKfycbz3bFmD-2rXt4gUwMYzDGnPeANYYM2J_-K442IQKuaqfvK8mKW4zRwMF_l64QxagVkaOw/exec';
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+/* ---------- tiny DOM helper ---------- */
+function h(tag, attrs, ...kids) {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs || {})) {
+    if (v == null || v === false) continue;
+    if (k === 'class') e.className = v;
+    else if (k === 'style') e.style.cssText = v;
+    else if (k.startsWith('on')) e.addEventListener(k.slice(2), v);
+    else if (k === 'value' || k === 'checked' || k === 'selected') e[k] = v;
+    else e.setAttribute(k, v === true ? '' : v);
+  }
+  kids.flat(Infinity).forEach(c => { if (c == null || c === false) return; e.append(c.nodeType ? c : document.createTextNode(String(c))); });
+  return e;
+}
+const $ = (s, r) => (r || document).querySelector(s);
+const grow = t => { t.style.height = 'auto'; t.style.height = (t.scrollHeight + 2) + 'px'; };
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+/* ---------- แคชไฟล์ในเครื่อง (IndexedDB) — ไม่ใช่ที่เก็บหลัก ข้อมูลจริงอยู่ในระบบ/Drive ---------- */
+const Cache = (() => {
+  let db = null;
+  const open = () => new Promise(res => {
+    try {
+      const r = indexedDB.open('pa-app-cloud', 1);
+      r.onupgradeneeded = () => { const d = r.result; d.createObjectStore('files'); d.createObjectStore('drafts'); };
+      r.onsuccess = () => { db = r.result; res(true); };
+      r.onerror = () => res(false); r.onblocked = () => res(false);
+    } catch (e) { res(false); }
+  });
+  const tx = (store, mode, fn) => new Promise((res, rej) => {
+    const t = db.transaction(store, mode); const rq = fn(t.objectStore(store));
+    t.oncomplete = () => res(rq && rq.result); t.onerror = () => rej(t.error); t.onabort = () => rej(t.error);
+  });
+  return {
+    open,
+    get: async (s, k) => { if (!db) return null; try { return await tx(s, 'readonly', o => o.get(k)); } catch (e) { return null; } },
+    put: async (s, k, v) => { if (!db) return; try { await tx(s, 'readwrite', o => o.put(v, k)); } catch (e) { /* แคชเต็ม: ไม่เป็นไร */ } },
+    del: async (s, k) => { if (!db) return; try { await tx(s, 'readwrite', o => o.delete(k)); } catch (e) { /* ignore */ } },
+    clear: async s => { if (!db) return; try { await tx(s, 'readwrite', o => o.clear()); } catch (e) { /* ignore */ } }
+  };
+})();
+
+/* ---------- Apps Script (Drive) ---------- */
+async function driveCall(payload) {
+  let lastMsg = 'ทำรายการไม่สำเร็จ ลองใหม่อีกครั้งค่ะ';
+  for (let i = 0; i < 3; i++) {
+    let retry = false;
+    try {
+      const { data: { session: s } } = await sb.auth.getSession();
+      if (!s) { const err = new Error('หมดเวลาเข้าสู่ระบบ กรุณาโหลดหน้าใหม่แล้วเข้าสู่ระบบอีกครั้งค่ะ'); err.fatal = true; throw err; }
+      const res = await fetch(DRIVE_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(Object.assign({}, payload, { token: s.access_token })) });
+      const j = await res.json();
+      if (j.ok) return j;
+      lastMsg = j.error || lastMsg;
+      if (/คำสั่งไม่ถูกต้อง/.test(lastMsg)) lastMsg = 'ที่เก็บไฟล์ Drive ยังไม่ได้อัปเดตเป็นรุ่นที่รองรับแอป PA (ดูคู่มือ tools/drive-submission/README.md)';
+      retry = !!j.busy;
+    } catch (e) {
+      if (e.fatal) throw e;
+      lastMsg = 'เชื่อมต่อที่เก็บไฟล์ไม่สำเร็จ ตรวจอินเทอร์เน็ตแล้วลองใหม่ค่ะ'; retry = true;
+    }
+    if (!retry) throw new Error(lastMsg);
+    await sleep(1500 * (i + 1));
+  }
+  throw new Error(lastMsg);
+}
+function bufToB64(buf) {
+  const u = new Uint8Array(buf); let s = '';
+  for (let i = 0; i < u.length; i += 0x8000) s += String.fromCharCode.apply(null, u.subarray(i, i + 0x8000));
+  return btoa(s);
+}
+function b64ToBuf(b64) { const bin = atob(b64); const u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return u.buffer; }
+
+// อัปโหลด 1 ไฟล์ → คืน { id: pa_evidence.id, driveFileId }
+async function upload(o) {
+  if (o.buf.byteLength > 10 * 1048576) throw new Error('ไฟล์ใหญ่เกิน 10 MB ค่ะ');
+  const j = await driveCall({ action: 'pa_upload', cycleId: o.cycleId || null, trainingId: o.trainingId || null, kind: o.kind, indicator: o.indicator || '',
+    itemId: o.itemId || '', mime: o.mime, fileName: o.fileName || 'หลักฐาน', data: bufToB64(o.buf), width: o.w || null, height: o.h || null });
+  await Cache.put('files', j.id, { buf: o.buf, mime: o.mime });
+  return j;
+}
+// โหลดไฟล์จาก Drive (ทีละไม่เกิน 3 ไฟล์ กันสคริปต์ยุ่ง)
+let running = 0; const waiters = [];
+async function slot(fn) { while (running >= 3) await new Promise(r => waiters.push(r)); running++; try { return await fn(); } finally { running--; const w = waiters.shift(); if (w) w(); } }
+const inflight = new Map();
+async function fileBytes(evId) {
+  if (!evId) return null;
+  const c = await Cache.get('files', evId); if (c) return c;
+  if (inflight.has(evId)) return inflight.get(evId);
+  const p = slot(async () => { const j = await driveCall({ action: 'pa_get', evidenceId: evId }); const rec = { buf: b64ToBuf(j.data), mime: j.mime }; await Cache.put('files', evId, rec); return rec; })
+    .finally(() => inflight.delete(evId));
+  inflight.set(evId, p); return p;
+}
+async function removeFile(evId) { if (!evId) return; await driveCall({ action: 'pa_remove', evidenceId: evId }); await Cache.del('files', evId); dropURL(evId); }
+
+/* ---------- state ---------- */
+let S = null, CY = null, CYCLES = [], TR = [], ME = null, tab = 'home';
+let saveTimer = null, saving = null, dirty = false, conflict = false;
+const openInd = new Set(), urlCache = new Map();
+const TABS = [['home', 'ภาพรวม'], ['info', 'ข้อมูล'], ['work', 'ภาระงาน'], ['ind', 'ตัวชี้วัด'], ['ch', 'ประเด็นท้าทาย'], ['train', 'อบรม/ID Plan'], ['out', 'รูปเล่ม']];
+const KINDS = ['อบรม', 'ประชุมเชิงปฏิบัติการ', 'สัมมนา', 'ศึกษาดูงาน', 'PLC', 'ศึกษาด้วยตนเอง', 'อื่น ๆ'];
+
+function setStatus(t) { const e = $('#status'); if (e) e.textContent = t; }
+function thError(e) {
+  const m = (e && e.message) || ''; const c = e && e.code;
+  if (/Failed to fetch|NetworkError|Load failed/i.test(m)) return 'เชื่อมต่อไม่ได้ ตรวจอินเทอร์เน็ตแล้วลองใหม่';
+  if (c === '23505') return 'มีรายการนี้อยู่แล้ว';
+  if (c === '42501' || /row-level security|permission denied/i.test(m)) return 'ไม่มีสิทธิ์ทำรายการนี้';
+  if (c === '23514') return 'ข้อมูลไม่ถูกต้อง ตรวจวันที่ ชั่วโมง และลิงก์อีกครั้ง';
+  if (/JWT|expired/i.test(m)) return 'หมดเวลาเข้าสู่ระบบ กรุณาโหลดหน้าใหม่';
+  if (m && /[฀-๿]/.test(m)) return m;
+  return 'เกิดข้อผิดพลาด ลองใหม่อีกครั้ง';
+}
+function busy(text) {
+  let b = $('#busy');
+  if (!text) { if (b) b.remove(); return; }
+  if (!b) { b = h('div', { id: 'busy', role: 'status' }); document.body.append(b); }
+  b.textContent = text;
+}
+
+// บันทึกขึ้นระบบ (หน่วง 0.8 วินาที, กันสองเครื่องเขียนทับกันด้วย updated_at)
+function touch() {
+  if (!CY || conflict) return;
+  S.updatedAt = Date.now(); dirty = true; setStatus('กำลังบันทึก…'); clearTimeout(saveTimer);
+  Cache.put('drafts', CY.id, { at: S.updatedAt, base: CY.updated_at, state: JSON.parse(JSON.stringify(S)) });
+  saveTimer = setTimeout(flush, 800);
+}
+async function flush() {
+  clearTimeout(saveTimer);
+  if (saving) { await saving; if (!dirty) return; }
+  if (!dirty || !CY || conflict) return;
+  saving = (async () => {
+    dirty = false;
+    const data = JSON.parse(JSON.stringify(S)); delete data.trainings;
+    const r = await sb.from('pa_cycles').update({ data }).eq('id', CY.id).eq('updated_at', CY.updated_at).select('updated_at');
+    if (r.error) { dirty = true; setStatus('บันทึกไม่สำเร็จ — ' + thError(r.error) + ' (ข้อมูลยังอยู่ในเครื่อง จะลองใหม่)'); saveTimer = setTimeout(flush, 8000); return; }
+    if (!r.data.length) {
+      conflict = true; setStatus('มีการแก้ไขจากเครื่องอื่น');
+      modal('มีการแก้ไขเล่มนี้จากเครื่องอื่น', h('p', {}, 'ข้อมูลในระบบใหม่กว่าหน้านี้ โหลดหน้าใหม่เพื่อดูข้อมูลล่าสุด (สิ่งที่เพิ่งพิมพ์ในหน้านี้เก็บสำรองไว้ในเครื่อง)'), [{ label: 'โหลดหน้าใหม่', kind: 'primary', fn: () => location.reload() }]);
+      return;
+    }
+    CY.updated_at = r.data[0].updated_at;
+    await Cache.del('drafts', CY.id);
+    setStatus(dirty ? 'กำลังบันทึก…' : 'บันทึกขึ้นระบบแล้ว');
+  })();
+  try { await saving; } finally { saving = null; }
+  if (dirty && !conflict) saveTimer = setTimeout(flush, 300);
+}
+window.addEventListener('beforeunload', e => { if (dirty || saving) { flush(); e.preventDefault(); e.returnValue = ''; } });
+
+function toast(msg) { document.querySelectorAll('.toast').forEach(x => x.remove()); const t = h('div', { class: 'toast', role: 'status' }, msg); document.body.append(t); setTimeout(() => t.remove(), 4200); }
+function modal(title, body, actions, wide) {
+  const ov = h('div', { class: 'ov' }, h('div', { class: 'dlg' + (wide ? ' wide' : ''), role: 'dialog', 'aria-modal': 'true' },
+    h('h3', {}, title), body,
+    h('div', { class: 'acts' }, actions.map(a => h('button', { class: 'btn ' + (a.kind || ''), onclick: async () => { if (a.keep) { if (await a.fn() === false) return; } else if (a.fn) { ov.remove(); a.fn(); return; } ov.remove(); } }, a.label)))));
+  document.body.append(ov); return ov;
+}
+const confirmBox = (title, msg, okLabel, fn) => modal(title, h('p', {}, msg), [{ label: 'ยกเลิก' }, { label: okLabel, kind: 'danger', fn }]);
+const blobBuf = b => b.arrayBuffer ? b.arrayBuffer() : new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsArrayBuffer(b); });
+
+function dropURL(key) { const u = urlCache.get(key); if (u) { URL.revokeObjectURL(u); urlCache.delete(key); } }
+async function urlFor(evId) {
+  if (!evId) return null;
+  if (urlCache.has(evId)) return urlCache.get(evId);
+  const rec = await fileBytes(evId); if (!rec) return null;
+  const u = URL.createObjectURL(new Blob([rec.buf], { type: rec.mime })); urlCache.set(evId, u); return u;
+}
+const MAX_EDGE = 1280, QUALITY = 0.78;
+const fmtMB = n => (n / 1048576).toFixed(n < 10485760 ? 2 : 1) + ' MB';
+async function shrinkBlob(blob, maxEdge) {
+  const edge = maxEdge || MAX_EDGE; let bmp;
+  try { bmp = await createImageBitmap(blob, { imageOrientation: 'from-image' }); }
+  catch (e) { bmp = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = URL.createObjectURL(blob); }); }
+  const w0 = bmp.width || bmp.naturalWidth, h0 = bmp.height || bmp.naturalHeight, sc = Math.min(1, edge / Math.max(w0, h0));
+  const w = Math.round(w0 * sc), hh = Math.round(h0 * sc);
+  const cv = document.createElement('canvas'); cv.width = w; cv.height = hh;
+  const cx = cv.getContext('2d'); cx.fillStyle = '#fff'; cx.fillRect(0, 0, w, hh); cx.drawImage(bmp, 0, 0, w, hh);
+  const out = await new Promise(r => cv.toBlob(r, 'image/jpeg', QUALITY));
+  if (sc === 1 && /^image\/(jpeg|png)$/.test(blob.type) && blob.size <= out.size)
+    return { buf: await blobBuf(blob), mime: blob.type, w: w0, h: h0, before: blob.size, after: blob.size };
+  return { buf: await blobBuf(out), mime: 'image/jpeg', w, h: hh, before: blob.size, after: out.size };
+}
+async function saveFile(name, data) {
+  try {
+    const dl = (window.claude && window.claude.use) ? await window.claude.use('downloads') : null;
+    if (dl) { await dl.save({ filename: name, data }); return 'saved'; }
+  } catch (e) { if (e && e.code === 'declined') return 'declined'; }
+  const url = URL.createObjectURL(data); const a = h('a', { href: url, download: name }); document.body.append(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 4000); return 'saved';
+}
+async function openFile(evId, name) {
+  const w = window.open('', '_blank');
+  try { const u = await urlFor(evId); if (w) w.location = u; else window.location = u; }
+  catch (e) { if (w) w.close(); toast(e.message || 'เปิดไฟล์ไม่สำเร็จ'); }
+}
+
+/* ---------- shared bits ---------- */
+const field = (label, input, hint) => h('label', { class: 'fld' }, h('span', { class: 'lbl' }, label), input, hint ? h('span', { class: 'hint' }, hint) : null);
+function textInput(get, set, opts) {
+  opts = opts || {}; return h('input', { type: 'text', value: get() || '', inputmode: opts.inputmode, placeholder: opts.ph || '', maxlength: opts.max || null, autocomplete: 'off', oninput: e => { set(e.target.value); touch(); } });
+}
+function textArea(get, set, opts) {
+  opts = opts || {}; const t = h('textarea', { rows: opts.rows || 2, placeholder: opts.ph || '', oninput: e => { set(e.target.value); grow(e.target); touch(); } });
+  t.value = get() || ''; requestAnimationFrame(() => grow(t)); return t;
+}
+const chip = (cls, text) => h('span', { class: 'chip ' + cls }, text);
+function go(t, ref) { tab = t; if (ref) openInd.add(ref); render(); window.scrollTo(0, 0); }
+const fyTrainings = () => TR.filter(t => t.fiscal_year === +S.cover.fy);
+const withTrainings = () => Object.assign({}, S, { trainings: fyTrainings() });
+const curFy = () => fyOfDate(new Date(Date.now() + 7 * 3600 * 1000).toISOString().slice(0, 10));
+
+/* ---------- screens ---------- */
+function hasAnyData() {
+  return S.semesters.some(s => s.items.length) || INDICATORS.some(d => { const i = S.indicators[d.id]; return i.action || i.evidenceText || i.items.length; }) || S.challenge.title || S.cover.first;
+}
+function daysLeft() { const y = (+S.cover.fy || 2569) - 543; const end = new Date(y, 8, 30, 23, 59, 59); return Math.ceil((end - new Date()) / 86400000); }
+function screenStart() {
+  const fyIn = h('input', { type: 'text', inputmode: 'numeric', value: String(curFy()), class: 'yr', 'aria-label': 'ปีงบประมาณ' });
+  const fy = () => { const v = +fyIn.value; if (!(v >= 2560 && v <= 2650)) { toast('ใส่ปีงบประมาณเป็น พ.ศ. เช่น ' + curFy()); return 0; } return v; };
+  return h('div', { class: 'stack' }, h('section', { class: 'card hero' },
+    h('h2', {}, 'เริ่มเล่ม PA'),
+    h('p', {}, 'ข้อมูลเก็บในระบบแนะให้แนว เห็นเฉพาะบัญชีของครูเอง รูปและเกียรติบัตรเก็บใน Google Drive ของโรงเรียน เปิดจากเครื่องไหนก็ได้'),
+    h('div', { class: 'row wrap' }, h('span', { class: 'lbl' }, 'ปีงบประมาณ'), fyIn),
+    h('div', { class: 'row wrap', style: 'margin-top:.6rem' },
+      h('button', { class: 'btn primary', onclick: () => { const v = fy(); if (v) startBlank(v); } }, 'เริ่มจากฟอร์มว่าง'),
+      h('button', { class: 'btn', onclick: () => { const v = fy(); if (v) pickFile('.docx', f => doImport(f, v)); } }, 'นำเข้าจากไฟล์ PA (.docx)'),
+      h('button', { class: 'btn ghost', onclick: () => pickFile('.zip', f => doRestore(f)) }, 'ย้ายข้อมูลจากแอป PA เดิม (ไฟล์สำรอง .zip)')),
+    h('p', { class: 'hint' }, 'เคยใช้แอป PA รุ่นเก็บในเครื่อง: เปิดแอปเดิม → แท็บรูปเล่ม → "สำรองข้อมูล (.zip)" แล้วนำไฟล์มาใส่ที่ปุ่มขวาสุด รูปทั้งหมดจะถูกอัปโหลดขึ้น Drive ให้')));
+}
+function screenHome() {
+  if (!CY) return screenStart();
+  const wrap = h('div', { class: 'stack' });
+  const a = analyze(withTrainings()), dl = daysLeft(), tr = fyTrainings(), hrs = tr.reduce((x, t) => x + (+t.hours || 0), 0);
+  wrap.append(h('section', { class: 'card' },
+    h('div', { class: 'row between wrap' }, h('div', {}, h('div', { class: 'eyebrow' }, 'ปีงบประมาณ ' + S.cover.fy), h('div', { class: 'big' }, dl >= 0 ? `เหลืออีก ${dl} วัน` : 'สิ้นสุดแล้ว'), h('div', { class: 'hint' }, `${S.cover.start} – ${S.cover.end}`)),
+      h('button', { class: 'btn primary', onclick: () => go('out') }, 'ไปส่งออกรูปเล่ม'))));
+  wrap.append(h('section', { class: 'grid3' },
+    stat(`${a.withEvidence}/${a.total}`, 'ตัวชี้วัดที่มีหลักฐาน'),
+    stat(String(a.photoCount), 'รูปหลักฐาน' + (a.linkCount ? ` + ${a.linkCount} ลิงก์` : '')),
+    stat(`${tr.length} รายการ · ${fmtHours(hrs)} ชม.`, 'อบรม/พัฒนาตนเอง ปีนี้'),
+    stat(S.semesters.map(s => fmtTotal(semMin(s)).replace(' ชั่วโมง', ' ชม.').replace(' นาที', ' น.')).join(' · ') || '–', 'ภาระงาน/สัปดาห์ ต่อภาค'),
+    a.planTotal ? stat(`${a.planDone}/${a.planTotal}`, 'หลักฐานที่ควรเก็บ (เก็บแล้ว)') : null));
+  const warns = a.issues.filter(i => i.level === 'warn'), infos = a.issues.filter(i => i.level === 'info');
+  if (!tr.length) infos.unshift({ level: 'info', tab: 'train', text: 'ยังไม่มีการอบรม/พัฒนาตนเองของปีนี้ (ใช้เป็นหลักฐานตัวชี้วัด 3.1 และผลตาม ID Plan)' });
+  if (tr.length && tr.some(t => !(t.files || []).some(f => f.kind === 'cert'))) infos.unshift({ level: 'info', tab: 'train', text: `การอบรม ${tr.filter(t => !(t.files || []).some(f => f.kind === 'cert')).length} รายการยังไม่ได้แนบเกียรติบัตร` });
+  wrap.append(h('section', { class: 'card' }, h('h3', {}, warns.length ? `ควรเช็ก (${warns.length})` : 'ไม่มีจุดที่ต้องรีบเช็ก'),
+    warns.length ? h('ul', { class: 'issues' }, warns.map(i => issueLi(i))) : h('p', { class: 'hint' }, 'ทุกส่วนหลักมีข้อมูลแล้ว ลองไล่ดูคำอธิบายรูปด้านล่างก่อนส่งออกนะคะ'),
+    infos.length ? h('details', { class: 'more' }, h('summary', {}, `ข้อเสนอแนะเพิ่มเติม (${infos.length})`), h('ul', { class: 'issues' }, infos.map(i => issueLi(i)))) : null));
+  return wrap;
+}
+const stat = (v, l) => h('div', { class: 'stat' }, h('div', { class: 'sv' }, v), h('div', { class: 'sl' }, l));
+const issueLi = i => h('li', {}, h('button', { class: 'linkbtn', onclick: () => go(i.tab, i.ref) }, chip(i.level === 'warn' ? 'warn' : 'info', i.level === 'warn' ? 'เช็ก' : 'แนะนำ'), ' ', i.text));
+
+function screenInfo() {
+  if (!CY) return screenStart();
+  const c = S.cover; const room = (k, l) => h('label', { class: 'chk' }, h('input', { type: 'checkbox', checked: !!c.rooms[k], onchange: e => { c.rooms[k] = e.target.checked; touch(); } }), ' ' + l);
+  return h('div', { class: 'stack' },
+    h('section', { class: 'card' }, h('h3', {}, 'ข้อมูลผู้จัดทำข้อตกลง'),
+      h('div', { class: 'two' },
+        field('ชื่อ (รวมคำนำหน้า)', textInput(() => c.first, v => c.first = v, { ph: 'เช่น นางสาวสมหญิง' })),
+        field('นามสกุล', textInput(() => c.last, v => c.last = v))),
+      h('p', { class: 'hint' }, 'ตำแหน่ง: ครู · วิทยฐานะ: ชำนาญการ (แบบฟอร์มรุ่นนี้รองรับวิทยฐานะชำนาญการ)'),
+      field('สถานศึกษา', textInput(() => c.school, v => c.school = v)),
+      field('สังกัด', textInput(() => c.affil, v => c.affil = v)),
+      h('div', { class: 'two' },
+        field('อันดับ', textInput(() => c.rank, v => c.rank = v)),
+        field('อัตราเงินเดือน (บาท)', textInput(() => c.salary, v => c.salary = v, { inputmode: 'decimal' }), 'เห็นเฉพาะบัญชีของครูเอง และจะพิมพ์ลงในรูปเล่มตามแบบฟอร์ม')),
+      h('div', { class: 'lbl', style: 'margin-top:.6rem' }, 'ประเภทห้องเรียนที่จัดการเรียนรู้'),
+      h('div', { class: 'checks' }, room('general', 'ห้องเรียนวิชาสามัญหรือวิชาพื้นฐาน'), room('early', 'ห้องเรียนปฐมวัย'), room('special', 'ห้องเรียนการศึกษาพิเศษ'), room('voc', 'ห้องเรียนสายวิชาชีพ'), room('nonformal', 'ห้องเรียนการศึกษานอกระบบ / ตามอัธยาศัย'))),
+    h('section', { class: 'card' }, h('h3', {}, 'รอบปีงบประมาณ ' + c.fy),
+      h('p', { class: 'hint' }, 'เปลี่ยนปีได้ที่ช่องเลือกปีด้านบน · เริ่มปีถัดไปได้ที่แท็บรูปเล่ม'),
+      field('ระหว่างวันที่', textInput(() => c.start, v => c.start = v)),
+      field('ถึงวันที่', textInput(() => c.end, v => c.end = v)),
+      h('button', { class: 'btn ghost sm', onclick: () => { const y = +c.fy; c.start = `1 เดือน ตุลาคม พ.ศ. ${y - 1}`; c.end = `30 กันยายน พ.ศ. ${y}`; touch(); render(); toast('ตั้งวันที่ตามปีงบประมาณแล้ว'); } }, 'ตั้งวันที่ตามปีงบฯ')));
+}
+
+function updTotals() {
+  S.semesters.forEach(s => {
+    const t = document.querySelector(`[data-tot="${s.id}"]`); if (t) t.textContent = fmtTotal(semMin(s)) + '/สัปดาห์';
+    CATS.forEach(c => { const e = document.querySelector(`[data-cat="${s.id}-${c.n}"]`); if (e) e.textContent = fmtItem(catMin(s, c.n)); });
+  });
+}
+function screenWork() {
+  if (!CY) return screenStart();
+  const wrap = h('div', { class: 'stack' });
+  S.semesters.forEach((sem, si) => {
+    const card = h('section', { class: 'card' });
+    card.append(h('div', { class: 'row between wrap' },
+      h('div', { class: 'row' }, h('span', { class: 'lbl' }, 'ภาคเรียนที่'),
+        h('select', { onchange: e => { sem.term = +e.target.value; touch(); } }, [1, 2].map(n => h('option', { value: n, selected: sem.term === n }, n))),
+        h('span', { class: 'lbl' }, 'ปีการศึกษา'), h('input', { class: 'yr', type: 'text', inputmode: 'numeric', value: sem.year, oninput: e => { sem.year = e.target.value; touch(); } })),
+      S.semesters.length > 1 ? h('button', { class: 'btn ghost sm', onclick: () => confirmBox('ลบภาคเรียนนี้?', 'รายการภาระงานในภาคเรียนนี้จะหายไป', 'ลบ', () => { S.semesters.splice(si, 1); touch(); render(); }) }, 'ลบภาคเรียน') : null));
+    CATS.forEach(c => {
+      const items = sem.items.filter(i => i.cat === c.n);
+      const sec = h('div', { class: 'cat' }, h('div', { class: 'row between' }, h('div', { class: 'cat-t' }, `${c.no} ${c.label}`), h('div', { class: 'cat-s', 'data-cat': `${sem.id}-${c.n}` }, fmtItem(catMin(sem, c.n)))));
+      items.forEach(it => {
+        const hh = Math.floor(it.min / 60), mm = it.min % 60;
+        const hi = h('input', { type: 'number', min: 0, max: 60, inputmode: 'numeric', value: hh, 'aria-label': 'ชั่วโมง' });
+        const mi = h('input', { type: 'number', min: 0, max: 59, inputmode: 'numeric', value: mm, 'aria-label': 'นาที' });
+        const upd = () => { it.min = Math.max(0, (parseInt(hi.value) || 0) * 60 + (parseInt(mi.value) || 0)); touch(); updTotals(); };
+        hi.addEventListener('input', upd); mi.addEventListener('input', upd);
+        sec.append(h('div', { class: 'wrow' },
+          h('input', { class: 'wname', type: 'text', value: it.name, placeholder: 'ชื่อรายวิชา/กิจกรรม', oninput: e => { it.name = e.target.value; touch(); } }),
+          h('div', { class: 'hm' }, hi, h('span', {}, 'ชม.'), mi, h('span', {}, 'น.')),
+          h('button', { class: 'iconbtn', 'aria-label': 'ลบรายการ', onclick: () => { sem.items.splice(sem.items.indexOf(it), 1); touch(); render(); } }, '✕')));
+      });
+      sec.append(h('button', { class: 'btn ghost sm', onclick: () => { sem.items.push({ id: uid('w'), cat: c.n, name: '', min: 0 }); touch(); render(); } }, '+ เพิ่มรายการ'));
+      card.append(sec);
+    });
+    card.append(h('div', { class: 'total row between' }, h('span', {}, 'รวมภาระงานที่ ก.ค.ศ. กำหนด'), h('b', { 'data-tot': sem.id }, fmtTotal(semMin(sem)) + '/สัปดาห์')));
+    if (sem.importedTotal != null && sem.importedTotal !== semMin(sem)) card.append(h('p', { class: 'note warn' }, `ยอดรวมที่พิมพ์ไว้ในไฟล์ที่นำเข้าคือ ${fmtTotal(sem.importedTotal)} ไม่ตรงกับผลบวกรายการ — ในรูปเล่มแอปจะใช้ผลบวกรายการเสมอ`));
+    wrap.append(card);
+  });
+  wrap.append(h('button', { class: 'btn', onclick: () => { const last = S.semesters[S.semesters.length - 1]; const term = last && last.term === 2 ? 1 : 2; const yr = last ? String(+last.year + (last.term === 2 ? 1 : 0)) : S.cover.fy; S.semesters.push({ id: uid('s'), term, year: yr, items: [] }); touch(); render(); } }, '+ เพิ่มภาคเรียน'));
+  wrap.append(h('p', { class: 'hint' }, 'หมวดที่ไม่มีรายการจะไม่แสดงในรูปเล่ม ตัวเลขรวมคำนวณจากรายการทุกครั้ง จึงไม่คลาดเคลื่อน'));
+  return wrap;
+}
+
+function indTrainings(id) { return fyTrainings().filter(t => (t.indicators || []).includes(id)); }
+function indStatus(d) {
+  const it = S.indicators[d.id]; const has = it.items.length || PA.evidenceLines(it).length || indTrainings(d.id).length;
+  if (!has) return ['warn', 'ยังไม่มีหลักฐาน'];
+  if (!lines(it.action || '').length) return ['warn', 'ขาดการดำเนินงาน'];
+  if (it.items.some(x => x.type === 'photo' && !(x.caption || '').trim())) return ['info', 'รูปยังไม่มีคำอธิบาย'];
+  const pl = it.plan || [], pd = pl.filter(p => p.done).length;
+  if (pl.length > pd) return ['info', `เก็บแล้ว ${pd}/${pl.length}`];
+  return ['ok', 'ครบ'];
+}
+const codeOf = (id, e) => { const i = S.indicators[id].items.indexOf(e); return `${id}-${i + 1}`; };
+function placeSelect(e) {
+  const dflt = S.evidenceMode === 'table' ? 'table' : 'half', cur = e.place || dflt;
+  const opts = e.type === 'link'
+    ? [['table', 'อยู่ในตาราง (ข้อความลิงก์)'], ['half', 'ภาคผนวก (มี QR)']]
+    : [['table', 'อยู่ในตาราง (ภาพย่อ)'], ['half', 'ภาคผนวก · ครึ่งหน้า'], ['full', 'ภาคผนวก · เต็มหน้า']];
+  return h('select', { class: 'place', 'aria-label': 'ตำแหน่งในรูปเล่ม', onchange: ev => { e.place = ev.target.value; touch(); } },
+    opts.map(([v, l]) => h('option', { value: v, selected: (e.type === 'link' && cur === 'full' ? 'half' : cur) === v }, l)));
+}
+function thumb(evId, alt) {
+  const img = h('img', { alt: alt || 'รูปหลักฐาน', loading: 'lazy' });
+  if (evId) urlFor(evId).then(u => { if (u) img.src = u; }).catch(() => { img.replaceWith(h('div', { class: 'miss' }, 'โหลดรูปไม่สำเร็จ')); });
+  else setTimeout(() => img.replaceWith(h('div', { class: 'miss' }, 'ยังไม่ได้อัปโหลด')), 0);
+  return img;
+}
+function photoCard(id, e) {
+  return h('div', { class: 'ph' }, thumb(e.ev, e.caption),
+    h('span', { class: 'code' }, codeOf(id, e)),
+    h('input', { type: 'text', value: e.caption || '', placeholder: 'คำอธิบายรูป เช่น กิจกรรมแนะแนว ม.6 วันที่ …', oninput: ev => { e.caption = ev.target.value; touch(); } }),
+    placeSelect(e),
+    h('button', { class: 'iconbtn', 'aria-label': 'ลบรูป', onclick: () => confirmBox('ลบรูปนี้?', 'รูปจะถูกนำออกจากเล่ม และย้ายลงถังขยะใน Drive (กู้คืนได้ 30 วัน)', 'ลบ', async () => {
+      try { busy('กำลังลบรูป…'); await removeFile(e.ev); } catch (err) { if (!/นำออกไปแล้ว|ไม่พบไฟล์/.test(err.message || '')) { busy(); return toast(err.message); } }
+      busy(); const it = S.indicators[id]; const i = it.items.indexOf(e); if (i >= 0) it.items.splice(i, 1); touch(); render();
+    }) }, '✕'));
+}
+async function addPhotos(id, files) {
+  let n = 0, k = 0;
+  for (const f of files) {
+    k++; busy(`กำลังอัปโหลดรูป ${k}/${files.length}…`);
+    try {
+      const r = await shrinkBlob(f); const pid = uid('p');
+      const up = await upload({ cycleId: CY.id, kind: 'photo', indicator: id, itemId: pid, buf: r.buf, mime: r.mime, fileName: f.name, w: r.w, h: r.h });
+      S.indicators[id].items.push({ id: pid, ev: up.id, type: 'photo', caption: '', mime: r.mime, w: r.w, h: r.h }); n++;
+      touch();
+    } catch (e) { toast(`อัปโหลด ${f.name} ไม่สำเร็จ: ${e.message || e}`); }
+  }
+  busy(); if (n) { openInd.add(id); render(); toast(`เพิ่มรูป ${n} รูป`); }
+}
+function planSection(d, it) {
+  const box = h('div', { class: 'plan' });
+  const done = it.plan.filter(p => p.done).length;
+  box.append(h('div', { class: 'lbl' }, `หลักฐานที่ควรเก็บ (${done}/${it.plan.length})`));
+  it.plan.forEach(p => box.append(h('div', { class: 'prow' },
+    h('input', { type: 'checkbox', checked: !!p.done, 'aria-label': 'เก็บแล้ว', onchange: e => { p.done = e.target.checked; touch(); openInd.add(d.id); render(); } }),
+    h('div', { class: 'pbody' }, h('input', { type: 'text', value: p.text, placeholder: 'ชื่อหลักฐาน', oninput: e => { p.text = e.target.value; touch(); } }), p.ref ? h('span', { class: 'hint' }, p.ref) : null),
+    h('button', { class: 'iconbtn', 'aria-label': 'ลบรายการ', onclick: () => { it.plan.splice(it.plan.indexOf(p), 1); touch(); openInd.add(d.id); render(); } }, '✕'))));
+  box.append(h('button', { class: 'btn ghost sm', onclick: () => { it.plan.push({ id: uid('e'), text: '', ref: '', done: false }); openInd.add(d.id); touch(); render(); } }, '+ เพิ่มรายการที่ต้องเก็บ'));
+  box.append(h('p', { class: 'hint' }, `ติ๊กเมื่อเก็บได้แล้ว รายการที่ติ๊กจะขึ้นในช่องเอกสารหลักฐานของรูปเล่ม · หลักฐานควรลงวันที่ในรอบ ${S.cover.start} – ${S.cover.end}`));
+  return box;
+}
+function screenInd() {
+  if (!CY) return screenStart();
+  const wrap = h('div', { class: 'stack' });
+  [1, 2, 3].forEach(area => {
+    wrap.append(h('h3', { class: 'area' }, AREAS[area]));
+    INDICATORS.filter(d => d.area === area).forEach(d => {
+      const it = S.indicators[d.id], [cls, label] = indStatus(d), trs = indTrainings(d.id);
+      const det = h('details', { class: 'ind', open: openInd.has(d.id) }, h('summary', {}, h('span', { class: 'ino' }, d.id), h('span', { class: 'ititle' }, d.title.replace(/^\S+\s/, '')), chip(cls, label)));
+      det.addEventListener('toggle', () => { det.open ? openInd.add(d.id) : openInd.delete(d.id); });
+      const body = h('div', { class: 'ibody' },
+        field('การดำเนินงาน', textArea(() => it.action, v => it.action = v, { rows: 3 })),
+        planSection(d, it),
+        field('ข้อความในช่องเอกสารหลักฐาน (หนึ่งบรรทัดต่อหนึ่งรายการ)', textArea(() => it.evidenceText, v => it.evidenceText = v, { rows: 2, ph: 'เช่น แผนการจัดการเรียนรู้' })),
+        trs.length ? h('p', { class: 'note ok' }, `การอบรม/พัฒนาตนเองที่ผูกกับตัวชี้วัดนี้ ${trs.length} รายการ รวม ${fmtHours(trs.reduce((a, t) => a + (+t.hours || 0), 0))} ชั่วโมง — ใส่ในรูปเล่มให้อัตโนมัติ (ภาคผนวก ข) `, h('button', { class: 'linkbtn inl', onclick: () => go('train') }, 'ดูรายการ')) : null,
+        h('div', { class: 'lbl' }, 'รูปและลิงก์หลักฐาน'),
+        h('div', { class: 'photos' }, it.items.filter(x => x.type === 'photo').map(e => photoCard(d.id, e))),
+        it.items.filter(x => x.type === 'link').map(e => h('div', { class: 'lrow' },
+          h('span', { class: 'code' }, codeOf(d.id, e)),
+          h('input', { type: 'text', value: e.caption || '', placeholder: 'ชื่อหลักฐาน', oninput: ev => { e.caption = ev.target.value; touch(); } }),
+          h('input', { type: 'url', value: e.url || '', placeholder: 'https://drive.google.com/…', oninput: ev => { e.url = ev.target.value; touch(); } }),
+          placeSelect(e),
+          h('button', { class: 'iconbtn', 'aria-label': 'ลบลิงก์', onclick: () => { it.items.splice(it.items.indexOf(e), 1); touch(); render(); } }, '✕'))),
+        h('div', { class: 'row wrap' },
+          h('button', { class: 'btn', onclick: () => pickFile('image/*', fs => addPhotos(d.id, fs), true) }, '+ เพิ่มรูป'),
+          h('button', { class: 'btn ghost', onclick: () => { it.items.push({ id: uid('l'), type: 'link', caption: '', url: '' }); openInd.add(d.id); touch(); render(); } }, '+ เพิ่มลิงก์ Drive')),
+        h('p', { class: 'hint' }, 'รูปถูกย่อแล้วอัปโหลดไปเก็บใน Google Drive ของโรงเรียนทันที ภาพเอกสารหรือภาพหน้าจอที่มีตัวหนังสือควรไปภาคผนวกเพื่อให้อ่านออก ลิงก์ Google Drive ต้องตั้งสิทธิ์ "ทุกคนที่มีลิงก์" ไม่งั้นผู้ประเมินเปิดไม่ได้'));
+      det.append(body); wrap.append(det);
+    });
+  });
+  return wrap;
+}
+
+function moveItem(arr, i, d) { const j = i + d; if (j < 0 || j >= arr.length) return; [arr[i], arr[j]] = [arr[j], arr[i]]; touch(); render(); }
+function listEditor(arr, prefix, mk, ph) {
+  const box = h('div', { class: 'stack sm' });
+  arr.forEach((m, i) => box.append(h('div', { class: 'li' }, h('span', { class: 'no' }, prefix ? `${prefix}${i + 1}` : `${i + 1}.`),
+    textArea(() => m.text, v => m.text = v, { rows: 2, ph }),
+    h('div', { class: 'mv' }, h('button', { class: 'iconbtn', 'aria-label': 'เลื่อนขึ้น', onclick: () => moveItem(arr, i, -1) }, '↑'), h('button', { class: 'iconbtn', 'aria-label': 'เลื่อนลง', onclick: () => moveItem(arr, i, 1) }, '↓'), h('button', { class: 'iconbtn', 'aria-label': 'ลบ', onclick: () => { arr.splice(i, 1); touch(); render(); } }, '✕')))));
+  box.append(h('button', { class: 'btn ghost sm', onclick: () => { arr.push(mk()); touch(); render(); } }, '+ เพิ่ม'));
+  return box;
+}
+function screenCh() {
+  if (!CY) return screenStart();
+  const ch = S.challenge;
+  const quant = h('div', { class: 'stack sm' });
+  ch.quant.forEach((q, i) => {
+    const p = pct(q.total, q.achieved), tg = +q.target || 80;
+    const res = h('span', {}, isNaN(p) ? 'กรอกจำนวนเพื่อคำนวณ' : `ร้อยละ ${p % 1 ? p.toFixed(1) : p} (เป้า ${tg})`);
+    const badge = h('span', { class: 'chip ' + (isNaN(p) ? 'info' : p >= tg ? 'ok' : 'warn') }, isNaN(p) ? '–' : (p >= tg ? 'ถึงเป้า' : 'ต่ำกว่าเป้า'));
+    const tot = h('input', { type: 'number', inputmode: 'numeric', min: 0, value: q.total, placeholder: 'ทั้งหมด' }), ach = h('input', { type: 'number', inputmode: 'numeric', min: 0, value: q.achieved, placeholder: 'ผ่านเกณฑ์' });
+    const ta = textArea(() => q.text, v => q.text = v, { rows: 3 });
+    const upd = () => { q.total = tot.value; q.achieved = ach.value; const pp = pct(q.total, q.achieved); res.textContent = isNaN(pp) ? 'กรอกจำนวนเพื่อคำนวณ' : `ร้อยละ ${pp % 1 ? pp.toFixed(1) : pp} (เป้า ${tg})`; badge.className = 'chip ' + (isNaN(pp) ? 'info' : pp >= tg ? 'ok' : 'warn'); badge.textContent = isNaN(pp) ? '–' : (pp >= tg ? 'ถึงเป้า' : 'ต่ำกว่าเป้า'); touch(); };
+    tot.addEventListener('input', upd); ach.addEventListener('input', upd);
+    quant.append(h('div', { class: 'qbox' }, h('div', { class: 'li' }, h('span', { class: 'no' }, `${i + 1}.`), ta,
+      h('div', { class: 'mv' }, h('button', { class: 'iconbtn', 'aria-label': 'ลบ', onclick: () => { ch.quant.splice(i, 1); touch(); render(); } }, '✕'))),
+      h('div', { class: 'calc' }, h('span', { class: 'lbl' }, 'นักเรียนทั้งหมด'), tot, h('span', { class: 'lbl' }, 'ผ่านเกณฑ์'), ach, res, badge),
+      h('button', { class: 'btn ghost sm', onclick: () => { const pp = pct(q.total, q.achieved); if (isNaN(pp)) return toast('กรอกจำนวนนักเรียนก่อนค่ะ'); if (!/ร้อยละ\s*\d/.test(q.text)) return toast('ในข้อความไม่มีคำว่า "ร้อยละ ตัวเลข" ให้แทนที่'); q.text = applyPercent(q.text, pp); touch(); render(); toast('ใส่ร้อยละลงในข้อความแล้ว'); } }, 'ใส่ร้อยละที่คำนวณลงในข้อความ')));
+  });
+  quant.append(h('button', { class: 'btn ghost sm', onclick: () => { ch.quant.push({ id: uid('q'), text: '', target: 80, total: '', achieved: '' }); touch(); render(); } }, '+ เพิ่มผลเชิงปริมาณ'));
+  return h('div', { class: 'stack' },
+    h('section', { class: 'card' }, h('h3', {}, 'ประเด็นท้าทาย'), field('เรื่อง', textInput(() => ch.title, v => ch.title = v)), field('1. สภาพปัญหาของผู้เรียนและการจัดการเรียนรู้', textArea(() => ch.problem, v => ch.problem = v, { rows: 5 }))),
+    h('section', { class: 'card' }, h('h3', {}, '2. วิธีการดำเนินการให้บรรลุผล'), listEditor(ch.methods, '2.', () => ({ id: uid('m'), text: '' }), 'ขั้นตอนการดำเนินงาน')),
+    h('section', { class: 'card' }, h('h3', {}, '3.1 ผลการจัดการเรียนรู้เชิงปริมาณ'), h('p', { class: 'hint' }, 'ปลายปีกรอกจำนวนนักเรียนจริง แอปคำนวณร้อยละและใส่ในข้อความให้ได้'), quant),
+    h('section', { class: 'card' }, h('h3', {}, '3.2 ผลการจัดการเรียนรู้เชิงคุณภาพ'), listEditor(ch.qual, null, () => ({ id: uid('u'), text: '' }), 'ผลเชิงคุณภาพ')));
+}
+
+/* ---------- อบรม/พัฒนาตนเอง + ID Plan ---------- */
+function topicLabel(id) { const t = (S.idplan || []).find(x => x.id === id); return t ? (t.topic || '').trim() || '(ยังไม่ตั้งชื่อ)' : ''; }
+function fileChip(t, f) {
+  const isImg = f.mime !== 'application/pdf';
+  const share = h('input', { type: 'checkbox', checked: !!f.is_shared, 'aria-label': 'แชร์ลิงก์' });
+  share.addEventListener('change', async () => {
+    share.disabled = true;
+    try { const j = await driveCall({ action: 'pa_share', evidenceId: f.ev, shared: share.checked }); f.is_shared = share.checked; f.url = j.url || ''; toast(share.checked ? 'เปิดลิงก์แล้ว รูปเล่มจะมี QR ของไฟล์นี้' : 'ปิดลิงก์แล้ว'); }
+    catch (e) { share.checked = !share.checked; toast(e.message); }
+    share.disabled = false;
+  });
+  return h('div', { class: 'fc' },
+    isImg ? thumb(f.ev, f.name) : h('button', { class: 'pdf', onclick: () => openFile(f.ev, f.name), 'aria-label': 'เปิดไฟล์ ' + (f.name || '') }, 'PDF'),
+    h('div', { class: 'fcb' },
+      h('div', { class: 'fcn' }, chip(f.kind === 'cert' ? 'ok' : 'info', f.kind === 'cert' ? 'เกียรติบัตร' : 'ภาพกิจกรรม'), ' ', f.name || ''),
+      h('div', { class: 'row wrap fca' },
+        h('button', { class: 'btn ghost sm', onclick: () => openFile(f.ev, f.name) }, 'เปิด'),
+        f.mime === 'application/pdf' ? h('label', { class: 'chk sm', title: 'ให้ทุกคนที่มีลิงก์เปิดได้ เพื่อทำ QR ในรูปเล่ม' }, share, ' แชร์ลิงก์ (ทำ QR)') : null,
+        h('button', { class: 'btn ghost sm danger', onclick: () => confirmBox('ลบไฟล์นี้?', 'ไฟล์จะถูกนำออก และย้ายลงถังขยะใน Drive (กู้คืนได้ 30 วัน)', 'ลบ', async () => {
+          try { busy('กำลังลบไฟล์…'); await removeFile(f.ev); t.files = t.files.filter(x => x !== f); render(); } catch (e) { toast(e.message); } busy();
+        }) }, 'ลบ'))));
+}
+async function addTrainingFiles(t, files, kind) {
+  let n = 0, k = 0;
+  for (const f of files) {
+    k++; busy(`กำลังอัปโหลด ${k}/${files.length}…`);
+    try {
+      let buf, mime = f.type, w = null, hh = null;
+      if (mime === 'application/pdf') { buf = await blobBuf(f); }
+      else if (/^image\//.test(mime)) { const r = await shrinkBlob(f, kind === 'cert' ? 2000 : MAX_EDGE); buf = r.buf; mime = r.mime; w = r.w; hh = r.h; }
+      else throw new Error('ใช้ได้เฉพาะ PDF, JPG หรือ PNG');
+      const up = await upload({ trainingId: t.id, kind, buf, mime, fileName: f.name, w, h: hh });
+      t.files.push({ ev: up.id, kind, mime, w, h: hh, name: f.name, is_shared: false, url: '' }); n++;
+    } catch (e) { toast(`อัปโหลด ${f.name} ไม่สำเร็จ: ${e.message || e}`); }
+  }
+  busy(); if (n) { render(); toast(`เพิ่มไฟล์ ${n} ไฟล์`); }
+}
+function trainingCard(t) {
+  const hasCert = t.files.some(f => f.kind === 'cert');
+  return h('article', { class: 'card tr' },
+    h('div', { class: 'row between wrap' },
+      h('div', { class: 'trh' }, h('h3', {}, t.title), h('div', { class: 'hint' }, [thRange(t.start_date, t.end_date), `${fmtHours(t.hours)} ชั่วโมง`, t.kind + ' (' + (MODE_TH[t.mode] || t.mode) + ')', t.organizer].filter(Boolean).join(' · '))),
+      h('div', { class: 'row' }, h('button', { class: 'btn ghost sm', onclick: () => trainingForm(t) }, 'แก้ไข'))),
+    h('div', { class: 'row wrap chips' },
+      (t.indicators || []).map(i => chip('info', 'ตัวชี้วัด ' + i)),
+      t.idplan_topic ? chip('ok', 'ID Plan: ' + topicLabel(t.idplan_topic)) : null,
+      hasCert ? null : chip('warn', 'ยังไม่มีเกียรติบัตร')),
+    t.applied_note ? h('p', { class: 'small' }, 'นำไปใช้: ' + t.applied_note) : null,
+    t.link_url ? h('p', { class: 'small' }, 'ลิงก์: ', h('a', { href: t.link_url, target: '_blank', rel: 'noopener' }, t.link_url)) : null,
+    t.files.length ? h('div', { class: 'files' }, t.files.map(f => fileChip(t, f))) : null,
+    h('div', { class: 'row wrap' },
+      h('button', { class: 'btn sm', onclick: () => pickFile('application/pdf,image/jpeg,image/png', fs => addTrainingFiles(t, fs, 'cert'), true) }, '+ เกียรติบัตร (PDF/รูป)'),
+      h('button', { class: 'btn ghost sm', onclick: () => pickFile('image/*', fs => addTrainingFiles(t, fs, 'photo'), true) }, '+ ภาพกิจกรรม')));
+}
+function trainingForm(t) {
+  const isNew = !t; const v = t ? Object.assign({}, t) : { title: '', organizer: '', kind: 'อบรม', mode: 'onsite', start_date: '', end_date: '', hours: '', indicators: ['3.1'], idplan_topic: '', applied_note: '', cert_no: '', link_url: '' };
+  const inp = (k, type, attrs) => { const e = h('input', Object.assign({ type: type || 'text', value: v[k] == null ? '' : v[k] }, attrs || {})); e.addEventListener('input', () => { v[k] = e.value; }); return e; };
+  const sel = (k, opts) => { const e = h('select', {}, opts.map(([val, l]) => h('option', { value: val, selected: v[k] === val }, l))); e.addEventListener('change', () => { v[k] = e.value; }); return e; };
+  const start = inp('start_date', 'date'), end = inp('end_date', 'date');
+  start.addEventListener('change', () => { if (!v.end_date || v.end_date < v.start_date) { end.value = v.start_date; v.end_date = v.start_date; } fyNote(); });
+  end.addEventListener('change', fyNote);
+  const note = h('p', { class: 'hint' });
+  function fyNote() { note.textContent = v.start_date ? (fyOfDate(v.start_date) === +S.cover.fy ? '' : `วันที่นี้อยู่ในปีงบประมาณ ${fyOfDate(v.start_date)} — รายการจะไปอยู่เล่มปีนั้น`) : ''; }
+  const ta = h('textarea', { rows: 2, maxlength: 2000, placeholder: 'เช่น นำเทคนิคการสัมภาษณ์มาใช้ซ้อมสัมภาษณ์นักเรียน ม.6' }); ta.value = v.applied_note || ''; ta.addEventListener('input', () => { v.applied_note = ta.value; });
+  const inds = h('div', { class: 'indpick' }, INDICATORS.map(d => {
+    const c = h('input', { type: 'checkbox', checked: (v.indicators || []).includes(d.id) });
+    c.addEventListener('change', () => { v.indicators = INDICATORS.map(x => x.id).filter(id => id === d.id ? c.checked : (v.indicators || []).includes(id)); });
+    return h('label', { class: 'chk sm', title: d.title }, c, ' ' + d.id);
+  }));
+  const topics = (S.idplan || []).filter(x => (x.topic || '').trim());
+  const body = h('div', { class: 'form' },
+    field('เรื่อง / หลักสูตร *', inp('title', 'text', { maxlength: 300, placeholder: 'เช่น อบรมเชิงปฏิบัติการการแนะแนวเพื่อการศึกษาต่อ' })),
+    field('หน่วยงานที่จัด', inp('organizer', 'text', { maxlength: 200, placeholder: 'เช่น สพม.สมุทรปราการ, OBEC Teacher Academy' })),
+    h('div', { class: 'two' }, field('ประเภท', sel('kind', KINDS.map(k => [k, k]))), field('รูปแบบ', sel('mode', [['onsite', 'ออนไซต์'], ['online', 'ออนไลน์'], ['hybrid', 'ผสม']]))),
+    h('div', { class: 'three' }, field('วันที่เริ่ม *', start), field('วันที่สิ้นสุด *', end), field('จำนวนชั่วโมง *', inp('hours', 'number', { min: 0, max: 500, step: 0.5, inputmode: 'decimal' }))),
+    note,
+    h('div', { class: 'fld' }, h('span', { class: 'lbl' }, 'ใช้เป็นหลักฐานตัวชี้วัด'), inds, h('span', { class: 'hint' }, 'ปกติคือ 3.1 (พัฒนาตนเอง) ถ้านำความรู้มาใช้ในห้องเรียนเลือก 3.3 เพิ่มได้')),
+    field('ตรงกับหัวข้อใน ID Plan', sel('idplan_topic', [['', topics.length ? '— ไม่ได้อยู่ในแผน —' : '— ยังไม่ได้เพิ่มหัวข้อ ID Plan (เพิ่มได้ด้านล่างหน้านี้) —']].concat(topics.map(x => [x.id, x.topic.trim()])))),
+    field('นำความรู้ไปใช้อย่างไร', ta),
+    h('div', { class: 'two' }, field('เลขที่เกียรติบัตร', inp('cert_no', 'text', { maxlength: 100 })), field('ลิงก์ (ถ้ามี)', inp('link_url', 'url', { maxlength: 1000, placeholder: 'https://…' }))));
+  requestAnimationFrame(fyNote);
+  modal(isNew ? 'เพิ่มการอบรม/พัฒนาตนเอง' : 'แก้ไขการอบรม', body, [
+    t ? { label: 'ลบรายการ', kind: 'danger left', keep: true, fn: () => { deleteTraining(t); return true; } } : null,
+    { label: 'ยกเลิก' },
+    { label: 'บันทึก', kind: 'primary', keep: true, fn: () => saveTraining(t, v) }
+  ].filter(Boolean), true);
+}
+async function saveTraining(t, v) {
+  const title = String(v.title || '').trim().replace(/\s+/g, ' ');
+  const hours = Number(v.hours);
+  if (title.length < 3) { toast('ใส่ชื่อเรื่องอย่างน้อย 3 ตัวอักษร'); return false; }
+  if (!v.start_date || !v.end_date) { toast('เลือกวันที่เริ่มและวันที่สิ้นสุด'); return false; }
+  if (v.end_date < v.start_date) { toast('วันที่สิ้นสุดต้องไม่ก่อนวันที่เริ่ม'); return false; }
+  if (v.start_date < '2015-01-01') { toast('วันที่ไม่ถูกต้อง (ตรวจว่าใส่ปี ค.ศ. ในปฏิทิน)'); return false; }
+  if (String(v.hours).trim() === '' || !(hours >= 0 && hours <= 500)) { toast('จำนวนชั่วโมงต้องอยู่ระหว่าง 0–500'); return false; }
+  const link = String(v.link_url || '').trim();
+  if (link && !/^https?:\/\//i.test(link)) { toast('ลิงก์ต้องขึ้นต้นด้วย https://'); return false; }
+  if (!(v.indicators || []).length) { toast('เลือกตัวชี้วัดอย่างน้อย 1 ข้อ'); return false; }
+  const row = { title, organizer: String(v.organizer || '').trim() || null, kind: v.kind, mode: v.mode, start_date: v.start_date, end_date: v.end_date,
+    hours: Math.round(hours * 10) / 10, indicators: v.indicators, idplan_topic: v.idplan_topic || null, applied_note: String(v.applied_note || '').trim() || null,
+    cert_no: String(v.cert_no || '').trim() || null, link_url: link || null };
+  busy('กำลังบันทึก…');
+  const r = t ? await sb.from('pa_trainings').update(row).eq('id', t.id).select('*').single()
+              : await sb.from('pa_trainings').insert(row).select('*').single();
+  busy();
+  if (r.error) { toast(r.error.code === '23505' ? 'มีการอบรมเรื่องนี้ วันเริ่มเดียวกันอยู่แล้ว' : thError(r.error)); return false; }
+  const rec = Object.assign(r.data, { files: t ? t.files : [] });
+  if (t) TR[TR.indexOf(t)] = rec; else TR.push(rec);
+  sortTR();
+  toast(rec.fiscal_year === +S.cover.fy ? 'บันทึกแล้ว' : `บันทึกแล้ว — รายการนี้อยู่ในปีงบประมาณ ${rec.fiscal_year}`);
+  document.querySelectorAll('.ov').forEach(o => o.remove()); render();
+  return true;
+}
+function deleteTraining(t) {
+  document.querySelectorAll('.ov').forEach(o => o.remove());
+  confirmBox('ลบการอบรมนี้?', `"${t.title}" และไฟล์ ${t.files.length} ไฟล์จะถูกนำออก (ไฟล์ย้ายลงถังขยะ Drive กู้คืนได้ 30 วัน)`, 'ลบ', async () => {
+    busy('กำลังลบ…');
+    try {
+      for (const f of t.files.slice()) { try { await removeFile(f.ev); } catch (e) { /* ไฟล์ถูกลบไปแล้ว */ } }
+      const r = await sb.from('pa_trainings').update({ deleted_at: new Date().toISOString() }).eq('id', t.id);
+      if (r.error) throw r.error;
+      TR = TR.filter(x => x !== t); toast('ลบแล้ว');
+    } catch (e) { toast(thError(e)); }
+    busy(); render();
+  });
+}
+const sortTR = () => TR.sort((a, b) => String(b.start_date).localeCompare(String(a.start_date)) || String(a.title).localeCompare(String(b.title), 'th'));
+function screenTrain() {
+  if (!CY) return screenStart();
+  const list = fyTrainings(), hrs = list.reduce((a, t) => a + (+t.hours || 0), 0), cert = list.filter(t => t.files.some(f => f.kind === 'cert')).length;
+  const other = TR.length - list.length;
+  const topics = S.idplan || (S.idplan = []);
+  const wrap = h('div', { class: 'stack' });
+  wrap.append(h('section', { class: 'grid3' }, stat(`${list.length} รายการ`, 'การอบรม/พัฒนาตนเอง ปีงบ ' + S.cover.fy), stat(`${fmtHours(hrs)} ชม.`, 'รวมชั่วโมง'), stat(`${cert}/${list.length}`, 'มีเกียรติบัตรแนบแล้ว')));
+  wrap.append(h('div', { class: 'row wrap between' }, h('h3', { class: 'area', style: 'margin:0' }, 'การอบรมและพัฒนาตนเอง'), h('button', { class: 'btn primary', onclick: () => trainingForm(null) }, '+ เพิ่มการอบรม')));
+  if (!list.length) wrap.append(h('section', { class: 'card' }, h('p', {}, 'ยังไม่มีรายการของปีงบประมาณนี้'), h('p', { class: 'hint' }, 'บันทึกทุกครั้งที่ไปอบรม ประชุม สัมมนา ศึกษาดูงาน PLC หรือเรียนออนไลน์ แล้วแนบเกียรติบัตร ระบบรวมชั่วโมงและใส่ในรูปเล่ม (ภาคผนวก ข + ตัวชี้วัดที่เลือก) ให้เอง')));
+  list.forEach(t => wrap.append(trainingCard(t)));
+  if (other > 0) wrap.append(h('p', { class: 'hint' }, `มีอีก ${other} รายการในปีงบประมาณอื่น — เปลี่ยนปีที่ช่องด้านบนเพื่อดู`));
+  // ID Plan
+  const tp = h('section', { class: 'card' }, h('h3', {}, 'แผนพัฒนาตนเอง (ID Plan) ปีงบ ' + S.cover.fy),
+    h('p', { class: 'hint' }, 'ใส่หัวข้อตามแบบ ID Plan ที่ส่งไว้ แล้วเลือกหัวข้อตอนบันทึกการอบรม ระบบจะสรุป "ทำแล้วกี่รายการ/กี่ชั่วโมง" ต่อหัวข้อให้ (ใช้รายงานผลการพัฒนาตามแผนปลายปี)'));
+  topics.forEach((x, i) => {
+    const done = list.filter(t => t.idplan_topic === x.id), dh = done.reduce((a, t) => a + (+t.hours || 0), 0);
+    tp.append(h('div', { class: 'topic' },
+      h('div', { class: 'row between' }, h('b', { class: 'tno' }, `หัวข้อ ${i + 1}`),
+        h('span', {}, chip(done.length ? 'ok' : 'warn', done.length ? `ทำแล้ว ${done.length} รายการ · ${fmtHours(dh)} ชม.` : 'ยังไม่มีกิจกรรม'),
+          h('button', { class: 'iconbtn', 'aria-label': 'ลบหัวข้อ', onclick: () => {
+            const used = TR.filter(t => t.idplan_topic === x.id).length;
+            confirmBox('ลบหัวข้อนี้?', used ? `มีการอบรม ${used} รายการเลือกหัวข้อนี้ไว้ จะกลายเป็น "ไม่ได้อยู่ในแผน"` : 'ลบหัวข้อออกจากแผน', 'ลบ', () => { topics.splice(topics.indexOf(x), 1); touch(); render(); });
+          } }, '✕'))),
+      field('สมรรถนะ/ประเด็นที่ต้องการพัฒนา', textInput(() => x.topic, val => x.topic = val, { max: 300, ph: 'เช่น การใช้เทคนิคการสัมภาษณ์เพื่อเตรียมนักเรียนเข้าศึกษาต่อ' })),
+      h('div', { class: 'two' },
+        field('วิธีการพัฒนา', textInput(() => x.method, val => x.method = val, { max: 200, ph: 'เช่น อบรม, PLC, ศึกษาด้วยตนเอง' })),
+        field('ช่วงเวลา', textInput(() => x.period, val => x.period = val, { max: 100, ph: 'เช่น พ.ย. 2569 – มี.ค. 2570' })))));
+  });
+  tp.append(h('button', { class: 'btn ghost sm', onclick: () => { if (topics.length >= 20) return toast('เพิ่มได้สูงสุด 20 หัวข้อ'); topics.push({ id: uid('t'), topic: '', method: '', period: '' }); touch(); render(); } }, '+ เพิ่มหัวข้อ ID Plan'));
+  wrap.append(tp);
+  return wrap;
+}
+
+function screenOut() {
+  if (!CY) return screenStart();
+  const nFiles = INDICATORS.reduce((a, d) => a + S.indicators[d.id].items.filter(x => x.type === 'photo').length, 0) + fyTrainings().reduce((a, t) => a + t.files.length, 0);
+  return h('div', { class: 'stack' },
+    h('section', { class: 'card' }, h('h3', {}, 'การวางหลักฐานในรูปเล่ม'),
+      h('p', {}, 'รูปหรือลิงก์ที่ยังไม่ได้เลือกตำแหน่งเอง (ที่แท็บตัวชี้วัด) จะวางตามค่านี้'),
+      h('div', { class: 'opts' },
+        [['appendix', 'ตาราง + ภาคผนวก (แนะนำ)', 'ช่องหลักฐานในตารางเหลือชื่อกับรหัสอ้างอิง รูปและลิงก์ (มี QR) ไปอยู่ในภาคผนวกขนาดใหญ่ อ่านชัด ตารางสั้นลง'],
+         ['table', 'รูปในตารางอย่างเดียว (แบบเดิม)', 'ภาพย่อกว้างไม่เกิน 4.5 ซม. อยู่ในช่องเอกสารหลักฐาน ตรงกับแบบฟอร์มเดิม แต่ภาพเอกสารจะเล็กเกินอ่าน']]
+        .map(([v, l, dsc]) => h('button', { class: 'opt' + (S.evidenceMode === v ? ' on' : ''), 'aria-pressed': S.evidenceMode === v ? 'true' : 'false', onclick: () => { S.evidenceMode = v; touch(); render(); } }, h('b', {}, l), h('span', { class: 'hint' }, dsc)))),
+      h('p', { class: 'hint' }, 'การอบรม/พัฒนาตนเองและ ID Plan จะต่อท้ายเป็นภาคผนวก ข (ตารางรวมชั่วโมง + เกียรติบัตร) เกียรติบัตร PDF ที่เปิด "แชร์ลิงก์" จะขึ้นเป็น QR')),
+    h('section', { class: 'card' }, h('h3', {}, 'ส่งออกรูปเล่ม (Word)'),
+      h('p', {}, 'สร้างเอกสาร Word (A4) ตามโครงสร้างแบบฟอร์ม จากข้อมูลที่กรอกไว้ เปิดใน Word แล้วบันทึกเป็น PDF ต่อได้'),
+      h('p', { class: 'hint' }, `ระบบจะดึงรูปจาก Drive มาใส่ (${nFiles} ไฟล์) ครั้งแรกอาจใช้เวลาสักครู่ ครั้งต่อไปเร็วขึ้นเพราะเก็บแคชไว้ในเครื่อง · ใช้ฟอนต์ TH SarabunPSK`),
+      h('button', { class: 'btn primary', id: 'btnExport', onclick: doExport }, 'ส่งออกเป็น Word (.docx)')),
+    h('section', { class: 'card' }, h('h3', {}, 'เริ่มปีงบประมาณถัดไป'),
+      h('p', {}, `สร้างเล่มปี ${(+S.cover.fy) + 1} โดยคัดลอกข้อมูลผู้จัดทำ ข้อความตัวชี้วัด ประเด็นท้าทาย และหัวข้อ ID Plan (เล่มปีนี้ยังอยู่ครบ)`),
+      h('button', { class: 'btn', onclick: askNextYear }, `เริ่มปีงบ ${(+S.cover.fy) + 1}`)),
+    h('section', { class: 'card' }, h('h3', {}, 'สำรองเก็บไว้เอง (.zip)'),
+      h('p', {}, 'ข้อมูลอยู่ในระบบแล้ว ไฟล์สำรองมีไว้เก็บเป็นสำเนาส่วนตัว (รวมรูปหลักฐานตัวชี้วัด)'),
+      h('div', { class: 'row wrap' }, h('button', { class: 'btn', onclick: doBackup }, 'ดาวน์โหลดไฟล์สำรอง'))),
+    h('section', { class: 'card' }, h('h3', {}, 'นำเข้า'),
+      h('p', {}, 'แทนที่ข้อมูลเล่มปีนี้ด้วยไฟล์ (รูปเดิมของเล่มนี้จะถูกย้ายลงถังขยะ Drive)'),
+      h('div', { class: 'row wrap' },
+        h('button', { class: 'btn ghost', onclick: () => pickFile('.docx', f => doImport(f, +S.cover.fy)) }, 'จากไฟล์ PA (.docx)'),
+        h('button', { class: 'btn ghost', onclick: () => pickFile('.zip', f => doRestore(f)) }, 'จากไฟล์สำรอง (.zip)'),
+        h('button', { class: 'btn ghost', onclick: () => pickFile('.json,application/json', doImportPlan) }, 'แผนหลักฐาน (.json)'))),
+    h('section', { class: 'card' }, h('h3', {}, 'แคชในเครื่องนี้'),
+      h('p', { class: 'hint' }, 'เครื่องนี้เก็บสำเนารูปไว้เพื่อให้เปิดเร็ว ล้างได้ไม่กระทบข้อมูลในระบบ (เหมาะกับเครื่องที่ใช้ร่วมกัน)'),
+      h('button', { class: 'btn ghost', onclick: async () => { await Cache.clear('files'); await Cache.clear('drafts'); urlCache.forEach(u => URL.revokeObjectURL(u)); urlCache.clear(); toast('ล้างแคชแล้ว'); } }, 'ล้างแคชในเครื่องนี้')));
+}
+const SCREENS = { home: screenHome, info: screenInfo, work: screenWork, ind: screenInd, ch: screenCh, train: screenTrain, out: screenOut };
+
+/* ---------- เล่มตามปีงบ ---------- */
+async function loadCycles() {
+  const r = await sb.from('pa_cycles').select('id,fiscal_year,updated_at').is('deleted_at', null).order('fiscal_year', { ascending: false });
+  if (r.error) throw r.error; CYCLES = r.data;
+}
+async function fetchAllRows(build) {
+  let out = [];
+  for (let from = 0; ; from += 1000) { const r = await build().range(from, from + 999); if (r.error) throw r.error; out = out.concat(r.data); if (r.data.length < 1000) break; }
+  return out;
+}
+async function openCycle(id) {
+  busy('กำลังโหลดเล่ม…');
+  try {
+    const r = await sb.from('pa_cycles').select('id,fiscal_year,updated_at,data').eq('id', id).single();
+    if (r.error) throw r.error;
+    CY = { id: r.data.id, fiscal_year: r.data.fiscal_year, updated_at: r.data.updated_at }; conflict = false; dirty = false;
+    let st = PA.normalize(r.data.data && Object.keys(r.data.data).length ? r.data.data : PA.emptyState(r.data.fiscal_year));
+    st.cover.fy = String(r.data.fiscal_year); st.started = true; delete st.trainings;
+    // ร่างที่ยังไม่ได้ขึ้นระบบ (เน็ตหลุด/ปิดหน้าเร็ว)
+    const draft = await Cache.get('drafts', CY.id);
+    if (draft && draft.base === CY.updated_at && draft.at > (st.updatedAt || 0)) { st = PA.normalize(draft.state); dirty = true; toast('พบข้อมูลที่ยังไม่ได้บันทึกขึ้นระบบ กำลังบันทึกต่อให้'); }
+    else if (draft) await Cache.del('drafts', CY.id);
+    S = st;
+    // จับคู่รูปกับไฟล์ในระบบ (กันกรณีอัปโหลดเสร็จแต่ยังไม่ได้บันทึกเล่ม)
+    const ev = await fetchAllRows(() => sb.from('pa_evidence').select('id,item_id').eq('cycle_id', CY.id).is('deleted_at', null).order('id'));
+    const byItem = {}; ev.forEach(e => { if (e.item_id) byItem[e.item_id] = e.id; });
+    INDICATORS.forEach(d => S.indicators[d.id].items.forEach(it => { if (it.type === 'photo' && !it.ev && byItem[it.id]) { it.ev = byItem[it.id]; dirty = true; } }));
+    await loadTrainings();
+    try { localStorage.setItem('pa_last_fy', String(CY.fiscal_year)); } catch (e) { /* ignore */ }
+    if (dirty) flush();
+    setStatus(dirty ? 'กำลังบันทึก…' : 'บันทึกขึ้นระบบแล้ว');
+  } finally { busy(); }
+}
+async function loadTrainings() {
+  const [tr, ev] = await Promise.all([
+    fetchAllRows(() => sb.from('pa_trainings').select('*').is('deleted_at', null).order('start_date', { ascending: false }).order('id')),
+    fetchAllRows(() => sb.from('pa_evidence').select('id,training_id,kind,mime,width,height,file_name,is_shared,drive_file_id').not('training_id', 'is', null).is('deleted_at', null).order('created_at').order('id'))
+  ]);
+  const map = {}; tr.forEach(t => { t.files = []; map[t.id] = t; });
+  ev.forEach(e => { const t = map[e.training_id]; if (t) t.files.push({ ev: e.id, kind: e.kind, mime: e.mime, w: e.width, h: e.height, name: e.file_name, is_shared: e.is_shared, url: e.is_shared ? `https://drive.google.com/file/d/${e.drive_file_id}/view` : '' }); });
+  TR = tr; sortTR();
+}
+async function ensureCycle(fy, data) {
+  await loadCycles();
+  const have = CYCLES.find(c => c.fiscal_year === fy);
+  if (have) return have.id;
+  const r = await sb.from('pa_cycles').insert({ fiscal_year: fy, data: data || {} }).select('id').single();
+  if (r.error) { if (r.error.code === '23505') { await loadCycles(); const c = CYCLES.find(x => x.fiscal_year === fy); if (c) return c.id; } throw r.error; }
+  await loadCycles(); return r.data.id;
+}
+async function switchYear(fy) {
+  await flush();
+  const c = CYCLES.find(x => x.fiscal_year === fy); if (!c) return;
+  urlCache.forEach(u => URL.revokeObjectURL(u)); urlCache.clear();
+  try { await openCycle(c.id); } catch (e) { toast(thError(e)); }
+  tab = 'home'; render(); window.scrollTo(0, 0);
+}
+
+/* ---------- actions ---------- */
+function pickFile(accept, cb, multiple) {
+  const i = h('input', { type: 'file', accept, multiple: !!multiple, style: 'display:none', onchange: () => { const fs = [...i.files]; i.remove(); if (fs.length) cb(multiple ? fs : fs[0]); } });
+  document.body.append(i); i.click();
+}
+async function startBlank(fy) {
+  try {
+    busy('กำลังสร้างเล่ม…');
+    const st = PA.normalize(PA.emptyState(fy)); st.started = true;
+    const id = await ensureCycle(fy, st); await openCycle(id); tab = 'info'; render();
+  } catch (e) { toast(thError(e)); } finally { busy(); }
+}
+// แทนที่เล่มปี fy ด้วย state + รูป (รูปเก่าของเล่มนั้นลงถังขยะ Drive)
+async function applyImported(state, photos, fy) {
+  await flush();
+  const id = await ensureCycle(fy, {});
+  if (!CY || CY.id !== id) await openCycle(id);
+  const old = await fetchAllRows(() => sb.from('pa_evidence').select('id').eq('cycle_id', CY.id).is('deleted_at', null).order('id'));
+  for (let i = 0; i < old.length; i++) { busy(`กำลังนำรูปเดิมออก ${i + 1}/${old.length}…`); try { await removeFile(old[i].id); } catch (e) { /* ข้าม */ } }
+  const st = PA.normalize(state); st.cover.fy = String(fy); st.started = true; delete st.trainings;
+  const byId = {}; photos.forEach(p => { byId[p.id] = p; });
+  let ok = 0, fail = 0, k = 0; const total = photos.length;
+  for (const d of INDICATORS) {
+    const keep = [];
+    for (const it of st.indicators[d.id].items) {
+      if (it.type !== 'photo') { keep.push(it); continue; }
+      delete it.ev; const p = byId[it.id];
+      if (!p) { fail++; continue; }
+      k++; busy(`กำลังอัปโหลดรูปขึ้น Drive ${k}/${total}…`);
+      try {
+        let buf = p.buf, mime = p.mime, w = it.w, hh = it.h;
+        if (buf.byteLength > 600 * 1024) { const q = await shrinkBlob(new Blob([buf], { type: mime })); if (q.after < buf.byteLength) { buf = q.buf; mime = q.mime; w = q.w; hh = q.h; } }
+        const up = await upload({ cycleId: CY.id, kind: 'photo', indicator: d.id, itemId: it.id, buf, mime, fileName: `${d.id}-${k}.${mime === 'image/png' ? 'png' : 'jpg'}`, w, h: hh });
+        Object.assign(it, { ev: up.id, mime, w, h: hh }); keep.push(it); ok++;
+      } catch (e) { fail++; }
+    }
+    st.indicators[d.id].items = keep;
+  }
+  S = st; busy(); dirty = true; S.updatedAt = Date.now(); await flush();
+  tab = 'home'; render(); window.scrollTo(0, 0);
+  return { ok, fail };
+}
+async function doImport(file, fy) {
+  if (!window.JSZip) return toast('โหลดตัวอ่านไฟล์ไม่สำเร็จ');
+  try {
+    const r = await PA.importDocx(await file.arrayBuffer(), window.JSZip);
+    const docFy = +r.state.cover.fy; const target = docFy >= 2560 && docFy <= 2650 ? docFy : fy;
+    const photos = r.photos.map(p => ({ id: p.id, mime: p.mime, buf: p.bytes.buffer.slice(p.bytes.byteOffset, p.bytes.byteOffset + p.bytes.byteLength) }));
+    const run = async () => {
+      try { const res = await applyImported(r.state, photos, target); toast(`นำเข้าเล่มปีงบ ${target} แล้ว: ภาระงาน ${r.found.workload} รายการ, รูป ${res.ok} รูป${res.fail ? ` (ไม่สำเร็จ ${res.fail})` : ''}`); }
+      catch (e) { busy(); toast('นำเข้าไม่สำเร็จ: ' + thError(e)); }
+    };
+    const exists = CYCLES.find(c => c.fiscal_year === target);
+    if (exists) confirmBox(`แทนที่เล่มปีงบ ${target}?`, `ไฟล์นี้เป็นของปีงบ ${target} ข้อมูลเล่มปีนั้นในระบบจะถูกแทนที่ด้วยข้อมูลจากไฟล์ (การอบรมไม่ถูกแตะ)`, 'นำเข้าและแทนที่', run); else await run();
+  } catch (e) { toast('อ่านไฟล์ไม่ได้: ' + (e.message || e)); }
+}
+async function doRestore(file) {
+  if (!window.JSZip) return toast('โหลดตัวอ่านไฟล์ไม่สำเร็จ');
+  try {
+    const z = await window.JSZip.loadAsync(await file.arrayBuffer()); const sf = z.file('state.json'); if (!sf) throw new Error('ไม่ใช่ไฟล์สำรองของแอป PA');
+    const state = JSON.parse(await sf.async('string')); const mimes = z.file('photos.json') ? JSON.parse(await z.file('photos.json').async('string')) : {};
+    const photos = []; for (const id of Object.keys(mimes)) { const f = z.file('photos/' + id); if (f && /^image\/(jpeg|png)$/.test(mimes[id])) photos.push({ id, mime: mimes[id], buf: await f.async('arraybuffer') }); }
+    const fy = +(state.cover && state.cover.fy); if (!(fy >= 2560 && fy <= 2650)) throw new Error('ไม่พบปีงบประมาณในไฟล์สำรอง');
+    const run = async () => {
+      try { const res = await applyImported(state, photos, fy); toast(`ย้ายข้อมูลเล่มปีงบ ${fy} แล้ว: รูป ${res.ok} รูป${res.fail ? ` (ไม่สำเร็จ ${res.fail})` : ''}`); }
+      catch (e) { busy(); toast('กู้คืนไม่สำเร็จ: ' + thError(e)); }
+    };
+    const exists = CYCLES.find(c => c.fiscal_year === fy);
+    if (exists) confirmBox(`แทนที่เล่มปีงบ ${fy}?`, 'ข้อมูลเล่มปีนั้นในระบบจะถูกแทนที่ด้วยไฟล์สำรอง', 'กู้คืนและแทนที่', run); else await run();
+  } catch (e) { toast('กู้คืนไม่สำเร็จ: ' + (e.message || e)); }
+}
+async function doImportPlan(file) {
+  try {
+    const plan = JSON.parse(await file.text());
+    if (!plan || plan.kind !== 'pa-evidence-plan' || !plan.items) throw new Error('ไม่ใช่ไฟล์แผนหลักฐานของแอปนี้');
+    const run = () => { const r = PA.mergePlan(S, plan); S = r.state; S.started = true; touch(); tab = 'ind'; render(); window.scrollTo(0, 0); toast(`เพิ่มรายการหลักฐาน ${r.added} รายการ (ซ้ำจึงข้าม ${r.skipped})`); };
+    if (String(plan.fy) !== String(S.cover.fy)) modal('ปีงบประมาณไม่ตรงกัน', h('p', {}, `แผนนี้เป็นของปีงบประมาณ ${plan.fy} แต่เล่มที่เปิดอยู่เป็นปี ${S.cover.fy}`), [{ label: 'ยกเลิก' }, { label: 'นำเข้าอยู่ดี', kind: 'danger', fn: run }]);
+    else run();
+  } catch (e) { toast('อ่านไฟล์ไม่ได้: ' + (e.message || e)); }
+}
+async function bytesFor(key) {
+  try {
+    if (String(key).startsWith('ev:')) { const r = await fileBytes(key.slice(3)); return r ? new Uint8Array(r.buf) : null; }
+    for (const d of INDICATORS) { const it = S.indicators[d.id].items.find(x => x.id === key); if (it && it.ev) { const r = await fileBytes(it.ev); return r ? new Uint8Array(r.buf) : null; } }
+  } catch (e) { /* ข้ามรูปที่โหลดไม่ได้ */ }
+  return null;
+}
+async function doExport() {
+  if (!window.JSZip) return toast('โหลดตัวสร้างไฟล์ไม่สำเร็จ');
+  const b = $('#btnExport'); if (b) { b.disabled = true; b.textContent = 'กำลังดึงรูปและสร้างไฟล์…'; }
+  try {
+    await flush();
+    const res = await PA.buildDocx(withTrainings(), bytesFor, window.JSZip);
+    const st = await saveFile(`PA_${S.cover.fy}.docx`, new Blob([res.bytes], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' }));
+    if (st === 'saved') toast(res.skipped.length ? `ส่งออกแล้ว (ข้ามรูปที่โหลดไม่ได้ ${res.skipped.length} รูป)` : 'ส่งออกไฟล์ Word แล้ว');
+  } catch (e) { toast('ส่งออกไม่สำเร็จ: ' + (e.message || e)); }
+  if (b) { b.disabled = false; b.textContent = 'ส่งออกเป็น Word (.docx)'; }
+}
+async function doBackup() {
+  if (!window.JSZip) return toast('โหลดตัวสร้างไฟล์ไม่สำเร็จ');
+  try {
+    const z = new window.JSZip(); const data = JSON.parse(JSON.stringify(S)); const mimes = {}; let k = 0;
+    const photos = []; INDICATORS.forEach(d => data.indicators[d.id].items.forEach(it => { if (it.type === 'photo') photos.push(it); }));
+    for (const it of photos) { k++; busy(`กำลังรวบรวมรูป ${k}/${photos.length}…`); try { const r = await fileBytes(it.ev); if (r) { z.file('photos/' + it.id, r.buf); mimes[it.id] = r.mime; } } catch (e) { /* ข้าม */ } delete it.ev; }
+    data.trainings_snapshot = fyTrainings().map(t => { const c = Object.assign({}, t); c.files = (t.files || []).map(f => ({ kind: f.kind, name: f.name })); return c; });
+    z.file('state.json', JSON.stringify(data)); z.file('photos.json', JSON.stringify(mimes));
+    busy('กำลังสร้างไฟล์…');
+    const blob = await z.generateAsync({ type: 'blob', compression: 'DEFLATE' }); const d = new Date(); busy();
+    const st = await saveFile(`PA-${S.cover.fy}-backup-${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}.zip`, blob);
+    if (st === 'saved') { toast('สร้างไฟล์สำรองแล้ว'); return true; }
+    return false;
+  } catch (e) { busy(); toast('สำรองไม่สำเร็จ: ' + (e.message || e)); return false; }
+}
+function askNextYear() {
+  const fy = (+S.cover.fy || 0) + 1;
+  if (CYCLES.find(c => c.fiscal_year === fy)) { modal(`มีเล่มปีงบ ${fy} อยู่แล้ว`, h('p', {}, 'เปิดเล่มนั้นจากช่องเลือกปีด้านบนได้เลย'), [{ label: 'เปิดเล่มปี ' + fy, kind: 'primary', fn: () => switchYear(fy) }, { label: 'ปิด' }]); return; }
+  modal(`เริ่มปีงบประมาณ ${fy} จากปีนี้?`,
+    h('div', {}, h('p', {}, 'คัดลอก: ข้อมูลผู้จัดทำ ข้อความตัวชี้วัด ประเด็นท้าทาย และหัวข้อ ID Plan (ปีการศึกษาในข้อความเลื่อนไป +1)'),
+      h('p', {}, 'ไม่คัดลอก: ภาระงาน รูป ลิงก์ ตัวเลขผลจริง และเงินเดือน'),
+      h('p', { class: 'note ok' }, `เล่มปี ${S.cover.fy} ยังอยู่ครบ สลับดูได้ที่ช่องเลือกปี`)),
+    [{ label: 'ยกเลิก' }, { label: 'เริ่มเลย', kind: 'primary', fn: async () => {
+      try { await flush(); busy('กำลังสร้างเล่มใหม่…'); const next = PA.rollover(S); delete next.trainings; const id = await ensureCycle(fy, next); await openCycle(id); tab = 'home'; render(); toast(`เริ่มปีงบประมาณ ${fy} แล้ว — กรอกภาระงานและเงินเดือนของปีใหม่`); }
+      catch (e) { toast(thError(e)); } finally { busy(); }
+    } }]);
+}
+
+/* ---------- shell ---------- */
+function renderNav() {
+  const nav = $('#nav'); nav.replaceChildren(...(CY ? TABS : TABS.slice(0, 1)).map(([k, l]) => h('button', { class: 'tab' + (k === tab ? ' on' : ''), 'aria-current': k === tab ? 'page' : null, onclick: () => go(k) }, l)));
+  const ys = $('#years'); ys.replaceChildren();
+  if (CYCLES.length) {
+    const s = h('select', { 'aria-label': 'เลือกปีงบประมาณ' }, CYCLES.map(c => h('option', { value: c.fiscal_year, selected: CY && c.fiscal_year === CY.fiscal_year }, 'ปีงบ ' + c.fiscal_year)));
+    s.addEventListener('change', () => switchYear(+s.value)); ys.append(s);
+  }
+}
+function render() {
+  const y = window.scrollY; renderNav(); const main = $('#main'); main.replaceChildren(SCREENS[CY ? tab : 'home']()); window.scrollTo(0, y);
+}
+function gate(title, msg) {
+  $('#nav').replaceChildren(); $('#main').replaceChildren(h('section', { class: 'card hero' }, h('h2', {}, title), h('p', {}, msg), h('a', { class: 'btn primary', href: 'index.html', style: 'display:inline-flex;align-items:center;text-decoration:none' }, 'ไปหน้าคลังแนะแนว')));
+}
+async function boot() {
+  await Cache.open();
+  setStatus('กำลังโหลด…');
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) return gate('กรุณาเข้าสู่ระบบก่อน', 'เข้าสู่ระบบที่หน้าคลังแนะแนวด้วยบัญชีครู แล้วเปิดหน้านี้อีกครั้ง');
+    const p = await sb.from('profiles').select('id,display_name,role').eq('id', session.user.id).maybeSingle();
+    ME = p.data;
+    if (!ME || (ME.role !== 'teacher' && ME.role !== 'admin')) return gate('หน้านี้สำหรับครู', 'แอป PA ใช้ได้เฉพาะบัญชีครูค่ะ');
+    if (/^บัญชีกลุ่มสาระ/.test(ME.display_name || '')) return gate('บัญชีนี้ใช้ร่วมกันหลายคน', 'แอป PA เก็บข้อมูลส่วนตัว (เงินเดือน ผลงาน เกียรติบัตร) จึงต้องใช้บัญชีส่วนตัวของครู ขอบัญชีส่วนตัวจากผู้ดูแลระบบนะคะ');
+    $('#who').textContent = ME.display_name || '';
+    sb.auth.onAuthStateChange(evt => { if (evt === 'SIGNED_OUT') gate('ออกจากระบบแล้ว', 'เข้าสู่ระบบใหม่ที่หน้าคลังแนะแนว'); });
+    await loadCycles();
+    if (CYCLES.length) {
+      let last = 0; try { last = +localStorage.getItem('pa_last_fy'); } catch (e) { /* ignore */ }
+      const pick = CYCLES.find(c => c.fiscal_year === last) || CYCLES.find(c => c.fiscal_year === curFy()) || CYCLES[0];
+      await openCycle(pick.id);
+    } else setStatus('');
+    render();
+  } catch (e) { setStatus(''); gate('โหลดข้อมูลไม่สำเร็จ', thError(e) + ' — ลองโหลดหน้าใหม่อีกครั้ง'); }
+}
+window.__pa = { get state() { return S; }, get trainings() { return TR; }, render, go };
+document.addEventListener('DOMContentLoaded', boot);
+})();
+</script>
+
+</body>
+</html>

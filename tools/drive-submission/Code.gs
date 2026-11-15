@@ -8,6 +8,10 @@
  *  3) ไฟล์เก็บที่ โฟลเดอร์หลัก / ชื่องาน / ห้อง / รหัสนักเรียน  (โฟลเดอร์เป็นส่วนตัว ไม่แชร์ใคร)
  *  4) ครูเปิดไฟล์ผ่านหน้าเว็บ (action: get) ไม่ต้องมีสิทธิ์ใน Drive
  *
+ * ส่วนที่ 2 (เพิ่ม 15 พ.ย. 2569): หลักฐาน PA / เกียรติบัตรอบรมของครู (pa-app.html)
+ *  - action: pa_upload / pa_get / pa_remove / pa_share — ตรวจสิทธิ์ด้วย pa_drive_* ในฐานข้อมูล (เจ้าของเท่านั้น)
+ *  - ไฟล์เก็บที่ โฟลเดอร์ "หลักฐาน PA (แนะให้แนว)" / ชื่อครู [รหัสสั้น] / ปีงบ 25xx / ตัวชี้วัด x.x หรือ การอบรม / ชื่อเรื่อง
+ *
  * ติดตั้ง: ดู README.md ในโฟลเดอร์เดียวกัน
  */
 
@@ -34,6 +38,10 @@ function doPost(e) {
 
     if (req.action === 'submit') return out_(submit_(req, token));
     if (req.action === 'get') return out_(get_(req, token));
+    if (req.action === 'pa_upload') return out_(paUpload_(req, token));
+    if (req.action === 'pa_get') return out_(paGet_(req, token));
+    if (req.action === 'pa_remove') return out_(paRemove_(req, token));
+    if (req.action === 'pa_share') return out_(paShare_(req, token));
     return fail_('คำสั่งไม่ถูกต้องค่ะ');
   } catch (err) {
     var m = String(err && err.message || '');
@@ -109,6 +117,105 @@ function get_(req, token) {
     data: Utilities.base64Encode(blob.getBytes())
   };
 }
+
+/* ───────── หลักฐาน PA ของครู ───────── */
+
+var PA_ROOT_NAME = 'หลักฐาน PA (แนะให้แนว)';
+var PA_KINDS = { photo: 1, cert: 1, file: 1 };
+var PA_IND_RE = /^[123]\.[1-8]$/;
+
+function paUpload_(req, token) {
+  var cycleId = req.cycleId ? String(req.cycleId) : null;
+  var trainingId = req.trainingId ? String(req.trainingId) : null;
+  if ((cycleId && !UUID_RE.test(cycleId)) || (trainingId && !UUID_RE.test(trainingId)) || (!cycleId === !trainingId))
+    throw thai_('ข้อมูลไม่ถูกต้อง ลองโหลดหน้าใหม่ค่ะ');
+  var kind = String(req.kind || '');
+  if (!PA_KINDS[kind]) throw thai_('ชนิดหลักฐานไม่ถูกต้องค่ะ');
+  var indicator = req.indicator ? String(req.indicator) : '';
+  if (indicator && !PA_IND_RE.test(indicator)) throw thai_('ตัวชี้วัดไม่ถูกต้องค่ะ');
+  var itemId = String(req.itemId || '').substring(0, 40);
+
+  var mime = String(req.mime || '');
+  var ext = ALLOWED[mime];
+  if (!ext) throw thai_('เก็บได้เฉพาะไฟล์ PDF, JPG หรือ PNG ค่ะ');
+  if (typeof req.data !== 'string' || !req.data) throw thai_('ไม่พบไฟล์ ลองเลือกใหม่ค่ะ');
+  var bytes = Utilities.base64Decode(req.data);
+  if (bytes.length < 1 || bytes.length > MAX_BYTES) throw thai_('ไฟล์ต้องมีขนาดไม่เกิน 10 MB ค่ะ');
+  if (!magicOk_(bytes, mime)) throw thai_('ไฟล์ไม่ตรงกับชนิด (ต้องเป็น PDF, JPG หรือ PNG จริง) ค่ะ');
+
+  var ctx = rpc_('pa_drive_context', { p_cycle_id: cycleId, p_training_id: trainingId }, token);
+  var folder = paFolder_(ctx, trainingId ? ('การอบรม/' + safe_(ctx.training_title).substring(0, 60) + ' [' + trainingId.substring(0, 6) + ']')
+                                         : (indicator ? 'ตัวชี้วัด ' + indicator : 'อื่น ๆ'));
+  var base = safe_(String(req.fileName || '').replace(/\.[^.]+$/, '')).substring(0, 60);
+  var file = folder.createFile(Utilities.newBlob(bytes, mime, base + '.' + ext));
+
+  var rec;
+  try {
+    rec = rpc_('pa_drive_record', {
+      p_cycle_id: cycleId, p_training_id: trainingId, p_item_id: itemId, p_kind: kind, p_indicator: indicator || null,
+      p_drive_file_id: file.getId(), p_file_name: String(req.fileName || base).substring(0, 200), p_mime: mime,
+      p_size: bytes.length, p_width: toInt_(req.width), p_height: toInt_(req.height)
+    }, token);
+  } catch (err) {
+    try { file.setTrashed(true); } catch (ignore) {}
+    throw err;
+  }
+  return { ok: true, id: rec.id, driveFileId: file.getId() };
+}
+
+function paGet_(req, token) {
+  var id = String(req.evidenceId || '');
+  if (!UUID_RE.test(id)) throw thai_('ข้อมูลไม่ถูกต้องค่ะ');
+  var info = rpc_('pa_drive_check', { p_evidence_id: id }, token);
+  var blob;
+  try { blob = DriveApp.getFileById(info.drive_file_id).getBlob(); }
+  catch (err) { throw thai_('ไม่พบไฟล์ใน Drive (อาจถูกลบไปแล้ว) ค่ะ'); }
+  return { ok: true, name: info.file_name || 'หลักฐาน', mime: info.mime || blob.getContentType(), data: Utilities.base64Encode(blob.getBytes()) };
+}
+
+function paRemove_(req, token) {
+  var id = String(req.evidenceId || '');
+  if (!UUID_RE.test(id)) throw thai_('ข้อมูลไม่ถูกต้องค่ะ');
+  var info = rpc_('pa_drive_remove', { p_evidence_id: id }, token);
+  try { DriveApp.getFileById(info.drive_file_id).setTrashed(true); } catch (ignore) {}   // ถังขยะ Drive กู้คืนได้ 30 วัน
+  return { ok: true };
+}
+
+// เปิด = ทุกคนที่มีลิงก์ดูได้ (ใช้ทำ QR ในรูปเล่ม) / ปิด = ส่วนตัว
+function paShare_(req, token) {
+  var id = String(req.evidenceId || '');
+  if (!UUID_RE.test(id)) throw thai_('ข้อมูลไม่ถูกต้องค่ะ');
+  var on = req.shared === true;
+  var info = rpc_('pa_drive_set_shared', { p_evidence_id: id, p_shared: on }, token);
+  var file;
+  try { file = DriveApp.getFileById(info.drive_file_id); } catch (err) { throw thai_('ไม่พบไฟล์ใน Drive ค่ะ'); }
+  try {
+    file.setSharing(on ? DriveApp.Access.ANYONE_WITH_LINK : DriveApp.Access.PRIVATE, DriveApp.Permission.VIEW);
+  } catch (err) {
+    rpc_('pa_drive_set_shared', { p_evidence_id: id, p_shared: !on }, token);   // คืนค่าเดิม
+    throw thai_('บัญชีโรงเรียนไม่อนุญาตให้แชร์ไฟล์แบบสาธารณะ ใช้ลิงก์ Drive ของครูเองแทนนะคะ');
+  }
+  return { ok: true, url: on ? 'https://drive.google.com/file/d/' + info.drive_file_id + '/view' : '' };
+}
+
+function paFolder_(ctx, sub) {
+  var props = PropertiesService.getScriptProperties();
+  var root = null, id = props.getProperty('PA_ROOT_FOLDER_ID');
+  if (id) { try { root = DriveApp.getFolderById(id); } catch (ignore) {} }
+  var lock = LockService.getScriptLock();
+  lock.waitLock(25000);
+  try {
+    if (!root) { root = DriveApp.createFolder(PA_ROOT_NAME); props.setProperty('PA_ROOT_FOLDER_ID', root.getId()); }
+    var f = childFolder_(root, safe_(ctx.owner_name).substring(0, 60) + ' [' + safe_(ctx.owner_key) + ']');
+    f = childFolder_(f, 'ปีงบ ' + safe_(ctx.fiscal_year));
+    sub.split('/').forEach(function (part) { f = childFolder_(f, safe_(part)); });
+    return f;
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function toInt_(v) { var n = parseInt(v, 10); return isFinite(n) && n > 0 && n < 100000 ? n : null; }
 
 /* ───────── โฟลเดอร์ ───────── */
 
