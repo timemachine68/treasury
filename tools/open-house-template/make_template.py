@@ -164,6 +164,11 @@ collapse(P[78], 'ด้วย{{UNI}} ได้จัดกิจกรรม Ope
 set_first_line(P[78], INDENT)
 replace_span(P[80], '......................................................', ' {{TEACHERS}}')
 replace_span(P[80], 'ครูแนะแนว', '{{POSITION}}')
+# ครูกำหนด (16 พ.ย. 2569): "กิจกรรมตามวันเวลาดังกล่าว…" ต่อท้าย "…ท่านเข้าร่วม" ทันที (เดิมกด Enter แยกบรรทัด)
+# รวมเป็นย่อหน้าเดียว และใช้ย่อหน้าบรรทัดแรกคงที่แทนแท็บ 2 ครั้ง (ตรงกับ "ด้วย…")
+assert text(P[79]).endswith('เข้าร่วม') and text(P[80]).startswith('กิจกรรมตามวันเวลาดังกล่าว'), (text(P[79]), text(P[80]))
+collapse(P[79], text(P[79]).strip() + text(P[80]).strip())
+set_first_line(P[79], INDENT)
 replace_span(P[85], 'นางสุภาพร  รัตน์น้อย', '{{DIRECTOR}}')
 # P[91] แบบตอบรับ: ชื่อผู้ปกครอง/นักเรียน/ชั้น คงจุดไว้ให้กรอกเอง
 replace_span(P[91], 'มหาวิทยาลัยธุรกิจบัณฑิตย์', '{{UNI}}')
@@ -185,7 +190,7 @@ replace_span(P[89], dots, '…' * 54)
 # ---------- ประกอบ body ใหม่: บันทึก(0-28) + หัวรายชื่อ(34) + แถว(35) + [SPLIT] + ผู้ปกครอง(68-96) + sectPr ----------
 keep = P[0:14] + P[15:17] + P[18:29] + [P[34], P[35]]   # ตัด P[14] (รวมเข้า P[13]) และ P[17] (เวลาบรรทัดแยกของข้อ 2 รวมเข้า P[16])
 split = etree.Element(q('p')); r = etree.SubElement(split, q('r')); t = etree.SubElement(r, q('t')); t.text = '{{SPLIT}}'
-parent = P[68:97]
+parent = P[68:80] + P[81:97]   # ตัด P[80] (รวมเข้า P[79] แล้ว)
 for k in list(body): body.remove(k)
 for k in keep: body.append(k)
 body.append(split)
