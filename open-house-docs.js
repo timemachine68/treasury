@@ -507,11 +507,14 @@ window.OH_DOCS = (function(){
     return t.zip.generateAsync({ type: "blob", compression: "DEFLATE",
       mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
   }
+  // ครูผู้ควบคุม: รับได้ทั้ง "ชื่อ" (ข้อมูลเก่า) และ {name, phone}
+  const teacherList = d => (d.teachers || []).map(t => typeof t === "string" ? { name: t, phone: "" } : { name: String(t.name || ""), phone: String(t.phone || "") })
+    .filter(t => t.name.trim());
   function common(d){
     return {
       UNI: d.uni || DOTS, PLACE: d.place || d.uni || DOTS, TIME: d.time || DOTS,
       DAYDATE: thDayDate(d.eventDate), DATE: thDate(d.docDate),
-      TEACHERS: joinNames(d.teachers), POSITION: d.position || "ครูแนะแนว"
+      TEACHERS: joinNames(teacherList(d).map(t => t.name)), POSITION: d.position || "ครูแนะแนว"
     };
   }
 
@@ -528,12 +531,14 @@ window.OH_DOCS = (function(){
     return pack(t, memo.slice(0, r0) + rows + memo.slice(r1));
   }
 
-  // d = {uni, place, time, eventDate, docDate, teachers[], position, pno, director}
+  // d = {uni, place, time, eventDate, docDate, teachers:[{name, phone}], position, pno, director}
   // หนังสือขออนุญาตผู้ปกครอง 1 หน้า (ถ่ายสำเนาแจก) — ไม่ระบุชื่อนักเรียน เว้นจุดไว้ให้กรอกเอง ใส่เฉพาะรายละเอียดกิจกรรม
   // ใช้เลขไทยทั้งฉบับ (ข้อความในแม่แบบแปลงไว้แล้ว ส่วนที่เติมตอนดาวน์โหลดแปลงที่นี่)
   async function buildParentLetter(d){
     const t = await open();
-    const vals = Object.assign(common(d), { PNO: d.pno || "……", DIRECTOR: d.director || DOTS });
+    const vals = Object.assign(common(d), { PNO: d.pno || "……", DIRECTOR: d.director || DOTS,
+      // หนังสือผู้ปกครองมีเบอร์โทรครูต่อท้ายชื่อ ให้ผู้ปกครองติดต่อได้ (บันทึกข้อความใช้แค่ชื่อ)
+      TEACHERS: joinNames(teacherList(d).map(t => t.phone ? t.name + " (โทร. " + t.phone + ")" : t.name)) });
     for (const k in vals) vals[k] = thNum(vals[k]);
     return pack(t, fill(t.parent, vals));
   }

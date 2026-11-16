@@ -170,12 +170,13 @@
 
     <h3>ครูผู้ควบคุม</h3>
     <div id="dTeachers"></div>
-    <div class="row2" style="margin-top:8px;align-items:end">
-      <div><input type="text" id="dTeacherIn" list="teacherList" maxlength="80" placeholder="เลือกจากรายชื่อครู หรือพิมพ์ชื่อเอง" aria-label="ชื่อครูผู้ควบคุม"></div>
-      <div><button class="btn ghost" id="dTeacherAdd" type="button">เพิ่มครู</button></div>
+    <div class="row2" style="margin-top:8px">
+      <div><label for="dTeacherIn">ชื่อครู</label><input type="text" id="dTeacherIn" list="teacherList" maxlength="80" placeholder="เลือกจากรายชื่อครู หรือพิมพ์ชื่อเอง"></div>
+      <div><label for="dTeacherPhone">เบอร์โทรศัพท์ (ไม่บังคับ)</label><input type="text" id="dTeacherPhone" maxlength="20" inputmode="tel" placeholder="เช่น 081-234-5678"></div>
     </div>
+    <div class="btnrow" style="margin-top:8px"><button class="btn ghost" id="dTeacherAdd" type="button">เพิ่มครู</button><span class="hint warn" id="dTeacherErr"></span></div>
     <datalist id="teacherList"></datalist>
-    <p class="hint">หนังสือราชการควรใช้คำนำหน้า นาย / นาง / นางสาว แก้ชื่อในช่องก่อนกด "เพิ่มครู" ได้</p>
+    <p class="hint">หนังสือราชการควรใช้คำนำหน้า นาย / นาง / นางสาว แก้ชื่อในช่องก่อนกด "เพิ่มครู" ได้ · เบอร์โทรจะแสดงต่อท้ายชื่อครูในหนังสือผู้ปกครอง</p>
     <label for="dPosition">ตำแหน่งครูผู้ควบคุม</label><input type="text" id="dPosition" maxlength="60">
 
     <h3>ผู้ลงนาม</h3>
@@ -433,16 +434,29 @@
 
   function renderDocTeachers(){
     $('dTeachers').innerHTML = DOC_TEACHERS.length
-      ? DOC_TEACHERS.map((n, i) => `<span class="chipx">${esc(n)}<button type="button" data-rm="${i}" aria-label="ลบ ${esc(n)}">✕</button></span>`).join('')
-        + (DOC_TEACHERS.length > 3 ? '<p class="hint warn">ครูมากกว่า 3 คน หนังสือผู้ปกครองอาจยาวเกิน 1 หน้า เปิดตรวจใน Word ก่อนพิมพ์</p>' : '')
+      ? DOC_TEACHERS.map((t, i) => `<span class="chipx">${esc(t.name)}${t.phone ? ' · โทร. ' + esc(t.phone) : ''}<button type="button" data-rm="${i}" aria-label="ลบ ${esc(t.name)}">✕</button></span>`).join('')
+        + (DOC_TEACHERS.length > 3 ? '<p class="hint warn">ครูหลายคน หนังสือผู้ปกครองอาจยาวเกิน 1 หน้า เปิดตรวจใน Word ก่อนพิมพ์</p>' : '')
       : '<p class="hint">ยังไม่ได้เลือกครูผู้ควบคุม (ในเอกสารจะเว้นเป็นจุดไว้เขียนเอง)</p>';
     $('dTeachers').querySelectorAll('button[data-rm]').forEach(b => b.onclick = () => { DOC_TEACHERS.splice(+b.dataset.rm, 1); renderDocTeachers(); });
   }
+  // เบอร์โทร: ตัวเลข 9-10 หลักขึ้นต้นด้วย 0 -> 081-234-5678 / 02-312-7109 · ว่างได้
+  function fmtPhone(raw){
+    const d = String(raw || '').replace(/[^0-9]/g, '');
+    if (!d) return { phone: '' };
+    if (!/^0\d{8,9}$/.test(d)) return { err: 'เบอร์โทรต้องเป็นตัวเลข 9-10 หลัก ขึ้นต้นด้วย 0' };
+    return { phone: d.length === 10 ? d.slice(0, 3) + '-' + d.slice(3, 6) + '-' + d.slice(6) : d.slice(0, 2) + '-' + d.slice(2, 5) + '-' + d.slice(5) };
+  }
   function addDocTeacher(){
     const n = $('dTeacherIn').value.trim().replace(/\s+/g, ' ');
-    if (!n) return;
-    if (!DOC_TEACHERS.includes(n)) DOC_TEACHERS.push(n);
-    $('dTeacherIn').value = ''; renderDocTeachers(); $('dTeacherIn').focus();
+    $('dTeacherErr').textContent = '';
+    if (!n) { $('dTeacherErr').textContent = 'กรุณาใส่ชื่อครู'; return; }
+    const ph = fmtPhone($('dTeacherPhone').value);
+    if (ph.err) { $('dTeacherErr').textContent = ph.err; return; }
+    const old = DOC_TEACHERS.find(t => t.name === n);
+    if (old) old.phone = ph.phone || old.phone;            // ชื่อซ้ำ = อัปเดตเบอร์
+    else DOC_TEACHERS.push({ name: n, phone: ph.phone });
+    $('dTeacherIn').value = ''; $('dTeacherPhone').value = '';
+    renderDocTeachers(); $('dTeacherIn').focus();
   }
 
   // บันทึกข้อความต้องมีรายชื่อ · หนังสือผู้ปกครองไม่ใช้รายชื่อ (ดาวน์โหลดได้ทันที)
@@ -488,7 +502,9 @@
     $('dHead').value = saved.head || DOC_DEF.head;
     let dir = DOC_DEF.director; try { dir = localStorage.getItem(DIRECTOR_KEY) || dir; } catch (_) {}
     $('dDirector').value = dir;
-    DOC_TEACHERS = Array.isArray(per.teachers) ? per.teachers.slice() : [];
+    // ข้อมูลเก่าเก็บเป็นชื่ออย่างเดียว -> แปลงเป็น {name, phone}
+    DOC_TEACHERS = (Array.isArray(per.teachers) ? per.teachers : []).map(t => typeof t === 'string' ? { name: t, phone: '' } : { name: String(t.name || ''), phone: String(t.phone || '') }).filter(t => t.name);
+    $('dTeacherErr').textContent = ''; $('dTeacherPhone').value = '';
     renderDocTeachers();
     $('docMsg').textContent = '';
     $('docStu').textContent = 'กำลังโหลดรายชื่อนักเรียนล่าสุด…';
@@ -515,7 +531,7 @@
     return {
       uni: DOC_EV.university, eventDate: DOC_EV.event_date,
       place: $('dPlace').value.trim() || DOC_EV.university, time: $('dTime').value.trim(),
-      docDate: $('dDocDate').value || todayISO(), teachers: DOC_TEACHERS.slice(),
+      docDate: $('dDocDate').value || todayISO(), teachers: DOC_TEACHERS.map(t => ({ name: t.name, phone: t.phone })),
       position: $('dPosition').value.trim() || DOC_DEF.position,
       signer: $('dSigner').value.trim(), head: $('dHead').value.trim(),
       director: $('dDirector').value.trim(), pno: $('dPno').value.trim(), students: DOC_STU.slice()
@@ -555,7 +571,7 @@
   $('docClose').onclick = () => { DOC_EV = null; $('docDlg').close(); };
   $('docDlg').addEventListener('close', () => { DOC_EV = null; });
   $('dTeacherAdd').onclick = addDocTeacher;
-  $('dTeacherIn').addEventListener('keydown', e => { if (e.key === 'Enter'){ e.preventDefault(); addDocTeacher(); } });
+  ['dTeacherIn', 'dTeacherPhone'].forEach(id => $(id).addEventListener('keydown', e => { if (e.key === 'Enter'){ e.preventDefault(); addDocTeacher(); } }));
   $('btnMemo').onclick = () => downloadDoc('memo');
   $('btnParent').onclick = () => downloadDoc('parent');
 
