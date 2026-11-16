@@ -377,7 +377,7 @@ pub:()=>{const t=C.TRACKS[G.track],field=G.priv?C.P[G.priv].field:null;
     ${u.firstYearIn?`<div class="note">${esc(u.short)} ให้นักศึกษาปี 1 อยู่หอใน เกมคิดปี 1 เป็นหอในให้อัตโนมัติ</div>`:""}
     ${srcLine([C.P[G.pub].src,u.src].filter(Boolean).concat([u.dormSrc||"dormIn",u.rentSrc||"rent"]))}</section>`}
   return `<div class="stack">${stepHead(4,"ทาง B: ไกลบ้าน / เลือกเอง")}
-  ${list.map(k=>{const p=C.P[k],u=C.U[p.u];return `<button class="opt pub" aria-pressed="${G.pub===k}" onclick="pickPub('${k}')"><span class="ic">🎓</span><span>${esc(u.short)} · ${esc(p.name)}<small>${u.type==="private"?"เอกชน · ":""}${esc(u.place)} · ${baht(p.sem)} บาท/เทอม · รุ่นพี่พูลเจริญฯ ติดที่นี่ปี 69: ${u.seniors} คน${p.field===field?" · สาขาใกล้กับทาง A":""}${p.note?" · "+esc(p.note):""}</small></span></button>`}).join("")}
+  ${list.map(k=>{const p=C.P[k],u=C.U[p.u];return `<button class="opt pub" aria-pressed="${G.pub===k}" onclick="pickPub('${k}')"><span class="ic">🎓</span><span>${esc(u.short)} · ${esc(p.name)}<small>${u.type==="private"?"เอกชน · ":""}${esc(u.place)} · ${baht(p.sem)} บาท/เทอม · รุ่นพี่พูลเจริญฯ ติดที่นี่ปี 69: ${u.seniors==="N"?"ยังไม่มีข้อมูล":u.seniors+" คน"}${p.field===field?" · สาขาใกล้กับทาง A":""}${p.note?" · "+esc(p.note):""}</small></span></button>`}).join("")}
   <button class="opt pub" aria-pressed="${G.pub==="custom_b"}" onclick="pickCustom('B')"><span class="ic">✏️</span><span>กรอกเอง<small>ใส่ชื่อ ค่าเทอม ค่าที่พัก และค่ากลับบ้านของที่ที่เราสนใจ</small></span></button>
   ${G.pub==="custom_b"?customFormB():""}
   ${hz}
@@ -476,7 +476,7 @@ function explain(k){
   const pv=C.P[G.priv],pb=C.P[G.pub],ub=C.U[pb.u],m=G.my;
   const x={
     tuition:`A: ${baht(pv.sem)} × 8 เทอม${pv.summer?" + ภาคฤดูร้อน "+baht(pv.summer):""}${pv.fixed?" + จ่ายครั้งเดียว "+baht(pv.fixed):""} · B: ${baht(pb.sem)} × 8 เทอม${pb.summer?" + ภาคฤดูร้อน "+baht(pb.summer):""}${pb.fixed?" + จ่ายครั้งเดียว "+baht(pb.fixed):""}`,
-    stay:G.housing==="home"?"ทั้งสองทางอยู่บ้าน ไม่มีค่าหอ":G.housing==="dorm_in"?`หอใน ${baht(ub.dormIn.fee)} บาท/เทอม × 8${ub.dormIn.util?` + ค่าไฟ ~${ub.dormIn.util}/เดือน`:""}`:`หอนอก ~${baht(ub.rent)} บาท/เดือน ${(ub.utilOut!=null?ub.utilOut:C.K.utilOut)?` + น้ำไฟ ~${ub.utilOut!=null?ub.utilOut:C.K.utilOut}`:" (รวมน้ำไฟแล้ว)"} × ${C.K.dormMonths} เดือน/ปี${ub.firstYearIn?" (ปี 1 อยู่หอใน)":""}`,
+    stay:G.housing==="home"?"ทั้งสองทางอยู่บ้าน ไม่มีค่าหอ":G.housing==="dorm_in"?(ub.dormIn.perTerm?`หอใน ${baht(ub.dormIn.perTerm)} บาท/เทอม × 12 เทอม (เรียนปีละ 3 เทอม)`:`หอใน ${baht(ub.dormIn.fee)} บาท/เทอม × 8`)+`${ub.dormIn.util?` + ค่าไฟ ~${ub.dormIn.util}/เดือน`:""}`:`หอนอก ~${baht(ub.rent)} บาท/เดือน ${(ub.utilOut!=null?ub.utilOut:C.K.utilOut)?` + น้ำไฟ ~${ub.utilOut!=null?ub.utilOut:C.K.utilOut}`:" (รวมน้ำไฟแล้ว)"} × ${C.K.dormMonths} เดือน/ปี${ub.firstYearIn?" (ปี 1 อยู่หอใน)":""}`,
     food:`อยู่บ้าน: ข้าวที่มหาวิทยาลัย ${m.lunch}/วัน × ${C.K.studyDays} วันเรียน + กับข้าวที่บ้าน ${m.homeFood}/วัน · อยู่หอ: ${m.dormFood}/วัน × ${C.K.dormDays} วัน`,
     travel:`ไป-กลับ: ${m.commute} บาท/วัน × ${C.K.studyDays} วันเรียน/ปี · อยู่หอ: ค่ากลับบ้าน${ub.zone==="far"?` ~${baht(ub.trip?ub.trip.cost:C.K.tripFar)}/ครั้ง ปีละ ${ub.tripPerYear!=null?ub.tripPerYear:C.K.tripFarPerYear} ครั้ง`:` ~${C.K.tripMid}/ครั้ง เดือนละ ${C.K.tripMidPerMonth} ครั้ง`}`
   };

@@ -45,7 +45,7 @@ const SRC = {
   kkuFac:{t:"สรุปค่าเทอม ม.ขอนแก่น แยกสาขา (dekuni.com ไม่ระบุปี ปรับปรุง ส.ค. 2568 · ไม่ใช่เว็บมหาวิทยาลัย)", u:"https://dekuni.com/tuitionfee-kku/"},
   msuFac:{t:"สรุปค่าเทอม ม.มหาสารคาม แยกสาขา (dekuni.com ไม่ระบุปี ปรับปรุง พ.ค. 2569 · ไม่ใช่เว็บมหาวิทยาลัย)", u:"https://dekuni.com/tuitionfee-msu/"},
   rmutkTcas:{t:"ค่าบำรุงการศึกษา มทร.กรุงเทพ จากข้อมูล ทปอ./mytcas TCAS70 (ภาคแรก 16,120 ภาคถัดไป 11,700 · ปรับปรุง 6 พ.ย. 2569)", u:"https://dreamnesthub.com/universities/rajamangala-university-of-technology-krungthep/faculty-of-engineering/civil-engineering-31920104302101A"},
-  /* คลังมหาวิทยาลัย 16 พ.ย. 2569: 7 แห่งด้านล่างใช้ในหน้า uni-library.html เท่านั้น (ไม่อยู่ใน TRACKS จึงไม่ขึ้นในเกม) */
+  /* 16 พ.ย. 2569: มหาวิทยาลัยรัฐชั้นนำ 7 แห่ง (เพิ่มให้คลังมหาวิทยาลัยก่อน แล้วครูสั่งให้ใส่ในเกมทาง B ด้วย) */
   cu:   {t:"สรุปค่าเทอม จุฬาฯ 2569 ตามกลุ่มคณะ (Sanook Campus)", u:"https://www.sanook.com/campus/1431467/"},
   rentCU:{t:"ค่าเช่าอพาร์ตเมนต์แถวซอยจุฬาฯ 4,500–7,000 บาท/เดือน ใช้ค่ากลาง (SuperAgent)", u:"https://www.superagent.co/th/blog/student-accommodation-near-universities-in-bangkok-prices-and-terms"},
   mu:   {t:"ค่าเทอม ม.มหิดล 2569 รายหลักสูตร ต่อภาค (ไทยรัฐออนไลน์)", u:"https://www.thairath.co.th/news/society/2922427"},
@@ -79,7 +79,7 @@ const U = {
   /* ม.ศิลปากร ทาง B เท่านั้น · ภาพไม่ระบุวิทยาเขต/ราคาหอ จึงใช้โซนกลาง (กลับบ้านได้บ่อย) และราคาหอในกับหอนอกค่าอ้างอิงกลางของเกม */
   su:   {name:"ม.ศิลปากร", short:"ม.ศิลปากร", place:"นครปฐม / กรุงเทพฯ (ตามคณะ)", type:"public", zone:"mid", housing:["dorm_in","dorm_out"], dormIn:{fee:3850, util:100, label:"ค่าอ้างอิงหอในมหาวิทยาลัยรัฐ 3,850 บาท/เทอม (ยังไม่ได้ตรวจราคาหอ ม.ศิลปากร)"}, rent:3250, seniors:"N", src:"su"},
   pim:  {name:"สถาบันการจัดการปัญญาภิวัฒน์ (PIM)", short:"PIM", place:"ดูวิทยาเขตที่ pim.ac.th", type:"private", zone:"near", housing:["home","dorm_out"], rent:3025, seniors:"N", src:"pim"},
-  /* คลังมหาวิทยาลัย: ไม่อยู่ใน TRACKS */
+  /* มหาวิทยาลัยรัฐชั้นนำ 7 แห่ง (16 พ.ย. 2569) — ทาง B */
   cu:    {name:"จุฬาลงกรณ์มหาวิทยาลัย", short:"จุฬาฯ", place:"ปทุมวัน กรุงเทพฯ", type:"public", zone:"near", housing:["home","dorm_out"], rent:5750, rentSrc:"rentCU", seniors:"N", src:"cu"},
   mu:    {name:"ม.มหิดล ศาลายา", short:"ม.มหิดล", place:"ศาลายา นครปฐม", type:"public", zone:"mid", housing:["dorm_out"], rent:3500, rentSrc:"rentSub", seniors:"N", src:"mu"},
   tu:    {name:"ม.ธรรมศาสตร์ รังสิต", short:"มธ.", place:"รังสิต ปทุมธานี", type:"public", zone:"mid", housing:["dorm_out"], rent:3500, rentSrc:"rentSub", seniors:"N", src:"tu"},
@@ -271,7 +271,7 @@ const P = {
   msu_arch:  {u:"msu", name:"สถาปัตยกรรมศาสตร์ ผังเมืองและนฤมิตศิลป์ (ทุกสาขา)", sem:18000, field:"arch", src:"msuFac"},
   msu_art:   {u:"msu", name:"ศิลปกรรมศาสตร์ (ทัศนศิลป์ / ออกแบบผลิตภัณฑ์)", sem:15000, field:"art", src:"msuFac"},
   msu_edu:   {u:"msu", name:"ศึกษาศาสตร์ (ทุกสาขา)", sem:13000, field:"edu", src:"msuFac"},
-  /* คลังมหาวิทยาลัย (ไม่อยู่ใน TRACKS) */
+  /* มหาวิทยาลัยรัฐชั้นนำ 7 แห่ง (16 พ.ย. 2569) — ทาง B */
   cu_biz:   {u:"cu", name:"พาณิชยศาสตร์และการบัญชี / เศรษฐศาสตร์", sem:21000, field:"biz"},
   cu_lang:  {u:"cu", name:"อักษรศาสตร์", sem:21000, field:"lang"},
   cu_soc:   {u:"cu", name:"รัฐศาสตร์ / นิติศาสตร์ / นิเทศศาสตร์", sem:21000, field:"soc"},
@@ -329,14 +329,14 @@ const P = {
 };
 
 const TRACKS = {
-  biz:   {name:"ธุรกิจ บัญชี โลจิสติกส์", icon:"💼", priv:["hcu_biz","dru_biz","dru_acc","dru_hotel"], pub:["kmitl_biz","ku_mgt","buu_log","mfu_mgt","up_mgt","rmutk_biz","cmu_biz","nu_biz","psuh_biz","kku_acc","kku_mgt","kku_fin","msu_biz","pim_log","pim_agri","pim_hotel","pim_bba","pim_food","pim_culi","su_mgt"]},
-  health:{name:"สุขภาพ พยาบาล เทคนิคการแพทย์", icon:"🩺", priv:["hcu_nur","hcu_mt","hcu_pt","hcu_medsci","hcu_oh","dru_nur"], pub:["buu_nur","buu_mt","buu_pt","buu_medsci","mfu_oh","up_nur","up_medsci","rmutk_health","cmu_nur","cmu_mt","cmu_pt","nu_nur","nu_medsci","nu_mt","nu_pt","dru_nur","psuh_nur","psuh_mt","psuh_pt","kku_nur","kku_mt","kku_pt","kku_oh","msu_nur","msu_oh","su_pharm"]},
-  sci:   {name:"วิทยาศาสตร์ คอมพิวเตอร์ วิศวกรรม (TPAT3)", icon:"🔬", priv:["hcu_cs","dru_ee","hcu_ai","dru_cs","dru_food","dru_rail","dru_tech"], pub:["kmitl_sci","ku_sci","buu_sci","up_sci","rmutk_cs","cmu_sci","nu_sci","psuh_sci","kku_sci","msu_sci","msu_info","pim_digit","pim_robot","pim_ai","su_sci","su_agri","su_eng","su_biotech","kmitl_eng","kmitl_it","rmutk_eng","ku_eng","buu_eng","buu_info","up_eng","up_ict","cmu_eng","cmu_camt","nu_eng","psuh_eng","kku_eng","msu_eng","dru_ee"]},
-  lang:  {name:"ภาษา ศิลปศาสตร์", icon:"🌏", priv:["hcu_eng","dru_eng","dru_chi","dru_thai","hcu_chi"], pub:["kmitl_lang","buu_eng","up_lang","rmutk_eng","cmu_lang","nu_lang","psuh_lang","kku_hum","msu_hum","dru_eng","dru_chi","dru_thai","pim_art","su_letters","su_arc_lang","su_arc"]},
-  soc:   {name:"สังคม นิเทศ กฎหมาย", icon:"⚖️", priv:["hcu_law","hcu_comm","hcu_sw","dru_law","dru_comm","dru_pa"], pub:["kmitl_agcomm","su_dev","su_comm","su_pa","buu_law","buu_pol","buu_soc","buu_comm","up_law","up_pol","up_comm","cmu_law","cmu_pol","cmu_soc","cmu_mc","nu_law","nu_soc","nu_comm","psuh_law","kku_law","kku_soc","msu_law","msu_pol","msu_soc","msu_comm"]},
+  biz:   {name:"ธุรกิจ บัญชี โลจิสติกส์", icon:"💼", priv:["hcu_biz","dru_biz","dru_acc","dru_hotel"], pub:["kmitl_biz","ku_mgt","buu_log","mfu_mgt","up_mgt","rmutk_biz","cmu_biz","nu_biz","psuh_biz","kku_acc","kku_mgt","kku_fin","msu_biz","pim_log","pim_agri","pim_hotel","pim_bba","pim_food","pim_culi","su_mgt","cu_biz","tu_biz","tu_eco","swu_biz","kmutnb_biz"]},
+  health:{name:"สุขภาพ พยาบาล เทคนิคการแพทย์", icon:"🩺", priv:["hcu_nur","hcu_mt","hcu_pt","hcu_medsci","hcu_oh","dru_nur"], pub:["buu_nur","buu_mt","buu_pt","buu_medsci","mfu_oh","up_nur","up_medsci","rmutk_health","cmu_nur","cmu_mt","cmu_pt","nu_nur","nu_medsci","nu_mt","nu_pt","dru_nur","psuh_nur","psuh_mt","psuh_pt","kku_nur","kku_mt","kku_pt","kku_oh","msu_nur","msu_oh","su_pharm","cu_nur","cu_ahs","mu_nur","mu_mt","mu_pt","mu_ph","tu_nur","tu_ahs","swu_nur","swu_pt"]},
+  sci:   {name:"วิทยาศาสตร์ คอมพิวเตอร์ วิศวกรรม (TPAT3)", icon:"🔬", priv:["hcu_cs","dru_ee","hcu_ai","dru_cs","dru_food","dru_rail","dru_tech"], pub:["kmitl_sci","ku_sci","buu_sci","up_sci","rmutk_cs","cmu_sci","nu_sci","psuh_sci","kku_sci","msu_sci","msu_info","pim_digit","pim_robot","pim_ai","su_sci","su_agri","su_eng","su_biotech","kmitl_eng","kmitl_it","rmutk_eng","ku_eng","buu_eng","buu_info","up_eng","up_ict","cmu_eng","cmu_camt","nu_eng","psuh_eng","kku_eng","msu_eng","dru_ee","cu_eng","cu_sci","mu_eng","mu_sci","tu_eng","tu_sci","swu_eng","swu_sci","swu_cs","kmutt_eng","kmutt_cpe","kmutt_sci","kmutt_cs","kmutt_it","kmutnb_eng","kmutnb_sci","sut_eng","sut_sci"]},
+  lang:  {name:"ภาษา ศิลปศาสตร์", icon:"🌏", priv:["hcu_eng","dru_eng","dru_chi","dru_thai","hcu_chi"], pub:["kmitl_lang","buu_eng","up_lang","rmutk_eng","cmu_lang","nu_lang","psuh_lang","kku_hum","msu_hum","dru_eng","dru_chi","dru_thai","pim_art","su_letters","su_arc_lang","su_arc","cu_lang","mu_lang","tu_lang","swu_lang"]},
+  soc:   {name:"สังคม นิเทศ กฎหมาย", icon:"⚖️", priv:["hcu_law","hcu_comm","hcu_sw","dru_law","dru_comm","dru_pa"], pub:["kmitl_agcomm","su_dev","su_comm","su_pa","buu_law","buu_pol","buu_soc","buu_comm","up_law","up_pol","up_comm","cmu_law","cmu_pol","cmu_soc","cmu_mc","nu_law","nu_soc","nu_comm","psuh_law","kku_law","kku_soc","msu_law","msu_pol","msu_soc","msu_comm","cu_soc","mu_law","tu_law","tu_pol","tu_comm","swu_soc","swu_law"]},
   /* หมวดตามวิชา TPAT · ทาง A ตอนนี้มีราชภัฏธนบุรี ศูนย์สมุทรปราการ */
-  arch:  {name:"สถาปัตย์ ศิลปะ การออกแบบ (TPAT2, TPAT4)", icon:"📐", priv:["dru_art"], pub:["su_arch","su_decor","su_paint","kmitl_arch","up_arch","up_art","cmu_arch","cmu_art","nu_arch","nu_art","psuh_arch","kku_arch","kku_art","msu_arch","msu_art","buu_art"]},
-  edu:   {name:"ครุศาสตร์ ศึกษาศาสตร์ (TPAT5)", icon:"🍎", priv:["dru_edu"], pub:["su_edu","kmitl_edu","rmutk_tedu","buu_edu","up_eledu","up_edu","cmu_edu","nu_edu","kku_edu","msu_edu"]}
+  arch:  {name:"สถาปัตย์ ศิลปะ การออกแบบ (TPAT2, TPAT4)", icon:"📐", priv:["dru_art"], pub:["su_arch","su_decor","su_paint","kmitl_arch","up_arch","up_art","cmu_arch","cmu_art","nu_arch","nu_art","psuh_arch","kku_arch","kku_art","msu_arch","msu_art","buu_art","cu_art","tu_art","swu_art","kmutt_art","kmutnb_arch"]},
+  edu:   {name:"ครุศาสตร์ ศึกษาศาสตร์ (TPAT5)", icon:"🍎", priv:["dru_edu"], pub:["su_edu","kmitl_edu","rmutk_tedu","buu_edu","up_eledu","up_edu","cmu_edu","nu_edu","kku_edu","msu_edu","cu_edu","tu_edu","swu_edu","kmutt_edu","kmutnb_edu"]}
 };
 
 const HOUSING = {home:"อยู่บ้าน ไป-กลับทุกวัน", dorm_in:"หอใน (หอของมหาวิทยาลัย)", dorm_out:"หอนอก (เช่ารายเดือน)"};
