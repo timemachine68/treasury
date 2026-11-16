@@ -1,6 +1,9 @@
 """สร้างแม่แบบเอกสาร Open House จากไฟล์ Word ต้นฉบับของโรงเรียน แล้วฝังลง open-house-docs.js
 
-วิธีใช้ (ต้องมี python3 + lxml):
+ทำตามสกิล thai-docx: ใช้ python-docx, แทรก Zero-Width Space (U+200B) ระหว่างคำไทยด้วย pythainlp,
+จัดย่อหน้าชิดซ้าย (ไม่ใช้ both / thaiDistribute) — ย่อหน้ากึ่งกลาง (หัวเรื่อง/ช่องลงชื่อ) คงไว้
+
+วิธีใช้ (ต้องมี: pip install python-docx pythainlp):
     python3 tools/open-house-template/make_template.py <ต้นฉบับ.docx> <แม่แบบ.docx> [open-house-docs.js]
 
 - ต้นฉบับ = ไฟล์ "บันทึกข้อความ + รายชื่อ + หนังสือขออนุญาตผู้ปกครอง" ของโรงเรียน (ครูส่งมา 16 พ.ย. 2569)
@@ -8,17 +11,20 @@
 - คงรูปแบบเดิม (ตราครุฑ ฟอนต์ ระยะขอบ) แทนเฉพาะข้อความที่ต้องเปลี่ยนด้วย {{KEY}}
 - อ้างย่อหน้าตามลำดับ: บันทึก p0-28, หัวรายชื่อ p34, แถวแม่แบบ p35, หนังสือผู้ปกครอง p68-96
   ถ้าโรงเรียนเปลี่ยนแบบฟอร์ม ลำดับย่อหน้าจะเปลี่ยน -> สคริปต์จะหยุดที่ assert ให้แก้เลขย่อหน้าก่อน
+- หนังสือขออนุญาตผู้ปกครอง = 1 หน้า ไม่ระบุชื่อนักเรียน (เว้นจุดไว้ให้กรอกเอง) ใส่เฉพาะรายละเอียดกิจกรรม
 - ใส่ path ของ open-house-docs.js เป็นอาร์กิวเมนต์ที่ 3 เพื่อแทนค่า TPL_B64 ให้อัตโนมัติ
 """
-import sys, zipfile, copy, re
+import sys, zipfile, copy, re, io
 from lxml import etree
+from docx import Document
+from pythainlp import word_tokenize
 
 SRC, OUT = sys.argv[1], sys.argv[2]
 W = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'
 def q(t): return '{%s}%s' % (W, t)
 
-zin = zipfile.ZipFile(SRC)
-root = etree.fromstring(zin.read('word/document.xml'))
+doc = Document(SRC)
+root = doc.element
 body = root.find(q('body'))
 kids = list(body)
 paras = [k for k in kids if k.tag == q('p')]
@@ -120,12 +126,12 @@ insert_ppr_child(row, ind, after=order + ['tabs','suppressAutoHyphens','kinsoku'
 replace_span(P[69], '149', '{{PNO}}')
 collapse(P[72], '{{DATE}}')
 replace_span(P[74], 'มหาวิทยาลัยธุรกิจบัณฑิตย์', '{{UNI}}')
-replace_span(P[76], 'ของ......................................................', 'ของ {{STUDENT}}')
+# P[76] "เรียน ผู้ปกครองของ......" คงจุดไว้ให้กรอกเอง (หนังสือฉบับเดียวใช้ถ่ายสำเนาแจก)
 collapse(P[78], '         ด้วย{{UNI}} ได้จัดกิจกรรม Open House ในวัน{{DAYDATE}} ระหว่างเวลา {{TIME}} ณ {{PLACE}}')
 replace_span(P[80], '......................................................', ' {{TEACHERS}}')
 replace_span(P[80], 'ครูแนะแนว', '{{POSITION}}')
 replace_span(P[85], 'นางสุภาพร  รัตน์น้อย', '{{DIRECTOR}}')
-replace_span(P[91], 'ผู้ปกครอง.....................................................นักเรียนชั้น ม........../.......', 'ผู้ปกครอง {{STUDENT}} นักเรียนชั้น ม.{{CLS}}')
+# P[91] แบบตอบรับ: ชื่อผู้ปกครอง/นักเรียน/ชั้น คงจุดไว้ให้กรอกเอง
 replace_span(P[91], 'มหาวิทยาลัยธุรกิจบัณฑิตย์', '{{UNI}}')
 # หนังสือผู้ปกครองต้องจบใน 1 หน้า (ขอบล่างแคบมาก) เผื่อที่ให้ชื่อครูผู้ดูแลหลายคน:
 # - บรรทัดว่างก่อนเบอร์โทร และก่อน "ลงชื่อ" ในแบบตอบรับ -> ครึ่งความสูง (แบบเดียวกับบรรทัดว่างหลัง "เรื่อง"/"เรียน" ในฟอร์มเดิม)
@@ -152,24 +158,43 @@ body.append(split)
 for k in parent: body.append(k)
 body.append(sect)
 
-xml = etree.tostring(root, xml_declaration=True, encoding='UTF-8', standalone=True)
-def scrub_props(name, data):
-    """ล้างชื่อผู้สร้าง/ผู้แก้ไข/บริษัทในคุณสมบัติไฟล์ (เป็นชื่อบุคคล ไม่ต้องติดไปกับเอกสาร)"""
-    t = data.decode('utf-8')
-    if name == 'docProps/core.xml':
-        t = re.sub(r'(<dc:creator>)[^<]*(</dc:creator>)', r'\1แนะให้แนว\2', t)
-        t = re.sub(r'(<cp:lastModifiedBy>)[^<]*(</cp:lastModifiedBy>)', r'\1แนะให้แนว\2', t)
-    if name == 'docProps/app.xml':
-        t = re.sub(r'(<Company>)[^<]*(</Company>)', r'\1\2', t)
-    return t.encode('utf-8')
+# ---------- กฎสกิล thai-docx ----------
+ZWS = '\u200b'
+THAI = re.compile(r'([\u0E00-\u0E7F]+)')
+def insert_zwsp(text):
+    """แทรก ZWS ระหว่างคำไทย (pythainlp newmm) อังกฤษ/ตัวเลข/{{KEY}} ไม่แตะ — เหมือน scripts/thai_docx.py ของสกิล"""
+    return ''.join(ZWS.join(word_tokenize(part, engine='newmm')) if THAI.fullmatch(part) else part
+                   for part in THAI.split(text))
+n_left = n_zw = 0
+for p in body.iter(q('p')):
+    x = p.find(q('pPr'))
+    jc = x.find(q('jc')) if x is not None else None
+    if jc is not None and jc.get(q('val')) in ('both', 'thaiDistribute', 'distribute', 'lowKashida', 'mediumKashida', 'highKashida'):
+        jc.set(q('val'), 'left'); n_left += 1
+for t in body.iter(q('t')):
+    if t.text and THAI.search(t.text):
+        new = insert_zwsp(t.text.replace(ZWS, ''))
+        if new != t.text: t.text = new; n_zw += 1
+print('ชิดซ้าย %d ย่อหน้า · แทรกตัวคั่นคำ %d ช่วงข้อความ' % (n_left, n_zw))
 
+# ---------- บันทึกด้วย python-docx + ล้างชื่อผู้สร้างไฟล์ ----------
+doc.core_properties.author = 'แนะให้แนว'
+doc.core_properties.last_modified_by = 'แนะให้แนว'
+buf = io.BytesIO(); doc.save(buf)
+zin = zipfile.ZipFile(io.BytesIO(buf.getvalue()))
 zout = zipfile.ZipFile(OUT, 'w', zipfile.ZIP_DEFLATED)
 for it in zin.infolist():
-    if it.filename == 'word/document.xml': data = xml
-    elif it.filename in ('docProps/core.xml', 'docProps/app.xml'): data = scrub_props(it.filename, zin.read(it.filename))
-    else: data = zin.read(it.filename)
+    data = zin.read(it.filename)
+    if it.filename == 'docProps/app.xml':
+        data = re.sub(r'(<Company>)[^<]*(</Company>)', r'\1\2', data.decode('utf-8')).encode('utf-8')
     zout.writestr(it, data)
 zout.close()
+
+s = zipfile.ZipFile(OUT).read('word/document.xml').decode('utf-8')
+keys = sorted(set(re.findall(r'\{\{(\w+)\}\}', s)))
+print('placeholders:', keys)
+assert '<w:p><w:r><w:t>{{SPLIT}}</w:t></w:r></w:p>' in s, 'ไม่พบตัวแบ่งส่วน {{SPLIT}}'
+assert 'STUDENT' not in keys, 'หนังสือผู้ปกครองต้องไม่มีชื่อนักเรียน'
 
 if len(sys.argv) > 3:
     import base64, textwrap
@@ -181,9 +206,3 @@ if len(sys.argv) > 3:
     assert n == 1, 'ไม่พบ TPL_B64 ใน ' + js_path
     open(js_path, 'w', encoding='utf-8').write(js2)
     print('ฝังแม่แบบลง', js_path, 'แล้ว (%d KB)' % (len(b) // 1024))
-
-# รายงานผล
-s = xml.decode('utf-8')
-keys = sorted(set(re.findall(r'\{\{(\w+)\}\}', s)))
-print('placeholders:', keys)
-print('split marker as <w:p>:', '<w:p><w:r><w:t>{{SPLIT}}</w:t></w:r></w:p>' in s)

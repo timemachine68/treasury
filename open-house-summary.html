@@ -188,8 +188,9 @@
 
     <div class="btnrow">
       <button class="btn" id="btnMemo" type="button">⬇ บันทึกข้อความ + รายชื่อ</button>
-      <button class="btn" id="btnParent" type="button">⬇ หนังสือผู้ปกครอง</button>
+      <button class="btn" id="btnParent" type="button">⬇ หนังสือผู้ปกครอง (1 หน้า)</button>
     </div>
+    <p class="hint">หนังสือผู้ปกครองไม่ระบุชื่อนักเรียน เว้นไว้ให้กรอกเอง พิมพ์แล้วถ่ายสำเนาแจกได้</p>
     <p class="hint" id="docMsg" role="status"></p>
   </div>
 </dialog>
@@ -213,7 +214,7 @@
   let EDIT_EV = null;   // งานที่เปิดแผงแก้ลิงก์อยู่
   let ME_NAME = '';     // ชื่อครูที่เข้าสู่ระบบ (ค่าเริ่มต้นผู้เสนอบันทึก)
   let TEACHERS = null;  // รายชื่อครูในระบบ (โหลดครั้งแรกที่เปิดหน้าต่างเอกสาร)
-  let DOC_EV = null, DOC_STU = [], DOC_TEACHERS = [];
+  let DOC_EV = null, DOC_STU = [], DOC_TEACHERS = [], DOC_LOADED = false, DOC_BUSY = false;
 
   function roomKey(r){ const m = /^ม\.(\d)\/(\d+)$/.exec(r || ''); return m ? [+m[1], +m[2]] : [9, 0]; }
   function byRoom(a, b){ const x = roomKey(a), y = roomKey(b); return x[0] - y[0] || x[1] - y[1]; }
@@ -444,9 +445,10 @@
     $('dTeacherIn').value = ''; renderDocTeachers(); $('dTeacherIn').focus();
   }
 
-  function setDocButtons(on){
-    $('btnMemo').disabled = !on; $('btnParent').disabled = !on;
-    $('btnParent').textContent = on ? `⬇ หนังสือผู้ปกครอง (${DOC_STU.length} ฉบับ)` : '⬇ หนังสือผู้ปกครอง';
+  // บันทึกข้อความต้องมีรายชื่อ · หนังสือผู้ปกครองไม่ใช้รายชื่อ (ดาวน์โหลดได้ทันที)
+  function setDocButtons(){
+    $('btnMemo').disabled = DOC_BUSY || !DOC_LOADED || !DOC_STU.length;
+    $('btnParent').disabled = DOC_BUSY || !DOC_EV;
   }
 
   // เฉพาะ "ไป + ไปกับโรงเรียน" เรียงตามห้อง แล้วเลขประจำตัว
@@ -459,22 +461,22 @@
   function renderDocStu(){
     const n = DOC_STU.length;
     if (!n){
-      $('docStu').innerHTML = '<b>ยังไม่มีนักเรียนที่เลือก "ไป + ไปกับโรงเรียน" ในงานนี้</b><br>สร้างเอกสารไม่ได้จนกว่าจะมีผู้ลงทะเบียน';
-      setDocButtons(false); return;
+      $('docStu').innerHTML = '<b>ยังไม่มีนักเรียนที่เลือก "ไป + ไปกับโรงเรียน" ในงานนี้</b><br>บันทึกข้อความยังสร้างไม่ได้ · หนังสือผู้ปกครองดาวน์โหลดได้เลย';
+      setDocButtons(); return;
     }
     const byR = {};
     DOC_STU.forEach(s => { const k = s.room || 'ไม่ระบุห้อง'; byR[k] = (byR[k] || 0) + 1; });
     const rooms = Object.keys(byR).sort(byRoom).map(k => `${esc(k)} ${byR[k]} คน`).join(' · ');
     const noName = DOC_STU.filter(s => !s.name).length;
-    $('docStu').innerHTML = `นักเรียนในเอกสาร <b>${n} คน</b> (เฉพาะคนที่เลือก ไป + ไปกับโรงเรียน)<br>${rooms}`
+    $('docStu').innerHTML = `รายชื่อในบันทึกข้อความ <b>${n} คน</b> (เฉพาะคนที่เลือก ไป + ไปกับโรงเรียน)<br>${rooms}`
       + (noName ? `<br><span class="warn">⚠️ ไม่มีชื่อ ${noName} คน ในเอกสารจะเว้นเป็นจุด ตรวจที่ทำเนียบนักเรียน</span>` : '');
-    setDocButtons(true);
+    setDocButtons();
   }
 
   async function openDocDialog(code){
     const ev = EVENTS.find(e => e.event_code === code);
     if (!ev) return;
-    DOC_EV = ev; DOC_STU = [];
+    DOC_EV = ev; DOC_STU = []; DOC_LOADED = false; DOC_BUSY = false;
     const saved = loadSaved(), per = (saved.events || {})[code] || {};
     $('docTitle').textContent = '📄 เอกสาร · ' + ev.university;
     $('dDocDate').value = todayISO();
@@ -490,7 +492,7 @@
     renderDocTeachers();
     $('docMsg').textContent = '';
     $('docStu').textContent = 'กำลังโหลดรายชื่อนักเรียนล่าสุด…';
-    setDocButtons(false);
+    setDocButtons();
     if (!$('docDlg').open) $('docDlg').showModal();
 
     loadTeachers().then(list => { $('teacherList').innerHTML = list.map(n => `<option value="${esc(n)}">`).join(''); });
@@ -505,7 +507,7 @@
       return;
     }
     if (DOC_EV !== ev) return;           // เปลี่ยนไปงานอื่นระหว่างรอ
-    DOC_STU = sortDocStudents(rows);
+    DOC_STU = sortDocStudents(rows); DOC_LOADED = true;
     renderDocStu();
   }
 
@@ -527,18 +529,18 @@
   }
 
   async function downloadDoc(kind){
-    if (!DOC_EV || !DOC_STU.length) return;
+    if (!DOC_EV || (kind === 'memo' && !DOC_STU.length)) return;
     if (typeof OH_DOCS === 'undefined' || typeof JSZip === 'undefined'){
       $('docMsg').textContent = 'โหลดตัวสร้างไฟล์ไม่สำเร็จ ตรวจอินเทอร์เน็ตแล้วรีเฟรชหน้านี้'; return;
     }
     const d = docData(); rememberDoc(d);
-    setDocButtons(false); $('docMsg').textContent = 'กำลังสร้างไฟล์…';
+    DOC_BUSY = true; setDocButtons(); $('docMsg').textContent = 'กำลังสร้างไฟล์…';
     try {
-      const blob = kind === 'memo' ? await OH_DOCS.buildMemo(d) : await OH_DOCS.buildParentLetters(d);
+      const blob = kind === 'memo' ? await OH_DOCS.buildMemo(d) : await OH_DOCS.buildParentLetter(d);
       const safe = x => String(x).replace(/[\\/:*?"<>|\s]+/g, '_');
       const name = kind === 'memo'
         ? `บันทึกข้อความ_OpenHouse_${safe(d.uni)}.docx`
-        : `หนังสือขออนุญาตผู้ปกครอง_${safe(d.uni)}_${d.students.length}ฉบับ.docx`;
+        : `หนังสือขออนุญาตผู้ปกครอง_${safe(d.uni)}.docx`;
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a'); a.href = url; a.download = name;
       document.body.appendChild(a); a.click(); a.remove();
@@ -547,7 +549,7 @@
     } catch (e) {
       $('docMsg').textContent = 'สร้างไฟล์ไม่สำเร็จ: ' + (e.message || e);
     }
-    setDocButtons(DOC_STU.length > 0);
+    DOC_BUSY = false; setDocButtons();
   }
 
   $('docClose').onclick = () => { DOC_EV = null; $('docDlg').close(); };
