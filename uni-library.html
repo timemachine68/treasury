@@ -186,6 +186,10 @@ const saveCmp = () => { try { sessionStorage.setItem('uniCmp', JSON.stringify(CM
 /* หมวดของแต่ละสาขา จาก TRACKS ในเกม */
 const PROG_TRACK = {};
 Object.keys(CG.TRACKS).forEach(t => { const tr = CG.TRACKS[t]; (tr.priv || []).concat(tr.pub || []).forEach(k => { if (!PROG_TRACK[k]) PROG_TRACK[k] = t; }); });
+/* สาขาที่ไม่อยู่ในเกม (เพิ่มเฉพาะคลัง) ใช้ field หาหมวด */
+const FIELD_TRACK = { biz:'biz', nur:'health', mt:'health', pt:'health', medsci:'health', oh:'health', pharm:'health',
+  sci:'sci', eng:'sci', lang:'lang', soc:'soc', law:'soc', comm:'soc', arch:'arch', art:'arch', edu:'edu' };
+Object.keys(CG.P).forEach(k => { if (!PROG_TRACK[k] && CG.TRACKS[FIELD_TRACK[CG.P[k].field]]) PROG_TRACK[k] = FIELD_TRACK[CG.P[k].field]; });
 
 function showErr(t){ const e = $('err'); e.textContent = t; e.classList.toggle('hidden', !t); }
 
@@ -434,7 +438,7 @@ function renderDetail(u){
     ${r.highlights ? `<section class="card"><h2>✨ จุดเด่น</h2><p style="margin:0;white-space:pre-line">${esc(r.highlights)}</p></section>` : ''}
     <section class="stats">
       <div class="stat"><div class="muted">ค่าเทอมต่อภาค</div><div class="v">${esc(rangeText(fr))}</div><div class="muted">${u.progs.length ? 'แล้วแต่สาขา (' + u.progs.length + ' สาขาในคลัง)' : 'ครูยังไม่ได้ใส่ข้อมูล'}</div></div>
-      <div class="stat"><div class="muted">หอใน</div><div class="v">${g && g.dormIn ? 'เริ่ม ' + baht(g.dormIn.fee) + ' / เทอม' : (r.has_dorm === true ? 'มีหอใน' : (r.has_dorm === false ? 'ไม่มีหอใน' : 'ยังไม่มีข้อมูล'))}</div><div class="muted">${esc(g && g.dormIn ? g.dormIn.label : '')}</div></div>
+      <div class="stat"><div class="muted">หอใน</div><div class="v">${g && g.dormIn ? 'เริ่ม ' + baht(g.dormIn.perTerm || g.dormIn.fee) + ' / เทอม' : (r.has_dorm === true ? 'มีหอใน' : (r.has_dorm === false ? 'ไม่มีหอใน' : 'ยังไม่มีข้อมูล'))}</div><div class="muted">${esc(g && g.dormIn ? g.dormIn.label : '')}</div></div>
       <div class="stat"><div class="muted">${g && g.housing && g.housing.indexOf('home') >= 0 ? 'อยู่บ้านได้ / หอนอก' : 'หอนอก (ค่ากลาง)'}</div><div class="v">${g && g.rent ? '~' + baht(g.rent) + ' / เดือน' : (g && g.housing && g.housing.indexOf('home') >= 0 ? 'ไป-กลับได้' : 'ยังไม่มีข้อมูล')}</div><div class="muted">${g && g.rent ? 'ห้องราคาประหยัดใกล้มหาวิทยาลัย' : ''}</div></div>
       <div class="stat g"><div>รุ่นพี่ PW ที่ติด TCAS ${esc(CG.YEAR)}</div><div class="v">${esc(seniorsText(u.seniors))}</div><div>${esc(u.campus || '')}</div></div>
     </section>
@@ -499,7 +503,7 @@ function renderCompare(ids){
     return (b >= 0 && vals.filter(v => v === vals[b]).length === 1) ? b : -1; };
   const row = (label, cells, best) => `<tr><th scope="row">${esc(label)}</th>${cells.map((c, i) => `<td class="${i === best ? 'best' : ''}">${c}</td>`).join('')}</tr>`;
   const housingText = u => { const g = u.g; if (!g) return 'ยังไม่มีข้อมูล';
-    return (g.housing || []).map(h => h === 'home' ? 'อยู่บ้าน ไป-กลับ' : h === 'dorm_in' ? 'หอใน ~' + baht(g.dormIn ? g.dormIn.fee : 0) + '/เทอม' : 'หอนอก ~' + baht(g.rent || 0) + '/เดือน').join(' · '); };
+    return (g.housing || []).map(h => h === 'home' ? 'อยู่บ้าน ไป-กลับ' : h === 'dorm_in' ? 'หอใน ~' + baht(g.dormIn ? (g.dormIn.perTerm || g.dormIn.fee) : 0) + '/เทอม' : 'หอนอก ~' + baht(g.rent || 0) + '/เดือน').join(' · '); };
   const sem = pick.map(p => p ? p.sem : null), t4 = pick.map(p => p ? p.total4 : null), sn = us.map(u => u.seniors);
 
   $('view').innerHTML = `

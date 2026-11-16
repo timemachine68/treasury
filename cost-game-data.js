@@ -44,7 +44,19 @@ const SRC = {
   upGuide:{t:"คู่มือรับสมัคร ม.พะเยา (ตารางค่าธรรมเนียมรายภาค ไม่ระบุปี ประมาณปี 2566 · วิศวะ 21,000 ตรงกับสรุปปี 2569)", u:"https://admission.up.ac.th/uploads/admission/media/file/66ed2582eb5b7LIYYa.pdf"},
   kkuFac:{t:"สรุปค่าเทอม ม.ขอนแก่น แยกสาขา (dekuni.com ไม่ระบุปี ปรับปรุง ส.ค. 2568 · ไม่ใช่เว็บมหาวิทยาลัย)", u:"https://dekuni.com/tuitionfee-kku/"},
   msuFac:{t:"สรุปค่าเทอม ม.มหาสารคาม แยกสาขา (dekuni.com ไม่ระบุปี ปรับปรุง พ.ค. 2569 · ไม่ใช่เว็บมหาวิทยาลัย)", u:"https://dekuni.com/tuitionfee-msu/"},
-  rmutkTcas:{t:"ค่าบำรุงการศึกษา มทร.กรุงเทพ จากข้อมูล ทปอ./mytcas TCAS70 (ภาคแรก 16,120 ภาคถัดไป 11,700 · ปรับปรุง 6 พ.ย. 2569)", u:"https://dreamnesthub.com/universities/rajamangala-university-of-technology-krungthep/faculty-of-engineering/civil-engineering-31920104302101A"}
+  rmutkTcas:{t:"ค่าบำรุงการศึกษา มทร.กรุงเทพ จากข้อมูล ทปอ./mytcas TCAS70 (ภาคแรก 16,120 ภาคถัดไป 11,700 · ปรับปรุง 6 พ.ย. 2569)", u:"https://dreamnesthub.com/universities/rajamangala-university-of-technology-krungthep/faculty-of-engineering/civil-engineering-31920104302101A"},
+  /* คลังมหาวิทยาลัย 16 พ.ย. 2569: 7 แห่งด้านล่างใช้ในหน้า uni-library.html เท่านั้น (ไม่อยู่ใน TRACKS จึงไม่ขึ้นในเกม) */
+  cu:   {t:"สรุปค่าเทอม จุฬาฯ 2569 ตามกลุ่มคณะ (Sanook Campus)", u:"https://www.sanook.com/campus/1431467/"},
+  rentCU:{t:"ค่าเช่าอพาร์ตเมนต์แถวซอยจุฬาฯ 4,500–7,000 บาท/เดือน ใช้ค่ากลาง (SuperAgent)", u:"https://www.superagent.co/th/blog/student-accommodation-near-universities-in-bangkok-prices-and-terms"},
+  mu:   {t:"ค่าเทอม ม.มหิดล 2569 รายหลักสูตร ต่อภาค (ไทยรัฐออนไลน์)", u:"https://www.thairath.co.th/news/society/2922427"},
+  tu:   {t:"ค่าเทอม ม.ธรรมศาสตร์ 2569 เหมาจ่ายต่อภาค (ไทยรัฐออนไลน์)", u:"https://www.thairath.co.th/news/society/2922994"},
+  rentSub:{t:"หอพักรอบ มหิดลศาลายา/ธรรมศาสตร์รังสิต เริ่ม 2,500–4,500 บาท/เดือน ใช้ค่ากลาง (SuperAgent)", u:"https://www.superagent.co/th/blog/student-accommodation-near-universities-in-bangkok-prices-and-terms"},
+  swu:  {t:"สรุปค่าเทอม มศว 2569 ทุกคณะ (Dream Nest Hub — ควรเทียบประกาศ มศว)", u:"https://dreamnesthub.com/srinakharinwirot-tuition-fees-2025"},
+  kmutt:{t:"ค่าใช้จ่ายตลอดหลักสูตร ป.ตรี มจธ. 2569 (เอกสาร มจธ. 12 มี.ค. 2569)", u:"https://www.kmutt.ac.th/wp-content/uploads/2026/03/20Mar69-ค่าใช้จ่ายตลอดหลักสูตรปตรี-69.pdf"},
+  kmutnb:{t:"สรุปค่าเทอม มจพ. 2569 ทุกคณะ (Dream Nest Hub)", u:"https://dreamnesthub.com/tuition-fee-kmutnb-2569"},
+  sut:  {t:"สรุปค่าใช้จ่าย มทส. (Dream Nest Hub — อัตราปี 2568 ควรเช็กประกาศปีล่าสุด)", u:"https://dreamnesthub.com/sut-tuition"},
+  dormSUT:{t:"หอพัก มทส. 3,100 บาท/คน/เทอม (เอกสารหอพัก มทส.)", u:"https://misbase.sut.ac.th/ranking/view_fileother.php?file=1757042127_%E0%B8%AB%E0%B8%AD%E0%B8%9E%E0%B8%B1%E0%B8%81+%E0%B8%A1%E0%B8%97%E0%B8%AA+.pdf"},
+  sutTrip:{t:"รถไฟ กรุงเทพอภิวัฒน์–นครราชสีมา ราว 4 ชม. 35 นาที (Rome2rio) ค่าไป-กลับรวมต่อรถเป็นค่าประมาณ", u:"https://www.rome2rio.com/s/Ratchaburi/Nakhon-Ratchasima"},
 };
 
 /* zone: near = ไป-กลับจากบ้านได้, mid = ชลบุรี กลับบ้านบ่อยได้, far = ต่างภาค */
@@ -66,7 +78,15 @@ const U = {
   /* PIM เอกชน อยู่ทาง B เท่านั้น (ไม่ใส่ใน TRACKS.priv) · ไม่ระบุวิทยาเขตในภาพ จึงใช้ค่าเช่าหอนอกค่ากลางเดียวกับ มทร.กรุงเทพ */
   /* ม.ศิลปากร ทาง B เท่านั้น · ภาพไม่ระบุวิทยาเขต/ราคาหอ จึงใช้โซนกลาง (กลับบ้านได้บ่อย) และราคาหอในกับหอนอกค่าอ้างอิงกลางของเกม */
   su:   {name:"ม.ศิลปากร", short:"ม.ศิลปากร", place:"นครปฐม / กรุงเทพฯ (ตามคณะ)", type:"public", zone:"mid", housing:["dorm_in","dorm_out"], dormIn:{fee:3850, util:100, label:"ค่าอ้างอิงหอในมหาวิทยาลัยรัฐ 3,850 บาท/เทอม (ยังไม่ได้ตรวจราคาหอ ม.ศิลปากร)"}, rent:3250, seniors:"N", src:"su"},
-  pim:  {name:"สถาบันการจัดการปัญญาภิวัฒน์ (PIM)", short:"PIM", place:"ดูวิทยาเขตที่ pim.ac.th", type:"private", zone:"near", housing:["home","dorm_out"], rent:3025, seniors:"N", src:"pim"}
+  pim:  {name:"สถาบันการจัดการปัญญาภิวัฒน์ (PIM)", short:"PIM", place:"ดูวิทยาเขตที่ pim.ac.th", type:"private", zone:"near", housing:["home","dorm_out"], rent:3025, seniors:"N", src:"pim"},
+  /* คลังมหาวิทยาลัย: ไม่อยู่ใน TRACKS */
+  cu:    {name:"จุฬาลงกรณ์มหาวิทยาลัย", short:"จุฬาฯ", place:"ปทุมวัน กรุงเทพฯ", type:"public", zone:"near", housing:["home","dorm_out"], rent:5750, rentSrc:"rentCU", seniors:"N", src:"cu"},
+  mu:    {name:"ม.มหิดล ศาลายา", short:"ม.มหิดล", place:"ศาลายา นครปฐม", type:"public", zone:"mid", housing:["dorm_out"], rent:3500, rentSrc:"rentSub", seniors:"N", src:"mu"},
+  tu:    {name:"ม.ธรรมศาสตร์ รังสิต", short:"มธ.", place:"รังสิต ปทุมธานี", type:"public", zone:"mid", housing:["dorm_out"], rent:3500, rentSrc:"rentSub", seniors:"N", src:"tu"},
+  swu:   {name:"มศว ประสานมิตร", short:"มศว", place:"สุขุมวิท 23 กรุงเทพฯ (บางคณะเรียนองครักษ์ นครนายก)", type:"public", zone:"near", housing:["home"], seniors:"N", src:"swu"},
+  kmutt: {name:"มจธ. บางมด", short:"มจธ.", place:"ทุ่งครุ กรุงเทพฯ", type:"public", zone:"near", housing:["home"], seniors:"N", src:"kmutt"},
+  kmutnb:{name:"มจพ. กรุงเทพฯ", short:"มจพ.", place:"บางซื่อ กรุงเทพฯ", type:"public", zone:"near", housing:["home"], seniors:"N", src:"kmutnb"},
+  sut:   {name:"ม.เทคโนโลยีสุรนารี", short:"มทส.", place:"เมือง นครราชสีมา", type:"public", zone:"far", housing:["dorm_in"], dormIn:{fee:4650, perTerm:3100, util:100, label:"หอใน 3,100 บาท/คน/เทอม (มทส. เรียนปีละ 3 เทอม จึงคิดเป็น 4,650 บาทต่อครึ่งปี)"}, dormSrc:"dormSUT", trip:{cost:1000, hours:12}, tripPerYear:6, tripSrc:"sutTrip", seniors:"N", src:"sut"},
 };
 
 /* sem = ค่าเทอมต่อภาค, summer = ค่าภาคฤดูร้อนรวมทั้งหลักสูตร (ถ้ามีบังคับ) */
@@ -250,7 +270,62 @@ const P = {
   msu_eng:   {u:"msu", name:"วิศวกรรมศาสตร์", sem:15000, field:"eng", src:"msuFac"},
   msu_arch:  {u:"msu", name:"สถาปัตยกรรมศาสตร์ ผังเมืองและนฤมิตศิลป์ (ทุกสาขา)", sem:18000, field:"arch", src:"msuFac"},
   msu_art:   {u:"msu", name:"ศิลปกรรมศาสตร์ (ทัศนศิลป์ / ออกแบบผลิตภัณฑ์)", sem:15000, field:"art", src:"msuFac"},
-  msu_edu:   {u:"msu", name:"ศึกษาศาสตร์ (ทุกสาขา)", sem:13000, field:"edu", src:"msuFac"}
+  msu_edu:   {u:"msu", name:"ศึกษาศาสตร์ (ทุกสาขา)", sem:13000, field:"edu", src:"msuFac"},
+  /* คลังมหาวิทยาลัย (ไม่อยู่ใน TRACKS) */
+  cu_biz:   {u:"cu", name:"พาณิชยศาสตร์และการบัญชี / เศรษฐศาสตร์", sem:21000, field:"biz"},
+  cu_lang:  {u:"cu", name:"อักษรศาสตร์", sem:21000, field:"lang"},
+  cu_soc:   {u:"cu", name:"รัฐศาสตร์ / นิติศาสตร์ / นิเทศศาสตร์", sem:21000, field:"soc"},
+  cu_edu:   {u:"cu", name:"ครุศาสตร์", sem:21000, field:"edu"},
+  cu_art:   {u:"cu", name:"ศิลปกรรมศาสตร์", sem:21000, field:"art"},
+  cu_eng:   {u:"cu", name:"วิศวกรรมศาสตร์", sem:25500, field:"eng"},
+  cu_sci:   {u:"cu", name:"วิทยาศาสตร์", sem:25500, field:"sci"},
+  cu_nur:   {u:"cu", name:"พยาบาลศาสตร์", sem:26500, field:"nur"},
+  cu_ahs:   {u:"cu", name:"สหเวชศาสตร์ (เทคนิคการแพทย์ / กายภาพบำบัด)", sem:26500, field:"mt"},
+  mu_nur:   {u:"mu", name:"พยาบาลศาสตร์", sem:25000, field:"nur"},
+  mu_mt:    {u:"mu", name:"เทคนิคการแพทย์", sem:25000, field:"mt"},
+  mu_pt:    {u:"mu", name:"กายภาพบำบัด", sem:25000, field:"pt"},
+  mu_ph:    {u:"mu", name:"สาธารณสุขศาสตร์", sem:21000, field:"oh"},
+  mu_sci:   {u:"mu", name:"วิทยาศาสตร์ (คณิต เคมี ชีววิทยา ฟิสิกส์ ฯลฯ)", sem:21000, field:"sci"},
+  mu_eng:   {u:"mu", name:"วิศวกรรมศาสตร์", sem:30000, field:"eng"},
+  mu_lang:  {u:"mu", name:"ศิลปศาสตร์ ภาษาไทย / ภาษาอังกฤษ", sem:17000, field:"lang"},
+  mu_law:   {u:"mu", name:"นิติศาสตร์", sem:21000, field:"law"},
+  tu_law:   {u:"tu", name:"นิติศาสตร์ (รังสิต)", sem:18000, field:"law"},
+  tu_biz:   {u:"tu", name:"พาณิชยศาสตร์และการบัญชี", sem:18000, field:"biz"},
+  tu_eco:   {u:"tu", name:"เศรษฐศาสตร์", sem:18000, field:"biz"},
+  tu_pol:   {u:"tu", name:"รัฐศาสตร์", sem:16300, field:"soc"},
+  tu_comm:  {u:"tu", name:"วารสารศาสตร์และสื่อสารมวลชน", sem:16000, field:"comm"},
+  tu_lang:  {u:"tu", name:"ศิลปศาสตร์", sem:16200, field:"lang"},
+  tu_edu:   {u:"tu", name:"วิทยาการเรียนรู้และศึกษาศาสตร์", sem:17300, field:"edu"},
+  tu_art:   {u:"tu", name:"ศิลปกรรมศาสตร์ (รังสิต)", sem:19000, field:"art"},
+  tu_sci:   {u:"tu", name:"วิทยาศาสตร์และเทคโนโลยี (รังสิต)", sem:18700, field:"sci"},
+  tu_eng:   {u:"tu", name:"วิศวกรรมศาสตร์", sem:19700, field:"eng"},
+  tu_nur:   {u:"tu", name:"พยาบาลศาสตร์", sem:26500, field:"nur"},
+  tu_ahs:   {u:"tu", name:"สหเวชศาสตร์", sem:25000, field:"mt"},
+  swu_nur:  {u:"swu", name:"พยาบาลศาสตร์", sem:28000, field:"nur"},
+  swu_pt:   {u:"swu", name:"กายภาพบำบัด", sem:31000, field:"pt"},
+  swu_sci:  {u:"swu", name:"วิทยาศาสตร์ (คณิต สถิติ เคมี ชีววิทยา)", sem:20000, field:"sci"},
+  swu_cs:   {u:"swu", name:"วิทยาการคอมพิวเตอร์", sem:24000, field:"sci"},
+  swu_eng:  {u:"swu", name:"วิศวกรรมศาสตร์ (ภาคปกติ)", sem:25000, field:"eng"},
+  swu_edu:  {u:"swu", name:"การศึกษา (ครู)", sem:20000, field:"edu"},
+  swu_lang: {u:"swu", name:"มนุษยศาสตร์ ภาษาไทย / ภาษาอังกฤษ", sem:17000, field:"lang"},
+  swu_soc:  {u:"swu", name:"สังคมศาสตร์ (สังคมศึกษา รัฐศาสตร์ ประวัติศาสตร์ ฯลฯ)", sem:15000, field:"soc", note:"ภาคในเวลา"},
+  swu_law:  {u:"swu", name:"นิติศาสตร์", sem:20000, field:"law", note:"ภาคในเวลา"},
+  swu_biz:  {u:"swu", name:"บริหารธุรกิจเพื่อสังคม / เศรษฐศาสตร์", sem:20000, field:"biz", note:"ภาคในเวลา"},
+  swu_art:  {u:"swu", name:"ศิลปกรรมศาสตร์ (ทัศนศิลป์ ศิลปะการแสดง ออกแบบ)", sem:23000, field:"art"},
+  kmutt_eng:{u:"kmutt", name:"วิศวกรรมโยธา / เครื่องกล / ไฟฟ้า / เคมี ฯลฯ (แผนไทย)", sem:26500, field:"eng", note:"ค่าบำรุง 14,500/ภาค + 650 บาท/หน่วยกิต · ค่าเฉลี่ยต่อภาค จากค่าใช้จ่ายตลอดหลักสูตร ราว 210,000–213,500"},
+  kmutt_cpe:{u:"kmutt", name:"วิศวกรรมคอมพิวเตอร์", sem:30000, field:"eng"},
+  kmutt_sci:{u:"kmutt", name:"วิทยาศาสตร์ (คณิต เคมี จุลชีววิทยา ฟิสิกส์ ฯลฯ)", sem:25600, field:"sci", note:"ค่าบำรุง 14,500/ภาค + 650 บาท/หน่วยกิต · ค่าเฉลี่ยต่อภาค จากค่าใช้จ่ายตลอดหลักสูตร ราว 200,500–205,700"},
+  kmutt_cs: {u:"kmutt", name:"วิทยาการคอมพิวเตอร์ประยุกต์", sem:30625, field:"sci", note:"ค่าเฉลี่ยต่อภาค จากค่าใช้จ่ายตลอดหลักสูตร 245,000"},
+  kmutt_it: {u:"kmutt", name:"เทคโนโลยีสารสนเทศ", sem:43300, field:"sci", note:"ค่าเฉลี่ยต่อภาค จากค่าใช้จ่ายตลอดหลักสูตร 346,400"},
+  kmutt_edu:{u:"kmutt", name:"เทคโนโลยีการศึกษาและสื่อสารมวลชนดิจิทัล (ครุศาสตร์อุตสาหกรรม)", sem:30250, field:"edu", note:"ค่าเฉลี่ยต่อภาค จากค่าใช้จ่ายตลอดหลักสูตร 242,000"},
+  kmutt_art:{u:"kmutt", name:"ศิลปะการออกแบบสื่อ (กราฟิก แอนิเมชัน ภาพยนตร์)", sem:39250, field:"art", note:"ค่าเฉลี่ยต่อภาค จากค่าใช้จ่ายตลอดหลักสูตร 314,000"},
+  kmutnb_eng:{u:"kmutnb", name:"วิศวกรรมศาสตร์ (กรุงเทพฯ)", sem:25000, field:"eng"},
+  kmutnb_edu:{u:"kmutnb", name:"ครุศาสตร์อุตสาหกรรม (กรุงเทพฯ)", sem:25000, field:"edu"},
+  kmutnb_sci:{u:"kmutnb", name:"วิทยาศาสตร์ประยุกต์ (กรุงเทพฯ)", sem:19000, field:"sci", note:"บางสาขา 25,000"},
+  kmutnb_arch:{u:"kmutnb", name:"สถาปัตยกรรมและการออกแบบ", sem:22000, field:"arch", note:"บางสาขา 28,000"},
+  kmutnb_biz:{u:"kmutnb", name:"พัฒนาธุรกิจและอุตสาหกรรม (กรุงเทพฯ)", sem:25000, field:"biz"},
+  sut_eng:  {u:"sut", name:"วิศวกรรมศาสตร์", sem:23250, field:"eng", note:"คิดตามหน่วยกิต 800 บาท + ค่าบำรุง 10,000/ปี · เฉลี่ยจากค่าใช้จ่ายตลอดหลักสูตรราว 172,300–199,500 (มทส. เรียนปีละ 3 เทอม)"},
+  sut_sci:  {u:"sut", name:"วิทยาศาสตร์", sem:23250, field:"sci", note:"คิดตามหน่วยกิต 800 บาท + ค่าบำรุง 10,000/ปี · เฉลี่ยจากค่าใช้จ่ายตลอดหลักสูตรราว 172,300–199,500 (มทส. เรียนปีละ 3 เทอม)"},
 };
 
 const TRACKS = {
