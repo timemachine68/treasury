@@ -1,0 +1,701 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>สุ่มรายชื่อนักเรียน · แนะให้แนว</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Mitr:wght@400;500;600&family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{
+  --ink:#2C3A2F; --ink-soft:#6A7466;
+  --board:#F5F3ED; --card:#FFFFFF;
+  --fern:#4A7C59; --fern-deep:#355A40; --fern-tint:#E6EFE4;
+  --marigold:#F9A620; --mari-tint:#FEF1D6; --terra:#B7472A;
+  --line:#DDD8C8; --danger:#C0392B;
+  --radius:16px; --shadow:0 2px 10px rgba(44,58,47,.10);
+}
+*{box-sizing:border-box}
+[hidden]{display:none !important}
+body{margin:0;font-family:'Sarabun',sans-serif;background:var(--board);color:var(--ink);font-size:16px;line-height:1.5}
+h1,h2,h3,.brand{font-family:'Mitr',sans-serif;font-weight:600}
+:focus-visible{outline:3px solid var(--marigold);outline-offset:2px;border-radius:8px}
+.wrap{max-width:1180px;margin:0 auto;padding:0 16px}
+header.app{background:var(--fern);color:#fff;padding:12px 0}
+header.app .wrap{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.brand{font-size:20px}
+.who{margin-left:auto;font-size:14px;opacity:.9}
+.back{color:#fff;text-decoration:none;font-size:14px;opacity:.9;border:1px solid rgba(255,255,255,.5);border-radius:999px;padding:4px 12px}
+main.wrap{padding:20px 16px 48px}
+h1{margin:0;font-size:26px;color:var(--fern-deep);line-height:1.25}
+.lead{color:var(--ink-soft);margin:4px 0 16px}
+.panel{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);padding:16px;margin-bottom:16px}
+.panel h2{font-size:17px;margin:0 0 10px;color:var(--fern-deep)}
+.btn{font-family:'Sarabun',sans-serif;font-weight:700;font-size:15px;border:1.5px solid var(--line);background:#fff;color:var(--fern-deep);border-radius:999px;padding:9px 18px;cursor:pointer;min-height:42px}
+.btn.primary{background:var(--fern);border-color:var(--fern);color:#fff}
+.btn.big{font-size:20px;padding:14px 34px;font-family:'Mitr',sans-serif;font-weight:500}
+.btn.sm{font-size:14px;padding:5px 14px;min-height:34px}
+.btn:disabled{opacity:.45;cursor:default}
+.levels{display:flex;gap:6px;flex-wrap:wrap}
+.lv{font-family:'Mitr',sans-serif;font-size:16px;border:none;background:var(--board);color:var(--ink-soft);border-radius:999px;padding:7px 18px;cursor:pointer}
+.lv.on{background:var(--fern-deep);color:#fff}
+.rooms{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.rm{font-family:'Sarabun',sans-serif;font-weight:600;font-size:15px;min-width:64px;min-height:42px;padding:0 14px;border-radius:12px;background:#fff;border:1.5px solid var(--line);cursor:pointer;color:var(--ink)}
+.rm.on{background:var(--marigold);border-color:var(--ink);font-weight:700}
+.sum{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px;font-size:15px;color:var(--ink-soft)}
+.sum b{color:var(--fern-deep);font-size:17px}
+.sum .sp{flex:1}
+.att{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:6px;margin-top:10px;max-height:320px;overflow:auto;padding:2px}
+.att label{display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:10px;background:var(--board);cursor:pointer;font-size:15px;line-height:1.3}
+.att label.off{opacity:.45;text-decoration:line-through}
+.att input{width:18px;height:18px;accent-color:var(--fern)}
+.att .no{font-weight:700;color:var(--fern-deep);min-width:22px}
+.modes{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.md{font-family:'Mitr',sans-serif;font-size:15px;border:1.5px solid var(--line);background:#fff;color:var(--ink);border-radius:14px;padding:10px 16px;cursor:pointer;min-height:46px}
+.md.on{background:var(--fern);border-color:var(--fern);color:#fff}
+.stage{position:relative;background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);padding:20px;min-height:420px}
+.stage:fullscreen{border-radius:0;padding:32px;overflow:auto;background:var(--board)}
+.stage-top{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+.stage-top .title{font-family:'Mitr',sans-serif;font-size:18px;color:var(--fern-deep)}
+.stage-top .sp{flex:1}
+.opt{display:flex;gap:14px;flex-wrap:wrap;align-items:center;font-size:15px;margin-bottom:12px}
+.opt label{display:flex;align-items:center;gap:6px;cursor:pointer}
+.opt input[type=checkbox],.opt input[type=radio]{width:18px;height:18px;accent-color:var(--fern)}
+.opt input[type=number]{width:72px;min-height:38px;border:1.5px solid var(--line);border-radius:10px;padding:0 8px;font:inherit;text-align:center}
+.center{text-align:center}
+.empty{text-align:center;color:var(--ink-soft);padding:48px 12px}
+.note{font-size:14px;color:var(--ink-soft)}
+
+/* สุ่มทีละคน */
+.slot{display:flex;flex-direction:column;align-items:center;gap:10px;padding:10px 0 18px}
+.slot .av{width:170px;height:170px;border-radius:50%;background:var(--fern);color:#fff;display:grid;place-items:center;font-family:'Mitr',sans-serif;font-size:72px;box-shadow:0 0 0 6px #fff,0 0 0 10px var(--marigold);overflow:hidden}
+.slot .av img{width:100%;height:100%;object-fit:cover;object-position:50% 20%}
+.slot .nm{font-family:'Mitr',sans-serif;font-size:clamp(28px,5vw,54px);line-height:1.2;color:var(--fern-deep);min-height:1.2em;text-align:center}
+.slot .sub{font-size:clamp(17px,2.4vw,24px);color:var(--ink-soft);min-height:1.4em}
+.slot.rolling .nm{color:var(--ink-soft)}
+.slot.win .av{animation:pop .5s ease}
+@keyframes pop{0%{transform:scale(.7)}60%{transform:scale(1.12)}100%{transform:scale(1)}}
+.stage:fullscreen .slot .av{width:260px;height:260px;font-size:110px}
+.stage:fullscreen .slot .nm{font-size:72px}
+.hist{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.hist span{background:var(--fern-tint);color:var(--fern-deep);border-radius:999px;padding:3px 12px;font-size:14px}
+
+/* วงล้อ */
+.wheel-box{position:relative;width:min(520px,100%);margin:0 auto}
+.wheel-box canvas{width:100%;height:auto;display:block}
+.wheel-box .pin{position:absolute;left:50%;top:-6px;transform:translateX(-50%);width:0;height:0;border-left:18px solid transparent;border-right:18px solid transparent;border-top:34px solid var(--terra);filter:drop-shadow(0 2px 2px rgba(0,0,0,.3));z-index:2}
+.stage:fullscreen .wheel-box{width:min(78vh,100%)}
+.wres{font-family:'Mitr',sans-serif;font-size:clamp(24px,4vw,44px);color:var(--fern-deep);text-align:center;min-height:1.4em;margin-top:10px}
+
+/* กลุ่ม / ลำดับ / หลายคน */
+.groups{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
+.grp{background:var(--board);border-radius:14px;padding:12px 14px;animation:fade .35s ease both}
+.grp h3{margin:0 0 6px;font-size:17px;color:var(--fern-deep);display:flex;justify-content:space-between}
+.grp h3 small{font-family:'Sarabun',sans-serif;font-weight:500;color:var(--ink-soft);font-size:14px}
+.grp ol{margin:0;padding-left:22px}
+.grp li{font-size:15px;line-height:1.55}
+.lead-tag{background:var(--marigold);color:var(--ink);border-radius:6px;padding:0 6px;font-size:12px;font-weight:700;margin-left:4px}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.olist{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:8px;list-style:none;padding:0;margin:0}
+.olist li{display:flex;gap:10px;align-items:center;background:var(--board);border-radius:12px;padding:8px 12px;animation:fade .3s ease both}
+.olist .k{flex:none;width:34px;height:34px;border-radius:50%;background:var(--fern-deep);color:#fff;display:grid;place-items:center;font-family:'Mitr',sans-serif;font-size:15px}
+.olist .t{line-height:1.3}
+.olist .t small{display:block;color:var(--ink-soft);font-size:13px}
+.stage:fullscreen .olist li,.stage:fullscreen .grp li{font-size:20px}
+
+/* การ์ดลุ้น */
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px}
+.fc{display:block;width:100%;perspective:700px;height:130px;cursor:pointer;border:none;background:none;padding:0;font:inherit}
+.fc .in{display:block;position:relative;width:100%;height:100%;transition:transform .55s;transform-style:preserve-3d}
+.fc.open .in{transform:rotateY(180deg)}
+.fc .f,.fc .b{position:absolute;inset:0;border-radius:14px;backface-visibility:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:6px;text-align:center}
+.fc .f{background:linear-gradient(135deg,var(--fern),var(--fern-deep));color:#fff;font-family:'Mitr',sans-serif;font-size:34px;box-shadow:var(--shadow)}
+.fc .f small{font-size:12px;opacity:.8;font-family:'Sarabun',sans-serif}
+.fc .b{background:var(--mari-tint);border:2px solid var(--marigold);transform:rotateY(180deg);font-size:15px;line-height:1.25;color:var(--ink)}
+.fc .b b{font-family:'Mitr',sans-serif;font-size:17px;color:var(--fern-deep);font-weight:500}
+.stage:fullscreen .fc{height:160px}
+
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 20px;border-radius:999px;font-size:15px;z-index:50;opacity:0;transition:opacity .2s;pointer-events:none}
+.toast.show{opacity:1}
+#no-access{background:#fff;border-radius:var(--radius);padding:32px;text-align:center;box-shadow:var(--shadow)}
+#confetti{position:fixed;inset:0;pointer-events:none;z-index:60}
+
+@media print{
+  header.app,.no-print,.modes,.stage-top,.opt,#pickPanel,.toast{display:none !important}
+  body{background:#fff}
+  .stage{box-shadow:none;padding:0}
+  .grp,.olist li{break-inside:avoid;background:#fff;border:1px solid #bbb}
+  #printHead{display:block !important}
+}
+#printHead{display:none;font-family:'Mitr',sans-serif;font-size:20px;margin-bottom:10px}
+</style>
+</head>
+<body>
+<header class="app"><div class="wrap">
+  <a class="back" href="index.html">← คลังแนะแนว</a>
+  <span class="brand">🎲 สุ่มรายชื่อนักเรียน</span>
+  <span class="who" id="who"></span>
+</div></header>
+
+<main class="wrap">
+  <div id="no-access" hidden></div>
+  <div id="main" hidden>
+    <h1>สุ่มรายชื่อนักเรียน</h1>
+    <p class="lead">เลือกห้อง ติ๊กออกคนที่ไม่มาเรียน แล้วเลือกวิธีสุ่มได้เลยค่ะ</p>
+
+    <section class="panel no-print" id="pickPanel">
+      <h2>1) เลือกห้องเรียน</h2>
+      <div class="levels" id="levels"></div>
+      <div class="rooms" id="rooms"></div>
+      <div class="sum" id="sum" hidden>
+        <span>ห้อง <b id="sRoom"></b> · มาเรียน <b id="sPresent">0</b> / <span id="sTotal">0</span> คน</span>
+        <span class="sp"></span>
+        <button class="btn sm" id="btnAtt" type="button">ติ๊กคนที่ไม่มา ▾</button>
+      </div>
+      <div id="attBox" hidden>
+        <div class="opt" style="margin:10px 0 0">
+          <button class="btn sm" id="attAll" type="button">มาครบทุกคน</button>
+          <span class="note">เอาเครื่องหมายถูกออก = ไม่มาเรียนวันนี้ (จะไม่ถูกสุ่ม)</span>
+        </div>
+        <div class="att" id="att"></div>
+      </div>
+    </section>
+
+    <div class="modes" id="modes">
+      <button class="md on" data-m="one">🎯 สุ่มทีละคน</button>
+      <button class="md" data-m="wheel">🎡 วงล้อ</button>
+      <button class="md" data-m="many">✋ สุ่มหลายคน</button>
+      <button class="md" data-m="group">👥 แบ่งกลุ่ม</button>
+      <button class="md" data-m="order">🔢 จัดลำดับ</button>
+      <button class="md" data-m="cards">🃏 การ์ดลุ้น</button>
+    </div>
+
+    <section class="stage" id="stage">
+      <div id="printHead"></div>
+      <div class="stage-top">
+        <span class="title" id="stTitle"></span>
+        <span class="sp"></span>
+        <button class="btn sm no-print" id="btnFs" type="button">⛶ เต็มจอ</button>
+      </div>
+      <div id="stBody"><div class="empty">เลือกระดับชั้นและห้องด้านบนก่อนนะคะ</div></div>
+    </section>
+  </div>
+</main>
+<canvas id="confetti"></canvas>
+<div class="toast" id="toast"></div>
+
+<script>
+const SUPABASE_URL = 'https://ikkhjslmtjwrxzxvtokb.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlra2hqc2xtdGp3cnh6eHZ0b2tiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM3NDMzNjksImV4cCI6MjA5OTMxOTM2OX0.3OR_9mEv82Ns1LLjx5nnRwJYzrtKFtWCWd1bPuQfNKU';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const BUCKET = 'profile-photos';
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+let ALL = [], ROOMS = {};
+let curLevel = null, curRoom = null;
+let roster = [];            // นักเรียนห้องที่เลือก เรียงตามรหัส มี no (เลขที่), url (รูป)
+let absent = new Set();     // id คนที่ไม่มา
+let picked = new Set();     // id ที่ถูกสุ่มไปแล้ว (โหมดไม่ซ้ำ)
+let pickHist = [];          // ชื่อที่สุ่มได้ล่าสุด
+let mode = 'one';
+let busy = false;
+let loadSeq = 0;
+
+// ---------- สุ่มแบบยุติธรรม (crypto) ----------
+function rand(n){
+  if (n <= 1) return 0;
+  const lim = Math.floor(0x100000000 / n) * n, a = new Uint32Array(1);
+  do { crypto.getRandomValues(a); } while (a[0] >= lim);
+  return a[0] % n;
+}
+function shuffle(arr){
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--){ const j = rand(i + 1); [a[i], a[j]] = [a[j], a[i]]; }
+  return a;
+}
+
+// ---------- ชื่อ ----------
+const PREFIX = /^(เด็กชาย|เด็กหญิง|นางสาว|นาย|นาง|ด\.ช\.|ด\.ญ\.)\s*/;
+function splitName(full){
+  const t = String(full || '').trim().replace(/\s+/g, ' ');
+  const m = PREFIX.exec(t);
+  const rest = t.replace(PREFIX, '');
+  const i = rest.indexOf(' ');
+  let first = i < 0 ? rest : rest.slice(0, i);
+  let last = i < 0 ? '' : rest.slice(i + 1).trim();
+  if (/^[-–—.]+$/.test(last)) last = '';
+  const p = m ? m[1] : '';
+  const sex = /^(เด็กชาย|นาย|ด\.ช\.)$/.test(p) ? 'M' : /^(เด็กหญิง|นางสาว|นาง|ด\.ญ\.)$/.test(p) ? 'F' : 'U';
+  return { first: first || t || '(ไม่มีชื่อ)', last, sex };
+}
+function shortName(s){ return s.nickname ? `${s.first} (${s.nickname})` : s.first; }
+function fullName(s){ return (s.first + ' ' + s.last).trim(); }
+function roomKey(r){ const m = /^ม\.(\d)\/(\d+)$/.exec(r || ''); return m ? [+m[1], +m[2]] : [9, 0]; }
+function byRoom(a, b){ const x = roomKey(a), y = roomKey(b); return x[0] - y[0] || x[1] - y[1]; }
+function byCode(a, b){
+  const x = String(a.student_id || a.username || ''), y = String(b.student_id || b.username || '');
+  return x.localeCompare(y, 'en', { numeric: true }) || String(a.id).localeCompare(String(b.id));
+}
+
+// ---------- บันทึกในเครื่อง (คนที่สุ่มไปแล้ว / คนที่ไม่มา) ----------
+function today(){ const d = new Date(Date.now() + 7 * 3600 * 1000); return d.toISOString().slice(0, 10); }
+function lsGet(k){ try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch(e){ return null; } }
+function lsSet(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} }
+function savePicked(){ lsSet('rp_picked:' + curRoom, [...picked]); }
+function saveAbsent(){ lsSet('rp_absent:' + curRoom, { d: today(), ids: [...absent] }); }
+
+function toast(msg){ const t = $('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('show'), 1800); }
+
+// ---------- เข้าสู่ระบบ + ตรวจสิทธิ์ ----------
+function showNoAccess(msg){ $('no-access').hidden = false; $('no-access').innerHTML = msg; }
+async function init(){
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session){ showNoAccess('กรุณาเข้าสู่ระบบจากหน้า <a href="index.html">คลังแนะแนว</a> ก่อน แล้วกลับมาเปิดหน้านี้อีกครั้งนะคะ'); return; }
+  const { data: me } = await sb.from('profiles').select('display_name, role, is_guidance').eq('id', session.user.id).single();
+  const ok = !!me && (me.role === 'admin' || (me.role === 'teacher' && me.is_guidance === true));
+  $('who').textContent = me ? me.display_name : '';
+  if (!ok){ showNoAccess('<b>หน้านี้สำหรับครูแนะแนวและผู้ดูแลระบบเท่านั้น</b><br>ถ้าต้องใช้ ให้แจ้งครูแนะแนวเพื่อขอสิทธิ์นะคะ'); return; }
+  $('main').hidden = false;
+  $('stBody').innerHTML = '<div class="empty">กำลังโหลดรายชื่อห้องเรียน...</div>';
+  const okLoad = await loadStudents();
+  if (!okLoad) return;
+  buildLevels();
+  const want = new URLSearchParams(location.search).get('room');
+  if (want && /^ม\.[1-6]\/\d+$/.test(want) && ALL.some(s => s.class_room === want)){ pickLevel(want.charAt(2)); pickRoom(want); }
+  else $('stBody').innerHTML = '<div class="empty">เลือกระดับชั้นและห้องด้านบนก่อนนะคะ</div>';
+}
+
+async function loadStudents(){
+  let all = [], from = 0;
+  while (true){
+    const { data, error } = await sb.from('profiles')
+      .select('id,username,student_id,display_name,class_room,avatar_path,school_photo_path,nickname')
+      .eq('role', 'student').eq('status', 'active')
+      .order('class_room').order('id').range(from, from + 999);
+    if (error){ $('stBody').innerHTML = `<div class="empty">โหลดรายชื่อไม่สำเร็จ: ${esc(error.message)}<br>ลองรีเฟรชหน้านี้อีกครั้งนะคะ</div>`; return false; }
+    all = all.concat(data || []);
+    if (!data || data.length < 1000) break;
+    from += 1000;
+  }
+  // กันแถวซ้ำ (id เดียวกัน) เผื่อข้อมูลเลื่อนระหว่างแบ่งหน้า
+  const seenId = new Set();
+  ALL = all.filter(s => s && s.id && !seenId.has(s.id) && seenId.add(s.id));
+  ROOMS = {};
+  for (const s of ALL){
+    const r = s.class_room, lv = (/^ม\.(\d)\/\d+$/.exec(r || '') || [])[1];
+    if (!lv) continue;
+    (ROOMS[lv] = ROOMS[lv] || []);
+    if (!ROOMS[lv].includes(r)) ROOMS[lv].push(r);
+  }
+  for (const k in ROOMS) ROOMS[k].sort(byRoom);
+  if (!Object.keys(ROOMS).length){ $('stBody').innerHTML = '<div class="empty">ยังไม่มีรายชื่อนักเรียนในระบบค่ะ</div>'; return false; }
+  return true;
+}
+
+function buildLevels(){
+  const lvs = Object.keys(ROOMS).sort();
+  $('levels').innerHTML = lvs.map(l => `<button class="lv" data-l="${l}">ม.${l}</button>`).join('');
+  $('levels').querySelectorAll('.lv').forEach(b => b.onclick = () => { if (!busy) pickLevel(b.dataset.l); });
+}
+function pickLevel(l){
+  curLevel = l;
+  $('levels').querySelectorAll('.lv').forEach(b => b.classList.toggle('on', b.dataset.l === l));
+  $('rooms').innerHTML = (ROOMS[l] || []).map(r => `<button class="rm" data-r="${esc(r)}">${esc(r)}</button>`).join('');
+  $('rooms').querySelectorAll('.rm').forEach(b => { b.classList.toggle('on', b.dataset.r === curRoom); b.onclick = () => { if (!busy) pickRoom(b.dataset.r); }; });
+}
+
+function photoPath(s){ return s.avatar_path || s.school_photo_path || null; }
+
+async function pickRoom(r){
+  const seq = ++loadSeq;
+  curRoom = r;
+  $('rooms').querySelectorAll('.rm').forEach(b => b.classList.toggle('on', b.dataset.r === r));
+  window.history.replaceState(null, '', '?room=' + encodeURIComponent(r));
+  roster = ALL.filter(s => s.class_room === r).sort(byCode).map((s, i) => Object.assign({}, s, splitName(s.display_name), { no: i + 1, url: null }));
+  const ids = new Set(roster.map(s => s.id));
+  const ab = lsGet('rp_absent:' + r);
+  absent = new Set(ab && ab.d === today() ? (ab.ids || []).filter(id => ids.has(id)) : []);   // คนไม่มา จำแค่วันนี้
+  picked = new Set((lsGet('rp_picked:' + r) || []).filter(id => ids.has(id)));
+  pickHist = []; lastMany = []; lastGroups = null; lastOrder = null; deck = null;
+  wheel.angle = 0;
+  renderAtt(); renderSum(); render();
+  const paths = roster.map(photoPath).filter(Boolean);
+  if (paths.length){
+    const { data, error } = await sb.storage.from(BUCKET).createSignedUrls(paths, 3600);
+    if (seq !== loadSeq) return;
+    if (!error && data){
+      const m = {}; data.forEach(d => { if (d && d.path && d.signedUrl) m[d.path] = d.signedUrl; });
+      roster.forEach(s => { const p = photoPath(s); s.url = p ? (m[p] || null) : null; });
+    }
+  }
+}
+
+// ---------- เช็คชื่อ ----------
+function present(){ return roster.filter(s => !absent.has(s.id)); }
+function renderSum(){
+  $('sum').hidden = !curRoom;
+  $('sRoom').textContent = curRoom || '';
+  $('sPresent').textContent = present().length;
+  $('sTotal').textContent = roster.length;
+}
+function renderAtt(){
+  $('att').innerHTML = roster.map(s => `<label class="${absent.has(s.id) ? 'off' : ''}"><input type="checkbox" data-id="${esc(s.id)}" ${absent.has(s.id) ? '' : 'checked'}><span class="no">${s.no}</span><span>${esc(fullName(s))}${s.nickname ? ' (' + esc(s.nickname) + ')' : ''}</span></label>`).join('') || '<div class="note">ห้องนี้ยังไม่มีรายชื่อ</div>';
+  $('att').querySelectorAll('input').forEach(c => c.onchange = () => {
+    if (busy){ c.checked = !c.checked; return; }
+    c.checked ? absent.delete(c.dataset.id) : absent.add(c.dataset.id);
+    c.parentElement.classList.toggle('off', !c.checked);
+    saveAbsent(); clearResults(); renderSum(); render();
+  });
+}
+$('btnAtt').onclick = () => { $('attBox').hidden = !$('attBox').hidden; $('btnAtt').textContent = $('attBox').hidden ? 'ติ๊กคนที่ไม่มา ▾' : 'ซ่อนรายชื่อ ▴'; };
+$('attAll').onclick = () => { if (busy) return; absent.clear(); saveAbsent(); clearResults(); renderAtt(); renderSum(); render(); };
+
+function clearResults(){ lastMany = []; lastGroups = null; lastOrder = null; }
+
+// ---------- โหมด ----------
+const TITLES = { one: '🎯 สุ่มทีละคน', wheel: '🎡 วงล้อ', many: '✋ สุ่มหลายคน', group: '👥 แบ่งกลุ่ม', order: '🔢 จัดลำดับ', cards: '🃏 การ์ดลุ้น' };
+$('modes').querySelectorAll('.md').forEach(b => b.onclick = () => {
+  if (busy) return;
+  mode = b.dataset.m;
+  $('modes').querySelectorAll('.md').forEach(x => x.classList.toggle('on', x === b));
+  render();
+});
+$('btnFs').onclick = () => {
+  const st = $('stage');
+  if (document.fullscreenElement) document.exitFullscreen();
+  else if (st.requestFullscreen) st.requestFullscreen().catch(() => toast('เบราว์เซอร์นี้เปิดเต็มจอไม่ได้'));
+};
+document.addEventListener('fullscreenchange', () => {
+  $('btnFs').textContent = document.fullscreenElement ? '✕ ออกจากเต็มจอ' : '⛶ เต็มจอ';
+  if (mode === 'wheel') drawWheel();
+});
+
+function render(){
+  $('stTitle').textContent = TITLES[mode] + (curRoom ? ' · ' + curRoom : '');
+  $('printHead').textContent = TITLES[mode].replace(/^\S+\s/, '') + ' · ห้อง ' + (curRoom || '');
+  if (!curRoom){ $('stBody').innerHTML = '<div class="empty">เลือกระดับชั้นและห้องด้านบนก่อนนะคะ</div>'; return; }
+  if (!roster.length){ $('stBody').innerHTML = '<div class="empty">ห้องนี้ยังไม่มีรายชื่อนักเรียนค่ะ</div>'; return; }
+  if (!present().length){ $('stBody').innerHTML = '<div class="empty">ทุกคนถูกติ๊กว่าไม่มาเรียน<br>กด “ติ๊กคนที่ไม่มา” แล้วกด “มาครบทุกคน” ได้ค่ะ</div>'; return; }
+  ({ one: renderOne, wheel: renderWheel, many: renderMany, group: renderGroup, order: renderOrder, cards: renderCards })[mode]();
+}
+
+// ตัวเลือก "ไม่ซ้ำ" ใช้ร่วมกันโหมดสุ่มทีละคน / วงล้อ / หลายคน
+let noRepeat = lsGet('rp_norepeat') !== false;
+function poolForPick(){
+  const p = present();
+  return noRepeat ? p.filter(s => !picked.has(s.id)) : p;
+}
+function repeatOptHtml(){
+  const done = present().filter(s => picked.has(s.id)).length;
+  return `<label><input type="checkbox" id="optNoRep" ${noRepeat ? 'checked' : ''}> ไม่สุ่มซ้ำคนเดิม</label>
+    ${noRepeat ? `<span class="note">สุ่มไปแล้ว ${done} / ${present().length} คน</span>
+    <button class="btn sm" id="btnReset" type="button" ${done ? '' : 'disabled'}>เริ่มนับใหม่</button>` : ''}`;
+}
+function bindRepeatOpt(){
+  const c = $('optNoRep'); if (c) c.onchange = () => { noRepeat = c.checked; lsSet('rp_norepeat', noRepeat); render(); };
+  const r = $('btnReset'); if (r) r.onclick = () => { picked.clear(); savePicked(); pickHist = []; toast('เริ่มนับใหม่แล้ว ทุกคนมีสิทธิ์ถูกสุ่มอีกครั้ง'); render(); };
+}
+function markPicked(list){ list.forEach(s => picked.add(s.id)); savePicked(); }
+function poolEmptyHtml(){
+  return `<div class="empty">🎉 สุ่มครบทุกคนที่มาเรียนแล้ว<br><button class="btn primary" id="btnReset2" type="button" style="margin-top:12px">เริ่มนับใหม่</button></div>`;
+}
+function bindReset2(){ const b = $('btnReset2'); if (b) b.onclick = () => { picked.clear(); savePicked(); pickHist = []; render(); }; }
+function setBusy(v){ busy = v; document.querySelectorAll('.md,.lv,.rm').forEach(b => b.disabled = v); }
+
+// ---------- 1) สุ่มทีละคน ----------
+function avatarHtml(s){ return s && s.url ? `<img src="${esc(s.url)}" alt="">` : esc(s ? s.first.charAt(0) : '?'); }
+function renderOne(){
+  const pool = poolForPick();
+  $('stBody').innerHTML = `
+    <div class="opt">${repeatOptHtml()}</div>
+    <div class="slot" id="slot">
+      <div class="av" id="slAv">?</div>
+      <div class="nm" id="slNm">${pool.length ? 'พร้อมสุ่มแล้ว' : '🎉 สุ่มครบทุกคนแล้ว'}</div>
+      <div class="sub" id="slSub">${pool.length ? 'มีสิทธิ์ถูกสุ่ม ' + pool.length + ' คน' : ''}</div>
+      ${pool.length ? '<button class="btn primary big" id="btnOne" type="button">🎲 สุ่มเลย</button>' : '<button class="btn primary big" id="btnReset2" type="button">เริ่มนับใหม่</button>'}
+    </div>
+    ${pickHist.length ? `<div class="note">สุ่มได้ล่าสุด:</div><div class="hist">${pickHist.map(h => `<span>${esc(h)}</span>`).join('')}</div>` : ''}`;
+  bindRepeatOpt(); bindReset2();
+  const b = $('btnOne'); if (b) b.onclick = spinOne;
+}
+function spinOne(){
+  const pool = poolForPick(); if (!pool.length || busy) return;
+  const win = pool[rand(pool.length)];
+  const all = present();
+  setBusy(true); $('btnOne').disabled = true;
+  const slot = $('slot'); slot.classList.remove('win'); slot.classList.add('rolling');
+  let t = 0, delay = 45;
+  const total = 2600, start = performance.now();
+  (function tick(){
+    const s = all[rand(all.length)];
+    $('slAv').textContent = s.first.charAt(0);
+    $('slNm').textContent = shortName(s);
+    $('slSub').textContent = 'เลขที่ ' + s.no;
+    const el = performance.now() - start;
+    if (el < total){ delay = 45 + Math.pow(el / total, 3) * 260; setTimeout(tick, delay); return; }
+    slot.classList.remove('rolling'); slot.classList.add('win');
+    $('slAv').innerHTML = avatarHtml(win);
+    $('slNm').textContent = fullName(win);
+    $('slSub').textContent = `เลขที่ ${win.no}${win.nickname ? ' · ' + win.nickname : ''}`;
+    if (noRepeat) markPicked([win]);
+    pickHist.unshift(`${win.no}. ${shortName(win)}`); pickHist = pickHist.slice(0, 12);
+    confetti();
+    setBusy(false);
+    // วาดส่วนอื่นใหม่ (ตัวนับ/ประวัติ) โดยคงผลลัพธ์ที่แสดงไว้
+    const keep = { av: $('slAv').innerHTML, nm: $('slNm').textContent, sub: $('slSub').textContent };
+    setTimeout(() => {
+      if (mode !== 'one') return;
+      renderOne();
+      $('slAv').innerHTML = keep.av; $('slNm').textContent = keep.nm; $('slSub').textContent = keep.sub;
+      if ($('btnOne')) $('btnOne').textContent = '🎲 สุ่มคนต่อไป';
+    }, 900);
+  })();
+}
+
+// ---------- 2) วงล้อ ----------
+const wheel = { angle: 0 };
+const WCOL = ['#4A7C59','#F9A620','#355A40','#E9C46A','#B7472A','#7FA87A','#F4A261','#2A9D8F'];
+function renderWheel(){
+  const pool = poolForPick();
+  $('stBody').innerHTML = `
+    <div class="opt">${repeatOptHtml()}<label><input type="checkbox" id="optNick" ${lsGet('rp_wnick') !== false ? 'checked' : ''}> แสดงชื่อเล่น</label></div>
+    ${pool.length ? `
+    <div class="wheel-box"><div class="pin"></div><canvas id="wc" width="900" height="900"></canvas></div>
+    <div class="wres" id="wres">${pool.length === 1 ? 'เหลือคนสุดท้ายแล้ว' : 'กดหมุนได้เลย'}</div>
+    <div class="center"><button class="btn primary big" id="btnSpin" type="button">🎡 หมุนวงล้อ</button></div>
+    ${pool.length > 45 ? '<p class="note center">คนเยอะ ตัวหนังสือในวงล้อจะเล็ก ถ้าฉายขึ้นจอแนะนำโหมด “สุ่มทีละคน” ค่ะ</p>' : ''}` : poolEmptyHtml()}`;
+  bindRepeatOpt(); bindReset2();
+  const n = $('optNick'); if (n) n.onchange = () => { lsSet('rp_wnick', n.checked); drawWheel(); };
+  if (pool.length){ wheel.pool = pool; drawWheel(); $('btnSpin').onclick = spinWheel; }
+}
+function wheelLabel(s){ return ($('optNick') && $('optNick').checked && s.nickname) ? s.nickname : s.first; }
+function drawWheel(hi){
+  const c = $('wc'); if (!c || !wheel.pool) return;
+  const ctx = c.getContext('2d'), N = wheel.pool.length, R = c.width / 2, seg = Math.PI * 2 / N;
+  ctx.clearRect(0, 0, c.width, c.height);
+  ctx.save(); ctx.translate(R, R); ctx.rotate(wheel.angle);
+  const fs = Math.max(13, Math.min(40, 560 / Math.max(N, 8)));
+  for (let i = 0; i < N; i++){
+    ctx.beginPath(); ctx.moveTo(0, 0); ctx.arc(0, 0, R - 8, i * seg, (i + 1) * seg); ctx.closePath();
+    let col = WCOL[i % WCOL.length];
+    if (N % WCOL.length === 1 && i === N - 1) col = WCOL[2];     // กันสีติดกันซ้ำช่องแรก/สุดท้าย
+    ctx.fillStyle = hi === i ? '#FFFFFF' : col; ctx.fill();
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 3; ctx.stroke();
+    ctx.save(); ctx.rotate(i * seg + seg / 2);
+    ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+    ctx.fillStyle = hi === i ? '#355A40' : ((col === '#F9A620' || col === '#E9C46A' || col === '#F4A261') ? '#2C3A2F' : '#fff');
+    ctx.font = `600 ${fs}px Mitr, Sarabun, sans-serif`;
+    let t = wheelLabel(wheel.pool[i]);
+    const maxW = R - 90;
+    while (ctx.measureText(t).width > maxW && t.length > 2) t = t.slice(0, -1);
+    if (t !== wheelLabel(wheel.pool[i])) t = t.slice(0, -1) + '…';
+    ctx.fillText(t, R - 26, 0);
+    ctx.restore();
+  }
+  ctx.restore();
+  ctx.beginPath(); ctx.arc(R, R, 46, 0, Math.PI * 2); ctx.fillStyle = '#fff'; ctx.fill();
+  ctx.lineWidth = 6; ctx.strokeStyle = '#355A40'; ctx.stroke();
+  ctx.fillStyle = '#355A40'; ctx.font = '600 34px Mitr, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('🎲', R, R + 2);
+}
+function spinWheel(){
+  const pool = wheel.pool; if (!pool || !pool.length || busy) return;
+  setBusy(true); $('btnSpin').disabled = true; $('wres').textContent = 'กำลังหมุน...';
+  const N = pool.length, seg = Math.PI * 2 / N, idx = rand(N);
+  // เข็มอยู่ด้านบน (มุม -90°) ให้กลางช่อง idx มาหยุดที่เข็ม พร้อมเยื้องสุ่มในช่อง
+  const off = (rand(1000) / 1000 - .5) * seg * .7;
+  const target = -Math.PI / 2 - (idx * seg + seg / 2) - off;
+  const cur = wheel.angle % (Math.PI * 2);
+  let delta = (target - cur) % (Math.PI * 2); if (delta < 0) delta += Math.PI * 2;
+  delta += Math.PI * 2 * (5 + rand(3));
+  const from = wheel.angle, dur = 4800, t0 = performance.now();
+  (function frame(now){
+    const p = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - p, 4);
+    wheel.angle = from + delta * e; drawWheel();
+    if (p < 1){ requestAnimationFrame(frame); return; }
+    const win = pool[idx];
+    drawWheel(idx);
+    $('wres').innerHTML = `${esc(fullName(win))} <span style="color:var(--ink-soft);font-size:.6em">เลขที่ ${win.no}${win.nickname ? ' · ' + esc(win.nickname) : ''}</span>`;
+    if (noRepeat) markPicked([win]);
+    confetti(); setBusy(false);
+    const res = $('wres').innerHTML;
+    setTimeout(() => { if (mode !== 'wheel') return; const keep = wheel.angle; renderWheel(); wheel.angle = keep; drawWheel(); if ($('wres')) $('wres').innerHTML = res; else $('stBody').insertAdjacentHTML('beforeend', `<div class="wres">${res}</div>`); }, 1600);
+  })(t0);
+}
+
+// ---------- 3) สุ่มหลายคน ----------
+let lastMany = [];
+function renderMany(){
+  const pool = poolForPick();
+  const n = Math.min(+(lsGet('rp_many') || 5), Math.max(pool.length, 1));
+  $('stBody').innerHTML = `
+    <div class="opt">${repeatOptHtml()}</div>
+    ${pool.length ? `
+    <div class="opt">สุ่ม <input type="number" id="manyN" min="1" max="${pool.length}" value="${n}"> คน
+      <span class="note">(มีสิทธิ์ ${pool.length} คน)</span>
+      <button class="btn primary" id="btnMany" type="button">✋ สุ่มเลย</button>
+    </div>` : poolEmptyHtml()}
+    <div class="opt"><button class="btn" id="btnManyCopy" type="button" ${lastMany.length ? '' : 'disabled'}>📋 คัดลอกรายชื่อที่สุ่มได้</button></div>
+    <ul class="olist" id="manyOut">${manyHtml(lastMany)}</ul>`;
+  bindRepeatOpt(); bindReset2();
+  $('btnManyCopy').onclick = () => copyText(`สุ่ม ${lastMany.length} คน · ${curRoom}\n` + lastMany.map((s, i) => `${i + 1}. ${fullName(s)} (เลขที่ ${s.no})`).join('\n'));
+  if (!pool.length) return;
+  $('btnMany').onclick = () => {
+    const pool2 = poolForPick();
+    let k = parseInt($('manyN').value, 10);
+    if (!(k >= 1)){ toast('ใส่จำนวนคนอย่างน้อย 1 คน'); return; }
+    if (k > pool2.length){ k = pool2.length; toast(`มีสิทธิ์แค่ ${k} คน สุ่มให้ทั้งหมดค่ะ`); }
+    lsSet('rp_many', k);
+    lastMany = shuffle(pool2).slice(0, k);
+    if (noRepeat) markPicked(lastMany);
+    renderMany(); confetti();
+  };
+}
+function manyHtml(list){
+  return list.map((s, i) => `<li style="animation-delay:${i * 60}ms"><span class="k">${i + 1}</span><span class="t">${esc(fullName(s))}<small>เลขที่ ${s.no}${s.nickname ? ' · ' + esc(s.nickname) : ''}</small></span></li>`).join('');
+}
+
+// ---------- 4) แบ่งกลุ่ม ----------
+let lastGroups = null;
+function renderGroup(){
+  const p = present(), cfg = lsGet('rp_group') || { by: 'count', n: 6, mix: true, lead: true };
+  $('stBody').innerHTML = `
+    <div class="opt">
+      <label><input type="radio" name="gby" value="count" ${cfg.by === 'count' ? 'checked' : ''}> แบ่งเป็น</label>
+      <label><input type="radio" name="gby" value="size" ${cfg.by === 'size' ? 'checked' : ''}> กลุ่มละ</label>
+      <input type="number" id="gN" min="1" max="${p.length}" value="${cfg.n}">
+      <span id="gUnit">${cfg.by === 'count' ? 'กลุ่ม' : 'คน'}</span>
+      <span class="note" id="gHint"></span>
+    </div>
+    <div class="opt">
+      <label><input type="checkbox" id="gMix" ${cfg.mix ? 'checked' : ''}> คละชาย-หญิงให้เท่า ๆ กัน</label>
+      <label><input type="checkbox" id="gLead" ${cfg.lead ? 'checked' : ''}> สุ่มหัวหน้ากลุ่ม</label>
+    </div>
+    <div class="opt">
+      <button class="btn primary" id="btnGroup" type="button">👥 แบ่งกลุ่ม</button>
+      <button class="btn" id="btnGCopy" type="button" ${lastGroups ? '' : 'disabled'}>📋 คัดลอก</button>
+      <button class="btn" id="btnGPrint" type="button" ${lastGroups ? '' : 'disabled'}>🖨 พิมพ์</button>
+    </div>
+    <div class="groups" id="gOut">${lastGroups ? groupsHtml(lastGroups) : ''}</div>`;
+  const hint = () => {
+    const by = document.querySelector('input[name=gby]:checked').value, n = parseInt($('gN').value, 10), tot = p.length;
+    $('gUnit').textContent = by === 'count' ? 'กลุ่ม' : 'คน';
+    if (!(n >= 1)){ $('gHint').textContent = ''; return; }
+    const g = by === 'count' ? Math.min(n, tot) : Math.ceil(tot / n);
+    const lo = Math.floor(tot / g), hi = Math.ceil(tot / g);
+    $('gHint').textContent = `→ ${g} กลุ่ม กลุ่มละ ${lo === hi ? lo : lo + '–' + hi} คน (จาก ${tot} คนที่มาเรียน)`;
+  };
+  document.querySelectorAll('input[name=gby]').forEach(r => r.onchange = hint);
+  $('gN').oninput = hint; hint();
+  $('btnGroup').onclick = () => {
+    const by = document.querySelector('input[name=gby]:checked').value, n = parseInt($('gN').value, 10);
+    if (!(n >= 1)){ toast('ใส่ตัวเลขอย่างน้อย 1'); return; }
+    const c = { by, n, mix: $('gMix').checked, lead: $('gLead').checked };
+    lsSet('rp_group', c);
+    lastGroups = makeGroups(present(), c);
+    renderGroup(); confetti();
+  };
+  $('btnGCopy').onclick = () => copyText(`แบ่งกลุ่ม · ${curRoom}\n\n` + lastGroups.map((g, i) => `กลุ่ม ${i + 1} (${g.members.length} คน)\n` + g.members.map((s, j) => `  ${j + 1}. ${fullName(s)}${g.lead === s.id ? ' ⭐ หัวหน้า' : ''}`).join('\n')).join('\n\n'));
+  $('btnGPrint').onclick = () => window.print();
+}
+function makeGroups(list, c){
+  const tot = list.length;
+  const G = Math.max(1, c.by === 'count' ? Math.min(c.n, tot) : Math.ceil(tot / c.n));
+  let order;
+  if (c.mix){
+    const M = shuffle(list.filter(s => s.sex === 'M')), F = shuffle(list.filter(s => s.sex === 'F')), U = shuffle(list.filter(s => s.sex === 'U'));
+    order = M.concat(F, U);
+  } else order = shuffle(list);
+  const groups = Array.from({ length: G }, () => ({ members: [], lead: null }));
+  // แจกวนทีละคน แล้วสลับลำดับกลุ่มที่เริ่มแจก เพื่อไม่ให้กลุ่มแรกได้คนเกินทุกครั้ง
+  const gOrder = shuffle([...Array(G).keys()]);
+  order.forEach((s, i) => groups[gOrder[i % G]].members.push(s));
+  groups.forEach(g => {
+    g.members = shuffle(g.members);
+    if (c.lead && g.members.length){ g.lead = g.members[0].id; }
+    g.members.sort((a, b) => (b.id === g.lead) - (a.id === g.lead) || a.no - b.no);
+  });
+  return groups;
+}
+function groupsHtml(gs){
+  return gs.map((g, i) => `<div class="grp" style="animation-delay:${i * 70}ms"><h3>กลุ่ม ${i + 1} <small>${g.members.length} คน</small></h3><ol>${
+    g.members.map(s => `<li>${esc(fullName(s))}${s.nickname ? ' <span class="note">(' + esc(s.nickname) + ')</span>' : ''}${g.lead === s.id ? '<span class="lead-tag">หัวหน้า</span>' : ''}</li>`).join('')}</ol></div>`).join('');
+}
+
+// ---------- 5) จัดลำดับ ----------
+let lastOrder = null;
+function renderOrder(){
+  $('stBody').innerHTML = `
+    <div class="opt">
+      <span class="note">สุ่มลำดับทุกคนที่มาเรียน (${present().length} คน) เช่น ลำดับนำเสนองาน</span>
+    </div>
+    <div class="opt">
+      <button class="btn primary" id="btnOrder" type="button">🔢 สุ่มลำดับ</button>
+      <button class="btn" id="btnOCopy" type="button" ${lastOrder ? '' : 'disabled'}>📋 คัดลอก</button>
+      <button class="btn" id="btnOPrint" type="button" ${lastOrder ? '' : 'disabled'}>🖨 พิมพ์</button>
+    </div>
+    <ol class="olist">${lastOrder ? lastOrder.map((s, i) => `<li style="animation-delay:${Math.min(i, 40) * 35}ms"><span class="k">${i + 1}</span><span class="t">${esc(fullName(s))}<small>เลขที่ ${s.no}${s.nickname ? ' · ' + esc(s.nickname) : ''}</small></span></li>`).join('') : ''}</ol>`;
+  $('btnOrder').onclick = () => { lastOrder = shuffle(present()); renderOrder(); };
+  $('btnOCopy').onclick = () => copyText(`ลำดับ · ${curRoom}\n` + lastOrder.map((s, i) => `${i + 1}. ${fullName(s)} (เลขที่ ${s.no})`).join('\n'));
+  $('btnOPrint').onclick = () => window.print();
+}
+
+// ---------- 6) การ์ดลุ้น ----------
+let deck = null;   // { room, cards:[student], open:Set }
+function renderCards(){
+  const p = present();
+  if (!deck || deck.room !== curRoom || deck.sig !== p.map(s => s.id).join()) deck = { room: curRoom, sig: p.map(s => s.id).join(), cards: shuffle(p), open: new Set() };
+  $('stBody').innerHTML = `
+    <div class="opt">
+      <span class="note">ให้นักเรียนเลือกหมายเลขการ์ด แล้วแตะเพื่อเปิดดูชื่อ · เปิดแล้ว ${deck.open.size} / ${deck.cards.length} ใบ</span>
+      <button class="btn sm" id="btnDeck" type="button">🔀 สับการ์ดใหม่</button>
+      <button class="btn sm" id="btnOpenAll" type="button">เปิดทั้งหมด</button>
+    </div>
+    <div class="cards">${deck.cards.map((s, i) => `
+      <button class="fc ${deck.open.has(i) ? 'open' : ''}" data-i="${i}" type="button" aria-label="การ์ดหมายเลข ${i + 1}">
+        <span class="in"><span class="f">${i + 1}<small>แตะเพื่อเปิด</small></span>
+        <span class="b"><b>${esc(s.first)}</b>${s.last ? esc(s.last) : ''}<span class="note">${s.nickname ? esc(s.nickname) + ' · ' : ''}เลขที่ ${s.no}</span></span></span>
+      </button>`).join('')}</div>`;
+  $('stBody').querySelectorAll('.fc').forEach(b => b.onclick = () => {
+    const i = +b.dataset.i; if (deck.open.has(i)) return;
+    deck.open.add(i); b.classList.add('open');
+    $('stBody').querySelector('.opt .note').textContent = `ให้นักเรียนเลือกหมายเลขการ์ด แล้วแตะเพื่อเปิดดูชื่อ · เปิดแล้ว ${deck.open.size} / ${deck.cards.length} ใบ`;
+  });
+  $('btnDeck').onclick = () => { deck = null; renderCards(); };
+  $('btnOpenAll').onclick = () => { deck.cards.forEach((_, i) => deck.open.add(i)); renderCards(); };
+}
+
+// ---------- เครื่องมือ ----------
+function copyText(t){
+  const done = () => toast('คัดลอกแล้ว นำไปวางในไลน์หรือเอกสารได้เลย');
+  if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(t).then(done, () => fallbackCopy(t, done));
+  else fallbackCopy(t, done);
+}
+function fallbackCopy(t, done){
+  const a = document.createElement('textarea'); a.value = t; a.style.position = 'fixed'; a.style.opacity = '0';
+  document.body.appendChild(a); a.select();
+  try { document.execCommand('copy'); done(); } catch(e){ toast('คัดลอกไม่สำเร็จ'); }
+  a.remove();
+}
+function confetti(){
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const c = $('confetti'), ctx = c.getContext('2d');
+  c.width = innerWidth; c.height = innerHeight;
+  const cols = ['#F9A620','#4A7C59','#B7472A','#E9C46A','#2A9D8F'];
+  const ps = Array.from({ length: 110 }, () => ({ x: c.width / 2 + (Math.random() - .5) * 200, y: c.height * .35, vx: (Math.random() - .5) * 14, vy: -Math.random() * 12 - 4, r: Math.random() * 6 + 4, c: cols[(Math.random() * cols.length) | 0], a: Math.random() * 6 }));
+  const t0 = performance.now();
+  (function f(now){
+    ctx.clearRect(0, 0, c.width, c.height);
+    ps.forEach(p => { p.vy += .35; p.x += p.vx; p.y += p.vy; p.a += .2; ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.a); ctx.fillStyle = p.c; ctx.fillRect(-p.r / 2, -p.r / 2, p.r, p.r * .6); ctx.restore(); });
+    if (now - t0 < 1800) requestAnimationFrame(f); else ctx.clearRect(0, 0, c.width, c.height);
+  })(t0);
+}
+// ย้ายแคนวาสพลุเข้าไปในเวทีตอนเต็มจอ เพื่อให้ยังเห็น
+document.addEventListener('fullscreenchange', () => { (document.fullscreenElement || document.body).appendChild($('confetti')); });
+
+init();
+</script>
+</body>
+</html>
