@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>คลังมหาวิทยาลัย · แนะให้แนว</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Mitr:wght@400;500;600&family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{--ink:#22313A;--ink-soft:#5B6B72;--board:#EFF3F1;--card:#FFF;--pine:#0F6B5C;--pine-deep:#0A4F44;--pine-tint:#E2F0EC;
+        --note:#FFD34D;--note-deep:#8A6D00;--line:#DCE4E1;--danger:#C0392B;--shadow:0 2px 10px rgba(34,49,58,.08)}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--board);color:var(--ink);font:16px/1.6 Sarabun,sans-serif}
+  a{color:var(--pine)} a:hover{color:var(--pine-deep)}
+  .hidden{display:none!important}
+  header.top{background:var(--pine);color:#fff;padding:12px 20px;display:flex;flex-wrap:wrap;align-items:center;gap:14px}
+  .logo{width:40px;height:40px;border-radius:12px;background:var(--note);color:var(--pine-deep);display:flex;align-items:center;justify-content:center;font:600 18px Mitr,sans-serif}
+  .brand{flex:1 1 180px}.brand b{display:block;font:600 20px Mitr,sans-serif}.brand span{font-size:14px;color:var(--pine-tint)}
+  header.top a{color:#fff;text-decoration:none;padding:8px 10px}
+  .chip-user{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.12);border-radius:999px;padding:5px 8px 5px 14px;font-size:15px}
+  .role{background:var(--note);color:#5A4700;border-radius:999px;padding:1px 10px;font-size:13px;font-weight:600}
+  main{max-width:1200px;margin:0 auto;padding:24px 16px 96px;display:flex;flex-direction:column;gap:18px}
+  h1{margin:0;font:600 28px Mitr,sans-serif;color:var(--pine-deep)}
+  h2{margin:0 0 10px;font:600 20px Mitr,sans-serif;color:var(--pine-deep)}
+  .sub{margin:4px 0 0;color:var(--ink-soft)}
+  .card{background:var(--card);border-radius:14px;box-shadow:var(--shadow);padding:18px 20px}
+  .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+  .between{justify-content:space-between}
+  .lbl{font:500 15px Mitr,sans-serif;display:block;margin-bottom:6px}
+  .search{width:100%;font:inherit;border:1px solid var(--line);background:var(--board);border-radius:999px;padding:11px 18px;min-height:44px}
+  .chips{display:flex;flex-wrap:wrap;gap:8px}
+  .chip{font:inherit;font-size:15px;min-height:42px;padding:6px 15px;border-radius:999px;cursor:pointer;background:#fff;color:var(--ink);border:1px solid var(--line)}
+  .chip.on{background:var(--note);color:#3D3000;border-color:#E0B520;font-weight:600}
+  .ck{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;padding:6px 14px;min-height:42px;cursor:pointer;background:#fff}
+  .filters{display:flex;flex-direction:column;gap:14px}
+  .fgroup{display:flex;flex-wrap:wrap;gap:22px}
+  .btn{display:inline-block;font:500 16px Mitr,sans-serif;border-radius:999px;padding:10px 18px;min-height:44px;cursor:pointer;text-decoration:none;border:1.5px solid transparent;text-align:center}
+  .btn.primary{background:var(--pine);color:#fff}.btn.primary:hover{background:var(--pine-deep);color:#fff}
+  .btn.ghost{background:#fff;color:var(--pine);border-color:var(--pine)}
+  .btn.plain{background:#fff;color:var(--ink);border-color:var(--line)}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+  select.sel{font:inherit;min-height:44px;border:1px solid var(--line);border-radius:999px;padding:8px 14px;background:#fff}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
+  .ucard{background:#fff;border-radius:14px;box-shadow:var(--shadow);overflow:hidden;display:flex;flex-direction:column}
+  .ucard .strip{height:8px}
+  .ucard .body{padding:14px 16px 10px;display:flex;flex-direction:column;gap:9px;flex:1}
+  .ubadge{flex:0 0 auto;width:56px;height:56px;border-radius:14px;display:flex;align-items:center;justify-content:center;font:600 15px Mitr,sans-serif;text-align:center;line-height:1.1;padding:2px}
+  .uname{font:600 18px Mitr,sans-serif;line-height:1.3}
+  .muted{color:var(--ink-soft);font-size:14px}
+  .pill{display:inline-block;border-radius:999px;padding:1px 10px;font-size:13px;background:var(--board)}
+  .pill.g{background:var(--pine-tint);color:var(--pine-deep)}
+  .tag{display:inline-block;background:#FFF4CC;color:#5A4700;border-radius:6px;padding:1px 8px;font-size:13px}
+  .tag.off{background:#F3D9D6;color:#8E2A20}
+  dl.kv{margin:0;display:grid;grid-template-columns:auto 1fr;gap:3px 12px;font-size:15px}
+  dl.kv dt{color:var(--ink-soft)} dl.kv dd{margin:0;font-weight:600}
+  .ufoot{border-top:1.5px dashed var(--line);padding:6px 16px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+  .ufoot a{font:500 15px Mitr,sans-serif;text-decoration:none;padding:10px 2px}
+  .cmpbar{position:fixed;left:0;right:0;bottom:0;background:var(--pine-deep);color:#fff;padding:10px 16px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:center;z-index:5}
+  .cmpbar .btn{background:var(--note);color:#3D3000}
+  .hero{border-radius:14px;padding:24px;display:flex;flex-wrap:wrap;gap:18px;align-items:center;box-shadow:var(--shadow)}
+  .hero .big{width:84px;height:84px;border-radius:20px;background:#fff;color:var(--ink);display:flex;align-items:center;justify-content:center;font:600 22px Mitr,sans-serif;text-align:center;line-height:1.1}
+  .hero h1{color:inherit}
+  .hero .hp{background:rgba(255,255,255,.75);color:var(--ink);border-radius:999px;padding:3px 12px;font-size:14px}
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px}
+  .stat{background:#fff;border-radius:14px;box-shadow:var(--shadow);padding:14px 18px}
+  .stat .v{font:600 22px Mitr,sans-serif}
+  .stat.g{background:var(--pine-tint);color:var(--pine-deep);box-shadow:none}
+  .opps{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px}
+  .opp{border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:4px}
+  .tblwrap{overflow-x:auto}
+  table{width:100%;border-collapse:collapse;font-size:15px}
+  th,td{padding:9px 12px;text-align:left;vertical-align:top}
+  thead th{background:var(--board);font:500 15px Mitr,sans-serif}
+  tbody tr{border-bottom:1px solid var(--line)}
+  td.num,th.num{text-align:right;white-space:nowrap}
+  td.best{background:var(--pine-tint);color:var(--pine-deep);font-weight:700}
+  th[scope=row]{font:500 15px Mitr,sans-serif;background:#F7FAF9;min-width:150px}
+  .two{display:flex;flex-wrap:wrap;gap:18px}.two>*{flex:1 1 420px}
+  .link-row{display:flex;justify-content:space-between;align-items:center;gap:10px;border:1px solid var(--line);border-radius:12px;padding:12px 14px;text-decoration:none;color:var(--ink);margin-bottom:10px}
+  .empty{border:1.5px dashed var(--line);border-radius:12px;padding:16px;color:var(--ink-soft);text-align:center}
+  .msg{padding:10px 14px;border-radius:10px;margin:0}
+  .msg.err{background:#FADBD8;color:#8E2A20}.msg.ok{background:var(--pine-tint);color:var(--pine-deep)}
+  .modal{position:fixed;inset:0;background:rgba(34,49,58,.45);display:flex;align-items:flex-start;justify-content:center;padding:24px 12px;overflow:auto;z-index:10}
+  .modal .box{background:#fff;border-radius:14px;max-width:640px;width:100%;padding:20px 22px;display:flex;flex-direction:column;gap:12px}
+  .modal label{display:flex;flex-direction:column;gap:4px;font-weight:600;font-size:15px}
+  .modal input[type=text],.modal input[type=url],.modal select,.modal textarea{font:inherit;font-weight:400;border:1px solid var(--line);border-radius:10px;padding:9px 12px;min-height:44px;background:#fff}
+  .modal textarea{min-height:80px;resize:vertical}
+  .modal .hint{font-weight:400;color:var(--ink-soft);font-size:13px}
+  .g2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+  @media (max-width:600px){.g2{grid-template-columns:1fr}.hero{padding:18px}h1{font-size:24px}}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="logo">PW</div>
+  <div class="brand"><b>แนะให้แนว</b><span>คลังมหาวิทยาลัย</span></div>
+  <a href="index.html">← กลับหน้าหลัก</a>
+  <div class="chip-user hidden" id="userChip"><span id="uName"></span><span class="role" id="uRole"></span></div>
+</header>
+
+<main>
+  <div class="card hidden" id="needLogin">
+    <h2>กรุณาเข้าสู่ระบบก่อน</h2>
+    <p>หน้านี้ดูได้เฉพาะนักเรียนและครูที่เข้าสู่ระบบแนะให้แนวแล้ว</p>
+    <a class="btn primary" href="index.html">ไปหน้าเข้าสู่ระบบ</a>
+  </div>
+  <p class="msg err hidden" id="err"></p>
+  <div id="view"></div>
+</main>
+
+<div class="cmpbar hidden" id="cmpBar">
+  <span id="cmpText"></span>
+  <a class="btn" id="cmpGo" href="#">⇄ เทียบเลย</a>
+  <button class="btn plain" id="cmpClear" type="button">ล้าง</button>
+</div>
+
+<div class="modal hidden" id="modal" role="dialog" aria-modal="true" aria-labelledby="mTitle">
+  <form class="box" id="mForm">
+    <h2 id="mTitle">แก้ข้อมูลมหาวิทยาลัย</h2>
+    <label id="mUniWrap">มหาวิทยาลัย
+      <select id="mUni"></select>
+      <span class="hint">เลือกจากรายชื่อกลาง ถ้าไม่มีในรายการ ให้เพิ่มที่ระบบซ้อมสัมภาษณ์ก่อน</span>
+    </label>
+    <div class="g2">
+      <label>ประเภท
+        <select id="mType" required>
+          <option value="public">มหาวิทยาลัยรัฐ</option><option value="rajabhat">ราชภัฏ</option>
+          <option value="rajamangala">ราชมงคล</option><option value="private">เอกชน</option><option value="special">สถาบันเฉพาะทาง</option>
+        </select>
+      </label>
+      <label>ระยะจากโรงเรียน
+        <select id="mZone"><option value="">ไม่ระบุ</option><option value="near">ใกล้ (ไป-กลับได้)</option><option value="mid">กลาง (ต้องหาที่พัก)</option><option value="far">ไกล (ต่างภาค)</option></select>
+      </label>
+      <label>จังหวัด<input type="text" id="mProv" maxlength="80"></label>
+      <label>วิทยาเขต / ศูนย์<input type="text" id="mCampus" maxlength="120" placeholder="เช่น วิทยาเขตศรีราชา"></label>
+      <label>หอในมหาวิทยาลัย
+        <select id="mDorm"><option value="">ไม่ระบุ</option><option value="1">มีหอใน</option><option value="0">ไม่มีหอใน</option></select>
+      </label>
+      <label>ข้อมูลค่าเทอม (จากเกมใกล้บ้าน vs ไกลบ้าน)
+        <select id="mGame"></select>
+      </label>
+    </div>
+    <label>จุดเด่น (ไม่เกิน 400 ตัวอักษร)
+      <textarea id="mHi" maxlength="400" placeholder="ภาษาง่าย ๆ 1–3 บรรทัด เช่น ฝึกงานกับโรงงานในนิคมฯ ตั้งแต่ปี 3"></textarea>
+    </label>
+    <div class="g2">
+      <label>เว็บไซต์<input type="url" id="mWeb" maxlength="300" placeholder="https://"></label>
+      <label>หน้ารับสมัคร<input type="url" id="mAdm" maxlength="300" placeholder="https://"></label>
+    </div>
+    <label>ที่มาของข้อมูล (ไม่บังคับ)<input type="text" id="mSrc" maxlength="300"></label>
+    <label style="flex-direction:row;align-items:center;gap:8px"><input type="checkbox" id="mPub"> แสดงให้นักเรียนเห็น</label>
+    <p class="msg hidden" id="mMsg"></p>
+    <div class="row" style="justify-content:flex-end">
+      <button type="button" class="btn plain" id="mCancel">ยกเลิก</button>
+      <button type="submit" class="btn primary" id="mSave">บันทึก</button>
+    </div>
+  </form>
+</div>
+
+<script src="cost-game-data.js"></script>
+<script src="congrats-card-draw.js"></script>
+<script type="module">
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+
+const SUPABASE_URL = 'https://ikkhjslmtjwrxzxvtokb.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_gkUomr4OsxcNV2a6EkVgRA__gCuRM7q';
+const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
+const CG = window.CG;
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const safeUrl = u => (u && /^https?:\/\//i.test(u)) ? u : '';
+const baht = n => Math.round(n).toLocaleString('th-TH');
+
+const TYPE_LABEL = {public:'รัฐ', rajabhat:'ราชภัฏ', rajamangala:'ราชมงคล', private:'เอกชน', special:'สถาบันเฉพาะทาง'};
+const ZONE_LABEL = {near:'ใกล้ (ไป-กลับได้)', mid:'กลาง (ต้องหาที่พัก)', far:'ไกล (ต่างภาค)'};
+const ZONE_SHORT = {near:'ใกล้', mid:'กลาง', far:'ไกล'};
+const MAX_CMP = 3;
+
+let ME = null, STAFF = false, UNIS = [], ALL_IV = [];
+const F = { q:'', track:'', type:'', zone:'', seniors:false, quota:false, iv:false, sort:'seniors' };
+let CMP = [];
+try { CMP = JSON.parse(sessionStorage.getItem('uniCmp') || '[]').filter(x => typeof x === 'string').slice(0, MAX_CMP); } catch(e) { CMP = []; }
+const saveCmp = () => { try { sessionStorage.setItem('uniCmp', JSON.stringify(CMP)); } catch(e) {} };
+
+/* หมวดของแต่ละสาขา จาก TRACKS ในเกม */
+const PROG_TRACK = {};
+Object.keys(CG.TRACKS).forEach(t => { const tr = CG.TRACKS[t]; (tr.priv || []).concat(tr.pub || []).forEach(k => { if (!PROG_TRACK[k]) PROG_TRACK[k] = t; }); });
+
+function showErr(t){ const e = $('err'); e.textContent = t; e.classList.toggle('hidden', !t); }
+
+function colorOf(name){ try { return window.PCWCard ? window.PCWCard.color({ inst: name }) : '#27478a'; } catch(e) { return '#27478a'; } }
+function codeOf(name, short){ let c = ''; try { c = window.PCWCard ? window.PCWCard.code({ inst: name }) : ''; } catch(e) {}
+  return c || String(short || '').replace(/^(ม\.|มทร\.|มรภ\.)/, '').slice(0, 6); }
+function isLight(hex){ const m = /^#?([0-9a-f]{6})$/i.exec(hex || ''); if (!m) return false;
+  const n = parseInt(m[1], 16), r = n >> 16, g = (n >> 8) & 255, b = n & 255; return (0.299*r + 0.587*g + 0.114*b) / 255 > 0.62; }
+function seniorsOf(g){ if (!g) return null; const s = g.seniors; if (typeof s === 'number') return s; if (s === '0') return 0; const n = Number(s); return Number.isFinite(n) ? n : null; }
+
+/* ---------- โหลดข้อมูล (เริ่มทำงานที่ท้ายไฟล์ หลังประกาศทุกอย่างครบ) ---------- */
+async function init(uid){
+  const { data: p } = await sb.from('profiles').select('display_name, class_room, role, is_guidance').eq('id', uid).maybeSingle();
+  if (!p) { showErr('ดึงข้อมูลบัญชีไม่ได้ กรุณาออกจากระบบแล้วเข้าใหม่ หรือแจ้งครูแนะแนว'); return; }
+  ME = p; STAFF = p.role === 'admin' || (p.role === 'teacher' && !!p.is_guidance);
+  $('uName').textContent = (p.display_name || '') + (p.class_room ? ' ' + p.class_room : '');
+  $('uRole').textContent = p.role === 'student' ? 'นักเรียน' : (p.role === 'admin' ? 'แอดมิน' : 'ครู');
+  $('userChip').classList.remove('hidden');
+  await loadAll();
+  window.addEventListener('hashchange', route);
+  route();
+}
+
+async function loadAll(){
+  const [pr, ex, iv] = await Promise.all([
+    sb.from('uni_profiles').select('*, iv_universities(id, name, short_name, aliases, campuses)').order('created_at'),
+    sb.rpc('uni_library_extras'),
+    STAFF ? sb.from('iv_universities').select('id, name, short_name, is_active').order('sort_order') : Promise.resolve({ data: [] })
+  ]);
+  if (pr.error) { showErr('โหลดข้อมูลมหาวิทยาลัยไม่สำเร็จ ลองรีเฟรชหน้าอีกครั้ง'); return; }
+  const extras = {}; (ex.data || []).forEach(r => { extras[r.university_id] = r; });
+  ALL_IV = iv.data || [];
+  UNIS = (pr.data || []).filter(r => r.iv_universities).map(r => build(r, extras[r.university_id] || {}));
+  CMP = CMP.filter(id => UNIS.some(u => u.id === id)); saveCmp();
+}
+
+function build(r, x){
+  const v = r.iv_universities, g = r.game_key && CG.U[r.game_key] ? CG.U[r.game_key] : null;
+  const progs = g ? Object.keys(CG.P).filter(k => CG.P[k].u === r.game_key).map(k => {
+    const p = CG.P[k]; return { key:k, name:p.name, sem:p.sem, total4:p.sem*8 + (p.summer||0) + (p.fixed||0), note:p.note || '', track:PROG_TRACK[k] || '' };
+  }) : [];
+  const color = colorOf(v.name);
+  return {
+    id: r.university_id, row: r, name: v.name, short: v.short_name, aliases: v.aliases || [], campuses: v.campuses || [],
+    g, gkey: r.game_key, progs, color, code: codeOf(v.name, v.short_name), light: isLight(color),
+    type: r.uni_type, zone: r.zone || (g && g.zone) || '', province: r.province || '', campus: r.campus_label || '',
+    seniors: seniorsOf(g), x,
+    hasQuota: !!(x.quotas && x.quotas.length), ivq: x.iv_questions || 0,
+    search: [v.name, v.short_name, (v.aliases || []).join(' '), r.province, r.campus_label, progs.map(p => p.name).join(' ')].join(' ').toLowerCase()
+  };
+}
+
+function feeRange(u, track){
+  const ps = u.progs.filter(p => !track || p.track === track);
+  if (!ps.length) return null;
+  const s = ps.map(p => p.sem); return [Math.min.apply(null, s), Math.max.apply(null, s)];
+}
+const rangeText = r => !r ? 'ยังไม่มีข้อมูล' : (r[0] === r[1] ? baht(r[0]) : baht(r[0]) + '–' + baht(r[1])) + ' บาท';
+function seniorsText(n){ return n == null ? 'ยังไม่มีข้อมูล' : (n === 0 ? 'ยังไม่มี' : n + ' คน'); }
+function countText(n){ return n == null ? 'น้อยกว่า 3 คน' : (n === 0 ? 'ยังไม่มี' : n + ' คน'); }
+
+function tagsOf(u){
+  const t = [];
+  if (!u.row.is_published) t.push('<span class="tag off">ซ่อนจากนักเรียน</span>');
+  if (u.hasQuota) t.push('<span class="tag">โควตาโรงเรียน</span>');
+  if (u.x.chang_phueak) t.push('<span class="tag">ช้างเผือก' + (u.x.chang_phueak === 'open' ? ' (เปิดรับ)' : '') + '</span>');
+  if (u.x.has_mou) t.push('<span class="tag">MOU</span>');
+  if (u.ivq) t.push('<span class="tag">ซ้อมสัมภาษณ์ ' + u.ivq + ' ข้อ</span>');
+  if (u.x.open_house && u.x.open_house.length) t.push('<span class="tag">Open House</span>');
+  if (u.g && u.g.firstYearIn) t.push('<span class="tag">ปี 1 อยู่หอใน</span>');
+  return t.join(' ');
+}
+
+/* ---------- เส้นทาง ---------- */
+function route(){
+  showErr('');
+  const h = location.hash.replace(/^#/, ''), prm = new URLSearchParams(h);
+  if (prm.get('u')) { const u = UNIS.find(x => x.id === prm.get('u')); u ? renderDetail(u) : renderList(); }
+  else if (prm.has('compare')) renderCompare(prm.get('compare').split(',').filter(Boolean));
+  else renderList();
+  updateCmpBar();
+  window.scrollTo(0, 0);
+}
+
+/* ---------- หน้ารวม ---------- */
+function chipRow(key, items){
+  return items.map(([v, l]) => `<button type="button" class="chip${F[key] === v ? ' on' : ''}" data-f="${key}" data-v="${esc(v)}">${esc(l)}</button>`).join('');
+}
+
+function renderList(){
+  const tracks = [['', 'ทั้งหมด']].concat(Object.keys(CG.TRACKS).map(k => [k, CG.TRACKS[k].icon + ' ' + CG.TRACKS[k].name.replace(/\s*\(.*\)$/, '')]));
+  $('view').innerHTML = `
+  <div style="display:flex;flex-direction:column;gap:18px">
+    <div class="row between" style="align-items:flex-end">
+      <div style="flex:1 1 380px"><h1>คลังมหาวิทยาลัย</h1>
+        <p class="sub">ดูค่าเทอม ที่พัก รุ่นพี่จาก PW และโควตาของแต่ละที่ ในหน้าเดียว</p></div>
+      <div class="row">
+        ${STAFF ? '<button type="button" class="btn ghost" id="addUni">+ เพิ่มมหาวิทยาลัย</button>' : ''}
+        <a class="btn primary" href="cost-game.html">🎮 เกมใกล้บ้าน vs ไกลบ้าน</a>
+      </div>
+    </div>
+    <section class="card filters">
+      <label><span class="lbl">ค้นหา</span>
+        <input class="search" type="search" id="q" value="${esc(F.q)}" placeholder="พิมพ์ชื่อมหาวิทยาลัย ชื่อย่อ หรือสาขา เช่น บูรพา, สจล., พยาบาล"></label>
+      <div><span class="lbl">อยากเรียนด้านไหน</span><div class="chips">${chipRow('track', tracks)}</div></div>
+      <div class="fgroup">
+        <div><span class="lbl">ประเภท</span><div class="chips">${chipRow('type', [['','ทั้งหมด'],['public','รัฐ'],['rajabhat','ราชภัฏ'],['rajamangala','ราชมงคล'],['private','เอกชน']])}</div></div>
+        <div><span class="lbl">ระยะจากโรงเรียน</span><div class="chips">${chipRow('zone', [['','ทั้งหมด'],['near','ใกล้'],['mid','กลาง'],['far','ไกล']])}</div></div>
+        <div><span class="lbl">เฉพาะที่มี</span><div class="chips">
+          <label class="ck"><input type="checkbox" data-ck="seniors"${F.seniors ? ' checked' : ''}> รุ่นพี่ PW</label>
+          <label class="ck"><input type="checkbox" data-ck="quota"${F.quota ? ' checked' : ''}> โควตาโรงเรียน</label>
+          <label class="ck"><input type="checkbox" data-ck="iv"${F.iv ? ' checked' : ''}> คำถามซ้อมสัมภาษณ์</label>
+        </div></div>
+      </div>
+    </section>
+    <div class="row between muted" style="font-size:15px">
+      <span id="count"></span>
+      <label class="row" style="gap:6px">เรียงตาม
+        <select class="sel" id="sort">
+          <option value="seniors"${F.sort === 'seniors' ? ' selected' : ''}>รุ่นพี่ PW มากสุด</option>
+          <option value="fee"${F.sort === 'fee' ? ' selected' : ''}>ค่าเทอมถูกสุด</option>
+          <option value="name"${F.sort === 'name' ? ' selected' : ''}>ชื่อ ก–ฮ</option>
+        </select></label>
+    </div>
+    <section class="grid" id="grid"></section>
+    <p class="muted" style="margin:0">ค่าเทอมเป็นค่าประมาณต่อภาค จากประกาศ/สรุปที่ครูตรวจไว้ (ตรวจล่าสุด ${esc(CG.CHECKED)}) · รุ่นพี่ = จำนวนนักเรียน PW ที่มีชื่อในผลคัดเลือก TCAS ${esc(CG.YEAR)} · ควรเช็กกับเว็บมหาวิทยาลัยอีกครั้งก่อนสมัคร</p>
+  </div>`;
+  $('view').querySelectorAll('[data-f]').forEach(b => b.addEventListener('click', () => { F[b.dataset.f] = b.dataset.v; renderList(); }));
+  $('view').querySelectorAll('[data-ck]').forEach(c => c.addEventListener('change', () => { F[c.dataset.ck] = c.checked; drawGrid(); }));
+  $('q').addEventListener('input', e => { F.q = e.target.value; drawGrid(); });
+  $('sort').addEventListener('change', e => { F.sort = e.target.value; drawGrid(); });
+  if ($('addUni')) $('addUni').addEventListener('click', () => openEdit(null));
+  drawGrid();
+}
+
+function drawGrid(){
+  const q = F.q.trim().toLowerCase();
+  let list = UNIS.filter(u =>
+    (!q || u.search.indexOf(q) >= 0) &&
+    (!F.track || u.progs.some(p => p.track === F.track)) &&
+    (!F.type || u.type === F.type) && (!F.zone || u.zone === F.zone) &&
+    (!F.seniors || (u.seniors || 0) > 0) && (!F.quota || u.hasQuota) && (!F.iv || u.ivq > 0));
+  const fee = u => { const r = feeRange(u, F.track); return r ? r[0] : Infinity; };
+  list.sort((a, b) => F.sort === 'fee' ? fee(a) - fee(b) || a.short.localeCompare(b.short, 'th')
+    : F.sort === 'name' ? a.short.localeCompare(b.short, 'th')
+    : ((b.seniors == null ? -1 : b.seniors) - (a.seniors == null ? -1 : a.seniors)) || a.short.localeCompare(b.short, 'th'));
+  $('count').innerHTML = `พบ <b style="color:var(--ink)">${list.length}</b> แห่ง จากทั้งหมด ${UNIS.length} แห่ง`;
+  $('grid').innerHTML = list.length ? list.map(u => `
+    <article class="ucard">
+      <div class="strip" style="background:${esc(u.color)}"></div>
+      <div class="body">
+        <div class="row" style="flex-wrap:nowrap;gap:12px">
+          <div class="ubadge" style="background:${esc(u.color)};color:${u.light ? '#22313A' : '#fff'};font-size:${u.code.length > 4 ? 13 : 15}px">${esc(u.code)}</div>
+          <div style="min-width:0"><div class="uname">${esc(u.short)}${u.campus ? ' ' + esc(u.campus) : ''}</div>
+            <div class="muted">${esc(u.province || u.name)}</div></div>
+        </div>
+        <div class="row" style="gap:6px">
+          <span class="pill g">${esc(TYPE_LABEL[u.type] || '')}</span>
+          ${u.zone ? `<span class="pill">${esc(ZONE_LABEL[u.zone])}</span>` : ''}
+          ${u.campuses.length > 1 ? `<span class="pill">${u.campuses.length} วิทยาเขต</span>` : ''}
+        </div>
+        <dl class="kv">
+          <dt>ค่าเทอม/ภาค</dt><dd>${esc(rangeText(feeRange(u, F.track)))}</dd>
+          <dt>รุ่นพี่ PW</dt><dd>${esc(seniorsText(u.seniors))}${u.seniors ? ' <span class="muted" style="font-weight:400">(TCAS ' + esc(CG.YEAR) + ')</span>' : ''}</dd>
+        </dl>
+        <div class="row" style="gap:6px">${tagsOf(u)}</div>
+      </div>
+      <div class="ufoot">
+        <label class="ck" style="border:0;padding:0 4px"><input type="checkbox" data-cmp="${esc(u.id)}"${CMP.includes(u.id) ? ' checked' : ''}> เทียบ</label>
+        <a href="#u=${encodeURIComponent(u.id)}">ดูรายละเอียด →</a>
+      </div>
+    </article>`).join('')
+    : '<div class="empty" style="grid-column:1/-1">ไม่พบมหาวิทยาลัยที่ตรงกับตัวกรอง ลองเอาตัวกรองบางอันออก</div>';
+  $('grid').querySelectorAll('[data-cmp]').forEach(c => c.addEventListener('change', () => toggleCmp(c.dataset.cmp, c)));
+}
+
+function toggleCmp(id, box){
+  if (CMP.includes(id)) CMP = CMP.filter(x => x !== id);
+  else if (CMP.length >= MAX_CMP) { if (box) box.checked = false; alertMsg('เทียบได้ครั้งละไม่เกิน ' + MAX_CMP + ' แห่ง เอาแห่งอื่นออกก่อนนะ'); return; }
+  else CMP.push(id);
+  saveCmp(); updateCmpBar();
+}
+function alertMsg(t){ showErr(t); setTimeout(() => showErr(''), 3500); }
+function updateCmpBar(){
+  const onCmp = location.hash.indexOf('compare') >= 0;
+  $('cmpBar').classList.toggle('hidden', !CMP.length || onCmp);
+  $('cmpText').textContent = 'เลือกเทียบแล้ว ' + CMP.length + ' แห่ง: ' + CMP.map(id => (UNIS.find(u => u.id === id) || {}).short).join(', ');
+  $('cmpGo').href = '#compare=' + CMP.join(',');
+  $('cmpGo').classList.toggle('hidden', CMP.length < 2);
+}
+$('cmpClear').addEventListener('click', () => { CMP = []; saveCmp(); updateCmpBar(); if (!location.hash.match(/u=/)) drawGridSafe(); });
+function drawGridSafe(){ if ($('grid')) drawGrid(); }
+
+/* ---------- หน้ารายละเอียด ---------- */
+function housingDefault(u){ return u.g && u.g.housing && u.g.housing.length ? u.g.housing[0] : 'home'; }
+function calcTotal(u, key){ try { return CG.calc(key, housingDefault(u), CG.DEFAULTS).total; } catch(e) { return null; } }
+
+function renderDetail(u){
+  const g = u.g, x = u.x, r = u.row, fr = feeRange(u, '');
+  const fg = u.light ? '#22313A' : '#fff';
+  const web = safeUrl(r.website_url), adm = safeUrl(r.admission_url);
+  const tracksHere = Object.keys(CG.TRACKS).filter(t => u.progs.some(p => p.track === t));
+  const progs = u.progs.slice().sort((a, b) => tracksHere.indexOf(a.track) - tracksHere.indexOf(b.track) || a.sem - b.sem);
+  const hd = housingDefault(u);
+
+  const opps = [];
+  (x.quotas || []).forEach(q => opps.push(`<div class="opp"><span class="tag" style="align-self:flex-start">${esc(q.type || 'โควตาโรงเรียน')}</span>
+    <b style="font-family:Mitr">${esc(q.faculty || 'ไม่ระบุคณะ')}${q.seats ? ' · ' + esc(q.seats) + ' ที่นั่ง' : ''}</b>
+    <span class="muted">ปีการศึกษา ${esc(q.year || '-')} · ${q.status === 'open' ? 'เปิดรับอยู่' : (q.status === 'closed' ? 'ปิดรับแล้ว' : 'กำลังดำเนินการ')}</span>
+    ${ME.role === 'student' ? '<a href="quota-apply.html">ดูโควตาและสมัคร →</a>' : '<a href="quota-hub.html">ไปหน้าจัดการโควตา →</a>'}</div>`));
+  if (x.chang_phueak) opps.push(`<div class="opp"><span class="tag" style="align-self:flex-start">โครงการช้างเผือก</span>
+    <b style="font-family:Mitr">คณะวิทยาศาสตร์</b><span class="muted">${x.chang_phueak === 'open' ? 'เปิดรับอยู่' : 'ยังไม่เปิดรับ / ปิดรับแล้ว'}</span>
+    ${ME.role === 'student' ? '<a href="chang-phueak-apply.html">ไปหน้าสมัคร →</a>' : '<a href="chang-phueak-teacher.html">ไปหน้าครู →</a>'}</div>`);
+  if (x.has_mou) opps.push(`<div class="opp"><span class="pill g" style="align-self:flex-start">MOU กับโรงเรียน</span>
+    <b style="font-family:Mitr">มีข้อตกลงความร่วมมือกับโรงเรียน</b><span class="muted">กิจกรรมร่วมกัน (ไม่ใช่สิทธิ์รับเข้าเรียน)</span></div>`);
+
+  const ohs = (x.open_house || []).map(e => {
+    const d = new Date(e.date + 'T00:00:00').toLocaleDateString('th-TH', { dateStyle: 'long' });
+    return `<a class="link-row" href="open-house-register.html?event=${encodeURIComponent(e.code)}"><span><b style="font-family:Mitr;font-weight:500">Open House</b><br><span class="muted">${esc(d)}${e.open ? ' · เปิดลงทะเบียน' : ''}</span></span><span>→</span></a>`;
+  }).join('');
+
+  const srcs = [];
+  const addSrc = k => { const s = k && CG.SRC[k]; if (s && !srcs.some(z => z.t === s.t)) srcs.push(s); };
+  if (g) { addSrc(g.src); addSrc(g.dormSrc); addSrc(g.rentSrc || (g.rent ? 'rent' : '')); addSrc(g.tripSrc); u.progs.forEach(p => addSrc(CG.P[p.key].src)); }
+
+  $('view').innerHTML = `
+  <div style="display:flex;flex-direction:column;gap:18px">
+    <a href="#" style="text-decoration:none">← กลับคลังมหาวิทยาลัย</a>
+    <section class="hero" style="background:${esc(u.color)};color:${fg}">
+      <div class="big">${esc(u.code)}</div>
+      <div style="flex:1 1 340px;display:flex;flex-direction:column;gap:6px">
+        <h1>${esc(u.name)}</h1>
+        <div style="font-size:17px">${esc([u.short, u.campus, u.province, TYPE_LABEL[u.type], u.zone ? 'ระยะ' + ZONE_SHORT[u.zone] : ''].filter(Boolean).join(' · '))}</div>
+        ${u.campuses.length ? `<div class="row" style="gap:6px">${u.campuses.map(c => `<span class="hp">${esc(c)}</span>`).join('')}</div>` : ''}
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        ${adm ? `<a class="btn" style="background:#22313A;color:#fff" href="${esc(adm)}" target="_blank" rel="noopener noreferrer">🌐 หน้ารับสมัคร</a>` : ''}
+        ${web ? `<a class="btn" style="background:#fff;color:#22313A" href="${esc(web)}" target="_blank" rel="noopener noreferrer">เว็บไซต์มหาวิทยาลัย</a>` : ''}
+        <button type="button" class="btn" style="background:#fff;color:#22313A" id="addCmp">${CMP.includes(u.id) ? '✓ อยู่ในรายการเทียบ' : '⇄ เพิ่มลงรายการเทียบ'}</button>
+      </div>
+    </section>
+    ${r.highlights ? `<section class="card"><h2>✨ จุดเด่น</h2><p style="margin:0;white-space:pre-line">${esc(r.highlights)}</p></section>` : ''}
+    <section class="stats">
+      <div class="stat"><div class="muted">ค่าเทอมต่อภาค</div><div class="v">${esc(rangeText(fr))}</div><div class="muted">${u.progs.length ? 'แล้วแต่สาขา (' + u.progs.length + ' สาขาในคลัง)' : 'ครูยังไม่ได้ใส่ข้อมูล'}</div></div>
+      <div class="stat"><div class="muted">หอใน</div><div class="v">${g && g.dormIn ? 'เริ่ม ' + baht(g.dormIn.fee) + ' / เทอม' : (r.has_dorm === true ? 'มีหอใน' : (r.has_dorm === false ? 'ไม่มีหอใน' : 'ยังไม่มีข้อมูล'))}</div><div class="muted">${esc(g && g.dormIn ? g.dormIn.label : '')}</div></div>
+      <div class="stat"><div class="muted">${g && g.housing && g.housing.indexOf('home') >= 0 ? 'อยู่บ้านได้ / หอนอก' : 'หอนอก (ค่ากลาง)'}</div><div class="v">${g && g.rent ? '~' + baht(g.rent) + ' / เดือน' : (g && g.housing && g.housing.indexOf('home') >= 0 ? 'ไป-กลับได้' : 'ยังไม่มีข้อมูล')}</div><div class="muted">${g && g.rent ? 'ห้องราคาประหยัดใกล้มหาวิทยาลัย' : ''}</div></div>
+      <div class="stat g"><div>รุ่นพี่ PW ที่ติด TCAS ${esc(CG.YEAR)}</div><div class="v">${esc(seniorsText(u.seniors))}</div><div>${esc(u.campus || '')}</div></div>
+    </section>
+    ${opps.length ? `<section class="card"><h2>⭐ โอกาสพิเศษสำหรับนักเรียน PW</h2><div class="opps">${opps.join('')}</div></section>` : ''}
+    <section class="card">
+      <div class="row between" style="margin-bottom:10px"><h2 style="margin:0">💰 สาขาและค่าเรียน</h2>
+        <a class="btn primary" href="cost-game.html">🎮 ลองคิดเองในเกม</a></div>
+      ${progs.length ? `<div class="tblwrap"><table style="min-width:640px">
+        <thead><tr><th>สาขา</th><th>ด้าน</th><th class="num">ต่อภาค</th><th class="num">ค่าเทอม 4 ปี</th><th class="num">รวมกิน-อยู่-เดินทาง 4 ปี*</th></tr></thead>
+        <tbody>${progs.map(p => { const t = calcTotal(u, p.key); return `<tr>
+          <td>${esc(p.name)}${p.note ? `<div class="muted">${esc(p.note)}</div>` : ''}</td>
+          <td>${p.track ? `<span class="pill g">${esc(CG.TRACKS[p.track].icon + ' ' + CG.TRACKS[p.track].name.replace(/\s*\(.*\)$/, ''))}</span>` : ''}</td>
+          <td class="num">${baht(p.sem)}</td><td class="num"><b>${baht(p.total4)}</b></td><td class="num">${t == null ? '-' : baht(t)}</td></tr>`; }).join('')}</tbody></table></div>
+        <p class="muted" style="margin:10px 0 0">ค่าเทอม 4 ปี = ต่อภาค × 8 ภาค (+ ภาคฤดูร้อน/ค่าแรกเข้า ถ้ามี) · *คิดแบบ “${esc(CG.HOUSING[hd] || '')}” ด้วยค่าประมาณเดียวกับเกม (ค่ากิน ค่ารถ ค่ากลับบ้าน) บ้านแต่ละคนไม่เท่ากัน</p>`
+      : '<div class="empty">ยังไม่มีข้อมูลค่าเทอมของที่นี่</div>'}
+    </section>
+    <div class="two">
+      <section class="card">
+        <h2>🎓 รุ่นพี่ PW ที่นี่</h2>
+        <div class="row" style="gap:10px;margin-bottom:12px">
+          <div class="stat" style="flex:1 1 150px;box-shadow:none;background:var(--board)"><div class="muted">ติด TCAS ${esc(CG.YEAR)}</div><div class="v">${esc(seniorsText(u.seniors))}</div></div>
+          <div class="stat" style="flex:1 1 150px;box-shadow:none;background:var(--board)"><div class="muted">ตอบแบบสำรวจว่าติดที่นี่</div><div class="v">${esc(countText(x.admitted))}</div></div>
+          <div class="stat" style="flex:1 1 150px;box-shadow:none;background:var(--board)"><div class="muted">เลือกเรียนที่นี่</div><div class="v">${esc(countText(x.chosen))}</div></div>
+        </div>
+        ${x.faculties && x.faculties.length
+          ? `<table><thead><tr><th>คณะที่รุ่นพี่เลือกเรียน</th><th class="num">จำนวน</th></tr></thead><tbody>${x.faculties.map(f => `<tr><td>${esc(f.faculty)}</td><td class="num">${esc(countText(f.n))}</td></tr>`).join('')}</tbody></table>`
+          : '<div class="empty">ยังแสดงรายคณะไม่ได้ (ต้องมีรุ่นพี่เลือกเรียนที่นี่อย่างน้อย 3 คน)<br>ไม่แสดงชื่อรุ่นพี่ เพื่อความเป็นส่วนตัว</div>'}
+      </section>
+      <section class="card">
+        <h2>🗣 เตรียมตัว</h2>
+        ${u.ivq ? `<a class="link-row" href="interview.html"><span><b style="font-family:Mitr;font-weight:500">ซ้อมสัมภาษณ์ ${esc(u.short)}</b><br><span class="muted">คำถามเฉพาะที่นี่ ${u.ivq} ข้อ</span></span><span>→</span></a>` : ''}
+        ${ohs}
+        <a class="link-row" href="index.html"><span><b style="font-family:Mitr;font-weight:500">กำหนดการ TCAS</b><br><span class="muted">ดูในปฏิทินสอบหน้าแรก</span></span><span>→</span></a>
+        <a class="link-row" href="https://timemachine68.github.io/admission70/" target="_blank" rel="noopener noreferrer"><span><b style="font-family:Mitr;font-weight:500">คะแนนสูงสุด–ต่ำสุดปีที่แล้ว</b><br><span class="muted">ค้นทุกคณะ ทุกมหาวิทยาลัย</span></span><span>→</span></a>
+      </section>
+    </div>
+    <section class="card">
+      <h2>📎 ข้อมูลมาจากไหน</h2>
+      ${srcs.length ? `<ul style="margin:0;padding-left:20px">${srcs.map(s => `<li>${esc(s.t)}${safeUrl(s.u) ? ` — <a href="${esc(s.u)}" target="_blank" rel="noopener noreferrer">เปิดแหล่งข้อมูล</a>` : ''}</li>`).join('')}</ul>` : '<p class="muted" style="margin:0">ยังไม่มีแหล่งข้อมูลค่าเทอม</p>'}
+      ${r.source_note ? `<p style="margin:8px 0 0">${esc(r.source_note)}</p>` : ''}
+      <div class="row between" style="border-top:1.5px dashed var(--line);margin-top:12px;padding-top:12px">
+        <span class="muted">ตรวจค่าเทอมล่าสุด ${esc(CG.CHECKED)} · ข้อมูลทั่วไปแก้ล่าสุด ${esc(new Date(r.updated_at).toLocaleDateString('th-TH', { dateStyle: 'medium' }))} · ตัวเลขเปลี่ยนได้ทุกปี เช็กประกาศมหาวิทยาลัยก่อนสมัคร</span>
+        ${STAFF ? '<button type="button" class="btn plain" id="editUni">✏️ แก้ข้อมูล</button>' : ''}
+      </div>
+    </section>
+  </div>`;
+  $('addCmp').addEventListener('click', () => { toggleCmp(u.id); $('addCmp').textContent = CMP.includes(u.id) ? '✓ อยู่ในรายการเทียบ' : '⇄ เพิ่มลงรายการเทียบ'; });
+  if ($('editUni')) $('editUni').addEventListener('click', () => openEdit(u));
+}
+
+/* ---------- หน้าเทียบ ---------- */
+let CMP_TRACK = '';
+function renderCompare(ids){
+  const us = ids.map(id => UNIS.find(u => u.id === id)).filter(Boolean).slice(0, MAX_CMP);
+  if (us.length < 2) { $('view').innerHTML = '<div class="card"><h2>เลือกมหาวิทยาลัยอย่างน้อย 2 แห่ง</h2><p>ติ๊ก “เทียบ” ที่การ์ดในหน้าคลังมหาวิทยาลัย</p><a class="btn primary" href="#">กลับคลังมหาวิทยาลัย</a></div>'; return; }
+  const tracks = Object.keys(CG.TRACKS).filter(t => us.some(u => u.progs.some(p => p.track === t)));
+  if (CMP_TRACK && tracks.indexOf(CMP_TRACK) < 0) CMP_TRACK = '';
+  if (!CMP_TRACK) CMP_TRACK = tracks.find(t => us.every(u => u.progs.some(p => p.track === t))) || tracks[0] || '';
+  const pick = us.map(u => { const ps = u.progs.filter(p => p.track === CMP_TRACK).sort((a, b) => a.sem - b.sem); return ps[0] || null; });
+  const tot = us.map((u, i) => pick[i] ? calcTotal(u, pick[i].key) : null);
+  const bestIdx = (vals, lower) => { let b = -1; vals.forEach((v, i) => { if (v == null) return; if (b < 0 || (lower ? v < vals[b] : v > vals[b])) b = i; });
+    return (b >= 0 && vals.filter(v => v === vals[b]).length === 1) ? b : -1; };
+  const row = (label, cells, best) => `<tr><th scope="row">${esc(label)}</th>${cells.map((c, i) => `<td class="${i === best ? 'best' : ''}">${c}</td>`).join('')}</tr>`;
+  const housingText = u => { const g = u.g; if (!g) return 'ยังไม่มีข้อมูล';
+    return (g.housing || []).map(h => h === 'home' ? 'อยู่บ้าน ไป-กลับ' : h === 'dorm_in' ? 'หอใน ~' + baht(g.dormIn ? g.dormIn.fee : 0) + '/เทอม' : 'หอนอก ~' + baht(g.rent || 0) + '/เดือน').join(' · '); };
+  const sem = pick.map(p => p ? p.sem : null), t4 = pick.map(p => p ? p.total4 : null), sn = us.map(u => u.seniors);
+
+  $('view').innerHTML = `
+  <div style="display:flex;flex-direction:column;gap:18px">
+    <a href="#" style="text-decoration:none">← กลับคลังมหาวิทยาลัย</a>
+    <div class="row between" style="align-items:flex-end">
+      <div><h1>เทียบมหาวิทยาลัย</h1><p class="sub">เทียบสาขาที่ถูกที่สุดของแต่ละแห่งในด้านเดียวกัน</p></div>
+      <label class="row" style="gap:8px"><span class="lbl" style="margin:0">ด้านที่สนใจ</span>
+        <select class="sel" id="cmpTrack">${tracks.map(t => `<option value="${t}"${t === CMP_TRACK ? ' selected' : ''}>${esc(CG.TRACKS[t].icon + ' ' + CG.TRACKS[t].name)}</option>`).join('')}</select></label>
+    </div>
+    <div class="card tblwrap" style="padding:0">
+      <table style="min-width:720px">
+        <thead><tr><th style="background:#fff"></th>${us.map(u => `<th style="background:#fff;padding:0;vertical-align:top">
+          <div style="height:8px;background:${esc(u.color)}"></div>
+          <div class="row between" style="padding:12px 14px;flex-wrap:nowrap;align-items:flex-start">
+            <div><a href="#u=${encodeURIComponent(u.id)}" style="font:600 18px Mitr,sans-serif;text-decoration:none;color:var(--ink)">${esc(u.short)}</a><div class="muted" style="font-family:Sarabun">${esc(u.campus || u.province)}</div></div>
+            <button type="button" class="btn plain" style="padding:6px 12px" data-rm="${esc(u.id)}" aria-label="นำ ${esc(u.short)} ออกจากการเทียบ">✕</button>
+          </div></th>`).join('')}</tr></thead>
+        <tbody>
+          ${row('สาขาที่เทียบ', pick.map(p => p ? esc(p.name) : '<span class="muted">ไม่มีสาขาด้านนี้ในคลัง</span>'), -1)}
+          ${row('ค่าเทอมต่อภาค', sem.map(v => v == null ? '-' : baht(v)), bestIdx(sem, true))}
+          ${row('ค่าเทอม 4 ปี', t4.map(v => v == null ? '-' : baht(v)), bestIdx(t4, true))}
+          ${row('รวมกิน-อยู่-เดินทาง 4 ปี*', tot.map(v => v == null ? '-' : baht(v)), bestIdx(tot, true))}
+          ${row('ระยะจากโรงเรียน', us.map(u => esc(ZONE_LABEL[u.zone] || '-')), -1)}
+          ${row('ที่พัก', us.map(u => esc(housingText(u))), -1)}
+          ${row('รุ่นพี่ PW (TCAS ' + CG.YEAR + ')', sn.map(v => esc(seniorsText(v))), bestIdx(sn, false))}
+          ${row('โควตาโรงเรียน', us.map(u => u.hasQuota ? esc(u.x.quotas.map(q => (q.faculty || '') + (q.seats ? ' ' + q.seats + ' ที่' : '')).join(', ')) : '—'), -1)}
+          ${row('ซ้อมสัมภาษณ์', us.map(u => u.ivq ? u.ivq + ' ข้อ' : 'ยังไม่มี'), -1)}
+        </tbody>
+      </table>
+    </div>
+    <div class="row between">
+      <p class="muted" style="margin:0">ช่องสีเขียว = ดีที่สุดในแถว (ถูกสุด / รุ่นพี่มากสุด) · *คิดแบบที่พักแบบแรกของแต่ละแห่งด้วยค่าประมาณเดียวกับเกม</p>
+      <a class="btn primary" href="cost-game.html">🎮 คิดละเอียดในเกม</a>
+    </div>
+  </div>`;
+  $('cmpTrack').addEventListener('change', e => { CMP_TRACK = e.target.value; renderCompare(ids); });
+  $('view').querySelectorAll('[data-rm]').forEach(b => b.addEventListener('click', () => {
+    CMP = CMP.filter(x => x !== b.dataset.rm); saveCmp();
+    const left = ids.filter(x => x !== b.dataset.rm); location.hash = 'compare=' + left.join(',');
+  }));
+}
+
+/* ---------- ครูแนะแนว: เพิ่ม/แก้ ---------- */
+let EDITING = null;
+function openEdit(u){
+  EDITING = u;
+  const r = u ? u.row : {};
+  $('mTitle').textContent = u ? 'แก้ข้อมูล ' + u.short : 'เพิ่มมหาวิทยาลัยเข้าคลัง';
+  $('mUniWrap').classList.toggle('hidden', !!u);
+  const used = new Set(UNIS.map(x => x.id));
+  $('mUni').innerHTML = '<option value="">— เลือก —</option>' + ALL_IV.filter(v => !used.has(v.id) && v.is_active)
+    .map(v => `<option value="${esc(v.id)}">${esc(v.name)}</option>`).join('');
+  const usedG = new Set(UNIS.filter(x => x !== u && x.gkey).map(x => x.gkey));
+  $('mGame').innerHTML = '<option value="">ไม่มี</option>' + Object.keys(CG.U).filter(k => !usedG.has(k))
+    .map(k => `<option value="${esc(k)}">${esc(CG.U[k].name)}</option>`).join('');
+  $('mType').value = r.uni_type || 'public';
+  $('mZone').value = r.zone || '';
+  $('mProv').value = r.province || '';
+  $('mCampus').value = r.campus_label || '';
+  $('mDorm').value = r.has_dorm === true ? '1' : (r.has_dorm === false ? '0' : '');
+  $('mGame').value = r.game_key || '';
+  $('mHi').value = r.highlights || '';
+  $('mWeb').value = r.website_url || '';
+  $('mAdm').value = r.admission_url || '';
+  $('mSrc').value = r.source_note || '';
+  $('mPub').checked = u ? !!r.is_published : true;
+  $('mMsg').className = 'msg hidden';
+  $('modal').classList.remove('hidden');
+}
+$('mCancel').addEventListener('click', () => $('modal').classList.add('hidden'));
+$('mForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const m = $('mMsg'), say = (t, ok) => { m.textContent = t; m.className = 'msg ' + (ok ? 'ok' : 'err'); };
+  const clean = v => { v = v.trim(); return v || null; };
+  const web = clean($('mWeb').value), adm = clean($('mAdm').value);
+  if (web && !/^https?:\/\//i.test(web)) return say('เว็บไซต์ต้องขึ้นต้นด้วย https://', false);
+  if (adm && !/^https?:\/\//i.test(adm)) return say('หน้ารับสมัครต้องขึ้นต้นด้วย https://', false);
+  const row = {
+    uni_type: $('mType').value, zone: $('mZone').value || null, province: clean($('mProv').value), campus_label: clean($('mCampus').value),
+    has_dorm: $('mDorm').value === '' ? null : $('mDorm').value === '1', game_key: $('mGame').value || null,
+    highlights: clean($('mHi').value), website_url: web, admission_url: adm, source_note: clean($('mSrc').value), is_published: $('mPub').checked
+  };
+  let res;
+  $('mSave').disabled = true;
+  if (EDITING) res = await sb.from('uni_profiles').update(row).eq('university_id', EDITING.id).select('university_id');
+  else {
+    if (!$('mUni').value) { $('mSave').disabled = false; return say('กรุณาเลือกมหาวิทยาลัย', false); }
+    row.university_id = $('mUni').value;
+    res = await sb.from('uni_profiles').insert(row).select('university_id');
+  }
+  $('mSave').disabled = false;
+  if (res.error) return say(res.error.code === '23505' ? 'มหาวิทยาลัยนี้หรือข้อมูลค่าเทอมชุดนี้ถูกใช้กับแห่งอื่นแล้ว' : 'บันทึกไม่สำเร็จ ตรวจข้อมูลแล้วลองใหม่', false);
+  if (!res.data || !res.data.length) return say('บันทึกไม่ได้ เฉพาะครูแนะแนวและแอดมินเท่านั้นที่แก้ได้', false);
+  $('modal').classList.add('hidden');
+  const goId = EDITING ? EDITING.id : row.university_id;
+  await loadAll();
+  if (location.hash === '#u=' + goId) route(); else location.hash = 'u=' + goId;
+});
+
+/* ---------- เริ่ม ---------- */
+const { data: { session } } = await sb.auth.getSession();
+if (!session) { $('needLogin').classList.remove('hidden'); }
+else { await init(session.user.id); }
+</script>
+</body>
+</html>
