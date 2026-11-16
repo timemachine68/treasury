@@ -204,6 +204,10 @@ async function init(uid){
   $('uName').textContent = (p.display_name || '') + (p.class_room ? ' ' + p.class_room : '');
   $('uRole').textContent = p.role === 'student' ? 'นักเรียน' : (p.role === 'admin' ? 'แอดมิน' : 'ครู');
   $('userChip').classList.remove('hidden');
+  if (!STAFF && p.role !== 'student') {
+    $('view').innerHTML = '<div class="card"><h2>หน้านี้สำหรับนักเรียนและครูแนะแนว</h2><p>บัญชีของคุณครูยังไม่มีสิทธิ์ดูคลังมหาวิทยาลัย ถ้าต้องใช้งาน กรุณาติดต่อครูแนะแนว</p><a class="btn primary" href="index.html">กลับหน้าหลัก</a></div>';
+    return;
+  }
   await loadAll();
   window.addEventListener('hashchange', route);
   route();
