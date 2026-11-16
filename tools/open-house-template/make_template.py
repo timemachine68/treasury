@@ -11,7 +11,7 @@
 - คงรูปแบบเดิม (ตราครุฑ ฟอนต์ ระยะขอบ) แทนเฉพาะข้อความที่ต้องเปลี่ยนด้วย {{KEY}}
 - อ้างย่อหน้าตามลำดับ: บันทึก p0-28, หัวรายชื่อ p34, แถวแม่แบบ p35, หนังสือผู้ปกครอง p68-96
   ถ้าโรงเรียนเปลี่ยนแบบฟอร์ม ลำดับย่อหน้าจะเปลี่ยน -> สคริปต์จะหยุดที่ assert ให้แก้เลขย่อหน้าก่อน
-- หนังสือขออนุญาตผู้ปกครอง = 1 หน้า ไม่ระบุชื่อนักเรียน (เว้นจุดไว้ให้กรอกเอง) ใส่เฉพาะรายละเอียดกิจกรรม
+- หนังสือขออนุญาตผู้ปกครอง = 1 หน้า ไม่ระบุชื่อนักเรียน (เว้นจุดไว้ให้กรอกเอง) ใส่เฉพาะรายละเอียดกิจกรรม ใช้เลขไทยทั้งฉบับ
 - ใส่ path ของ open-house-docs.js เป็นอาร์กิวเมนต์ที่ 3 เพื่อแทนค่า TPL_B64 ให้อัตโนมัติ
 """
 import sys, zipfile, copy, re, io
@@ -124,6 +124,20 @@ insert_ppr_child(row, ind, after=order + ['tabs','suppressAutoHyphens','kinsoku'
 
 # ---------- หนังสือขออนุญาตผู้ปกครอง ----------
 replace_span(P[69], '149', '{{PNO}}')
+# บรรทัด "ที่ ศธ ... [แท็บหลายครั้ง] โรงเรียนพูลเจริญวิทยาคม": เดิมกดแท็บ 6 ครั้งดันชื่อโรงเรียน
+# พอเป็นเลขไทย (กว้างกว่า) ชื่อโรงเรียนเลยขอบแล้วขึ้นบรรทัดใหม่ -> ใช้แท็บเดียวไปจุดแท็บคงที่ 6480
+# (= 4.5 นิ้วจากขอบซ้าย ตำแหน่งเดิมของชื่อโรงเรียนในต้นฉบับ) ไม่ขึ้นกับความกว้างของตัวเลข
+for r in P[69].findall(q('r')):
+    for tb in r.findall(q('tab')): r.remove(tb)
+    for t in r.findall(q('t')):
+        if not (t.text or '').strip(): t.text = ''
+school = [t for t in P[69].iter(q('t')) if 'โรงเรียนพูลเจริญวิทยาคม' in (t.text or '')]
+assert len(school) == 1
+school[0].text = school[0].text.lstrip()
+school[0].addprevious(etree.Element(q('tab')))
+tabs69 = etree.Element(q('tabs')); tb = etree.SubElement(tabs69, q('tab'))
+tb.set(q('val'), 'left'); tb.set(q('pos'), '6480')
+insert_ppr_child(P[69], tabs69, after=['pStyle','keepNext','keepLines','pageBreakBefore','framePr','widowControl','numPr','suppressLineNumbers','pBdr','shd'])
 collapse(P[72], '{{DATE}}')
 replace_span(P[74], 'มหาวิทยาลัยธุรกิจบัณฑิตย์', '{{UNI}}')
 # P[76] "เรียน ผู้ปกครองของ......" คงจุดไว้ให้กรอกเอง (หนังสือฉบับเดียวใช้ถ่ายสำเนาแจก)
@@ -176,6 +190,16 @@ for t in body.iter(q('t')):
         new = insert_zwsp(t.text.replace(ZWS, ''))
         if new != t.text: t.text = new; n_zw += 1
 print('ชิดซ้าย %d ย่อหน้า · แทรกตัวคั่นคำ %d ช่วงข้อความ' % (n_left, n_zw))
+
+# ---------- หนังสือผู้ปกครอง: ตัวเลขไทย (ครูกำหนด 16 พ.ย. 2569) ----------
+# ทำหลังแทรกตัวคั่นคำ: ตอนแทรกยังเป็นเลขอารบิก pythainlp จึงไม่แทรกตัวคั่นกลางเลขที่หนังสือ/เบอร์โทร
+TH_DIGITS = str.maketrans('0123456789', '๐๑๒๓๔๕๖๗๘๙')
+n_th = 0
+for p in P[68:97]:
+    for t in p.iter(q('t')):
+        if t.text and re.search(r'[0-9]', t.text):
+            t.text = t.text.translate(TH_DIGITS); n_th += 1
+print('หนังสือผู้ปกครอง: เปลี่ยนเป็นเลขไทย %d ช่วงข้อความ' % n_th)
 
 # ---------- บันทึกด้วย python-docx + ล้างชื่อผู้สร้างไฟล์ ----------
 doc.core_properties.author = 'แนะให้แนว'
