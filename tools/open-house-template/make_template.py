@@ -83,9 +83,25 @@ def set_jc(p, val):
     jc.set(q('val'), val)
 
 P = paras
+
+def set_first_line(p, twips):
+    """ย่อหน้าบรรทัดแรกแบบคงที่ (แทนการเคาะเว้นวรรค/แท็บ) — คง left/right เดิมไว้"""
+    x = ppr(p); ind = x.find(q('ind'))
+    if ind is None:
+        ind = etree.Element(q('ind'))
+        insert_ppr_child(p, ind, after=['pStyle','keepNext','keepLines','pageBreakBefore','framePr','widowControl','numPr',
+            'suppressLineNumbers','pBdr','shd','tabs','suppressAutoHyphens','kinsoku','wordWrap','overflowPunct','topLinePunct',
+            'autoSpaceDE','autoSpaceDN','bidi','adjustRightInd','snapToGrid','spacing'])
+    for a in ('hanging', 'hangingChars', 'firstLineChars'): ind.attrib.pop(q(a), None)
+    ind.set(q('firstLine'), str(twips))
+
+# ย่อหน้า "ด้วย…" ในต้นฉบับเคาะเว้นวรรค 9 ครั้ง ไม่ตรงกับย่อหน้าอื่นที่ใช้แท็บ 2 ครั้ง (1440 = 2.54 ซม.)
+# -> ใช้ย่อหน้าบรรทัดแรก 1440 คงที่ ให้เริ่มตรงกับ "ในการนี้" / ข้อ 1-2 / "จึงเรียน"
+INDENT = 1440
 # ---------- บันทึกข้อความ ----------
 replace_span(P[6], '5 พฤศจิกายน 2569', '{{DATE}}')
-collapse(P[13], '         ด้วย{{UNI}} ได้จัดกิจกรรม Open House ในวัน{{DAYDATE}} ระหว่างเวลา {{TIME}} ณ {{PLACE}} ในการนี้จึงขออนุญาตนำนักเรียนเข้าร่วมกิจกรรมดังกล่าว โดยมีรายชื่อนักเรียนตามเอกสารแนบ')
+collapse(P[13], 'ด้วย{{UNI}} ได้จัดกิจกรรม Open House ในวัน{{DAYDATE}} ระหว่างเวลา {{TIME}} ณ {{PLACE}} ในการนี้จึงขออนุญาตนำนักเรียนเข้าร่วมกิจกรรมดังกล่าว โดยมีรายชื่อนักเรียนตามเอกสารแนบ')
+set_first_line(P[13], INDENT)
 replace_span(P[14], '...............................................', '{{TEACHERS}}')
 replace_span(P[14], 'ตำแหน่ง ครูแนะแนว', 'ตำแหน่ง {{POSITION}}')
 # ข้อ 2 เดิมแยก 2 บรรทัด (กด Enter กลางประโยค) -> รวมเป็นย่อหน้าเดียว ชิดซ้ายขวาแบบปกติ
@@ -141,7 +157,8 @@ insert_ppr_child(P[69], tabs69, after=['pStyle','keepNext','keepLines','pageBrea
 collapse(P[72], '{{DATE}}')
 replace_span(P[74], 'มหาวิทยาลัยธุรกิจบัณฑิตย์', '{{UNI}}')
 # P[76] "เรียน ผู้ปกครองของ......" คงจุดไว้ให้กรอกเอง (หนังสือฉบับเดียวใช้ถ่ายสำเนาแจก)
-collapse(P[78], '         ด้วย{{UNI}} ได้จัดกิจกรรม Open House ในวัน{{DAYDATE}} ระหว่างเวลา {{TIME}} ณ {{PLACE}}')
+collapse(P[78], 'ด้วย{{UNI}} ได้จัดกิจกรรม Open House ในวัน{{DAYDATE}} ระหว่างเวลา {{TIME}} ณ {{PLACE}}')
+set_first_line(P[78], INDENT)
 replace_span(P[80], '......................................................', ' {{TEACHERS}}')
 replace_span(P[80], 'ครูแนะแนว', '{{POSITION}}')
 replace_span(P[85], 'นางสุภาพร  รัตน์น้อย', '{{DIRECTOR}}')
