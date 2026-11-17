@@ -56,37 +56,41 @@ const SRC = {
   kmutnb:{t:"สรุปค่าเทอม มจพ. 2569 ทุกคณะ (Dream Nest Hub)", u:"https://dreamnesthub.com/tuition-fee-kmutnb-2569"},
   sut:  {t:"สรุปค่าใช้จ่าย มทส. (Dream Nest Hub — อัตราปี 2568 ควรเช็กประกาศปีล่าสุด)", u:"https://dreamnesthub.com/sut-tuition"},
   dormSUT:{t:"หอพัก มทส. 3,100 บาท/คน/เทอม (เอกสารหอพัก มทส.)", u:"https://misbase.sut.ac.th/ranking/view_fileother.php?file=1757042127_%E0%B8%AB%E0%B8%AD%E0%B8%9E%E0%B8%B1%E0%B8%81+%E0%B8%A1%E0%B8%97%E0%B8%AA+.pdf"},
+  /* 17 พ.ย. 2569: ม.เกษตรศาสตร์ บางเขน */
+  kub:  {t:"สรุปค่าเทอม ม.เกษตรศาสตร์ บางเขน ปี 2569 ภาคปกติ ค่าประมาณต่อภาค (AdmissionPremium อ้างประกาศ มก.)", u:"https://www.admissionpremium.com/content/8883"},
+  rentKUB:{t:"หอพัก/อพาร์ตเมนต์แถวพหลโยธิน ใกล้ มก.บางเขน 3,000–5,500 บาท/เดือน ใช้ค่ากลาง (SuperAgent)", u:"https://www.superagent.co/th/blog/student-accommodation-near-universities-in-bangkok-prices-and-terms"},
   sutTrip:{t:"รถไฟ กรุงเทพอภิวัฒน์–นครราชสีมา ราว 4 ชม. 35 นาที (Rome2rio) ค่าไป-กลับรวมต่อรถเป็นค่าประมาณ", u:"https://www.rome2rio.com/s/Ratchaburi/Nakhon-Ratchasima"},
 };
 
 /* zone: near = ไป-กลับจากบ้านได้, mid = ชลบุรี กลับบ้านบ่อยได้, far = ต่างภาค */
 const U = {
-  hcu:  {name:"ม.หัวเฉียวเฉลิมพระเกียรติ", short:"หัวเฉียวฯ", place:"บางพลี สมุทรปราการ", type:"private", zone:"near", housing:["home"], seniors:2, src:"hcu"},
+  hcu:  {name:"ม.หัวเฉียวเฉลิมพระเกียรติ", short:"หัวเฉียวฯ", place:"บางพลี สมุทรปราการ", type:"private", zone:"near", housing:["home"], seniors:10, src:"hcu"},
   rmutk:{name:"มทร.กรุงเทพ (ราชมงคลกรุงเทพ)", short:"ราชมงคลกรุงเทพ", place:"สาทร กรุงเทพฯ", type:"public", zone:"near", housing:["home","dorm_out"], rent:3025, seniors:16, src:"rmutk"},
   kmitl:{name:"สจล. พระจอมเกล้าลาดกระบัง", short:"สจล.", place:"ลาดกระบัง กรุงเทพฯ", type:"public", zone:"near", housing:["home","dorm_out"], rent:3025, seniors:35, src:"kmitl"},
-  ku:   {name:"ม.เกษตรศาสตร์ ศรีราชา", short:"มก.ศรีราชา", place:"ศรีราชา ชลบุรี", type:"public", zone:"mid", housing:["dorm_out"], rent:3250, seniors:7, src:"ku"},
-  buu:  {name:"ม.บูรพา บางแสน", short:"บูรพา", place:"บางแสน ชลบุรี", type:"public", zone:"mid", housing:["dorm_in","dorm_out"], dormIn:{fee:3850, util:100, label:"หอในพัดลม 2–4 คน/ห้อง เริ่ม 3,850 บาท/เทอม"}, rent:3250, seniors:23, src:"buu"},
-  up:   {name:"ม.พะเยา", short:"ม.พะเยา", place:"เมือง พะเยา", type:"public", zone:"far", housing:["dorm_in","dorm_out"], rent:2750, dormIn:{fee:10580, util:150, label:"หอในพัดลม 4 คน/ห้อง 21,160 บาท/ปี (หอ มพ. 2 คน/ห้อง ถูกสุด 12,000 · ห้องแอร์ 29,095–31,740 บาท/ปี)"}, dormSrc:"dormUP", seniors:7, src:"up"},
+  ku:   {name:"ม.เกษตรศาสตร์ ศรีราชา", short:"มก.ศรีราชา", place:"ศรีราชา ชลบุรี", type:"public", zone:"mid", housing:["dorm_out"], rent:3250, seniors:9, src:"ku"},
+  buu:  {name:"ม.บูรพา บางแสน", short:"บูรพา", place:"บางแสน ชลบุรี", type:"public", zone:"mid", housing:["dorm_in","dorm_out"], dormIn:{fee:3850, util:100, label:"หอในพัดลม 2–4 คน/ห้อง เริ่ม 3,850 บาท/เทอม"}, rent:3250, seniors:25, src:"buu"},
+  up:   {name:"ม.พะเยา", short:"ม.พะเยา", place:"เมือง พะเยา", type:"public", zone:"far", housing:["dorm_in","dorm_out"], rent:2750, dormIn:{fee:10580, util:150, label:"หอในพัดลม 4 คน/ห้อง 21,160 บาท/ปี (หอ มพ. 2 คน/ห้อง ถูกสุด 12,000 · ห้องแอร์ 29,095–31,740 บาท/ปี)"}, dormSrc:"dormUP", seniors:11, src:"up"},
   mfu:  {name:"ม.แม่ฟ้าหลวง", short:"แม่ฟ้าหลวง", place:"เชียงราย", type:"public", zone:"far", housing:["dorm_in","dorm_out"], dormIn:{fee:5000, util:200, label:"หอในพัดลม 4,000–6,000 บาท/เทอม (ใช้ 5,000)"}, rent:2750, firstYearIn:true, seniors:9, src:"mfu"},
-  /* seniors:"N" = รอใส่จำนวนรุ่นพี่จริงจากไฟล์ผลคัดเลือก TCAS 2569 (เกมจะแสดง "N คน") */
-  cmu:  {name:"ม.เชียงใหม่", short:"มช.", place:"เมือง เชียงใหม่", type:"public", zone:"far", housing:["dorm_out"], rent:2750, rentSrc:"rentN", seniors:"N", src:"cmu"},
-  nu:   {name:"ม.นเรศวร", short:"ม.นเรศวร", place:"เมือง พิษณุโลก", type:"public", zone:"far", housing:["dorm_out"], rent:2750, rentSrc:"rentN", trip:{cost:1000, hours:12}, tripSrc:"nuTrip", seniors:"N", src:"nu"},
-  psuh: {name:"ม.สงขลานครินทร์ หาดใหญ่", short:"ม.อ.หาดใหญ่", place:"หาดใหญ่ สงขลา", type:"public", zone:"far", housing:["dorm_in"], dormIn:{fee:4500, util:150, label:"ใช้ค่าหอศรีตรังของ ม.อ. เป็นค่าอ้างอิง: ห้อง 2 คน 3,800 + น้ำ 200 + ประกัน 500 บาท/ภาค (ค่าไฟประมาณ 150/เดือน)"}, dormSrc:"psuDorm", trip:{cost:500, hours:28}, tripSrc:"psuTrip", seniors:"0", src:"psuh"},
-  kku:  {name:"ม.ขอนแก่น", short:"ม.ขอนแก่น", place:"เมือง ขอนแก่น", type:"public", zone:"far", housing:["dorm_out"], rent:2750, rentSrc:"rentN", trip:{cost:780, hours:14}, tripSrc:"kkuTrip", seniors:"N", src:"kku"},
-  msu:  {name:"ม.มหาสารคาม", short:"ม.มหาสารคาม", place:"กันทรวิชัย มหาสารคาม", type:"public", zone:"far", housing:["dorm_out"], rent:2750, rentSrc:"rentN", trip:{cost:1100, hours:15}, tripSrc:"msuTrip", seniors:"N", src:"msu"},
-  dru:  {name:"ม.ราชภัฏธนบุรี ศูนย์สมุทรปราการ", short:"ราชภัฏธนบุรี", place:"ศูนย์สมุทรปราการ", type:"public", zone:"near", housing:["home"], seniors:"N", src:"dru"},
+  /* seniors = รุ่นพี่ ม.6 ปีการศึกษา 2568 ที่ไปเรียนจริง (ไฟล์สรุปเรียนต่อ 19 ต.ค. 2569) · "N" = ยังไม่มีข้อมูล */
+  cmu:  {name:"ม.เชียงใหม่", short:"มช.", place:"เมือง เชียงใหม่", type:"public", zone:"far", housing:["dorm_out"], rent:2750, rentSrc:"rentN", seniors:0, src:"cmu"},
+  nu:   {name:"ม.นเรศวร", short:"ม.นเรศวร", place:"เมือง พิษณุโลก", type:"public", zone:"far", housing:["dorm_out"], rent:2750, rentSrc:"rentN", trip:{cost:1000, hours:12}, tripSrc:"nuTrip", seniors:1, src:"nu"},
+  psuh: {name:"ม.สงขลานครินทร์ หาดใหญ่", short:"ม.อ.หาดใหญ่", place:"หาดใหญ่ สงขลา", type:"public", zone:"far", housing:["dorm_in"], dormIn:{fee:4500, util:150, label:"ใช้ค่าหอศรีตรังของ ม.อ. เป็นค่าอ้างอิง: ห้อง 2 คน 3,800 + น้ำ 200 + ประกัน 500 บาท/ภาค (ค่าไฟประมาณ 150/เดือน)"}, dormSrc:"psuDorm", trip:{cost:500, hours:28}, tripSrc:"psuTrip", seniors:0, src:"psuh"},
+  kku:  {name:"ม.ขอนแก่น", short:"ม.ขอนแก่น", place:"เมือง ขอนแก่น", type:"public", zone:"far", housing:["dorm_out"], rent:2750, rentSrc:"rentN", trip:{cost:780, hours:14}, tripSrc:"kkuTrip", seniors:0, src:"kku"},
+  msu:  {name:"ม.มหาสารคาม", short:"ม.มหาสารคาม", place:"กันทรวิชัย มหาสารคาม", type:"public", zone:"far", housing:["dorm_out"], rent:2750, rentSrc:"rentN", trip:{cost:1100, hours:15}, tripSrc:"msuTrip", seniors:0, src:"msu"},
+  dru:  {name:"ม.ราชภัฏธนบุรี ศูนย์สมุทรปราการ", short:"ราชภัฏธนบุรี", place:"ศูนย์สมุทรปราการ", type:"public", zone:"near", housing:["home"], seniors:2, src:"dru"},
   /* PIM เอกชน อยู่ทาง B เท่านั้น (ไม่ใส่ใน TRACKS.priv) · ไม่ระบุวิทยาเขตในภาพ จึงใช้ค่าเช่าหอนอกค่ากลางเดียวกับ มทร.กรุงเทพ */
   /* ม.ศิลปากร ทาง B เท่านั้น · ภาพไม่ระบุวิทยาเขต/ราคาหอ จึงใช้โซนกลาง (กลับบ้านได้บ่อย) และราคาหอในกับหอนอกค่าอ้างอิงกลางของเกม */
-  su:   {name:"ม.ศิลปากร", short:"ม.ศิลปากร", place:"นครปฐม / กรุงเทพฯ (ตามคณะ)", type:"public", zone:"mid", housing:["dorm_in","dorm_out"], dormIn:{fee:3850, util:100, label:"ค่าอ้างอิงหอในมหาวิทยาลัยรัฐ 3,850 บาท/เทอม (ยังไม่ได้ตรวจราคาหอ ม.ศิลปากร)"}, rent:3250, seniors:"N", src:"su"},
-  pim:  {name:"สถาบันการจัดการปัญญาภิวัฒน์ (PIM)", short:"PIM", place:"ดูวิทยาเขตที่ pim.ac.th", type:"private", zone:"near", housing:["home","dorm_out"], rent:3025, seniors:"N", src:"pim"},
+  su:   {name:"ม.ศิลปากร", short:"ม.ศิลปากร", place:"นครปฐม / กรุงเทพฯ (ตามคณะ)", type:"public", zone:"mid", housing:["dorm_in","dorm_out"], dormIn:{fee:3850, util:100, label:"ค่าอ้างอิงหอในมหาวิทยาลัยรัฐ 3,850 บาท/เทอม (ยังไม่ได้ตรวจราคาหอ ม.ศิลปากร)"}, rent:3250, seniors:7, src:"su"},
+  pim:  {name:"สถาบันการจัดการปัญญาภิวัฒน์ (PIM)", short:"PIM", place:"ดูวิทยาเขตที่ pim.ac.th", type:"private", zone:"near", housing:["home","dorm_out"], rent:3025, seniors:0, src:"pim"},
   /* มหาวิทยาลัยรัฐชั้นนำ 7 แห่ง (16 พ.ย. 2569) — ทาง B */
-  cu:    {name:"จุฬาลงกรณ์มหาวิทยาลัย", short:"จุฬาฯ", place:"ปทุมวัน กรุงเทพฯ", type:"public", zone:"near", housing:["home","dorm_out"], rent:5750, rentSrc:"rentCU", seniors:"N", src:"cu"},
-  mu:    {name:"ม.มหิดล ศาลายา", short:"ม.มหิดล", place:"ศาลายา นครปฐม", type:"public", zone:"mid", housing:["dorm_out"], rent:3500, rentSrc:"rentSub", seniors:"N", src:"mu"},
-  tu:    {name:"ม.ธรรมศาสตร์ รังสิต", short:"มธ.", place:"รังสิต ปทุมธานี", type:"public", zone:"mid", housing:["dorm_out"], rent:3500, rentSrc:"rentSub", seniors:"N", src:"tu"},
-  swu:   {name:"มศว ประสานมิตร", short:"มศว", place:"สุขุมวิท 23 กรุงเทพฯ (บางคณะเรียนองครักษ์ นครนายก)", type:"public", zone:"near", housing:["home"], seniors:"N", src:"swu"},
-  kmutt: {name:"มจธ. บางมด", short:"มจธ.", place:"ทุ่งครุ กรุงเทพฯ", type:"public", zone:"near", housing:["home"], seniors:"N", src:"kmutt"},
-  kmutnb:{name:"มจพ. กรุงเทพฯ", short:"มจพ.", place:"บางซื่อ กรุงเทพฯ", type:"public", zone:"near", housing:["home"], seniors:"N", src:"kmutnb"},
-  sut:   {name:"ม.เทคโนโลยีสุรนารี", short:"มทส.", place:"เมือง นครราชสีมา", type:"public", zone:"far", housing:["dorm_in"], dormIn:{fee:4650, perTerm:3100, util:100, label:"หอใน 3,100 บาท/คน/เทอม (มทส. เรียนปีละ 3 เทอม จึงคิดเป็น 4,650 บาทต่อครึ่งปี)"}, dormSrc:"dormSUT", trip:{cost:1000, hours:12}, tripPerYear:6, tripSrc:"sutTrip", seniors:"N", src:"sut"},
+  cu:    {name:"จุฬาลงกรณ์มหาวิทยาลัย", short:"จุฬาฯ", place:"ปทุมวัน กรุงเทพฯ", type:"public", zone:"near", housing:["home","dorm_out"], rent:5750, rentSrc:"rentCU", seniors:0, src:"cu"},
+  mu:    {name:"ม.มหิดล ศาลายา", short:"ม.มหิดล", place:"ศาลายา นครปฐม", type:"public", zone:"mid", housing:["dorm_out"], rent:3500, rentSrc:"rentSub", seniors:1, src:"mu"},
+  tu:    {name:"ม.ธรรมศาสตร์ รังสิต", short:"มธ.", place:"รังสิต ปทุมธานี", type:"public", zone:"mid", housing:["dorm_out"], rent:3500, rentSrc:"rentSub", seniors:1, src:"tu"},
+  swu:   {name:"มศว ประสานมิตร", short:"มศว", place:"สุขุมวิท 23 กรุงเทพฯ (บางคณะเรียนองครักษ์ นครนายก)", type:"public", zone:"near", housing:["home"], seniors:4, src:"swu"},
+  kmutt: {name:"มจธ. บางมด", short:"มจธ.", place:"ทุ่งครุ กรุงเทพฯ", type:"public", zone:"near", housing:["home"], seniors:0, src:"kmutt"},
+  kmutnb:{name:"มจพ. กรุงเทพฯ", short:"มจพ.", place:"บางซื่อ กรุงเทพฯ", type:"public", zone:"near", housing:["home"], seniors:8, src:"kmutnb"},
+  sut:   {name:"ม.เทคโนโลยีสุรนารี", short:"มทส.", place:"เมือง นครราชสีมา", type:"public", zone:"far", housing:["dorm_in"], dormIn:{fee:4650, perTerm:3100, util:100, label:"หอใน 3,100 บาท/คน/เทอม (มทส. เรียนปีละ 3 เทอม จึงคิดเป็น 4,650 บาทต่อครึ่งปี)"}, dormSrc:"dormSUT", trip:{cost:1000, hours:12}, tripPerYear:6, tripSrc:"sutTrip", seniors:0, src:"sut"},
+  kub:   {name:"ม.เกษตรศาสตร์ บางเขน", short:"มก.บางเขน", place:"จตุจักร กรุงเทพฯ", type:"public", zone:"near", housing:["home","dorm_out"], rent:4250, rentSrc:"rentKUB", seniors:1, src:"kub"}
 };
 
 /* sem = ค่าเทอมต่อภาค, summer = ค่าภาคฤดูร้อนรวมทั้งหลักสูตร (ถ้ามีบังคับ) */
@@ -326,17 +330,30 @@ const P = {
   kmutnb_biz:{u:"kmutnb", name:"พัฒนาธุรกิจและอุตสาหกรรม (กรุงเทพฯ)", sem:25000, field:"biz"},
   sut_eng:  {u:"sut", name:"วิศวกรรมศาสตร์", sem:23250, field:"eng", note:"คิดตามหน่วยกิต 800 บาท + ค่าบำรุง 10,000/ปี · เฉลี่ยจากค่าใช้จ่ายตลอดหลักสูตรราว 172,300–199,500 (มทส. เรียนปีละ 3 เทอม)"},
   sut_sci:  {u:"sut", name:"วิทยาศาสตร์", sem:23250, field:"sci", note:"คิดตามหน่วยกิต 800 บาท + ค่าบำรุง 10,000/ปี · เฉลี่ยจากค่าใช้จ่ายตลอดหลักสูตรราว 172,300–199,500 (มทส. เรียนปีละ 3 เทอม)"},
+  kub_agri:  {u:"kub", name:"เกษตร", sem:17800, field:"sci", note:"ภาคปกติ ค่าประมาณ"},
+  kub_fish:  {u:"kub", name:"ประมง", sem:17800, field:"sci", note:"ภาคปกติ ค่าประมาณ"},
+  kub_forest: {u:"kub", name:"วนศาสตร์ / สิ่งแวดล้อม", sem:17800, field:"sci", note:"ภาคปกติ ค่าประมาณ"},
+  kub_sci:   {u:"kub", name:"วิทยาศาสตร์", sem:21000, field:"sci", note:"ภาคปกติ ค่าประมาณ"},
+  kub_agro:  {u:"kub", name:"อุตสาหกรรมเกษตร", sem:21000, field:"sci", note:"ภาคปกติ ค่าประมาณ"},
+  kub_eng:   {u:"kub", name:"วิศวกรรมศาสตร์", sem:24800, field:"eng", note:"ภาคปกติ ค่าประมาณ"},
+  kub_vtech: {u:"kub", name:"เทคนิคการสัตวแพทย์", sem:21000, field:"medsci", note:"ภาคปกติ ค่าประมาณ"},
+  kub_bus:   {u:"kub", name:"บริหารธุรกิจ", sem:17200, field:"biz", note:"ภาคปกติ ค่าประมาณ"},
+  kub_econ:  {u:"kub", name:"เศรษฐศาสตร์", sem:17200, field:"biz", note:"ภาคปกติ ค่าประมาณ"},
+  kub_hum:   {u:"kub", name:"มนุษยศาสตร์", sem:17200, field:"lang", note:"ภาคปกติ ค่าประมาณ"},
+  kub_soc:   {u:"kub", name:"สังคมศาสตร์", sem:17200, field:"soc", note:"ภาคปกติ ค่าประมาณ"},
+  kub_edu:   {u:"kub", name:"ศึกษาศาสตร์", sem:17200, field:"edu", note:"ภาคปกติ ค่าประมาณ"},
+  kub_arch:  {u:"kub", name:"สถาปัตยกรรมศาสตร์", sem:24800, field:"arch", note:"ภาคปกติ ค่าประมาณ"},
 };
 
 const TRACKS = {
-  biz:   {name:"ธุรกิจ บัญชี โลจิสติกส์", icon:"💼", priv:["hcu_biz","dru_biz","dru_acc","dru_hotel"], pub:["kmitl_biz","ku_mgt","buu_log","mfu_mgt","up_mgt","rmutk_biz","cmu_biz","nu_biz","psuh_biz","kku_acc","kku_mgt","kku_fin","msu_biz","pim_log","pim_agri","pim_hotel","pim_bba","pim_food","pim_culi","su_mgt","cu_biz","tu_biz","tu_eco","swu_biz","kmutnb_biz"]},
-  health:{name:"สุขภาพ พยาบาล เทคนิคการแพทย์", icon:"🩺", priv:["hcu_nur","hcu_mt","hcu_pt","hcu_medsci","hcu_oh","dru_nur"], pub:["buu_nur","buu_mt","buu_pt","buu_medsci","mfu_oh","up_nur","up_medsci","rmutk_health","cmu_nur","cmu_mt","cmu_pt","nu_nur","nu_medsci","nu_mt","nu_pt","dru_nur","psuh_nur","psuh_mt","psuh_pt","kku_nur","kku_mt","kku_pt","kku_oh","msu_nur","msu_oh","su_pharm","cu_nur","cu_ahs","mu_nur","mu_mt","mu_pt","mu_ph","tu_nur","tu_ahs","swu_nur","swu_pt"]},
-  sci:   {name:"วิทยาศาสตร์ คอมพิวเตอร์ วิศวกรรม (TPAT3)", icon:"🔬", priv:["hcu_cs","dru_ee","hcu_ai","dru_cs","dru_food","dru_rail","dru_tech"], pub:["kmitl_sci","ku_sci","buu_sci","up_sci","rmutk_cs","cmu_sci","nu_sci","psuh_sci","kku_sci","msu_sci","msu_info","pim_digit","pim_robot","pim_ai","su_sci","su_agri","su_eng","su_biotech","kmitl_eng","kmitl_it","rmutk_eng","ku_eng","buu_eng","buu_info","up_eng","up_ict","cmu_eng","cmu_camt","nu_eng","psuh_eng","kku_eng","msu_eng","dru_ee","cu_eng","cu_sci","mu_eng","mu_sci","tu_eng","tu_sci","swu_eng","swu_sci","swu_cs","kmutt_eng","kmutt_cpe","kmutt_sci","kmutt_cs","kmutt_it","kmutnb_eng","kmutnb_sci","sut_eng","sut_sci"]},
-  lang:  {name:"ภาษา ศิลปศาสตร์", icon:"🌏", priv:["hcu_eng","dru_eng","dru_chi","dru_thai","hcu_chi"], pub:["kmitl_lang","buu_eng","up_lang","rmutk_eng","cmu_lang","nu_lang","psuh_lang","kku_hum","msu_hum","dru_eng","dru_chi","dru_thai","pim_art","su_letters","su_arc_lang","su_arc","cu_lang","mu_lang","tu_lang","swu_lang"]},
-  soc:   {name:"สังคม นิเทศ กฎหมาย", icon:"⚖️", priv:["hcu_law","hcu_comm","hcu_sw","dru_law","dru_comm","dru_pa"], pub:["kmitl_agcomm","su_dev","su_comm","su_pa","buu_law","buu_pol","buu_soc","buu_comm","up_law","up_pol","up_comm","cmu_law","cmu_pol","cmu_soc","cmu_mc","nu_law","nu_soc","nu_comm","psuh_law","kku_law","kku_soc","msu_law","msu_pol","msu_soc","msu_comm","cu_soc","mu_law","tu_law","tu_pol","tu_comm","swu_soc","swu_law"]},
+  biz:   {name:"ธุรกิจ บัญชี โลจิสติกส์", icon:"💼", priv:["hcu_biz","dru_biz","dru_acc","dru_hotel"], pub:["kmitl_biz","ku_mgt","buu_log","mfu_mgt","up_mgt","rmutk_biz","cmu_biz","nu_biz","psuh_biz","kku_acc","kku_mgt","kku_fin","msu_biz","pim_log","pim_agri","pim_hotel","pim_bba","pim_food","pim_culi","su_mgt","cu_biz","tu_biz","tu_eco","swu_biz","kmutnb_biz","kub_bus","kub_econ"]},
+  health:{name:"สุขภาพ พยาบาล เทคนิคการแพทย์", icon:"🩺", priv:["hcu_nur","hcu_mt","hcu_pt","hcu_medsci","hcu_oh","dru_nur"], pub:["buu_nur","buu_mt","buu_pt","buu_medsci","mfu_oh","up_nur","up_medsci","rmutk_health","cmu_nur","cmu_mt","cmu_pt","nu_nur","nu_medsci","nu_mt","nu_pt","dru_nur","psuh_nur","psuh_mt","psuh_pt","kku_nur","kku_mt","kku_pt","kku_oh","msu_nur","msu_oh","su_pharm","cu_nur","cu_ahs","mu_nur","mu_mt","mu_pt","mu_ph","tu_nur","tu_ahs","swu_nur","swu_pt","kub_vtech"]},
+  sci:   {name:"วิทยาศาสตร์ คอมพิวเตอร์ วิศวกรรม (TPAT3)", icon:"🔬", priv:["hcu_cs","dru_ee","hcu_ai","dru_cs","dru_food","dru_rail","dru_tech"], pub:["kmitl_sci","ku_sci","buu_sci","up_sci","rmutk_cs","cmu_sci","nu_sci","psuh_sci","kku_sci","msu_sci","msu_info","pim_digit","pim_robot","pim_ai","su_sci","su_agri","su_eng","su_biotech","kmitl_eng","kmitl_it","rmutk_eng","ku_eng","buu_eng","buu_info","up_eng","up_ict","cmu_eng","cmu_camt","nu_eng","psuh_eng","kku_eng","msu_eng","dru_ee","cu_eng","cu_sci","mu_eng","mu_sci","tu_eng","tu_sci","swu_eng","swu_sci","swu_cs","kmutt_eng","kmutt_cpe","kmutt_sci","kmutt_cs","kmutt_it","kmutnb_eng","kmutnb_sci","sut_eng","sut_sci","kub_agri","kub_fish","kub_forest","kub_sci","kub_agro","kub_eng"]},
+  lang:  {name:"ภาษา ศิลปศาสตร์", icon:"🌏", priv:["hcu_eng","dru_eng","dru_chi","dru_thai","hcu_chi"], pub:["kmitl_lang","buu_eng","up_lang","rmutk_eng","cmu_lang","nu_lang","psuh_lang","kku_hum","msu_hum","dru_eng","dru_chi","dru_thai","pim_art","su_letters","su_arc_lang","su_arc","cu_lang","mu_lang","tu_lang","swu_lang","kub_hum"]},
+  soc:   {name:"สังคม นิเทศ กฎหมาย", icon:"⚖️", priv:["hcu_law","hcu_comm","hcu_sw","dru_law","dru_comm","dru_pa"], pub:["kmitl_agcomm","su_dev","su_comm","su_pa","buu_law","buu_pol","buu_soc","buu_comm","up_law","up_pol","up_comm","cmu_law","cmu_pol","cmu_soc","cmu_mc","nu_law","nu_soc","nu_comm","psuh_law","kku_law","kku_soc","msu_law","msu_pol","msu_soc","msu_comm","cu_soc","mu_law","tu_law","tu_pol","tu_comm","swu_soc","swu_law","kub_soc"]},
   /* หมวดตามวิชา TPAT · ทาง A ตอนนี้มีราชภัฏธนบุรี ศูนย์สมุทรปราการ */
-  arch:  {name:"สถาปัตย์ ศิลปะ การออกแบบ (TPAT2, TPAT4)", icon:"📐", priv:["dru_art"], pub:["su_arch","su_decor","su_paint","kmitl_arch","up_arch","up_art","cmu_arch","cmu_art","nu_arch","nu_art","psuh_arch","kku_arch","kku_art","msu_arch","msu_art","buu_art","cu_art","tu_art","swu_art","kmutt_art","kmutnb_arch"]},
-  edu:   {name:"ครุศาสตร์ ศึกษาศาสตร์ (TPAT5)", icon:"🍎", priv:["dru_edu"], pub:["su_edu","kmitl_edu","rmutk_tedu","buu_edu","up_eledu","up_edu","cmu_edu","nu_edu","kku_edu","msu_edu","cu_edu","tu_edu","swu_edu","kmutt_edu","kmutnb_edu"]}
+  arch:  {name:"สถาปัตย์ ศิลปะ การออกแบบ (TPAT2, TPAT4)", icon:"📐", priv:["dru_art"], pub:["su_arch","su_decor","su_paint","kmitl_arch","up_arch","up_art","cmu_arch","cmu_art","nu_arch","nu_art","psuh_arch","kku_arch","kku_art","msu_arch","msu_art","buu_art","cu_art","tu_art","swu_art","kmutt_art","kmutnb_arch","kub_arch"]},
+  edu:   {name:"ครุศาสตร์ ศึกษาศาสตร์ (TPAT5)", icon:"🍎", priv:["dru_edu"], pub:["su_edu","kmitl_edu","rmutk_tedu","buu_edu","up_eledu","up_edu","cmu_edu","nu_edu","kku_edu","msu_edu","cu_edu","tu_edu","swu_edu","kmutt_edu","kmutnb_edu","kub_edu"]}
 };
 
 const HOUSING = {home:"อยู่บ้าน ไป-กลับทุกวัน", dorm_in:"หอใน (หอของมหาวิทยาลัย)", dorm_out:"หอนอก (เช่ารายเดือน)"};

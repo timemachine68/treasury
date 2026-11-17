@@ -198,7 +198,13 @@ function codeOf(name, short){ let c = ''; try { c = window.PCWCard ? window.PCWC
   return c || String(short || '').replace(/^(ม\.|มทร\.|มรภ\.)/, '').slice(0, 6); }
 function isLight(hex){ const m = /^#?([0-9a-f]{6})$/i.exec(hex || ''); if (!m) return false;
   const n = parseInt(m[1], 16), r = n >> 16, g = (n >> 8) & 255, b = n & 255; return (0.299*r + 0.587*g + 0.114*b) / 255 > 0.62; }
-function seniorsOf(g){ if (!g) return null; const s = g.seniors; if (typeof s === 'number') return s; if (s === '0') return 0; const n = Number(s); return Number.isFinite(n) ? n : null; }
+/* รุ่นพี่ PW ที่ไปเรียนจริง จากตาราง uni_alumni_stats (ฐานข้อมูลปิดตัวเลข 1–2 คนเป็น null ให้แล้ว) */
+function alumniOf(x, campus){
+  const a = x.alumni; if (!a) return { n:0, masked:false, year:null, campusOnly:false };
+  const c = campus && (a.campuses || []).find(e => e.campus === campus);
+  if (c) return { n:c.n, masked:c.n == null, year:a.year, campusOnly:true };
+  return { n:a.total, masked:a.total == null, year:a.year, campusOnly:false };
+}
 
 /* ---------- โหลดข้อมูล (เริ่มทำงานที่ท้ายไฟล์ หลังประกาศทุกอย่างครบ) ---------- */
 async function init(uid){
@@ -227,6 +233,8 @@ async function loadAll(){
   const extras = {}; (ex.data || []).forEach(r => { extras[r.university_id] = r; });
   ALL_IV = iv.data || [];
   UNIS = (pr.data || []).filter(r => r.iv_universities).map(r => build(r, extras[r.university_id] || {}));
+  const per = {}; UNIS.forEach(u => { per[u.uid] = (per[u.uid] || 0) + 1; });
+  UNIS.forEach(u => { if (per[u.uid] > 1 && u.campus) { u.short = u.short + ' ' + u.campus.replace(/^วิทยาเขต/, ''); u.multi = true; u.search += ' ' + u.short.toLowerCase(); } });
   CMP = CMP.filter(id => UNIS.some(u => u.id === id)); saveCmp();
 }
 
@@ -235,12 +243,12 @@ function build(r, x){
   const progs = g ? Object.keys(CG.P).filter(k => CG.P[k].u === r.game_key).map(k => {
     const p = CG.P[k]; return { key:k, name:p.name, sem:p.sem, total4:p.sem*8 + (p.summer||0) + (p.fixed||0), note:p.note || '', track:PROG_TRACK[k] || '' };
   }) : [];
-  const color = colorOf(v.name);
+  const color = colorOf(v.name), sen = alumniOf(x, r.campus_label);
   return {
-    id: r.university_id, row: r, name: v.name, short: v.short_name, aliases: v.aliases || [], campuses: v.campuses || [],
+    id: r.id, uid: r.university_id, row: r, name: v.name, short: v.short_name, aliases: v.aliases || [], campuses: v.campuses || [],
     g, gkey: r.game_key, progs, color, code: codeOf(v.name, v.short_name), light: isLight(color),
     type: r.uni_type, zone: r.zone || (g && g.zone) || '', province: r.province || '', campus: r.campus_label || '',
-    seniors: seniorsOf(g), x,
+    sen, seniors: sen.masked ? 1 : (sen.n || 0), x,
     hasQuota: !!(x.quotas && x.quotas.length), ivq: x.iv_questions || 0,
     search: [v.name, v.short_name, (v.aliases || []).join(' '), r.province, r.campus_label, progs.map(p => p.name).join(' ')].join(' ').toLowerCase()
   };
@@ -252,7 +260,15 @@ function feeRange(u, track){
   const s = ps.map(p => p.sem); return [Math.min.apply(null, s), Math.max.apply(null, s)];
 }
 const rangeText = r => !r ? 'ยังไม่มีข้อมูล' : (r[0] === r[1] ? baht(r[0]) : baht(r[0]) + '–' + baht(r[1])) + ' บาท';
-function seniorsText(n){ return n == null ? 'ยังไม่มีข้อมูล' : (n === 0 ? 'ยังไม่มี' : n + ' คน'); }
+function senText(u){ const s = u.sen; return s.masked ? 'น้อยกว่า 3 คน' : (!s.n ? 'ยังไม่มี' : s.n + ' คน'); }
+const SEN_LABEL = 'รุ่นพี่ PW ไปเรียน (จบ ม.6 ปีการศึกษา 2568)';
+function alumniBlock(u){
+  const a = u.x.alumni;
+  if (!a) return '<div class="empty">รุ่นจบปี 2568 ยังไม่มีรุ่นพี่ PW มาเรียนที่นี่</div>';
+  const camp = (a.campuses || []).length ? `<p class="muted" style="margin:0 0 8px">แยกวิทยาเขต: ${a.campuses.map(c => esc(c.campus.replace(/^วิทยาเขต/, '')) + ' ' + esc(countText(c.n))).join(' · ')}${a.total != null ? ' (รวมทั้งมหาวิทยาลัย ' + a.total + ' คน)' : ''}</p>` : '';
+  if (!a.groups || !a.groups.length) return camp + '<div class="empty">ยังแยกสาขาไม่ได้ (ต้องมีรุ่นพี่อย่างน้อย 3 คน)</div>';
+  return camp + `<table><thead><tr><th>กลุ่มสาขาที่รุ่นพี่ไปเรียน (รุ่นจบปี ${esc(a.year)})</th><th class="num">จำนวน</th></tr></thead><tbody>${a.groups.map(g => `<tr><td>${esc(g.group)}</td><td class="num">${esc(countText(g.n))}</td></tr>`).join('')}</tbody></table>`;
+}
 function countText(n){ return n == null ? 'น้อยกว่า 3 คน' : (n === 0 ? 'ยังไม่มี' : n + ' คน'); }
 
 function tagsOf(u){
@@ -303,7 +319,7 @@ function renderList(){
         <div><span class="lbl">ประเภท</span><div class="chips">${chipRow('type', [['','ทั้งหมด'],['public','รัฐ'],['rajabhat','ราชภัฏ'],['rajamangala','ราชมงคล'],['private','เอกชน']])}</div></div>
         <div><span class="lbl">ระยะจากโรงเรียน</span><div class="chips">${chipRow('zone', [['','ทั้งหมด'],['near','ใกล้'],['mid','กลาง'],['far','ไกล']])}</div></div>
         <div><span class="lbl">เฉพาะที่มี</span><div class="chips">
-          <label class="ck"><input type="checkbox" data-ck="seniors"${F.seniors ? ' checked' : ''}> รุ่นพี่ PW</label>
+          <label class="ck"><input type="checkbox" data-ck="seniors"${F.seniors ? ' checked' : ''}> มีรุ่นพี่ PW</label>
           <label class="ck"><input type="checkbox" data-ck="quota"${F.quota ? ' checked' : ''}> โควตาโรงเรียน</label>
           <label class="ck"><input type="checkbox" data-ck="iv"${F.iv ? ' checked' : ''}> คำถามซ้อมสัมภาษณ์</label>
         </div></div>
@@ -313,7 +329,7 @@ function renderList(){
       <span id="count"></span>
       <label class="row" style="gap:6px">เรียงตาม
         <select class="sel" id="sort">
-          <option value="seniors"${F.sort === 'seniors' ? ' selected' : ''}>รุ่นพี่ PW มากสุด</option>
+          <option value="seniors"${F.sort === 'seniors' ? ' selected' : ''}>รุ่นพี่ PW ไปเรียนมากสุด</option>
           <option value="fee"${F.sort === 'fee' ? ' selected' : ''}>ค่าเทอมถูกสุด</option>
           <option value="name"${F.sort === 'name' ? ' selected' : ''}>ชื่อ ก–ฮ</option>
         </select></label>
@@ -347,7 +363,7 @@ function drawGrid(){
       <div class="body">
         <div class="row" style="flex-wrap:nowrap;gap:12px">
           <div class="ubadge" style="background:${esc(u.color)};color:${u.light ? '#22313A' : '#fff'};font-size:${u.code.length > 4 ? 13 : 15}px">${esc(u.code)}</div>
-          <div style="min-width:0"><div class="uname">${esc(u.short)}${u.campus ? ' ' + esc(u.campus) : ''}</div>
+          <div style="min-width:0"><div class="uname">${esc(u.short)}${u.campus && !u.multi ? ' ' + esc(u.campus) : ''}</div>
             <div class="muted">${esc(u.province || u.name)}</div></div>
         </div>
         <div class="row" style="gap:6px">
@@ -357,7 +373,7 @@ function drawGrid(){
         </div>
         <dl class="kv">
           <dt>ค่าเทอม/ภาค</dt><dd>${esc(rangeText(feeRange(u, F.track)))}</dd>
-          <dt>รุ่นพี่ PW</dt><dd>${esc(seniorsText(u.seniors))}${u.seniors ? ' <span class="muted" style="font-weight:400">(TCAS ' + esc(CG.YEAR) + ')</span>' : ''}</dd>
+          <dt>รุ่นพี่ PW</dt><dd>${esc(senText(u))}${u.seniors ? ' <span class="muted" style="font-weight:400">(ไปเรียนจริง รุ่นจบปี 2568)</span>' : ''}</dd>
         </dl>
         <div class="row" style="gap:6px">${tagsOf(u)}</div>
       </div>
@@ -440,7 +456,7 @@ function renderDetail(u){
       <div class="stat"><div class="muted">ค่าเทอมต่อภาค</div><div class="v">${esc(rangeText(fr))}</div><div class="muted">${u.progs.length ? 'แล้วแต่สาขา (' + u.progs.length + ' สาขาในคลัง)' : 'ครูยังไม่ได้ใส่ข้อมูล'}</div></div>
       <div class="stat"><div class="muted">หอใน</div><div class="v">${g && g.dormIn ? 'เริ่ม ' + baht(g.dormIn.perTerm || g.dormIn.fee) + ' / เทอม' : (r.has_dorm === true ? 'มีหอใน' : (r.has_dorm === false ? 'ไม่มีหอใน' : 'ยังไม่มีข้อมูล'))}</div><div class="muted">${esc(g && g.dormIn ? g.dormIn.label : '')}</div></div>
       <div class="stat"><div class="muted">${g && g.housing && g.housing.indexOf('home') >= 0 ? 'อยู่บ้านได้ / หอนอก' : 'หอนอก (ค่ากลาง)'}</div><div class="v">${g && g.rent ? '~' + baht(g.rent) + ' / เดือน' : (g && g.housing && g.housing.indexOf('home') >= 0 ? 'ไป-กลับได้' : 'ยังไม่มีข้อมูล')}</div><div class="muted">${g && g.rent ? 'ห้องราคาประหยัดใกล้มหาวิทยาลัย' : ''}</div></div>
-      <div class="stat g"><div>รุ่นพี่ PW ที่ติด TCAS ${esc(CG.YEAR)}</div><div class="v">${esc(seniorsText(u.seniors))}</div><div>${esc(u.campus || '')}</div></div>
+      <div class="stat g"><div>${esc(SEN_LABEL)}</div><div class="v">${esc(senText(u))}</div><div>${esc(u.sen.campusOnly ? 'เฉพาะ' + (u.campus.startsWith('วิทยาเขต') ? '' : 'วิทยาเขต') + u.campus : (u.campus ? 'รวมทุกวิทยาเขต' : ''))}</div></div>
     </section>
     ${opps.length ? `<section class="card"><h2>⭐ โอกาสพิเศษสำหรับนักเรียน PW</h2><div class="opps">${opps.join('')}</div></section>` : ''}
     <section class="card">
@@ -459,13 +475,15 @@ function renderDetail(u){
       <section class="card">
         <h2>🎓 รุ่นพี่ PW ที่นี่</h2>
         <div class="row" style="gap:10px;margin-bottom:12px">
-          <div class="stat" style="flex:1 1 150px;box-shadow:none;background:var(--board)"><div class="muted">ติด TCAS ${esc(CG.YEAR)}</div><div class="v">${esc(seniorsText(u.seniors))}</div></div>
-          <div class="stat" style="flex:1 1 150px;box-shadow:none;background:var(--board)"><div class="muted">ตอบแบบสำรวจว่าติดที่นี่</div><div class="v">${esc(countText(x.admitted))}</div></div>
-          <div class="stat" style="flex:1 1 150px;box-shadow:none;background:var(--board)"><div class="muted">เลือกเรียนที่นี่</div><div class="v">${esc(countText(x.chosen))}</div></div>
+          <div class="stat" style="flex:1 1 150px;box-shadow:none;background:var(--board)"><div class="muted">ไปเรียนจริง (รุ่นจบปี 2568)</div><div class="v">${esc(senText(u))}</div></div>
+          <div class="stat" style="flex:1 1 150px;box-shadow:none;background:var(--board)"><div class="muted">แบบสำรวจปีนี้: ติดที่นี่</div><div class="v">${esc(countText(x.admitted))}</div></div>
+          <div class="stat" style="flex:1 1 150px;box-shadow:none;background:var(--board)"><div class="muted">แบบสำรวจปีนี้: เลือกเรียน</div><div class="v">${esc(countText(x.chosen))}</div></div>
         </div>
+        ${alumniBlock(u)}
         ${x.faculties && x.faculties.length
-          ? `<table><thead><tr><th>คณะที่รุ่นพี่เลือกเรียน</th><th class="num">จำนวน</th></tr></thead><tbody>${x.faculties.map(f => `<tr><td>${esc(f.faculty)}</td><td class="num">${esc(countText(f.n))}</td></tr>`).join('')}</tbody></table>`
-          : '<div class="empty">ยังแสดงรายคณะไม่ได้ (ต้องมีรุ่นพี่เลือกเรียนที่นี่อย่างน้อย 3 คน)<br>ไม่แสดงชื่อรุ่นพี่ เพื่อความเป็นส่วนตัว</div>'}
+          ? `<table style="margin-top:12px"><thead><tr><th>แบบสำรวจปีนี้: คณะที่เลือกเรียน</th><th class="num">จำนวน</th></tr></thead><tbody>${x.faculties.map(f => `<tr><td>${esc(f.faculty)}</td><td class="num">${esc(countText(f.n))}</td></tr>`).join('')}</tbody></table>`
+          : ''}
+        <p class="muted" style="margin:10px 0 0">ไม่แสดงชื่อรุ่นพี่ และกลุ่มที่มี 1–2 คนจะขึ้นว่า “น้อยกว่า 3 คน” เพื่อความเป็นส่วนตัว</p>
       </section>
       <section class="card">
         <h2>🗣 เตรียมตัว</h2>
@@ -529,7 +547,7 @@ function renderCompare(ids){
           ${row('รวมกิน-อยู่-เดินทาง 4 ปี*', tot.map(v => v == null ? '-' : baht(v)), bestIdx(tot, true))}
           ${row('ระยะจากโรงเรียน', us.map(u => esc(ZONE_LABEL[u.zone] || '-')), -1)}
           ${row('ที่พัก', us.map(u => esc(housingText(u))), -1)}
-          ${row('รุ่นพี่ PW (TCAS ' + CG.YEAR + ')', sn.map(v => esc(seniorsText(v))), bestIdx(sn, false))}
+          ${row('รุ่นพี่ PW ไปเรียน (รุ่นจบปี 2568)', us.map(u => esc(senText(u))), bestIdx(sn, false))}
           ${row('โควตาโรงเรียน', us.map(u => u.hasQuota ? esc(u.x.quotas.map(q => (q.faculty || '') + (q.seats ? ' ' + q.seats + ' ที่' : '')).join(', ')) : '—'), -1)}
           ${row('ซ้อมสัมภาษณ์', us.map(u => u.ivq ? u.ivq + ' ข้อ' : 'ยังไม่มี'), -1)}
         </tbody>
@@ -554,9 +572,9 @@ function openEdit(u){
   const r = u ? u.row : {};
   $('mTitle').textContent = u ? 'แก้ข้อมูล ' + u.short : 'เพิ่มมหาวิทยาลัยเข้าคลัง';
   $('mUniWrap').classList.toggle('hidden', !!u);
-  const used = new Set(UNIS.map(x => x.id));
-  $('mUni').innerHTML = '<option value="">— เลือก —</option>' + ALL_IV.filter(v => !used.has(v.id) && v.is_active)
-    .map(v => `<option value="${esc(v.id)}">${esc(v.name)}</option>`).join('');
+  const used = new Set(UNIS.map(x => x.uid));
+  $('mUni').innerHTML = '<option value="">— เลือก —</option>' + ALL_IV.filter(v => v.is_active)
+    .map(v => `<option value="${esc(v.id)}">${esc(v.name)}${used.has(v.id) ? ' (มีแล้ว · เพิ่มเป็นวิทยาเขตใหม่)' : ''}</option>`).join('');
   const usedG = new Set(UNIS.filter(x => x !== u && x.gkey).map(x => x.gkey));
   $('mGame').innerHTML = '<option value="">ไม่มี</option>' + Object.keys(CG.U).filter(k => !usedG.has(k))
     .map(k => `<option value="${esc(k)}">${esc(CG.U[k].name)}</option>`).join('');
@@ -589,17 +607,18 @@ $('mForm').addEventListener('submit', async e => {
   };
   let res;
   $('mSave').disabled = true;
-  if (EDITING) res = await sb.from('uni_profiles').update(row).eq('university_id', EDITING.id).select('university_id');
+  if (EDITING) res = await sb.from('uni_profiles').update(row).eq('id', EDITING.id).select('id');
   else {
     if (!$('mUni').value) { $('mSave').disabled = false; return say('กรุณาเลือกมหาวิทยาลัย', false); }
     row.university_id = $('mUni').value;
-    res = await sb.from('uni_profiles').insert(row).select('university_id');
+    if (UNIS.some(x => x.uid === row.university_id) && !row.campus_label) { $('mSave').disabled = false; return say('มหาวิทยาลัยนี้มีในคลังแล้ว ถ้าจะเพิ่มอีกวิทยาเขต กรุณากรอกช่องวิทยาเขต', false); }
+    res = await sb.from('uni_profiles').insert(row).select('id');
   }
   $('mSave').disabled = false;
-  if (res.error) return say(res.error.code === '23505' ? 'มหาวิทยาลัยนี้หรือข้อมูลค่าเทอมชุดนี้ถูกใช้กับแห่งอื่นแล้ว' : 'บันทึกไม่สำเร็จ ตรวจข้อมูลแล้วลองใหม่', false);
+  if (res.error) return say(res.error.code === '23505' ? 'วิทยาเขตนี้มีในคลังแล้ว หรือข้อมูลค่าเทอมชุดนี้ถูกใช้กับแห่งอื่นแล้ว' : 'บันทึกไม่สำเร็จ ตรวจข้อมูลแล้วลองใหม่', false);
   if (!res.data || !res.data.length) return say('บันทึกไม่ได้ เฉพาะครูแนะแนวและแอดมินเท่านั้นที่แก้ได้', false);
   $('modal').classList.add('hidden');
-  const goId = EDITING ? EDITING.id : row.university_id;
+  const goId = EDITING ? EDITING.id : res.data[0].id;
   await loadAll();
   if (location.hash === '#u=' + goId) route(); else location.hash = 'u=' + goId;
 });
